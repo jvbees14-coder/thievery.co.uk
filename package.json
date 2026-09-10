@@ -1,0 +1,19 @@
+{
+  "name": "logic-card-game",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Logic: the partnership deduction card game, playable online with room codes.",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node test/smoke.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

@@ -1,0 +1,793 @@
+/* Logic — client. Renders whatever personalised state the server sends. */
+(() => {
+  'use strict';
+
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) =>
+    String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+  const ordinal = (n) => {
+    const s = ['th', 'st', 'nd', 'rd'];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  };
+
+  // --- state ---------------------------------------------------------------
+  let ws = null;
+  let state = null; // last server snapshot
+  let session = loadJSON('logic:session'); // { code, name, token }
+  let pendingJoin = null; // create/join message waiting for the socket to open
+  let halted = false; // stop reconnecting (superseded by another tab)
+  let retry = 0;
+  let renderedRound = null;
+  const ui = { target: null, arrange: null, confirmDeclare: false, swapPick: null };
+
+  // The session (room + secret token) lives in sessionStorage: it survives a
+  // refresh or a dropped connection, but each tab is its own player. If the
+  // browser is closed, rejoining by room code + the same name still works.
+  function loadJSON(key) {
+    try {
+      return JSON.parse(sessionStorage.getItem(key) || 'null');
+    } catch {
+      return null;
+    }
+  }
+  function saveSession(s) {
+    session = s;
+    try {
+      if (s) sessionStorage.setItem('logic:session', JSON.stringify(s));
+      else sessionStorage.removeItem('logic:session');
+    } catch {}
+  }
+
+  // --- networking ----------------------------------------------------------
+  function connect() {
+    if (halted) return;
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    ws = new WebSocket(`${proto}://${location.host}`);
+    ws.onopen = () => {
+      retry = 0;
+      $('#conn').hidden = true;
+      if (pendingJoin) {
+        ws.send(JSON.stringify(pendingJoin));
+        pendingJoin = null;
+      } else if (session) {
+        ws.send(JSON.stringify({ type: 'join', code: session.code, name: session.name, token: session.token }));
+      }
+    };
+    ws.onmessage = (e) => {
+      let msg;
+      try {
+        msg = JSON.parse(e.data);
+      } catch {
+        return;
+      }
+      handleMessage(msg);
+    };
+    ws.onclose = () => {
+      ws = null;
+      if (halted) return;
+      if (session || pendingJoin) $('#conn').hidden = false;
+      const delay = Math.min(8000, 400 * 2 ** retry++);
+      setTimeout(connect, delay);
+    };
+    ws.onerror = () => {};
+  }
+
+  function send(msg) {
+    if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
+    else toast('Not connected — trying to reconnect…');
+  }
+
+  function joinWith(msg) {
+    if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
+    else {
+      pendingJoin = msg;
+      if (!ws) connect();
+    }
+  }
+
+  function handleMessage(msg) {
+    switch (msg.type) {
+      case 'state': {
+        const hadState = !!state;
+        state = msg;
+        saveSession({ code: msg.room.code, name: msg.you.name, token: msg.you.token });
+        if (!hadState) history.replaceState(null, '', `/?code=${msg.room.code}`);
+        render();
+        break;
+      }
+      case 'error':
+        toast(msg.message);
+        if (!state) {
+          // Our (re)join was rejected: the room is gone, full or started.
+          saveSession(null);
+          render();
+        }
+        break;
+      case 'superseded':
+        halted = true;
+        state = null;
+        render();
+        toast('You opened this room in another tab. This tab is now inactive.');
+        break;
+      case 'kicked':
+        saveSession(null);
+        state = null;
+        render();
+        toast('The host removed you from the room.');
+        break;
+    }
+  }
+
+  // --- helpers -------------------------------------------------------------
+  let toastTimer;
+  function toast(text, kind = '') {
+    const el = $('#toast');
+    el.textContent = text;
+    el.className = `toast ${kind}`;
+    el.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => (el.hidden = true), 3500);
+  }
+
+  function copyText(text) {
+    navigator.clipboard?.writeText(text).then(
+      () => toast('Copied', 'info'),
+      () => toast(text, 'info'),
+    );
+  }
+
+  function leaveRoom() {
+    if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'leave' }));
+    saveSession(null);
+    state = null;
+    history.replaceState(null, '', '/');
+    render();
+  }
+
+  // --- rendering -----------------------------------------------------------
+  function render() {
+    const home = $('#home');
+    const app = $('#app');
+    if (!state) {
+      home.hidden = false;
+      app.innerHTML = '';
+      return;
+    }
+    home.hidden = true;
+    if (state.room.round !== renderedRound) {
+      renderedRound = state.room.round;
+      ui.target = null;
+      ui.arrange = null;
+      ui.confirmDeclare = false;
+    }
+    app.innerHTML = state.game ? renderGame() : renderLobby();
+    const log = $('#log');
+    if (log) log.scrollTop = log.scrollHeight;
+  }
+
+  function topbar(extra = '') {
+    const code = state.room.code;
+    return `
+      <div class="topbar">
+        <div class="brand">Logic <small>Round ${state.room.round || '–'}</small></div>
+        <div class="codebox">
+          <span class="muted">Room</span>
+          <span class="code">${esc(code)}</span>
+          <button class="btn small" data-action="copy-link">Copy invite link</button>
+          ${extra}
+        </div>
+      </div>`;
+  }
+
+  function tallyPanel() {
+    const rows = Object.values(state.tally || {}).sort((a, b) => b.wins - a.wins);
+    if (!rows.length) return '';
+    return `
+      <div class="panel">
+        <h3>Wins this session</h3>
+        <div class="tally">
+          ${rows.map((r) => `<div><span>${esc(r.name)}</span><span class="wins">${r.wins}</span></div>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  function handTotal(r) {
+    return r.players.reduce((a, p) => a + (p.handSize || 0), 0);
+  }
+
+  // -- lobby --
+  function renderLobby() {
+    const r = state.room;
+    const me = state.you;
+    const isHost = r.hostId === me.id;
+    const teamsOn = r.mode === 4 && r.teams;
+    const seats = [];
+    for (let i = 0; i < r.mode; i++) {
+      const p = r.players.find((x) => x.seat === i);
+      const team = teamsOn ? `<span class="pill team-${i % 2}">Team ${i % 2 === 0 ? 'A' : 'B'}</span>` : '';
+      if (!p) {
+        seats.push(`<li class="empty"><span class="seat">${i + 1}</span><span class="name">Waiting for a player…</span>${team}</li>`);
+        continue;
+      }
+      const isMe = p.id === me.id;
+      const selected = ui.swapPick === p.id ? 'selected' : '';
+      const above = r.players.find((x) => x.seat === i - 1);
+      const below = r.players.find((x) => x.seat === i + 1);
+      const hand = r.customDeal
+        ? isHost
+          ? `<input class="hand" type="number" min="1" max="24" value="${p.handSize ?? ''}" data-change="hand-size" data-id="${p.id}" title="Cards dealt to ${esc(p.name)}" />`
+          : `<span class="pill">${p.handSize ?? '?'} cards</span>`
+        : '';
+      seats.push(`
+        <li class="${selected}" ${isHost ? `data-action="pick-swap" data-id="${p.id}"` : ''}>
+          <span class="seat">${i + 1}</span>
+          <span class="dot ${p.connected ? '' : 'off'}"></span>
+          <span class="name">${esc(p.name)} ${isMe ? '<span class="pill">You</span>' : ''} ${p.id === r.hostId ? '<span class="pill accent">Host</span>' : ''} ${r.firstPlayer === p.id ? '<span class="pill accent">Leads</span>' : ''}</span>
+          ${team}
+          ${hand}
+          ${
+            isHost
+              ? `<span class="order">
+                  <button class="btn small ghost" data-action="move" data-a="${p.id}" data-b="${above?.id || ''}" ${above ? '' : 'disabled'} title="Move up">&#9650;</button>
+                  <button class="btn small ghost" data-action="move" data-a="${p.id}" data-b="${below?.id || ''}" ${below ? '' : 'disabled'} title="Move down">&#9660;</button>
+                </span>`
+              : ''
+          }
+          ${isHost && !isMe ? `<button class="btn small ghost" data-action="kick" data-id="${p.id}" title="Remove">✕</button>` : ''}
+        </li>`);
+    }
+
+    const ready = r.players.length === r.mode;
+    const host = r.players.find((p) => p.id === r.hostId);
+
+    return `
+      ${topbar('<button class="btn small ghost" data-action="leave">Leave</button>')}
+      <div class="lobby">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div class="panel big-code">
+            <div class="muted" style="margin-bottom:8px">Share this code</div>
+            <span class="code">${esc(r.code)}</span>
+            <p>Friends can join at <b>${esc(location.host)}</b> with this code, or use the invite link.</p>
+          </div>
+          <div class="panel">
+            <h2>Players <span class="muted">(${r.players.length}/${r.mode})</span> <span class="faint" style="font-weight:400;font-size:13px">&middot; seat order is the order of play</span></h2>
+            <ul class="players">${seats.join('')}</ul>
+            ${
+              r.customDeal
+                ? `<p class="faint" style="font-size:12px;margin:10px 0 0">Hand sizes: ${handTotal(r)} of 26 cards${handTotal(r) === 26 ? '' : ' (must add up to 26)'}.</p>`
+                : ''
+            }
+            ${isHost ? `<p class="faint" style="font-size:12px;margin:10px 0 0">Tip: use the arrows to change the order of play, or click two players to swap them.${teamsOn ? ' Seats 1 & 3 are Team A, 2 & 4 are Team B.' : ''}</p>` : ''}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div class="panel settings">
+            <h2>Settings</h2>
+            <div class="setting">
+              <div><div class="label">Players</div><div class="hint">26 cards between them</div></div>
+              <div class="seg">
+                <button class="${r.mode === 3 ? 'on' : ''}" data-action="mode" data-mode="3" ${isHost ? '' : 'disabled'}>3</button>
+                <button class="${r.mode === 4 ? 'on' : ''}" data-action="mode" data-mode="4" ${isHost ? '' : 'disabled'}>4</button>
+              </div>
+            </div>
+            <div class="setting">
+              <div><div class="label">Partnerships</div><div class="hint">${r.mode === 4 ? 'Teams enable the Show step (1 & 3 vs 2 & 4)' : 'Needs 4 players'}</div></div>
+              <div class="seg">
+                <button class="${!teamsOn ? 'on' : ''}" data-action="teams" data-teams="0" ${isHost && r.mode === 4 ? '' : 'disabled'}>Solo</button>
+                <button class="${teamsOn ? 'on' : ''}" data-action="teams" data-teams="1" ${isHost && r.mode === 4 ? '' : 'disabled'}>Teams</button>
+              </div>
+            </div>
+            <div class="setting">
+              <div><div class="label">Deal</div><div class="hint">${r.customDeal ? "Host sets each player's hand size" : `Random ${r.mode === 4 ? '7/7/6/6' : '9/9/8'} split each round`}</div></div>
+              <div class="seg">
+                <button class="${!r.customDeal ? 'on' : ''}" data-action="deal" data-custom="0" ${isHost ? '' : 'disabled'}>Random</button>
+                <button class="${r.customDeal ? 'on' : ''}" data-action="deal" data-custom="1" ${isHost ? '' : 'disabled'}>Custom</button>
+              </div>
+            </div>
+            <div class="setting">
+              <div><div class="label">First to play</div><div class="hint">${r.firstPlayer ? 'Same player leads every round' : 'Random, then rotates each round'}</div></div>
+              <select data-change="first" ${isHost ? '' : 'disabled'}>
+                <option value="" ${r.firstPlayer ? '' : 'selected'}>Rotate</option>
+                ${r.players.map((p) => `<option value="${p.id}" ${r.firstPlayer === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
+              </select>
+            </div>
+            ${
+              isHost
+                ? `<div class="lobby-actions">
+                    <button class="btn" data-action="shuffle">Shuffle seats</button>
+                    <button class="btn primary" data-action="start" ${ready ? '' : 'disabled'}>Start game</button>
+                  </div>
+                  ${ready ? '' : `<div class="faint" style="font-size:12px">Waiting for ${r.mode - r.players.length} more player${r.mode - r.players.length === 1 ? '' : 's'}…</div>`}`
+                : `<div class="muted" style="font-size:13px">${esc(host?.name || 'The host')} will start the game once ${r.mode} players are here.</div>`
+            }
+          </div>
+          ${tallyPanel()}
+        </div>
+      </div>`;
+  }
+
+  // -- game --
+  function renderGame() {
+    const g = state.game;
+    const me = state.you.seat;
+    const order = [];
+    for (let k = 1; k <= g.numPlayers; k++) order.push((me + k) % g.numPlayers); // me last (bottom)
+
+    return `
+      ${topbar(g.phase === 'ended' ? '<button class="btn small ghost" data-action="leave">Leave</button>' : '')}
+      <div class="game">
+        <div class="table">${order.map((si) => seatRow(si)).join('')}</div>
+        <div class="side">
+          <div class="panel action">${actionPanel()}</div>
+          ${tallyPanel()}
+          <div class="panel">
+            <h3>Log</h3>
+            <div class="log" id="log">
+              ${g.log.map((e) => `<div class="${e.kind || ''} ${e.priv ? 'priv' : ''}">${esc(e.text)}</div>`).join('')}
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function stepLabel(g) {
+    if (g.declare) return 'declaring';
+    return { show: 'being shown a card', guess: 'guessing', reveal: 'flipping a card' }[g.step] || '';
+  }
+
+  function seatRow(si) {
+    const g = state.game;
+    const me = state.you.seat;
+    const s = g.seats[si];
+    const mine = si === me;
+    const player = state.room.players.find((p) => p.seat === si);
+    const active = g.phase === 'play' && !g.declare && g.turn === si;
+    const declaring = g.declare && g.declare.seat === si;
+    const down = s.cards.filter((c) => !c.faceUp).length;
+
+    const badges = [];
+    if (mine) badges.push('<span class="pill">You</span>');
+    if (g.teams) badges.push(`<span class="pill team-${s.team}">Team ${s.team === 0 ? 'A' : 'B'}</span>`);
+    if (g.teams && g.partnerSeat === si) badges.push('<span class="pill accent">Partner</span>');
+    if (declaring) badges.push('<span class="pill accent">Declaring</span>');
+    if (player && !player.connected) badges.push('<span class="pill bad">Offline</span>');
+
+    let status = '';
+    if (g.phase === 'arrange') status = s.locked ? 'Locked in' : mine ? 'Arrange your cards' : 'Arranging…';
+    else if (g.phase === 'play') status = active ? stepLabel(g) : `${down} face down`;
+    else status = `${down} face down`;
+
+    let cards;
+    if (g.phase === 'arrange' && mine && !s.locked) {
+      cards = arrangeCards(s.cards);
+    } else {
+      cards = s.cards.map((c, ci) => cardEl(c, si, ci, cardOpts(si, ci, c))).join('');
+    }
+
+    return `
+      <div class="seat-row ${active || declaring ? 'active' : ''} ${mine ? 'me' : ''}">
+        <div class="seat-head">
+          <span class="faint">${si + 1}</span>
+          <span class="name">${esc(g.names[si])}</span>
+          ${badges.join(' ')}
+          <span class="status">${status}</span>
+        </div>
+        <div class="cards indexed">${cards}</div>
+      </div>`;
+  }
+
+  function cardOpts(si, ci, c) {
+    const g = state.game;
+    const me = state.you.seat;
+    const opts = { mine: si === me, index: true };
+    if (g.phase !== 'play' || c.faceUp) return opts;
+    if (g.declare) {
+      const cur = g.declare.current;
+      if (cur && cur.seat === si && cur.idx === ci) opts.target = true;
+      return opts;
+    }
+    const myTurn = g.turn === me;
+    if (g.step === 'show' && g.partnerSeat === g.turn && si === me) opts.selectable = true;
+    if (g.step === 'guess' && myTurn && g.seats[si].team !== g.seats[me].team) {
+      opts.selectable = true;
+      if (ui.target && ui.target.seat === si && ui.target.idx === ci) opts.selected = true;
+    }
+    if (g.step === 'reveal' && myTurn && si === me) opts.selectable = true;
+    return opts;
+  }
+
+  function cardEl(c, si, ci, opts = {}) {
+    const cls = ['card', c.color || 'unknown', c.faceUp ? 'faceup' : 'down'];
+    if (opts.mine) cls.push('mine');
+    if (opts.draggable) cls.push('draggable');
+    if (opts.dragging) cls.push('dragging');
+    if (c.shown) cls.push('shown');
+    if (opts.selectable) cls.push('selectable');
+    if (opts.selected) cls.push('selected');
+    if (opts.target) cls.push('target');
+    const rank = c.rank ? RANKS[c.rank - 1] : '';
+    const title = c.shown ? 'Shown to you by your partner' : '';
+    return `<div class="${cls.join(' ')}" data-action="card" data-seat="${si}" data-idx="${ci}" ${opts.draggable ? `data-id="${c.id}"` : ''} title="${title}">
+      <span class="rank">${rank}</span>${opts.index ? `<span class="idx">${ci + 1}</span>` : ''}
+    </div>`;
+  }
+
+  function arrangeCards(cards) {
+    if (!ui.arrange) ui.arrange = cards.map((c) => c.id);
+    const byId = new Map(cards.map((c) => [c.id, c]));
+    return ui.arrange
+      .map((id, i) => cardEl(byId.get(id), state.you.seat, i, { mine: true, index: true, draggable: true, dragging: id === drag.id && drag.active }))
+      .join('');
+  }
+
+  // Mirrors the server rule: aces anywhere, everything else ascending.
+  function legalOrder(ids, byId) {
+    const nonAces = ids.map((id) => byId.get(id)).filter((c) => c.rank !== 1);
+    for (let i = 1; i < nonAces.length; i++) if (nonAces[i].rank < nonAces[i - 1].rank) return false;
+    return true;
+  }
+
+  // --- drag to arrange (pointer events: mouse + touch) ----------------------
+  const drag = { id: null, el: null, clone: null, active: false, startX: 0, startY: 0, offX: 0, offY: 0 };
+
+  function startDrag() {
+    const r = drag.el.getBoundingClientRect();
+    const clone = drag.el.cloneNode(true);
+    clone.classList.add('drag-clone');
+    clone.classList.remove('dragging');
+    clone.querySelector('.idx')?.remove();
+    clone.style.width = `${r.width}px`;
+    clone.style.height = `${r.height}px`;
+    document.body.appendChild(clone);
+    drag.clone = clone;
+    drag.active = true;
+    render();
+  }
+
+  function moveClone(e) {
+    drag.clone.style.left = `${e.clientX - drag.offX}px`;
+    drag.clone.style.top = `${e.clientY - drag.offY}px`;
+  }
+
+  function reorderAt(x, y) {
+    const g = state.game;
+    const cards = g.seats[state.you.seat].cards;
+    const byId = new Map(cards.map((c) => [c.id, c]));
+    const els = [...document.querySelectorAll('.seat-row.me .card.draggable')].filter((el) => el.dataset.id !== drag.id);
+    if (!els.length) return;
+    // Nearest other card decides the slot; left or right of its centre decides the side.
+    let nearest = null;
+    let best = Infinity;
+    let before = false;
+    for (const el of els) {
+      const r = el.getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      const d = Math.hypot(x - cx, (y - cy) * 2);
+      if (d < best) {
+        best = d;
+        nearest = el;
+        before = x < cx;
+      }
+    }
+    const others = ui.arrange.filter((id) => id !== drag.id);
+    const slot = others.indexOf(nearest.dataset.id) + (before ? 0 : 1);
+    const next = [...others];
+    next.splice(slot, 0, drag.id);
+    if (next.join() === ui.arrange.join()) return;
+    if (!legalOrder(next, byId)) return; // illegal spot: the row simply doesn't move
+    ui.arrange = next;
+    render();
+  }
+
+  function endDrag() {
+    if (!drag.id) return;
+    drag.clone?.remove();
+    const wasActive = drag.active;
+    drag.id = null;
+    drag.el = null;
+    drag.clone = null;
+    drag.active = false;
+    if (wasActive) render();
+  }
+
+  $('#app').addEventListener('pointerdown', (e) => {
+    const el = e.target.closest('.card.draggable');
+    if (!el || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    const r = el.getBoundingClientRect();
+    drag.id = el.dataset.id;
+    drag.el = el;
+    drag.active = false;
+    drag.startX = e.clientX;
+    drag.startY = e.clientY;
+    drag.offX = e.clientX - r.left;
+    drag.offY = e.clientY - r.top;
+    e.preventDefault();
+  });
+  document.addEventListener('pointermove', (e) => {
+    if (!drag.id) return;
+    if (!drag.active) {
+      if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) < 5) return;
+      startDrag();
+    }
+    moveClone(e);
+    reorderAt(e.clientX, e.clientY);
+  });
+  document.addEventListener('pointerup', endDrag);
+  document.addEventListener('pointercancel', endDrag);
+
+  function rankButtons() {
+    return `<div class="ranks">${RANKS.map((r, i) => `<button data-action="rank" data-rank="${i + 1}">${r}</button>`).join('')}</div>`;
+  }
+
+  function actionPanel() {
+    const g = state.game;
+    const me = state.you.seat;
+    const n = (s) => `<b>${esc(g.names[s])}</b>`;
+    const isHost = state.room.hostId === state.you.id;
+
+    if (g.phase === 'arrange') {
+      if (g.seats[me].locked) {
+        const waiting = g.seats.map((s, i) => (s.locked ? null : g.names[i])).filter(Boolean);
+        return `<p class="prompt">Locked in.</p><p class="sub">Waiting for ${esc(waiting.join(', '))}…</p>`;
+      }
+      return `
+        <p class="prompt">Arrange your cards</p>
+        <p class="sub">Drag cards to reorder them. Same-rank pairs can go either way round and aces can go anywhere; the row only accepts positions the rules allow. Everyone will see your colours, but not your ranks.</p>
+        <div class="actions-row">
+          <button class="btn primary" data-action="lock">Lock in</button>
+          <button class="btn ghost" data-action="reset-order">Reset</button>
+        </div>`;
+    }
+
+    if (g.phase === 'ended') {
+      const r = g.result;
+      const cls = r.winners.includes(me) ? 'win' : r.losers.includes(me) ? 'lose' : '';
+      const headline = r.winners.includes(me) ? 'You win!' : r.losers.includes(me) ? 'You lose' : 'Round over';
+      return `
+        <div class="result ${cls}">
+          <p class="headline">${headline}</p>
+          <p class="muted">${esc(r.text)}</p>
+        </div>
+        ${
+          isHost
+            ? `<div class="actions-row">
+                <button class="btn primary" data-action="new-round">New round</button>
+                <button class="btn" data-action="to-lobby">Back to lobby</button>
+              </div>`
+            : `<p class="sub" style="text-align:center;margin-top:10px">Waiting for the host to start a new round…</p>`
+        }`;
+    }
+
+    // phase === 'play'
+    let body = '';
+    if (g.declare) {
+      const d = g.declare;
+      if (d.seat === me && d.current) {
+        body = `
+          <p class="prompt">Name ${n(d.current.seat)}'s ${ordinal(d.current.idx + 1)} card</p>
+          <p class="sub">${d.pos} of ${d.total} correct so far. One wrong answer ends the round.</p>
+          ${rankButtons()}`;
+      } else {
+        body = `<p class="prompt">${n(d.seat)} is declaring…</p><p class="sub">${d.pos} of ${d.total} named correctly so far.</p>`;
+      }
+      return body;
+    }
+
+    const myTurn = g.turn === me;
+    if (g.step === 'show') {
+      const partner = g.partnerSeat;
+      const activePartner = (g.turn + 2) % g.numPlayers;
+      const partnerPlayer = state.room.players.find((p) => p.seat === activePartner);
+      if (partner === g.turn) {
+        body = `
+          <p class="prompt">Show ${n(g.turn)} one of your cards</p>
+          <p class="sub">Click a face-down card in your row. Only your partner will see its rank.</p>
+          <div class="actions-row"><button class="btn" data-action="skip-show">Show nothing</button></div>`;
+      } else if (myTurn) {
+        body = `<p class="prompt">Waiting for ${n(activePartner)} to show you a card…</p>`;
+        if (partnerPlayer && !partnerPlayer.connected) {
+          body += `<div class="actions-row"><button class="btn" data-action="skip-show">Partner is offline — skip</button></div>`;
+        }
+      } else {
+        body = `<p class="prompt">${n(activePartner)} is showing ${n(g.turn)} a card…</p>`;
+      }
+    } else if (g.step === 'guess') {
+      if (myTurn) {
+        if (!g.canGuess) {
+          body = `
+            <p class="prompt">No opponent cards left to guess</p>
+            <p class="sub">You can declare, or end your turn.</p>
+            <div class="actions-row"><button class="btn" data-action="end-turn">End turn</button></div>`;
+        } else if (ui.target) {
+          body = `
+            <p class="prompt">${n(ui.target.seat)}'s ${ordinal(ui.target.idx + 1)} card is a…</p>
+            ${rankButtons()}
+            <div class="actions-row"><button class="btn ghost" data-action="cancel-target">Pick a different card</button></div>`;
+        } else {
+          body = `
+            <p class="prompt">Your turn: guess a card</p>
+            <p class="sub">Click one of ${g.teams ? "your opponents'" : "another player's"} face-down cards, then pick a rank.</p>`;
+        }
+      } else {
+        body = `<p class="prompt">${n(g.turn)} is guessing…</p>`;
+      }
+    } else if (g.step === 'reveal') {
+      body = myTurn
+        ? `<p class="prompt">Wrong guess — flip one of your cards</p><p class="sub">Click one of your face-down cards to reveal it.</p>`
+        : `<p class="prompt">${n(g.turn)} guessed wrong and must flip a card…</p>`;
+    }
+
+    const declareBox = ui.confirmDeclare
+      ? `<div class="declare-box">
+          <p>You'll flip all your cards and then name every other face-down card on the table, one at a time. One mistake and ${g.teams ? 'your team loses' : 'you lose'} the round.</p>
+          <div class="actions-row">
+            <button class="btn danger" data-action="declare-confirm">Yes, declare</button>
+            <button class="btn" data-action="declare-cancel">Cancel</button>
+          </div>
+        </div>`
+      : `<div class="declare-box">
+          <p>Think you know every card? You can declare at any time, even during someone else's turn.</p>
+          <div class="actions-row"><button class="btn" data-action="declare">Declare</button></div>
+        </div>`;
+
+    return body + declareBox;
+  }
+
+  // --- actions -------------------------------------------------------------
+  function onCardClick(seat, idx) {
+    const g = state.game;
+    if (!g || g.phase !== 'play' || g.declare) return;
+    const me = state.you.seat;
+    const card = g.seats[seat].cards[idx];
+    if (!card || card.faceUp) return;
+    if (g.step === 'show' && g.partnerSeat === g.turn && seat === me) {
+      send({ type: 'show', idx });
+    } else if (g.step === 'guess' && g.turn === me && g.seats[seat].team !== g.seats[me].team) {
+      ui.target = { seat, idx };
+      render();
+    } else if (g.step === 'reveal' && g.turn === me && seat === me) {
+      send({ type: 'reveal', idx });
+    }
+  }
+
+  function act(action, d) {
+    switch (action) {
+      case 'copy-link':
+        return copyText(`${location.origin}/?code=${state.room.code}`);
+      case 'leave':
+        return leaveRoom();
+      case 'mode':
+        return send({ type: 'lobby:mode', mode: Number(d.mode) });
+      case 'teams':
+        return send({ type: 'lobby:teams', teams: d.teams === '1' });
+      case 'shuffle':
+        return send({ type: 'lobby:shuffle' });
+      case 'pick-swap': {
+        if (state.room.hostId !== state.you.id) return;
+        if (!ui.swapPick) ui.swapPick = d.id;
+        else if (ui.swapPick === d.id) ui.swapPick = null;
+        else {
+          send({ type: 'lobby:swap', a: ui.swapPick, b: d.id });
+          ui.swapPick = null;
+        }
+        return render();
+      }
+      case 'move':
+        if (!d.b) return;
+        return send({ type: 'lobby:swap', a: d.a, b: d.b });
+      case 'deal':
+        return send({ type: 'lobby:deal', custom: d.custom === '1' });
+      case 'kick':
+        return send({ type: 'lobby:kick', id: d.id });
+      case 'start':
+        return send({ type: 'lobby:start' });
+      case 'card':
+        return onCardClick(Number(d.seat), Number(d.idx));
+      case 'reset-order':
+        ui.arrange = null;
+        return render();
+      case 'lock':
+        return send({ type: 'arrange:lock', order: ui.arrange });
+      case 'skip-show':
+        return send({ type: 'show:skip' });
+      case 'rank': {
+        const rank = Number(d.rank);
+        const g = state.game;
+        if (g.declare && g.declare.seat === state.you.seat) return send({ type: 'declare:name', rank });
+        if (ui.target) {
+          send({ type: 'guess', target: ui.target, rank });
+          ui.target = null;
+        }
+        return;
+      }
+      case 'cancel-target':
+        ui.target = null;
+        return render();
+      case 'end-turn':
+        return send({ type: 'endTurn' });
+      case 'declare':
+        ui.confirmDeclare = true;
+        return render();
+      case 'declare-cancel':
+        ui.confirmDeclare = false;
+        return render();
+      case 'declare-confirm':
+        ui.confirmDeclare = false;
+        return send({ type: 'declare:start' });
+      case 'new-round':
+        return send({ type: 'newRound' });
+      case 'to-lobby':
+        return send({ type: 'toLobby' });
+    }
+  }
+
+  $('#app').addEventListener('change', (e) => {
+    const el = e.target.closest('[data-change]');
+    if (!el || !state) return;
+    if (el.dataset.change === 'hand-size') send({ type: 'lobby:handSize', id: el.dataset.id, size: Number(el.value) });
+    if (el.dataset.change === 'first') send({ type: 'lobby:first', id: el.value || null });
+  });
+  // Clicking an input or select inside a player row must not trigger the row's swap action.
+  $('#app').addEventListener(
+    'click',
+    (e) => {
+      if (e.target.matches('input, select')) e.stopPropagation();
+    },
+    true,
+  );
+
+  $('#app').addEventListener('click', (e) => {
+    const el = e.target.closest('[data-action]');
+    if (!el || !state) return;
+    // Buttons nested inside a clickable <li> (kick inside pick-swap) win.
+    e.stopPropagation();
+    act(el.dataset.action, el.dataset);
+  });
+
+  // --- home screen ---------------------------------------------------------
+  const nameInput = $('#name');
+  const codeInput = $('#code');
+  nameInput.value = localStorage.getItem('logic:name') || '';
+  const urlCode = new URLSearchParams(location.search).get('code') || location.pathname.replace('/', '');
+  if (urlCode && /^[A-Za-z0-9]{4}$/.test(urlCode)) codeInput.value = urlCode.toUpperCase();
+
+  function getName() {
+    const name = nameInput.value.trim();
+    if (!name) {
+      toast('Enter a display name first');
+      nameInput.focus();
+      return null;
+    }
+    try {
+      localStorage.setItem('logic:name', name);
+    } catch {}
+    return name;
+  }
+  $('#create').addEventListener('click', () => {
+    const name = getName();
+    if (name) joinWith({ type: 'create', name });
+  });
+  $('#join').addEventListener('click', () => {
+    const name = getName();
+    const code = codeInput.value.trim().toUpperCase();
+    if (!name) return;
+    if (code.length !== 4) {
+      toast('Room codes are 4 characters');
+      codeInput.focus();
+      return;
+    }
+    joinWith({ type: 'join', code, name });
+  });
+  codeInput.addEventListener('keydown', (e) => e.key === 'Enter' && $('#join').click());
+  nameInput.addEventListener('keydown', (e) => e.key === 'Enter' && (codeInput.value ? $('#join') : $('#create')).click());
+
+  // --- boot ----------------------------------------------------------------
+  // If we have a saved session for the room in the URL (or any session when
+  // there's no code in the URL), try to resume it silently.
+  if (session && urlCode && session.code !== urlCode.toUpperCase()) saveSession(null);
+  render();
+  connect();
+})();

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Logic</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='4' y='4' width='24' height='24' rx='5' fill='%23e8b04b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div id="toast" class="toast" hidden></div>
+  <div id="conn" class="conn" hidden>Reconnecting…</div>
+
+  <!-- Home screen (static markup so typed input survives state updates) -->
+  <section id="home" class="screen home" hidden>
+    <div class="home-card">
+      <h1 class="logo">Logic</h1>
+      <p class="tagline">The partnership deduction card game. 3–4 players, one room code.</p>
+
+      <label class="field">
+        <span>Your name</span>
+        <input id="name" maxlength="20" placeholder="e.g. Ada" autocomplete="nickname" />
+      </label>
+
+      <div class="home-actions">
+        <button id="create" class="btn primary">Create game</button>
+        <div class="or">or join with a code</div>
+        <div class="join-row">
+          <input id="code" maxlength="4" placeholder="CODE" autocapitalize="characters" autocomplete="off" spellcheck="false" />
+          <button id="join" class="btn">Join</button>
+        </div>
+      </div>
+
+      <details class="rules">
+        <summary>How to play</summary>
+        <ol>
+          <li>Each player arranges their hand face down in ascending order (aces can go anywhere). Red cards show sideways, black cards upright, so everyone can see the colours but not the ranks.</li>
+          <li>On your turn (teams mode) your partner may privately show you one of their cards.</li>
+          <li>Pick one opponent's face-down card and guess its rank. Right: it flips face up and you guess again. Wrong: you flip one of your own cards and the turn passes.</li>
+          <li>At any time, anyone may <b>declare</b>: flip your cards and name every other face-down card on the table. All right and you win. One wrong and you lose.</li>
+        </ol>
+      </details>
+    </div>
+  </section>
+
+  <!-- Lobby + game are rendered here -->
+  <main id="app"></main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

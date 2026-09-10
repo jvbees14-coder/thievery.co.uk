@@ -1,0 +1,13 @@
+# Render "Blueprint": connect the repo at https://dashboard.render.com and it
+# picks this file up automatically. The free tier works (it sleeps when idle).
+services:
+  - type: web
+    name: logic
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
