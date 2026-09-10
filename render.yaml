@@ -8,6 +8,11 @@ services:
     buildCommand: npm ci
     startCommand: npm start
     healthCheckPath: /health
+    # Custom domain. Render issues the TLS certificate once the DNS records
+    # below exist in Cloudflare (see README "Custom domain").
+    domains:
+      - thievery.co.uk
+      - www.thievery.co.uk
     envVars:
       - key: NODE_VERSION
         value: 22

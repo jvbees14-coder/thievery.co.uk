@@ -89,6 +89,26 @@ with a `/health` endpoint for health checks.
 The free instance sleeps after 15 minutes idle; the first visit takes ~30 s to
 wake. Rooms are in memory, so a sleep/restart clears them.
 
+### Custom domain (thievery.co.uk on Cloudflare)
+
+`render.yaml` already lists `thievery.co.uk` and `www.thievery.co.uk`, so the
+Blueprint deploy creates the service with both domains attached. Render then
+shows the DNS records it needs under **Settings -> Custom Domains**. Add them
+in the Cloudflare dashboard (DNS -> Records):
+
+| Type  | Name  | Content                  |
+|-------|-------|--------------------------|
+| A     | `@`   | the IP Render shows (currently `216.24.57.1`) |
+| CNAME | `www` | `logic.onrender.com` (your service's onrender hostname) |
+
+Either proxy setting works. If you leave the orange cloud (proxied) on, set
+Cloudflare **SSL/TLS -> Overview** to **Full (strict)**, otherwise you get a
+redirect loop. If Render's certificate check stalls, switch the records to
+"DNS only" until the certificate is issued, then re-enable the proxy.
+
+Render redirects `www` to the bare domain automatically, and the client
+switches to `wss://` on its own, so nothing in the code changes.
+
 ### Fly.io
 
 ```bash
