@@ -1,140 +1,116 @@
-# Logic — online multiplayer
+# Thievery.co.uk
 
-A browser version of **Logic**, the 3–4 player deduction card game. One player
-creates a room and gets a 4-letter code; everyone else joins with the code and
-plays in real time from their own browser.
+**Thievery.co.uk** is an online version of the deduction card game for 3 or 4
+players. Everyone plays from their own phone, tablet or laptop, in real time,
+with no downloads and no accounts. One person creates a room, shares the
+4-letter code, and the game begins as soon as the last player joins.
 
-- Solo mode (3 or 4 players) or two partnerships (4 players, 1 & 3 vs 2 & 4).
-- The server is the only place hidden ranks live. Each client is sent a
-  personalised snapshot containing only what that player is allowed to know, so
-  nothing can be peeked at with devtools.
-- Refreshing or dropping the connection re-joins the same seat automatically.
-  Closing the browser entirely and coming back works too: rejoin with the room
-  code and the same name.
-- Running win tally per player across rounds in a session.
-- Host lobby controls: order of play (arrow buttons or click-to-swap), who
-  leads each round, and either a random deal split or a custom hand size per
-  player (must total 26).
-- A correct guess earns another guess; the turn only passes on a miss. Aces
-  may be placed anywhere in a player's row.
-- Arrange your row by dragging cards (mouse or touch). The row only accepts
-  positions the rules allow, and the server re-validates on lock-in.
+Play at <https://thievery.co.uk>.
 
-## Run it locally
+## The idea
 
-Requires Node 18+ (tested on Node 24).
+Half a deck of cards is dealt out face down. Each player lines their cards up
+in ascending order, so the *colours* are on show but the *ranks* are hidden.
+On your turn you point at an opponent's card and guess what it is. Guess right
+and it flips over, letting you guess again. Guess wrong and the turn passes.
+The first player (or team) to turn over every opponent card wins the round.
+
+The skill is in the deduction: a black card sitting between a face-up 4 and a
+face-up 7 can only be a 4, 5, 6 or 7, and every card that flips narrows things
+further for everyone at the table.
+
+## Starting a game
+
+1. Open the site and press **Create game**. You become the host and get a room
+   code.
+2. Share the code, or use **Copy invite link** to send a link that fills the
+   code in automatically.
+3. Friends open the site, type the code and their name, and press **Join**.
+4. When the right number of players is in the room, the host presses
+   **Start game**.
+
+### Host options in the lobby
+
+- **Players**: 3 or 4.
+- **Teams**: with 4 players you can play as two partnerships. Seats 1 and 3 are
+  one team, seats 2 and 4 the other.
+- **Order of play**: use the arrows to move players around the table, click
+  two names to swap them, or press **Shuffle seats**.
+- **First to play**: pick a player to lead every round, or leave it on
+  **Rotate** so the lead passes round the table each round.
+- **Deal**: either a random split (7/7/6/6 with 4 players, 9/9/8 with 3) or a
+  fixed hand size per player. Custom sizes must add up to 26.
+- **Kick**: remove someone who joined by mistake.
+
+## How a round works
+
+### 1. Arrange your cards
+
+You are dealt your cards and see them face up on your own screen. Drag them
+into ascending order and press **Lock in**. Two rules:
+
+- Every card must be in ascending order, ace low. Cards of the same rank can
+  go in either order.
+- **Aces are wild in position**: you may put an ace anywhere in your row.
+
+Once everyone has locked in, all the rows are revealed face down. Red cards
+are shown sideways and black cards upright, so the colour of every card on the
+table is public but the ranks are not.
+
+### 2. (Teams only) The show
+
+At the start of your turn your partner may privately show you one of their
+face-down cards. Only you see its rank. Your partner can also choose to show
+nothing. This lets partners feed each other information without giving it to
+the other side.
+
+### 3. Guess
+
+Click any face-down card belonging to an opponent, then pick a rank from Ace
+to King.
+
+- **Right**: the card flips face up for everyone, and you guess again.
+- **Wrong**: nothing happens to your cards. The turn passes to the next player.
+
+Keep going for as long as you keep guessing correctly.
+
+### 4. Winning
+
+The round ends the moment one player (or, in teams mode, one team) has every
+opponent card face up. That player or team wins the round. In solo mode this
+means the last person with any face-down cards left is the winner.
+
+At the end of a round all the cards are revealed. The host can start a new
+round in the same room or return everyone to the lobby. A running tally of
+wins per player is kept for the session.
+
+## Fair play
+
+You cannot cheat by looking at the page source or the network traffic. Each
+player is only ever sent the information they are entitled to: their own
+cards, cards that are face up, and cards their partner has shown them. Hidden
+ranks never leave the server.
+
+## Losing connection
+
+- Refreshing the page, or a brief network drop, puts you straight back in your
+  seat with everything you knew.
+- If you close the browser entirely, open the site again and join with the
+  same room code and the same name to pick up where you left off.
+- Other players see an **Offline** badge next to anyone who has dropped. If a
+  partner is offline during the show step, the active player can skip it.
+- Rooms are kept in memory and disappear after about an hour of inactivity.
+
+## Running your own copy
+
+The whole game is a small Node.js server with no database. If you would rather
+host it yourself, install Node 18 or newer and run:
 
 ```bash
 npm install
-npm start          # http://localhost:3000
-npm run dev        # same, but restarts when server files change
-npm test           # end-to-end smoke test (boots the server, plays two full games)
+npm start
 ```
 
-Open <http://localhost:3000> in several tabs to try it: each tab is a separate
-player. To let friends on the same Wi-Fi join, give them
-`http://<your-LAN-IP>:3000`.
-
-## Project layout
-
-```
-server/index.js   HTTP static server + WebSocket room/lobby handling
-server/game.js    Pure game rules + viewFor() (the per-player privacy filter)
-server/deal.js    Deal split (7/7/6/6 and 9/9/8) — change here if your table deals differently
-public/           index.html, style.css, app.js — the client, no build step
-test/smoke.test.js  Drives real WebSocket clients through complete games
-```
-
-### Protocol in one paragraph
-
-Clients send small JSON actions (`create`, `join`, `lobby:start`,
-`arrange:lock`, `show`, `guess`, `reveal`, `declare:start`, `declare:name`,
-`newRound`, …). After every action the server validates it against the
-authoritative game object and broadcasts a fresh `state` message to each
-player in the room, built by `viewFor(game, seat)`. A card's rank is only
-included if the viewer owns it, it is face up, or their partner has shown it
-to them. Colours are withheld until everyone has locked in their row.
-
-## Why a small Node server instead of Firebase
-
-The hard requirement is that players can't see each other's hidden ranks.
-With a realtime database the browser talks to the database directly, so to
-keep ranks private you would need per-card security rules *and* Cloud
-Functions to validate guesses and flips (the client can't be trusted to check
-"was my guess right?" without being given the answer). At that point you are
-writing a server anyway, just spread across rules, functions and a schema.
-
-A single ~400-line Node process with the `ws` library keeps all the rules in
-one file, has no database at all (rooms are in memory and vanish after an hour
-of inactivity, which is fine for a party game), and deploys as one container.
-The trade-off is that state does not survive a server restart and you can't
-scale past one instance without adding sticky sessions or Redis. For a group
-of friends that is not a concern.
-
-## Deploying so friends can join over the internet
-
-WebSockets need a long-running process, so **Vercel/Netlify serverless
-functions are not a good fit**. Any host that runs a plain Node process works.
-The app reads `PORT` from the environment and serves everything from one port,
-with a `/health` endpoint for health checks.
-
-### Render (easiest, free tier)
-
-1. Push this folder to a GitHub repo.
-2. On <https://dashboard.render.com> choose **New → Blueprint**, pick the repo.
-   It reads `render.yaml` and creates the web service.
-3. You get a URL like `https://logic.onrender.com`. Share `https://…/?code=ABCD`
-   links straight from the lobby's "Copy invite link" button.
-
-The free instance sleeps after 15 minutes idle; the first visit takes ~30 s to
-wake. Rooms are in memory, so a sleep/restart clears them.
-
-### Custom domain (thievery.co.uk on Cloudflare)
-
-`render.yaml` already lists `thievery.co.uk` and `www.thievery.co.uk`, so the
-Blueprint deploy creates the service with both domains attached. Render then
-shows the DNS records it needs under **Settings -> Custom Domains**. Add them
-in the Cloudflare dashboard (DNS -> Records):
-
-| Type  | Name  | Content                  |
-|-------|-------|--------------------------|
-| A     | `@`   | the IP Render shows (currently `216.24.57.1`) |
-| CNAME | `www` | `logic.onrender.com` (your service's onrender hostname) |
-
-Either proxy setting works. If you leave the orange cloud (proxied) on, set
-Cloudflare **SSL/TLS -> Overview** to **Full (strict)**, otherwise you get a
-redirect loop. If Render's certificate check stalls, switch the records to
-"DNS only" until the certificate is issued, then re-enable the proxy.
-
-Render redirects `www` to the bare domain automatically, and the client
-switches to `wss://` on its own, so nothing in the code changes.
-
-### Fly.io
-
-```bash
-fly launch --copy-config --no-deploy   # uses fly.toml + Dockerfile
-fly deploy
-```
-
-### Railway
-
-New project → Deploy from GitHub → it detects `npm start`. Nothing else needed.
-
-### Anything with Docker
-
-```bash
-docker build -t logic .
-docker run -p 3000:3000 logic
-```
-
-All of these terminate TLS for you, and the client switches to `wss://`
-automatically when the page is served over HTTPS.
-
-## House rules you might want to tweak
-
-- **Deal split**: `server/deal.js`.
-- **Room code length/alphabet**: `newRoomCode()` in `server/index.js`.
-- **Who may skip the Show step**: `skipShow()` in `server/game.js` (currently
-  the partner, or the active player only if their partner is offline).
-- **Failed solo declare**: currently nobody wins the round; change
-  `finishRound()` in `server/game.js` if you'd rather award it to the others.
+Then open <http://localhost:3000>. Anyone on the same Wi-Fi can join with your
+computer's local address. The `render.yaml`, `fly.toml` and `Dockerfile` in
+this folder deploy it to Render, Fly.io, or any Docker host.
