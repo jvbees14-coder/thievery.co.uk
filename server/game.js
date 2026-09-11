@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Logic — pure game logic. No networking in here.
+// Thievery.co.uk — pure game logic. No networking in here.
 //
 // The game object is the single source of truth and lives only on the server.
 // Clients never receive it directly; they get `viewFor(game, seat)`, which
@@ -30,7 +30,7 @@ export function makeDeck() {
 // --- construction ----------------------------------------------------------
 
 export function createGame({ numPlayers, teams, startSeat, names, counts: customCounts }) {
-  if (![3, 4].includes(numPlayers)) throw new Error('Logic supports 3 or 4 players');
+  if (![3, 4].includes(numPlayers)) throw new Error('Thievery.co.uk supports 3 or 4 players');
   const useTeams = !!teams && numPlayers === 4;
   const deck = shuffle(makeDeck());
   // Hand sizes: the host may fix them per seat; otherwise use the random split.

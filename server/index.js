@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Logic — HTTP static server + WebSocket game server.
+// Thievery.co.uk — HTTP static server + WebSocket game server.
 //
 // One Node process holds every room in memory. Each client gets a
 // personalised state snapshot after every change (see game.js viewFor), so
@@ -545,5 +545,5 @@ setInterval(() => {
 }, 60_000);
 
 server.listen(PORT, () => {
-  console.log(`Logic is running at http://localhost:${PORT}`);
+  console.log(`Thievery.co.uk is running at http://localhost:${PORT}`);
 });

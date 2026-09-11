@@ -1,8 +1,8 @@
 {
-  "name": "logic-card-game",
+  "name": "thievery-co-uk",
   "version": "1.0.0",
   "private": true,
-  "description": "Logic: the partnership deduction card game, playable online with room codes.",
+  "description": "Thievery.co.uk: the partnership deduction card game, playable online with room codes.",
   "type": "module",
   "main": "server/index.js",
   "scripts": {

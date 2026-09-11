@@ -1,4 +1,4 @@
-/* Logic — client. Renders whatever personalised state the server sends. */
+/* Thievery.co.uk — client. Renders whatever personalised state the server sends. */
 (() => {
   'use strict';
 
@@ -15,7 +15,7 @@
   // --- state ---------------------------------------------------------------
   let ws = null;
   let state = null; // last server snapshot
-  let session = loadJSON('logic:session'); // { code, name, token }
+  let session = loadJSON('thievery:session'); // { code, name, token }
   let pendingJoin = null; // create/join message waiting for the socket to open
   let halted = false; // stop reconnecting (superseded by another tab)
   let retry = 0;
@@ -36,8 +36,8 @@
   function saveSession(s) {
     session = s;
     try {
-      if (s) sessionStorage.setItem('logic:session', JSON.stringify(s));
-      else sessionStorage.removeItem('logic:session');
+      if (s) sessionStorage.setItem('thievery:session', JSON.stringify(s));
+      else sessionStorage.removeItem('thievery:session');
     } catch {}
   }
 
@@ -174,7 +174,7 @@
     const code = state.room.code;
     return `
       <div class="topbar">
-        <div class="brand">Logic <small>Round ${state.room.round || '–'}</small></div>
+        <div class="brand">Thievery.co.uk <small>Round ${state.room.round || '–'}</small></div>
         <div class="codebox">
           <span class="muted">Room</span>
           <span class="code">${esc(code)}</span>
@@ -719,7 +719,7 @@
   // --- home screen ---------------------------------------------------------
   const nameInput = $('#name');
   const codeInput = $('#code');
-  nameInput.value = localStorage.getItem('logic:name') || '';
+  nameInput.value = localStorage.getItem('thievery:name') || '';
   const urlCode = new URLSearchParams(location.search).get('code') || location.pathname.replace('/', '');
   if (urlCode && /^[A-Za-z0-9]{4}$/.test(urlCode)) codeInput.value = urlCode.toUpperCase();
 
@@ -731,7 +731,7 @@
       return null;
     }
     try {
-      localStorage.setItem('logic:name', name);
+      localStorage.setItem('thievery:name', name);
     } catch {}
     return name;
   }
