@@ -114,3 +114,10 @@ npm start
 Then open <http://localhost:3000>. Anyone on the same Wi-Fi can join with your
 computer's local address. The `render.yaml`, `fly.toml` and `Dockerfile` in
 this folder deploy it to Render, Fly.io, or any Docker host.
+
+### Test mode
+
+To try the game out on your own, create a game with the display name
+**Test67**. The room fills with four players and starts straight away, and a
+bar at the top of the page lets you switch between the seats so you can play
+every hand yourself. A dot marks whose turn it is.

@@ -350,6 +350,53 @@ async function main() {
     await P.waitFor((s) => !s.game && s.room.players.length === 3, 'back to lobby');
 
     for (const c of [P, Q, R2]) c.close();
+
+    // ---------------- test mode: one browser drives four seats ----------------
+    const T = new Client('T');
+    await T.connect();
+    T.send({ type: 'create', name: 'Test67' });
+    await T.waitFor((s) => s.game && s.room.test, 'test room');
+    assert.deepEqual(
+      T.state.room.players.map((p) => `${p.seat}:${p.name}`),
+      ['0:Test67', '1:Test67-2', '2:Test67-3', '3:Test67-4'],
+      'four seats filled in order',
+    );
+    assert.equal(T.you.seat, 0, 'tester starts in seat 1');
+    assert.equal(T.state.game.phase, 'arrange', 'game starts immediately');
+    assert.ok(T.state.room.players.every((p) => p.connected), 'all seats count as connected');
+    assert.match(await T.expectError({ type: 'test:switch', seat: 9 }, 'bad seat'), /seat/);
+    // Lock in from every seat by switching to it; only that seat's cards carry ids.
+    for (let seat = 0; seat < 4; seat++) {
+      T.send({ type: 'test:switch', seat });
+      await T.waitFor((s) => s.you.seat === seat, `switch to seat ${seat}`);
+      assert.equal(T.state.room.hostId, T.you.id, 'controlled seat acts as host');
+      T.send({ type: 'arrange:lock', order: T.state.game.seats[seat].cards.map((c) => c.id) });
+      await T.waitFor((s) => s.game.seats[seat].locked, `seat ${seat} locked`);
+    }
+    await T.waitFor((s) => s.game.phase === 'play', 'test game in play');
+    // Act as whoever's turn it is and make a correct guess.
+    const turn = T.state.game.turn;
+    T.send({ type: 'test:switch', seat: turn });
+    await T.waitFor((s) => s.you.seat === turn, 'switch to active seat');
+    const targetSeat = (turn + 1) % 4;
+    const targetIdx = faceDown(T.state.game, targetSeat)[0];
+    T.send({ type: 'test:switch', seat: targetSeat });
+    await T.waitFor((s) => s.you.seat === targetSeat, 'peek at the target seat');
+    const real = T.state.game.seats[targetSeat].cards[targetIdx].rank;
+    T.send({ type: 'test:switch', seat: turn });
+    await T.waitFor((s) => s.you.seat === turn, 'back to the active seat');
+    T.send({ type: 'guess', target: { seat: targetSeat, idx: targetIdx }, rank: real });
+    await T.waitFor((s) => s.game.seats[targetSeat].cards[targetIdx].faceUp, 'guess from a switched seat lands');
+    // Leaving a test room deletes it.
+    const testCode = T.state.room.code;
+    T.send({ type: 'leave' });
+    await new Promise((r) => setTimeout(r, 150)); // leave is processed with no reply
+    const T2 = new Client('T2');
+    await T2.connect();
+    assert.match(await T2.expectError({ type: 'join', code: testCode, name: 'Test67-2' }, 'test room gone'), /not found/);
+    T.close();
+    T2.close();
+
     console.log(`OK — ${snapshotsChecked} snapshots checked for leaks`);
   } finally {
     server.kill();

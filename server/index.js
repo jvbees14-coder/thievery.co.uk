@@ -124,20 +124,49 @@ function removePlayer(room, player) {
 function lobbyView(room) {
   return {
     code: room.code,
-    hostId: room.hostId,
+    // In a test room whoever is currently being controlled acts as host.
+    hostId: room.test ? (room.players.find((p) => p.ws)?.id ?? room.hostId) : room.hostId,
     mode: room.mode,
     teams: room.teams,
     customDeal: room.customDeal,
     firstPlayer: room.firstPlayer,
     round: room.round,
+    test: !!room.test,
     players: room.players.map((p) => ({
       id: p.id,
       name: p.name,
       seat: p.seat,
-      connected: p.connected,
+      connected: isConnected(room, p),
       handSize: p.handSize ?? null,
     })),
   };
+}
+
+// --- test mode -------------------------------------------------------------
+//
+// Creating a room with the display name "Test67" fills all four seats at once
+// and starts the game immediately. Every seat is driven from the creator's
+// browser: a `test:switch` action moves their socket to another seat, so they
+// see that seat's view and act as that player. Seats that are not currently
+// attached count as connected as long as the tester is.
+
+const TEST_NAME = 'test67';
+
+function isConnected(room, p) {
+  return room.test ? room.players.some((x) => x.ws) : p.connected;
+}
+
+function setupTestRoom(room, ws) {
+  room.test = true;
+  room.mode = 4;
+  for (let i = 0; i < 4; i++) {
+    const name = i === 0 ? 'Test67' : `Test67-${i + 1}`;
+    room.players.push({ id: randomId(6), token: randomId(), name, seat: i, ws: null, connected: false, handSize: null });
+  }
+  room.hostId = room.players[0].id;
+  attach(room, room.players[0], ws);
+  startRound(room);
+  sendState(room);
 }
 
 // Default hand size for a player when the host switches to a custom deal.
@@ -220,6 +249,10 @@ function handleJoin(ws, msg) {
   if (msg.type === 'create') {
     if (!name) throw new Error('Enter a display name first');
     room = createRoom();
+    if (name.toLowerCase() === TEST_NAME) {
+      if (ws.ctx) handleLeave(ws);
+      return setupTestRoom(room, ws);
+    }
   } else {
     const code = String(msg.code || '')
       .trim()
@@ -265,6 +298,11 @@ function handleLeave(ws) {
   ws.ctx = null;
   player.ws = null;
   player.connected = false;
+  if (room.test) {
+    // The tester drives every seat, so leaving ends the whole test room.
+    rooms.delete(room.code);
+    return;
+  }
   if (!room.game || room.game.phase === 'ended') {
     removePlayer(room, player);
     if (room.game && room.players.length === 0) room.game = null;
@@ -281,7 +319,7 @@ function handleDisconnect(ws) {
   player.ws = null;
   player.connected = false;
   if (room.players.every((p) => !p.connected)) room.emptySince = Date.now();
-  if (!room.game) {
+  if (!room.game && !room.test) {
     setTimeout(() => {
       if (!player.connected && rooms.get(room.code) === room && !room.game && room.players.includes(player)) {
         removePlayer(room, player);
@@ -298,7 +336,7 @@ function handleAction(ws, msg) {
   const ctx = ws.ctx;
   if (!ctx) throw new Error('You are not in a room');
   const { room, player } = ctx;
-  const isHost = room.hostId === player.id;
+  const isHost = room.test || room.hostId === player.id;
   const g = room.game;
   const requireHost = () => {
     if (!isHost) throw new Error('Only the host can do that');
@@ -415,7 +453,7 @@ function handleAction(ws, msg) {
       requireGame();
       const partnerSeat = Game.partnerOf(g, g.turn);
       const partner = partnerSeat === null ? null : room.players[partnerSeat];
-      Game.skipShow(g, player.seat, { allowActive: !partner || !partner.connected });
+      Game.skipShow(g, player.seat, { allowActive: !partner || !isConnected(room, partner) });
       break;
     }
     case 'guess':
@@ -423,10 +461,23 @@ function handleAction(ws, msg) {
       Game.guess(g, player.seat, msg.target, Number(msg.rank));
       break;
 
+    case 'test:switch': {
+      if (!room.test) throw new Error('Not a test room');
+      const target = room.players[Number(msg.seat)];
+      if (!target) throw new Error('No such seat');
+      if (target !== player) {
+        ws.ctx = null;
+        player.ws = null;
+        player.connected = false;
+        attach(room, target, ws);
+      }
+      break;
+    }
+
     case 'newRound':
       requireHost();
       requireEnded();
-      if (room.players.some((p) => !p.connected)) throw new Error('Wait for everyone to reconnect (or go back to the lobby)');
+      if (room.players.some((p) => !isConnected(room, p))) throw new Error('Wait for everyone to reconnect (or go back to the lobby)');
       startRound(room);
       break;
 
@@ -434,7 +485,7 @@ function handleAction(ws, msg) {
       requireHost();
       requireEnded();
       room.game = null;
-      room.players = room.players.filter((p) => p.connected);
+      room.players = room.players.filter((p) => isConnected(room, p));
       reseat(room);
       if (!room.players.some((p) => p.id === room.hostId)) room.hostId = room.players[0]?.id ?? null;
       if (!room.players.some((p) => p.id === room.firstPlayer)) room.firstPlayer = null;

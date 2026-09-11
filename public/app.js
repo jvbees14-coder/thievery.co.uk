@@ -20,6 +20,7 @@
   let halted = false; // stop reconnecting (superseded by another tab)
   let retry = 0;
   let renderedRound = null;
+  let renderedSeat = null;
   const ui = { target: null, arrange: null, swapPick: null };
 
   // The session (room + secret token) lives in sessionStorage: it survives a
@@ -156,8 +157,11 @@
       return;
     }
     home.hidden = true;
-    if (state.room.round !== renderedRound) {
+    // Per-seat UI state (pending guess, card arrangement) must not survive a
+    // new round or, in test mode, switching to a different seat.
+    if (state.room.round !== renderedRound || state.you.seat !== renderedSeat) {
       renderedRound = state.room.round;
+      renderedSeat = state.you.seat;
       ui.target = null;
       ui.arrange = null;
     }
@@ -177,6 +181,29 @@
           <button class="btn small" data-action="copy-link">Copy invite link</button>
           ${extra}
         </div>
+      </div>
+      ${testBar()}`;
+  }
+
+  // Test mode: one browser drives every seat. Pick which one to act as.
+  function testBar() {
+    if (!state.room.test) return '';
+    const me = state.you.seat;
+    const g = state.game;
+    const seats = state.room.players
+      .slice()
+      .sort((a, b) => a.seat - b.seat)
+      .map((p) => {
+        const turn = g && g.phase === 'play' && g.turn === p.seat;
+        return `<button class="btn small ${p.seat === me ? 'primary' : ''}" data-action="test-switch" data-seat="${p.seat}">
+          ${p.seat + 1}. ${esc(p.name)}${turn ? ' ●' : ''}
+        </button>`;
+      });
+    return `
+      <div class="testbar">
+        <span class="pill bad">Test mode</span>
+        <span class="muted">Acting as:</span>
+        ${seats.join('')}
       </div>`;
   }
 
@@ -657,6 +684,8 @@
       case 'cancel-target':
         ui.target = null;
         return render();
+      case 'test-switch':
+        return send({ type: 'test:switch', seat: Number(d.seat) });
       case 'new-round':
         return send({ type: 'newRound' });
       case 'to-lobby':
