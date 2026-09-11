@@ -140,15 +140,17 @@ async function lockAll(clients) {
   for (const c of clients) await c.waitFor((s) => s.game.phase === 'play', 'play phase');
 }
 
-// Play turns until `maxTurns` have passed. Alternates correct/incorrect guesses.
-async function playTurns(clients, maxTurns) {
+// Play turns until `maxTurns` have passed or the round ends. Alternates
+// correct/incorrect guesses unless `alwaysCorrect` is set. Returns the final
+// game snapshot.
+async function playTurns(clients, maxTurns, { alwaysCorrect = false } = {}) {
   let turns = 0;
   let correct = true;
+  const ref = clients[0];
   while (turns < maxTurns) {
-    const ref = clients[0];
-    await ref.waitFor((s) => s.game.phase !== 'play' || ['show', 'guess', 'reveal'].includes(s.game.step), 'a step');
+    await ref.waitFor((s) => s.game.phase !== 'play' || ['show', 'guess'].includes(s.game.step), 'a step');
     const g = ref.state.game;
-    if (g.phase !== 'play') return;
+    if (g.phase !== 'play') break;
     const active = bySeat(clients, g.turn);
     if (g.step === 'show') {
       const partnerSeat = (g.turn + 2) % 4;
@@ -172,56 +174,44 @@ async function playTurns(clients, maxTurns) {
         if (s.team === ag.seats[g.turn].team) return;
         faceDown(ag, si).forEach((idx) => targets.push({ seat: si, idx }));
       });
-      if (!targets.length) {
-        active.send({ type: 'endTurn' });
-      } else {
-        const t = targets[Math.floor(Math.random() * targets.length)];
-        const real = trueRank(clients, t.seat, t.idx);
-        const rank = correct ? real : (real % 13) + 1;
-        const logLen = g.log.length;
-        active.send({ type: 'guess', target: t, rank });
-        await ref.waitFor((s) => s.game.log.length > logLen || s.game.phase !== 'play', 'guess result');
-        const after = ref.state.game;
-        if (correct) {
+      // The round ends the moment someone runs out of targets, so an active
+      // player always has something to guess.
+      assert.ok(targets.length > 0, 'active player should always have a card to guess');
+      const t = targets[Math.floor(Math.random() * targets.length)];
+      const real = trueRank(clients, t.seat, t.idx);
+      const useCorrect = alwaysCorrect || correct;
+      const rank = useCorrect ? real : (real % 13) + 1;
+      const logLen = g.log.length;
+      const ownDown = faceDown(g, g.turn).length;
+      active.send({ type: 'guess', target: t, rank });
+      await ref.waitFor((s) => s.game.log.length > logLen || s.game.phase !== 'play', 'guess result');
+      const after = ref.state.game;
+      if (useCorrect) {
+        assert.ok(after.seats[t.seat].cards[t.idx].faceUp, 'guessed card flips');
+        if (after.phase === 'play') {
           // A correct guess keeps the turn and the guess step.
           assert.equal(after.turn, g.turn, 'correct guess should keep the turn');
           assert.equal(after.step, 'guess', 'correct guess should allow another guess');
-          assert.ok(after.seats[t.seat].cards[t.idx].faceUp, 'guessed card flips');
-        } else {
-          assert.ok(after.step === 'reveal' || after.turn !== g.turn, 'wrong guess ends the guessing');
         }
-        correct = !correct;
-        turns++;
-        continue;
+      } else {
+        assert.equal(after.phase, 'play', 'a wrong guess never ends the round');
+        assert.notEqual(after.turn, g.turn, 'wrong guess passes the turn');
+        assert.ok(!after.seats[t.seat].cards[t.idx].faceUp, 'wrongly guessed card stays face down');
+        assert.equal(faceDown(after, g.turn).length, ownDown, 'a wrong guess must not cost the guesser a card');
       }
+      correct = !correct;
       turns++;
-      await ref.waitFor((s) => s.game.turn !== g.turn || s.game.step === 'reveal' || s.game.phase !== 'play', 'turn to advance');
-    } else if (g.step === 'reveal') {
-      await active.waitFor((s) => s.game.step === 'reveal' && s.game.turn === g.turn, 'reveal step');
-      const idxs = faceDown(active.state.game, g.turn);
-      active.send({ type: 'reveal', idx: idxs[0] });
-      await ref.waitFor((s) => s.game.turn !== g.turn || s.game.phase !== 'play', 'turn to advance after reveal');
     }
   }
+  return ref.state.game;
 }
 
-async function declare(clients, declarer, { sabotage = false } = {}) {
-  declarer.send({ type: 'declare:start' });
-  await declarer.waitFor((s) => s.game.declare || s.game.phase === 'ended', 'declare to start');
-  let sabotaged = false;
-  while (declarer.state.game.phase === 'play') {
-    const d = declarer.state.game.declare;
-    let rank = trueRank(clients, d.current.seat, d.current.idx);
-    if (sabotage && !sabotaged) {
-      rank = (rank % 13) + 1;
-      sabotaged = true;
-    }
-    const pos = d.pos;
-    declarer.send({ type: 'declare:name', rank });
-    await declarer.waitFor((s) => s.game.phase === 'ended' || s.game.declare.pos !== pos, 'declare progress');
-  }
+// Play correct guesses until the round ends; every client sees the result.
+async function playToEnd(clients) {
+  const g = await playTurns(clients, Infinity, { alwaysCorrect: true });
+  assert.equal(g.phase, 'ended', 'round should have ended');
   for (const c of clients) await c.waitFor((s) => s.game.phase === 'ended', 'round end');
-  return declarer.state.game.result;
+  return clients[0].state.game.result;
 }
 
 async function main() {
@@ -286,22 +276,22 @@ async function main() {
     assert.deepEqual(bKnown2, bKnown, 'partner-shown cards survive a reconnect');
     four[1] = B2;
 
-    // Someone declares (interrupting whoever's turn it is) with perfect info → their team wins.
-    const declarer = C;
-    const res = await declare(four, declarer);
-    const team = declarer.you.seat % 2;
-    assert.deepEqual(res.winners, [0, 2].map((s) => s + team), 'declaring team wins');
+    // Play the round out: the first team to flip every opposing card wins.
+    const res = await playToEnd(four);
+    assert.equal(res.winners.length, 2, 'a whole team wins');
+    assert.equal(res.winners[0] % 2, res.winners[1] % 2, 'winners are partners');
+    assert.deepEqual(res.losers, [0, 1, 2, 3].filter((s) => !res.winners.includes(s)), 'the other team loses');
     assert.ok(four.every((c) => c.state.game.seats.every((s) => s.cards.every((x) => x.faceUp && x.rank))), 'all cards public after round');
+    // Nothing can be guessed once the round is over.
+    assert.match(await A.expectError({ type: 'guess', target: { seat: 1, idx: 0 }, rank: 1 }, 'guess after end'), /not in progress/);
 
-    // New round, same room: sabotage the declaration → the other team wins.
+    // New round, same room.
     A.send({ type: 'newRound' });
     await lockAll(four);
     assert.equal(A.state.room.round, 2);
     await playTurns(four, 3);
-    const res2 = await declare(four, D, { sabotage: true });
-    const dTeam = D.you.seat % 2;
-    assert.deepEqual(res2.losers, [0, 2].map((s) => s + dTeam), 'sabotaged team loses');
-    assert.deepEqual(res2.winners, [0, 2].map((s) => s + (1 - dTeam)), 'other team wins');
+    const res2 = await playToEnd(four);
+    assert.equal(res2.winners.length, 2, 'a whole team wins round 2');
     const wins = Object.values(A.state.tally).map((t) => t.wins);
     assert.equal(wins.reduce((a, b) => a + b, 0), 4, 'two team wins → four player-wins tallied');
 
@@ -345,9 +335,10 @@ async function main() {
     // Nobody can show in solo mode.
     assert.match(await Q.expectError({ type: 'show', idx: 0 }, 'show in solo'), /showing/);
     await playTurns(three, 5);
-    const res3 = await declare(three, Q, { sabotage: true });
-    assert.deepEqual(res3.winners, [], 'failed solo declare has no winner');
-    assert.deepEqual(res3.losers, [Q.you.seat]);
+    const res3 = await playToEnd(three);
+    assert.equal(res3.winners.length, 1, 'solo mode has a single winner');
+    assert.equal(res3.losers.length, 2, 'the other two lose');
+    assert.deepEqual([...res3.winners, ...res3.losers].sort(), [0, 1, 2]);
 
     // Rejoin by name after the round (no token), then back to lobby.
     R.close();

@@ -55,8 +55,6 @@ b { font-weight: 600; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 .btn.primary { background: var(--accent); color: #1a1405; border-color: transparent; font-weight: 600; }
 .btn.primary:hover { background: #f0bd5f; }
-.btn.danger { border-color: rgba(229, 100, 107, 0.5); color: #f0a0a5; }
-.btn.danger:hover { background: rgba(229, 100, 107, 0.12); }
 .btn.small { padding: 5px 10px; font-size: 13px; border-radius: 8px; }
 .btn.ghost { background: transparent; }
 
@@ -265,8 +263,6 @@ select:disabled { opacity: 0.6; }
 .ranks button:hover { border-color: var(--accent); background: var(--accent-soft); }
 .actions-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .actions-row .btn { flex: 1; }
-.declare-box { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 14px; }
-.declare-box p { margin: 0 0 8px; font-size: 13px; color: var(--text-dim); }
 .result { text-align: center; padding: 8px 0 4px; }
 .result .headline { font-size: 20px; font-weight: 700; margin: 0 0 6px; }
 .result.win .headline { color: var(--good); }
@@ -281,7 +277,6 @@ select:disabled { opacity: 0.6; }
 .log .good { color: #cdeedb; border-left: 2px solid var(--good); }
 .log .bad { color: #f2cfd1; border-left: 2px solid var(--bad); }
 .log .flip { color: var(--text); }
-.log .declare { color: var(--accent); font-weight: 600; background: var(--accent-soft); }
 .log .result { color: var(--text); font-weight: 600; text-align: left; padding: 8px 9px; }
 .log .priv { color: var(--accent); background: var(--accent-soft); }
 

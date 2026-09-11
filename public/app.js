@@ -20,7 +20,7 @@
   let halted = false; // stop reconnecting (superseded by another tab)
   let retry = 0;
   let renderedRound = null;
-  const ui = { target: null, arrange: null, confirmDeclare: false, swapPick: null };
+  const ui = { target: null, arrange: null, swapPick: null };
 
   // The session (room + secret token) lives in sessionStorage: it survives a
   // refresh or a dropped connection, but each tab is its own player. If the
@@ -160,7 +160,6 @@
       renderedRound = state.room.round;
       ui.target = null;
       ui.arrange = null;
-      ui.confirmDeclare = false;
     }
     app.innerHTML = state.game ? renderGame() : renderLobby();
     const log = $('#log');
@@ -333,8 +332,7 @@
   }
 
   function stepLabel(g) {
-    if (g.declare) return 'declaring';
-    return { show: 'being shown a card', guess: 'guessing', reveal: 'flipping a card' }[g.step] || '';
+    return { show: 'being shown a card', guess: 'guessing' }[g.step] || '';
   }
 
   function seatRow(si) {
@@ -343,15 +341,13 @@
     const s = g.seats[si];
     const mine = si === me;
     const player = state.room.players.find((p) => p.seat === si);
-    const active = g.phase === 'play' && !g.declare && g.turn === si;
-    const declaring = g.declare && g.declare.seat === si;
+    const active = g.phase === 'play' && g.turn === si;
     const down = s.cards.filter((c) => !c.faceUp).length;
 
     const badges = [];
     if (mine) badges.push('<span class="pill">You</span>');
     if (g.teams) badges.push(`<span class="pill team-${s.team}">Team ${s.team === 0 ? 'A' : 'B'}</span>`);
     if (g.teams && g.partnerSeat === si) badges.push('<span class="pill accent">Partner</span>');
-    if (declaring) badges.push('<span class="pill accent">Declaring</span>');
     if (player && !player.connected) badges.push('<span class="pill bad">Offline</span>');
 
     let status = '';
@@ -367,7 +363,7 @@
     }
 
     return `
-      <div class="seat-row ${active || declaring ? 'active' : ''} ${mine ? 'me' : ''}">
+      <div class="seat-row ${active ? 'active' : ''} ${mine ? 'me' : ''}">
         <div class="seat-head">
           <span class="faint">${si + 1}</span>
           <span class="name">${esc(g.names[si])}</span>
@@ -383,18 +379,12 @@
     const me = state.you.seat;
     const opts = { mine: si === me, index: true };
     if (g.phase !== 'play' || c.faceUp) return opts;
-    if (g.declare) {
-      const cur = g.declare.current;
-      if (cur && cur.seat === si && cur.idx === ci) opts.target = true;
-      return opts;
-    }
     const myTurn = g.turn === me;
     if (g.step === 'show' && g.partnerSeat === g.turn && si === me) opts.selectable = true;
     if (g.step === 'guess' && myTurn && g.seats[si].team !== g.seats[me].team) {
       opts.selectable = true;
       if (ui.target && ui.target.seat === si && ui.target.idx === ci) opts.selected = true;
     }
-    if (g.step === 'reveal' && myTurn && si === me) opts.selectable = true;
     return opts;
   }
 
@@ -563,19 +553,6 @@
 
     // phase === 'play'
     let body = '';
-    if (g.declare) {
-      const d = g.declare;
-      if (d.seat === me && d.current) {
-        body = `
-          <p class="prompt">Name ${n(d.current.seat)}'s ${ordinal(d.current.idx + 1)} card</p>
-          <p class="sub">${d.pos} of ${d.total} correct so far. One wrong answer ends the round.</p>
-          ${rankButtons()}`;
-      } else {
-        body = `<p class="prompt">${n(d.seat)} is declaring…</p><p class="sub">${d.pos} of ${d.total} named correctly so far.</p>`;
-      }
-      return body;
-    }
-
     const myTurn = g.turn === me;
     if (g.step === 'show') {
       const partner = g.partnerSeat;
@@ -596,12 +573,7 @@
       }
     } else if (g.step === 'guess') {
       if (myTurn) {
-        if (!g.canGuess) {
-          body = `
-            <p class="prompt">No opponent cards left to guess</p>
-            <p class="sub">You can declare, or end your turn.</p>
-            <div class="actions-row"><button class="btn" data-action="end-turn">End turn</button></div>`;
-        } else if (ui.target) {
+        if (ui.target) {
           body = `
             <p class="prompt">${n(ui.target.seat)}'s ${ordinal(ui.target.idx + 1)} card is a…</p>
             ${rankButtons()}
@@ -609,37 +581,20 @@
         } else {
           body = `
             <p class="prompt">Your turn: guess a card</p>
-            <p class="sub">Click one of ${g.teams ? "your opponents'" : "another player's"} face-down cards, then pick a rank.</p>`;
+            <p class="sub">Click one of ${g.teams ? "your opponents'" : "another player's"} face-down cards, then pick a rank. A wrong guess just passes the turn.</p>`;
         }
       } else {
         body = `<p class="prompt">${n(g.turn)} is guessing…</p>`;
       }
-    } else if (g.step === 'reveal') {
-      body = myTurn
-        ? `<p class="prompt">Wrong guess — flip one of your cards</p><p class="sub">Click one of your face-down cards to reveal it.</p>`
-        : `<p class="prompt">${n(g.turn)} guessed wrong and must flip a card…</p>`;
     }
 
-    const declareBox = ui.confirmDeclare
-      ? `<div class="declare-box">
-          <p>You'll flip all your cards and then name every other face-down card on the table, one at a time. One mistake and ${g.teams ? 'your team loses' : 'you lose'} the round.</p>
-          <div class="actions-row">
-            <button class="btn danger" data-action="declare-confirm">Yes, declare</button>
-            <button class="btn" data-action="declare-cancel">Cancel</button>
-          </div>
-        </div>`
-      : `<div class="declare-box">
-          <p>Think you know every card? You can declare at any time, even during someone else's turn.</p>
-          <div class="actions-row"><button class="btn" data-action="declare">Declare</button></div>
-        </div>`;
-
-    return body + declareBox;
+    return body;
   }
 
   // --- actions -------------------------------------------------------------
   function onCardClick(seat, idx) {
     const g = state.game;
-    if (!g || g.phase !== 'play' || g.declare) return;
+    if (!g || g.phase !== 'play') return;
     const me = state.you.seat;
     const card = g.seats[seat].cards[idx];
     if (!card || card.faceUp) return;
@@ -648,8 +603,6 @@
     } else if (g.step === 'guess' && g.turn === me && g.seats[seat].team !== g.seats[me].team) {
       ui.target = { seat, idx };
       render();
-    } else if (g.step === 'reveal' && g.turn === me && seat === me) {
-      send({ type: 'reveal', idx });
     }
   }
 
@@ -695,8 +648,6 @@
         return send({ type: 'show:skip' });
       case 'rank': {
         const rank = Number(d.rank);
-        const g = state.game;
-        if (g.declare && g.declare.seat === state.you.seat) return send({ type: 'declare:name', rank });
         if (ui.target) {
           send({ type: 'guess', target: ui.target, rank });
           ui.target = null;
@@ -706,17 +657,6 @@
       case 'cancel-target':
         ui.target = null;
         return render();
-      case 'end-turn':
-        return send({ type: 'endTurn' });
-      case 'declare':
-        ui.confirmDeclare = true;
-        return render();
-      case 'declare-cancel':
-        ui.confirmDeclare = false;
-        return render();
-      case 'declare-confirm':
-        ui.confirmDeclare = false;
-        return send({ type: 'declare:start' });
       case 'new-round':
         return send({ type: 'newRound' });
       case 'to-lobby':

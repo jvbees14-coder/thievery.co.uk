@@ -423,26 +423,6 @@ function handleAction(ws, msg) {
       Game.guess(g, player.seat, msg.target, Number(msg.rank));
       break;
 
-    case 'reveal':
-      requireGame();
-      Game.reveal(g, player.seat, Number(msg.idx));
-      break;
-
-    case 'endTurn':
-      requireGame();
-      Game.endTurn(g, player.seat);
-      break;
-
-    case 'declare:start':
-      requireGame();
-      Game.declareStart(g, player.seat);
-      break;
-
-    case 'declare:name':
-      requireGame();
-      Game.declareName(g, player.seat, Number(msg.rank));
-      break;
-
     case 'newRound':
       requireHost();
       requireEnded();

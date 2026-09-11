@@ -55,9 +55,8 @@ export function createGame({ numPlayers, teams, startSeat, names, counts: custom
     phase: 'arrange', // arrange | play | ended
     seats,
     turn: startSeat,
-    step: null, // show | guess | reveal | declare
+    step: null, // show | guess
     known: seats.map(() => []), // per seat: ["seat:idx"] cards a partner has shown them
-    declare: null, // { seat, queue: [{seat, idx}], pos }
     result: null, // { winners: [seat], losers: [seat], text }
     log: [],
   };
@@ -208,109 +207,42 @@ export function guess(g, seat, target, rank) {
   const desc = `${g.names[seat]} guessed ${g.names[ts]}'s ${ordinal(idx + 1)} card is a ${rankName(rank)}`;
   if (c.rank === rank) {
     c.faceUp = true;
+    const winner = findWinner(g);
+    if (winner !== null) {
+      log(g, `${desc} — correct! It's the ${cardName(c)}.`, { kind: 'good' });
+      finishRound(g, winner);
+      return;
+    }
     log(g, `${desc} — correct! It's the ${cardName(c)}. ${g.names[seat]} guesses again.`, { kind: 'good' });
     // A correct guess earns another guess; the turn only passes on a miss.
     g.step = 'guess';
   } else {
+    // A wrong guess costs nothing: the turn simply passes.
     log(g, `${desc} — incorrect.`, { kind: 'bad' });
-    if (faceDownCount(g, seat) > 0) {
-      g.step = 'reveal';
-    } else {
-      log(g, `${g.names[seat]} has no face-down cards left to flip.`);
-      nextTurn(g);
-    }
+    nextTurn(g);
   }
 }
 
-export function endTurn(g, seat) {
-  requirePlay(g);
-  if (g.step !== 'guess') throw new Error('You can only end your turn during the guess step');
-  requireTurn(g, seat);
-  if (guessTargets(g, seat).length > 0) throw new Error('You still have cards you can guess');
-  log(g, `${g.names[seat]} has nothing left to guess and ends their turn.`);
-  nextTurn(g);
-}
+// --- ending the round ------------------------------------------------------
 
-// --- the reveal ------------------------------------------------------------
-
-export function reveal(g, seat, idx) {
-  requirePlay(g);
-  if (g.step !== 'reveal') throw new Error('Not the reveal step');
-  requireTurn(g, seat);
-  const c = g.seats[seat].cards[idx];
-  if (!c) throw new Error('No such card');
-  if (c.faceUp) throw new Error('That card is already face up');
-  c.faceUp = true;
-  log(g, `${g.names[seat]} flipped their own ${ordinal(idx + 1)} card face up: ${cardName(c)}.`, { kind: 'flip' });
-  nextTurn(g);
-}
-
-// --- declaring -------------------------------------------------------------
-
-export function declareStart(g, seat) {
-  requirePlay(g);
-  if (g.declare) throw new Error('A declaration is already in progress');
-  const flipped = [];
-  g.seats[seat].cards.forEach((c) => {
-    if (!c.faceUp) {
-      c.faceUp = true;
-      flipped.push(c);
-    }
-  });
-  const queue = [];
-  for (let k = 1; k < g.numPlayers; k++) {
-    const si = (seat + k) % g.numPlayers;
-    g.seats[si].cards.forEach((c, ci) => {
-      if (!c.faceUp) queue.push({ seat: si, idx: ci });
-    });
+// The round ends as soon as some player (or team) has every opponent card face
+// up. Returns that seat, or null if the round continues.
+function findWinner(g) {
+  for (let seat = 0; seat < g.numPlayers; seat++) {
+    if (guessTargets(g, seat).length === 0) return seat;
   }
-  g.declare = { seat, queue, pos: 0 };
-  g.step = 'declare';
-  const own = flipped.length ? flipped.map(cardName).join(', ') : 'nothing left to flip';
-  log(g, `${g.names[seat]} DECLARES! Their remaining cards: ${own}.`, { kind: 'declare' });
-  if (queue.length === 0) finishRound(g, { win: true, seat });
+  return null;
 }
 
-export function declareName(g, seat, rank) {
-  requirePlay(g);
-  if (!g.declare) throw new Error('No declaration in progress');
-  if (seat !== g.declare.seat) throw new Error('Only the declaring player can name cards');
-  validRank(rank);
-  const { queue, pos } = g.declare;
-  const t = queue[pos];
-  const c = g.seats[t.seat].cards[t.idx];
-  c.faceUp = true;
-  const desc = `${g.names[seat]} says ${g.names[t.seat]}'s ${ordinal(t.idx + 1)} card is a ${rankName(rank)}`;
-  if (c.rank === rank) {
-    log(g, `${desc} — correct (${cardName(c)}).`, { kind: 'good' });
-    g.declare.pos++;
-    if (g.declare.pos >= queue.length) finishRound(g, { win: true, seat });
-  } else {
-    log(g, `${desc} — wrong! It was the ${cardName(c)}.`, { kind: 'bad' });
-    finishRound(g, { win: false, seat });
-  }
-}
-
-function finishRound(g, { win, seat }) {
+function finishRound(g, seat) {
   g.phase = 'ended';
   const team = teamOf(g, seat);
   const all = g.seats.map((_, s) => s);
-  const mates = all.filter((s) => teamOf(g, s) === team);
-  const others = all.filter((s) => teamOf(g, s) !== team);
-  let winners, losers, text;
-  if (win) {
-    winners = mates;
-    losers = others;
-    text = g.teams ? `${teamLabel(g, team)} win the round!` : `${g.names[seat]} wins the round!`;
-  } else if (g.teams) {
-    winners = others;
-    losers = mates;
-    text = `${teamLabel(g, team)}'s declaration failed — ${teamLabel(g, 1 - team)} win the round!`;
-  } else {
-    winners = [];
-    losers = mates;
-    text = `${g.names[seat]}'s declaration failed. No winner this round.`;
-  }
+  const winners = all.filter((s) => teamOf(g, s) === team);
+  const losers = all.filter((s) => teamOf(g, s) !== team);
+  const text = g.teams
+    ? `Every ${teamLabel(g, 1 - team)} card is face up — ${teamLabel(g, team)} win the round!`
+    : `Every other card is face up — ${g.names[seat]} wins the round!`;
   g.result = { winners, losers, text };
   // Everything is public once the round is over.
   g.seats.forEach((s) => s.cards.forEach((c) => (c.faceUp = true)));
@@ -353,15 +285,6 @@ export function viewFor(g, viewer) {
     turn: g.turn,
     step: g.step,
     partnerSeat: partnerOf(g, viewer),
-    canGuess: g.phase === 'play' ? guessTargets(g, viewer).length > 0 : false,
-    declare: g.declare
-      ? {
-          seat: g.declare.seat,
-          pos: g.declare.pos,
-          total: g.declare.queue.length,
-          current: g.declare.queue[g.declare.pos] || null,
-        }
-      : null,
     result: g.result,
     seats,
     log: g.log.slice(-250).map((e) => ({
