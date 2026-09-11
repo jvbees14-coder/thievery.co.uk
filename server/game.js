@@ -91,6 +91,7 @@ const faceDownCount = (g, seat) => g.seats[seat].cards.filter((c) => !c.faceUp).
 function log(g, text, opts = {}) {
   const entry = { text };
   if (opts.kind) entry.kind = opts.kind;
+  if (opts.event) entry.event = opts.event; // structured data the client animates from
   if (opts.privSeat !== undefined) {
     entry.privSeat = opts.privSeat;
     entry.privText = opts.privText;
@@ -205,20 +206,22 @@ export function guess(g, seat, target, rank) {
   validRank(rank);
 
   const desc = `${g.names[seat]} guessed ${g.names[ts]}'s ${ordinal(idx + 1)} card is a ${rankName(rank)}`;
+  const event = { type: 'guess', by: seat, target: { seat: ts, idx }, rank, correct: c.rank === rank };
   if (c.rank === rank) {
     c.faceUp = true;
+    event.card = cardName(c);
     const winner = findWinner(g);
     if (winner !== null) {
-      log(g, `${desc} — correct! It's the ${cardName(c)}.`, { kind: 'good' });
+      log(g, `${desc} — correct! It's the ${cardName(c)}.`, { kind: 'good', event });
       finishRound(g, winner);
       return;
     }
-    log(g, `${desc} — correct! It's the ${cardName(c)}. ${g.names[seat]} guesses again.`, { kind: 'good' });
+    log(g, `${desc} — correct! It's the ${cardName(c)}. ${g.names[seat]} guesses again.`, { kind: 'good', event });
     // A correct guess earns another guess; the turn only passes on a miss.
     g.step = 'guess';
   } else {
     // A wrong guess costs nothing: the turn simply passes.
-    log(g, `${desc} — incorrect.`, { kind: 'bad' });
+    log(g, `${desc} — incorrect.`, { kind: 'bad', event });
     nextTurn(g);
   }
 }
@@ -246,7 +249,7 @@ function finishRound(g, seat) {
   g.result = { winners, losers, text };
   // Everything is public once the round is over.
   g.seats.forEach((s) => s.cards.forEach((c) => (c.faceUp = true)));
-  log(g, text, { kind: 'result' });
+  log(g, text, { kind: 'result', event: { type: 'result', winners, losers } });
 }
 
 // --- per-player view -------------------------------------------------------
@@ -287,10 +290,12 @@ export function viewFor(g, viewer) {
     partnerSeat: partnerOf(g, viewer),
     result: g.result,
     seats,
+    logTotal: g.log.length, // lets the client tell which log entries are new
     log: g.log.slice(-250).map((e) => ({
       kind: e.kind || null,
       text: e.privSeat === viewer ? e.privText : e.text,
       priv: e.privSeat === viewer,
+      event: e.event || null,
     })),
   };
 }

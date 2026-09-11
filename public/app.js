@@ -95,6 +95,7 @@
         state = msg;
         saveSession({ code: msg.room.code, name: msg.you.name, token: msg.you.token });
         if (!hadState) history.replaceState(null, '', `/?code=${msg.room.code}`);
+        announceEvents(msg);
         render();
         break;
       }
@@ -119,6 +120,207 @@
         toast('The host removed you from the room.');
         break;
     }
+  }
+
+  // --- banners -------------------------------------------------------------
+  // Big, brief announcements for the moments that matter to *this* player:
+  // their guess landed, their guess missed, or one of their cards was taken.
+  // Detected from structured events on new log entries, so they fire for
+  // whichever seat is being viewed (including test-mode switching).
+  let seenLog = 0;
+  let seenRound = null;
+  const RANK_WORDS = { 1: 'an Ace', 8: 'an 8', 11: 'a Jack', 12: 'a Queen', 13: 'a King' };
+  const rankWord = (r) => RANK_WORDS[r] || `a ${r}`;
+
+  function announceEvents(msg) {
+    const g = msg.game;
+    if (!g) {
+      seenLog = 0;
+      return;
+    }
+    if (msg.room.round !== seenRound) {
+      seenRound = msg.room.round;
+      seenLog = 0;
+    }
+    const fresh = g.logTotal - seenLog;
+    const firstLook = seenLog === 0;
+    seenLog = g.logTotal;
+    if (firstLook || fresh <= 0) return; // never replay history on (re)join
+    const me = msg.you.seat;
+    const who = (s) => g.names[s];
+    for (const entry of g.log.slice(-fresh)) {
+      const ev = entry.event;
+      if (!ev) continue;
+      if (ev.type === 'result') {
+        if (ev.winners.includes(me)) banner('win', 'Heist complete', entry.text);
+        else if (ev.losers.includes(me)) banner('lose', 'Busted', entry.text);
+        continue;
+      }
+      if (ev.type !== 'guess') continue;
+      const nth = ordinal(ev.target.idx + 1);
+      if (ev.by === me) {
+        if (ev.correct) {
+          const last = g.phase === 'ended';
+          banner('good', 'Stolen', `${who(ev.target.seat)}'s ${nth} card was the ${ev.card}. ${last ? 'That was the last one!' : 'Guess again.'}`);
+        } else {
+          banner('bad', 'Missed', `${who(ev.target.seat)}'s ${nth} card is not ${rankWord(ev.rank)}. The turn passes.`);
+        }
+      } else if (ev.correct && ev.target.seat === me) {
+        banner('exposed', 'Exposed', `${who(ev.by)} took your ${nth} card: the ${ev.card}.`);
+        document.body.classList.remove('shake');
+        void document.body.offsetWidth;
+        document.body.classList.add('shake');
+      }
+    }
+  }
+
+  const bannerQueue = [];
+  let bannerBusy = false;
+  let bannerTimer = 0;
+  let bannerShownAt = 0;
+  const BANNER_MIN_MS = 700; // a banner gets at least this long before the next one cuts in
+  const isResult = (b) => b.kind === 'win' || b.kind === 'lose';
+  function banner(kind, title, sub) {
+    // A streak of hits must not pile up: only the newest pending guess banner
+    // survives, and the round result always plays last.
+    const results = bannerQueue.filter(isResult);
+    const next = { kind, title, sub };
+    bannerQueue.length = 0;
+    if (isResult(next)) bannerQueue.push(...results, next);
+    else bannerQueue.push(next, ...results);
+    if (!bannerBusy) return nextBanner();
+    clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(nextBanner, Math.max(0, BANNER_MIN_MS - (performance.now() - bannerShownAt)));
+  }
+  function nextBanner() {
+    clearTimeout(bannerTimer);
+    const el = $('#banner');
+    const b = bannerQueue.shift();
+    if (!b) {
+      bannerBusy = false;
+      el.hidden = true;
+      return;
+    }
+    bannerBusy = true;
+    bannerShownAt = performance.now();
+    el.hidden = true;
+    el.className = `banner ${b.kind}`;
+    el.innerHTML = `<div class="banner-inner"><div class="banner-title">${esc(b.title)}</div><div class="banner-sub">${esc(b.sub)}</div></div>`;
+    void el.offsetWidth; // restart the CSS animation
+    el.hidden = false;
+    if (b.kind === 'win') confetti();
+    bannerTimer = setTimeout(nextBanner, isResult(b) ? 3200 : 2100);
+  }
+
+  // Brass ticker-tape, diamonds and suit glyphs rain down for a winner.
+  function confetti() {
+    const c = $('#confetti');
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const ctx = c.getContext('2d');
+    c.width = innerWidth;
+    c.height = innerHeight;
+    c.hidden = false;
+    const colors = ['#d4af5a', '#f1d382', '#f4ecd8', '#8e1f2e', '#b02a3c', '#d4af5a'];
+    const suits = ['♠', '♥', '♦', '♣'];
+    const parts = Array.from({ length: 220 }, () => {
+      const kind = Math.random();
+      return {
+        x: Math.random() * c.width,
+        y: -30 - Math.random() * c.height * 0.8,
+        w: 6 + Math.random() * 8,
+        h: 10 + Math.random() * 12,
+        vx: (Math.random() - 0.5) * 1.6,
+        vy: 2.2 + Math.random() * 3.6,
+        rot: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 0.25,
+        sway: Math.random() * Math.PI * 2,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        shape: kind < 0.2 ? 'suit' : kind < 0.45 ? 'diamond' : 'tape',
+        glyph: suits[Math.floor(Math.random() * suits.length)],
+      };
+    });
+    const start = performance.now();
+    const life = 5200;
+    function frame(t) {
+      const age = t - start;
+      ctx.clearRect(0, 0, c.width, c.height);
+      const fade = age > life - 900 ? Math.max(0, (life - age) / 900) : 1;
+      ctx.globalAlpha = fade;
+      for (const p of parts) {
+        p.sway += 0.05;
+        p.x += p.vx + Math.sin(p.sway) * 0.8;
+        p.y += p.vy;
+        p.rot += p.vr;
+        if (p.y > c.height + 30) {
+          p.y = -30;
+          p.x = Math.random() * c.width;
+        }
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        if (p.shape === 'tape') {
+          // A slight squash as it tumbles sells the 3D flutter.
+          ctx.scale(1, Math.abs(Math.cos(p.rot * 2)) * 0.8 + 0.2);
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        } else if (p.shape === 'diamond') {
+          ctx.beginPath();
+          ctx.moveTo(0, -p.h / 2);
+          ctx.lineTo(p.w / 2, 0);
+          ctx.lineTo(0, p.h / 2);
+          ctx.lineTo(-p.w / 2, 0);
+          ctx.closePath();
+          ctx.fill();
+        } else {
+          ctx.font = `${p.h + 6}px serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(p.glyph, 0, 0);
+        }
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+      if (age < life) requestAnimationFrame(frame);
+      else {
+        ctx.clearRect(0, 0, c.width, c.height);
+        c.hidden = true;
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // --- the deal ------------------------------------------------------------
+  // When a round begins, cards fly from the dealer's deck at the top of the
+  // table into every row, one to each player in turn, exactly like a real
+  // deal. Re-renders during the deal pick up mid-animation rather than
+  // restarting it.
+  const DEAL_STEP = 55; // ms between cards
+  const DEAL_FLIGHT = 600; // ms each card takes
+  let dealStart = 0;
+
+  function animateDeal() {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const table = $('#app .table');
+    if (!table) return;
+    const rows = [...table.querySelectorAll('.seat-row')];
+    const tr = table.getBoundingClientRect();
+    const ox = tr.left + tr.width / 2;
+    const oy = tr.top - 30;
+    const elapsed = performance.now() - dealStart;
+    let last = 0;
+    rows.forEach((row, r) => {
+      row.querySelectorAll('.card').forEach((card, i) => {
+        const k = i * rows.length + r; // round-robin: everyone's 1st card, then 2nd, ...
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty('--dx', `${ox - (rect.left + rect.width / 2)}px`);
+        card.style.setProperty('--dy', `${oy - (rect.top + rect.height / 2)}px`);
+        card.style.animationDelay = `${k * DEAL_STEP - elapsed}ms`;
+        card.classList.add('dealt');
+        last = Math.max(last, k);
+      });
+    });
+    table.style.setProperty('--deal-total', `${last * DEAL_STEP + DEAL_FLIGHT - elapsed}ms`);
+    table.classList.add('dealing');
   }
 
   // --- helpers -------------------------------------------------------------
@@ -160,12 +362,14 @@
     // Per-seat UI state (pending guess, card arrangement) must not survive a
     // new round or, in test mode, switching to a different seat.
     if (state.room.round !== renderedRound || state.you.seat !== renderedSeat) {
+      if (state.room.round !== renderedRound && state.game && state.game.phase === 'arrange') dealStart = performance.now();
       renderedRound = state.room.round;
       renderedSeat = state.you.seat;
       ui.target = null;
       ui.arrange = null;
     }
     app.innerHTML = state.game ? renderGame() : renderLobby();
+    if (state.game && dealStart && performance.now() - dealStart < 26 * DEAL_STEP + DEAL_FLIGHT) animateDeal();
     const log = $('#log');
     if (log) log.scrollTop = log.scrollHeight;
   }
@@ -174,7 +378,7 @@
     const code = state.room.code;
     return `
       <div class="topbar">
-        <div class="brand">Thievery.co.uk <small>Round ${state.room.round || '–'}</small></div>
+        <div class="brand"><span class="wordmark">Thievery<em>.co.uk</em></span><small>Round ${state.room.round || '–'}</small></div>
         <div class="codebox">
           <span class="muted">Room</span>
           <span class="code">${esc(code)}</span>
@@ -346,7 +550,7 @@
       <div class="game">
         <div class="table">${order.map((si) => seatRow(si)).join('')}</div>
         <div class="side">
-          <div class="panel action">${actionPanel()}</div>
+          <div class="panel action ${g.phase === 'ended' && g.result.winners.includes(me) ? 'celebrate' : ''}">${actionPanel()}</div>
           ${tallyPanel()}
           <div class="panel">
             <h3>Log</h3>
@@ -376,6 +580,10 @@
     if (g.teams) badges.push(`<span class="pill team-${s.team}">Team ${s.team === 0 ? 'A' : 'B'}</span>`);
     if (g.teams && g.partnerSeat === si) badges.push('<span class="pill accent">Partner</span>');
     if (player && !player.connected) badges.push('<span class="pill bad">Offline</span>');
+    const ended = g.phase === 'ended';
+    const won = ended && g.result.winners.includes(si);
+    const lost = ended && g.result.losers.includes(si);
+    if (won) badges.push('<span class="pill accent">Winner</span>');
 
     let status = '';
     if (g.phase === 'arrange') status = s.locked ? 'Locked in' : mine ? 'Arrange your cards' : 'Arranging…';
@@ -390,7 +598,7 @@
     }
 
     return `
-      <div class="seat-row ${active ? 'active' : ''} ${mine ? 'me' : ''}">
+      <div class="seat-row ${active ? 'active' : ''} ${mine ? 'me' : ''} ${won ? 'winner' : ''} ${lost ? 'loser' : ''}">
         <div class="seat-head">
           <span class="faint">${si + 1}</span>
           <span class="name">${esc(g.names[si])}</span>
@@ -427,7 +635,7 @@
     const rank = c.rank ? RANKS[c.rank - 1] : '';
     const title = c.shown ? 'Shown to you by your partner' : '';
     return `<div class="${cls.join(' ')}" data-action="card" data-seat="${si}" data-idx="${ci}" ${opts.draggable ? `data-id="${c.id}"` : ''} title="${title}">
-      <span class="rank">${rank}</span>${opts.index ? `<span class="idx">${ci + 1}</span>` : ''}
+      <span class="rank">${rank}</span><i class="gloss"></i>${opts.index ? `<span class="idx">${ci + 1}</span>` : ''}
     </div>`;
   }
 
@@ -446,8 +654,36 @@
     return true;
   }
 
+  // --- 3D tilt on hover ---------------------------------------------------
+  // Cards you can interact with tilt towards the pointer, with a moving gloss.
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  function setTilt(el, px, py) {
+    el.style.setProperty('--ry', `${((px - 0.5) * 30).toFixed(1)}deg`);
+    el.style.setProperty('--rx', `${((0.5 - py) * 30).toFixed(1)}deg`);
+    el.style.setProperty('--gx', `${(px * 100).toFixed(0)}%`);
+    el.style.setProperty('--gy', `${(py * 100).toFixed(0)}%`);
+  }
+  function clearTilt(el) {
+    for (const p of ['--rx', '--ry', '--gx', '--gy']) el.style.removeProperty(p);
+  }
+  $('#app').addEventListener('pointermove', (e) => {
+    if (e.pointerType !== 'mouse' || drag.id) return;
+    const el = e.target.closest('.card.selectable, .card.draggable, .card.selected');
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    setTilt(el, clamp((e.clientX - r.left) / r.width, 0, 1), clamp((e.clientY - r.top) / r.height, 0, 1));
+  });
+  $('#app').addEventListener(
+    'pointerout',
+    (e) => {
+      const el = e.target.closest('.card');
+      if (el && !el.contains(e.relatedTarget)) clearTilt(el);
+    },
+    true,
+  );
+
   // --- drag to arrange (pointer events: mouse + touch) ----------------------
-  const drag = { id: null, el: null, clone: null, active: false, startX: 0, startY: 0, offX: 0, offY: 0 };
+  const drag = { id: null, el: null, clone: null, active: false, startX: 0, startY: 0, offX: 0, offY: 0, lastX: 0, lastY: 0, settle: 0 };
 
   function startDrag() {
     const r = drag.el.getBoundingClientRect();
@@ -464,8 +700,23 @@
   }
 
   function moveClone(e) {
-    drag.clone.style.left = `${e.clientX - drag.offX}px`;
-    drag.clone.style.top = `${e.clientY - drag.offY}px`;
+    const clone = drag.clone;
+    clone.style.left = `${e.clientX - drag.offX}px`;
+    clone.style.top = `${e.clientY - drag.offY}px`;
+    // The card swings with the motion, like it's being carried, then settles.
+    const vx = e.clientX - drag.lastX;
+    const vy = e.clientY - drag.lastY;
+    drag.lastX = e.clientX;
+    drag.lastY = e.clientY;
+    clone.style.setProperty('--ry', `${clamp(vx * 2.2, -35, 35).toFixed(1)}deg`);
+    clone.style.setProperty('--rx', `${clamp(-vy * 2.2, -35, 35).toFixed(1)}deg`);
+    clearTimeout(drag.settle);
+    drag.settle = setTimeout(() => {
+      if (drag.clone) {
+        drag.clone.style.setProperty('--ry', '0deg');
+        drag.clone.style.setProperty('--rx', '0deg');
+      }
+    }, 90);
   }
 
   function reorderAt(x, y) {
@@ -519,6 +770,8 @@
     drag.active = false;
     drag.startX = e.clientX;
     drag.startY = e.clientY;
+    drag.lastX = e.clientX;
+    drag.lastY = e.clientY;
     drag.offX = e.clientX - r.left;
     drag.offY = e.clientY - r.top;
     e.preventDefault();
@@ -562,11 +815,13 @@
     if (g.phase === 'ended') {
       const r = g.result;
       const cls = r.winners.includes(me) ? 'win' : r.losers.includes(me) ? 'lose' : '';
-      const headline = r.winners.includes(me) ? 'You win!' : r.losers.includes(me) ? 'You lose' : 'Round over';
+      const headline = r.winners.includes(me) ? 'You win' : r.losers.includes(me) ? 'Busted' : 'Round over';
       return `
         <div class="result ${cls}">
+          ${cls === 'win' ? '<p class="ornament">◆ ◇ ◆</p>' : ''}
           <p class="headline">${headline}</p>
           <p class="muted">${esc(r.text)}</p>
+          ${cls === 'win' ? '<p class="ornament">◆ ◇ ◆</p>' : ''}
         </div>
         ${
           isHost

@@ -5,18 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark" />
   <title>Thievery.co.uk</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='4' y='4' width='24' height='24' rx='5' fill='%23e8b04b'/%3E%3C/svg%3E" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c14'/%3E%3Cpath d='M16 4l10 12-10 12L6 16z' fill='none' stroke='%23d4af5a' stroke-width='2'/%3E%3Cpath d='M16 10l5 6-5 6-5-6z' fill='%23d4af5a'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Limelight&family=Josefin+Sans:wght@400;600;700&family=Manrope:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <div id="toast" class="toast" hidden></div>
+  <div id="banner" class="banner" hidden></div>
+  <canvas id="confetti" class="confetti" hidden></canvas>
   <div id="conn" class="conn" hidden>Reconnecting…</div>
 
   <!-- Home screen (static markup so typed input survives state updates) -->
   <section id="home" class="screen home" hidden>
     <div class="home-card">
-      <h1 class="logo">Thievery.co.uk</h1>
-      <p class="tagline">The partnership deduction card game. 3–4 players, one room code.</p>
+      <p class="eyebrow">Est. for cheats, sleuths &amp; card sharps</p>
+      <h1 class="logo wordmark">Thievery<em>.co.uk</em></h1>
+      <p class="tagline">Steal their secrets before they steal yours. A deduction card game for 3–4 players, one room code.</p>
 
       <label class="field">
         <span>Your name</span>
