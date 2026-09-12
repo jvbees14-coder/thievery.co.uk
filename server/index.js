@@ -31,6 +31,10 @@ const MIME = {
   '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.json': 'application/json',
+  '.txt': 'text/plain; charset=utf-8',
+  '.xml': 'application/xml; charset=utf-8',
+  '.jpg': 'image/jpeg',
+  '.webp': 'image/webp',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.ico': 'image/x-icon',
@@ -53,13 +57,15 @@ const server = http.createServer((req, res) => {
   fs.readFile(abs, (err, data) => {
     if (err) {
       // A bare room link like /ABCD is a page, not a file: serve the game.
+      // Every room is the same page and a code stops working within the hour,
+      // so search engines are told to keep those links out of the index.
       if (!path.extname(file)) {
         return fs.readFile(path.join(PUBLIC_DIR, 'index.html'), (e2, html) => {
           if (e2) {
             res.writeHead(404);
             return res.end('Not found');
           }
-          res.writeHead(200, { 'Content-Type': MIME['.html'] });
+          res.writeHead(200, { 'Content-Type': MIME['.html'], 'X-Robots-Tag': 'noindex, follow' });
           res.end(html);
         });
       }

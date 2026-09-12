@@ -301,6 +301,8 @@ input[type="number"]::-webkit-inner-spin-button { appearance: none; -webkit-appe
   transition: color 0.15s;
 }
 .rules summary::-webkit-details-marker { display: none; }
+/* The label is an <h2> so crawlers see a heading; it must look like the summary. */
+.rules summary h2 { margin: 0; font: inherit; letter-spacing: inherit; color: inherit; text-transform: inherit; }
 .rules summary::before {
   content: ""; width: 8px; height: 8px; flex: none; background: var(--brass);
   transform: rotate(45deg) scale(0.85); transition: transform 0.45s var(--bounce), background 0.2s;
