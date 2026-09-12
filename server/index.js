@@ -1,9 +1,14 @@
 // ---------------------------------------------------------------------------
-// Thievery.co.uk — HTTP static server + WebSocket game server.
+// The room server.
 //
-// One Node process holds every room in memory. Each client gets a
-// personalised state snapshot after every change (see game.js viewFor), so
-// nobody ever receives a rank they aren't allowed to see.
+// One process hosts every room, all of them in memory: no database, nothing
+// written to disk. A room is a four-character code, the people sitting at it,
+// their settings and whatever round is in progress. Anything that changes at
+// a table is pushed straight back out to everyone sitting at it, cut down to
+// what each person is allowed to know.
+//
+// Rooms survive a refresh or a dropped connection, and disappear on their own
+// once nobody has been connected for an hour.
 // ---------------------------------------------------------------------------
 
 import http from 'node:http';
@@ -13,7 +18,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 import * as Game from './game.js';
-import { shuffle, DEAL_SPLITS } from './deal.js';
+import { shuffle, DEAL_SPLITS, PLAYER_COUNTS, MIN_PLAYERS, MAX_PLAYERS } from './deal.js';
 
 const PORT = Number(process.env.PORT) || 3000;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -47,7 +52,7 @@ const server = http.createServer((req, res) => {
   }
   fs.readFile(abs, (err, data) => {
     if (err) {
-      // Single-page app: unknown paths (e.g. /ABCD room links) fall back to index.
+      // A bare room link like /ABCD is a page, not a file: serve the game.
       if (!path.extname(file)) {
         return fs.readFile(path.join(PUBLIC_DIR, 'index.html'), (e2, html) => {
           if (e2) {
@@ -72,9 +77,9 @@ const server = http.createServer((req, res) => {
 // --- rooms -----------------------------------------------------------------
 
 const rooms = new Map();
-const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I confusion
-const LOBBY_GRACE_MS = 20_000; // disconnected lobby players are dropped after this
-const ROOM_TTL_MS = 60 * 60_000; // rooms with nobody connected are deleted after this
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // nothing that can be misread as 0/O or 1/I
+const LOBBY_GRACE_MS = 20_000; // how long a seat is held for someone who drops out of a lobby
+const ROOM_TTL_MS = 60 * 60_000; // how long an empty room is kept before it is forgotten
 
 function randomId(bytes = 12) {
   return crypto.randomBytes(bytes).toString('base64url');
@@ -93,13 +98,13 @@ function createRoom() {
   const room = {
     code: newRoomCode(),
     hostId: null,
-    mode: 4, // 3 or 4 players
-    teams: false, // only meaningful when mode === 4
-    customDeal: false, // host fixes each player's hand size (player.handSize)
-    firstPlayer: null, // player id who leads every round, or null = random then rotate
-    players: [], // { id, token, name, seat, ws, connected, handSize }
+    mode: 4, // how many seats the table is set for
+    teams: false, // partnerships, four-handed only
+    customDeal: false, // the host has fixed a hand size for every seat
+    firstPlayer: null, // who leads every round, or nobody: random, then rotating
+    players: [],
     game: null,
-    tally: {}, // playerId -> { name, wins }
+    tally: {}, // wins so far this session
     round: 0,
     lastStart: -1,
     emptySince: Date.now(),
@@ -142,13 +147,12 @@ function lobbyView(room) {
   };
 }
 
-// --- test mode -------------------------------------------------------------
+// --- playing on your own ---------------------------------------------------
 //
-// Creating a room with the display name "Test67" fills all four seats at once
-// and starts the game immediately. Every seat is driven from the creator's
-// browser: a `test:switch` action moves their socket to another seat, so they
-// see that seat's view and act as that player. Seats that are not currently
-// attached count as connected as long as the tester is.
+// Create a game under the name "Test67" and the room fills with four players
+// and deals straight away. A bar across the top of the page switches between
+// the seats, so one person can play every hand and try the game out. Leaving
+// closes the whole room.
 
 const TEST_NAME = 'test67';
 
@@ -169,7 +173,7 @@ function setupTestRoom(room, ws) {
   sendState(room);
 }
 
-// Default hand size for a player when the host switches to a custom deal.
+// The size a seat's hand starts at when the host switches to a custom deal.
 function defaultHandSize(room, player) {
   return DEAL_SPLITS[room.mode][player.seat] ?? 6;
 }
@@ -262,11 +266,12 @@ function handleJoin(ws, msg) {
   }
 
   if (ws.ctx) {
-    // Leaving a previous room cleanly if this socket was already in one.
+    // Joining somewhere new means leaving wherever you were.
     handleLeave(ws);
   }
 
-  // Rejoin: by secret token first, then by matching a disconnected player's name.
+  // Coming back: the saved token gets your seat straight away, and failing
+  // that, the same name as a player who has dropped out.
   let player = msg.token ? room.players.find((p) => p.token === msg.token) : null;
   if (!player && name) {
     player = room.players.find((p) => !p.connected && p.name.toLowerCase() === name.toLowerCase());
@@ -299,7 +304,7 @@ function handleLeave(ws) {
   player.ws = null;
   player.connected = false;
   if (room.test) {
-    // The tester drives every seat, so leaving ends the whole test room.
+    // One person is every seat, so there is nothing left to keep open.
     rooms.delete(room.code);
     return;
   }
@@ -314,7 +319,7 @@ function handleDisconnect(ws) {
   const ctx = ws.ctx;
   if (!ctx) return;
   const { room, player } = ctx;
-  if (player.ws !== ws) return; // superseded by a newer socket
+  if (player.ws !== ws) return; // this seat has already moved to a newer tab
   ws.ctx = null;
   player.ws = null;
   player.connected = false;
@@ -330,7 +335,7 @@ function handleDisconnect(ws) {
   sendState(room);
 }
 
-// --- in-room actions -------------------------------------------------------
+// --- everything a player can do --------------------------------------------
 
 function handleAction(ws, msg) {
   const ctx = ws.ctx;
@@ -360,16 +365,16 @@ function handleAction(ws, msg) {
       requireHost();
       requireLobby();
       const m = Number(msg.mode);
-      if (![3, 4].includes(m)) throw new Error('Mode must be 3 or 4 players');
+      if (!PLAYER_COUNTS.includes(m)) throw new Error(`A table seats ${MIN_PLAYERS} to ${MAX_PLAYERS} players`);
       if (room.players.length > m) throw new Error(`Too many players in the room for ${m}-player mode`);
       room.mode = m;
-      if (m === 3) room.teams = false;
+      if (m !== 4) room.teams = false; // partnerships are a four-handed game
       break;
     }
     case 'lobby:teams':
       requireHost();
       requireLobby();
-      if (room.mode !== 4) throw new Error('Teams need 4 players');
+      if (room.mode !== 4) throw new Error('Partnerships need exactly 4 players');
       room.teams = !!msg.teams;
       break;
 
@@ -435,7 +440,7 @@ function handleAction(ws, msg) {
       if (room.players.length !== room.mode) {
         throw new Error(`Need exactly ${room.mode} players to start (${room.players.length} in room)`);
       }
-      customCounts(room); // validates before we commit to a round
+      customCounts(room); // check the hand sizes add up before dealing anything
       startRound(room);
       break;
 
@@ -499,7 +504,7 @@ function handleAction(ws, msg) {
   sendState(room);
 }
 
-// --- websocket wiring ------------------------------------------------------
+// --- the connection --------------------------------------------------------
 
 const wss = new WebSocketServer({ server });
 
@@ -526,7 +531,8 @@ wss.on('connection', (ws) => {
   ws.on('error', () => {});
 });
 
-// Heartbeat: drop dead sockets so their seats show as disconnected.
+// A seat whose connection has quietly died should show as offline to the rest
+// of the table, so every socket is pinged and dropped if it stops answering.
 setInterval(() => {
   for (const ws of wss.clients) {
     if (!ws.isAlive) return ws.terminate();
@@ -535,7 +541,7 @@ setInterval(() => {
   }
 }, 30_000);
 
-// Garbage-collect abandoned rooms.
+// Forget rooms nobody has come back to.
 setInterval(() => {
   const now = Date.now();
   for (const [code, room] of rooms) {

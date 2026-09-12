@@ -1,8 +1,8 @@
 # Thievery.co.uk
 
-**Thievery.co.uk** is an online version of the deduction card game for 3 or 4
-players. Everyone plays from their own phone, tablet or laptop, in real time,
-with no downloads and no accounts. One person creates a room, shares the
+**Thievery.co.uk** is an online version of the deduction card game, for three
+to six players. Everyone plays from their own phone, tablet or laptop, in real
+time, with no downloads and no accounts. One person creates a room, shares the
 4-letter code, and the game begins as soon as the last player joins.
 
 Play at <https://thievery.co.uk>.
@@ -22,7 +22,8 @@ further for everyone at the table.
 ## Starting a game
 
 1. Open the site and press **Create game**. You become the host and get a room
-   code.
+   code. The name box arrives pre-filled with an alias — press the roller
+   beside it for another, or type your own over the top.
 2. Share the code, or use **Copy invite link** to send a link that fills the
    code in automatically.
 3. Friends open the site, type the code and their name, and press **Join**.
@@ -31,15 +32,20 @@ further for everyone at the table.
 
 ### Host options in the lobby
 
-- **Players**: 3 or 4.
-- **Teams**: with 4 players you can play as two partnerships. Seats 1 and 3 are
-  one team, seats 2 and 4 the other.
+- **Players**: anything from 3 to 6. The 26 cards are split as evenly as the
+  table allows, so bigger tables mean smaller hands — and, in solo play, a
+  longer round, since you have to turn over everybody else's cards to win.
+- **Teams**: at a table of four you can play as two partnerships instead.
+  Seats 1 and 3 are one team, seats 2 and 4 the other. Partnerships need
+  exactly four players, because the Show step depends on each player having a
+  single partner.
 - **Order of play**: use the arrows to move players around the table, click
   two names to swap them, or press **Shuffle seats**.
 - **First to play**: pick a player to lead every round, or leave it on
   **Rotate** so the lead passes round the table each round.
-- **Deal**: either a random split (7/7/6/6 with 4 players, 9/9/8 with 3) or a
-  fixed hand size per player. Custom sizes must add up to 26.
+- **Deal**: either a random split — 9/9/8 at three, 7/7/6/6 at four, 6/5/5/5/5
+  at five, 5/5/4/4/4/4 at six — or a fixed hand size per player. Custom sizes
+  must add up to 26.
 - **Kick**: remove someone who joined by mistake.
 
 ## How a round works
@@ -80,6 +86,9 @@ The round ends the moment one player (or, in teams mode, one team) has every
 opponent card face up. That player or team wins the round. In solo mode this
 means the last person with any face-down cards left is the winner.
 
+The result is announced across the whole screen and stays there until you
+press a key or click — nothing is whisked away before you have read it.
+
 At the end of a round all the cards are revealed. The host can start a new
 round in the same room or return everyone to the lobby. A running tally of
 wins per player is kept for the session.
@@ -100,6 +109,14 @@ ranks never leave the server.
 - Other players see an **Offline** badge next to anyone who has dropped. If a
   partner is offline during the show step, the active player can skip it.
 - Rooms are kept in memory and disappear after about an hour of inactivity.
+
+## Leaving
+
+Click the **Thievery.co.uk** wordmark at the top of any room to leave it. In
+the lobby, or once a round has finished, you go straight back to the home
+screen; part-way through a round you are asked to click it a second time, so a
+stray click cannot walk you out of a game. There is a **Leave** button beside
+the room code as well.
 
 ## Running your own copy
 

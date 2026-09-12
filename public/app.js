@@ -1,4 +1,9 @@
-/* Thievery.co.uk — client. Renders whatever personalised state the server sends. */
+/* Thievery.co.uk — the table as you see it.
+ *
+ * Everything on screen is drawn from the last snapshot the room sent you, and
+ * a snapshot only ever contains what you are allowed to know. Your own hand,
+ * anything face up, and whatever your partner has shown you: nothing else is
+ * in here to be found. */
 (() => {
   'use strict';
 
@@ -6,6 +11,27 @@
   const esc = (s) =>
     String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+  // Anything the table is waiting on trails off in dots that count up.
+  const DOTS = '<span class="dots"><i>.</i><i>.</i><i>.</i></span>';
+  // Table sizes a room can be set to, and how the 26 cards fall at each.
+  const PLAYER_COUNTS = [3, 4, 5, 6];
+  const SPLIT_LABEL = { 3: '9/9/8', 4: '7/7/6/6', 5: '6/5/5/5/5', 6: '5/5/4/4/4/4' };
+
+  // Aliases, dealt out like a hand: an adjective and a noun, run together.
+  const ADJECTIVES = [
+    'Lucky', 'Silent', 'Golden', 'Velvet', 'Crooked', 'Midnight', 'Brazen', 'Nimble', 'Shady', 'Dapper',
+    'Reckless', 'Slippery', 'Cunning', 'Gilded', 'Sly', 'Swift', 'Bold', 'Wicked', 'Dashing', 'Smooth',
+    'Quiet', 'Sharp', 'Rogue', 'Hidden', 'Masked', 'Polished', 'Restless', 'Grand', 'Loose', 'Wild',
+    'Copper', 'Ivory', 'Feral', 'Idle', 'Sudden', 'Broken', 'Iron', 'Hollow', 'Lonely', 'Marble',
+  ];
+  const NOUNS = [
+    'Horse', 'Fox', 'Magpie', 'Raven', 'Jack', 'Queen', 'Ace', 'Spade', 'Diamond', 'Bandit',
+    'Burglar', 'Ferret', 'Weasel', 'Badger', 'Otter', 'Falcon', 'Panther', 'Cobra', 'Viper', 'Mongoose',
+    'Crow', 'Hound', 'Wolf', 'Marten', 'Lynx', 'Heron', 'Stoat', 'Mole', 'Gecko', 'Shark',
+    'Sparrow', 'Hawk', 'Jackal', 'Lantern', 'Cipher', 'Keyhole', 'Domino', 'Whisper', 'Shadow', 'Dealer',
+  ];
+  const pickOne = (a) => a[Math.floor(Math.random() * a.length)];
+  const randomAlias = () => pickOne(ADJECTIVES) + pickOne(NOUNS);
   const ordinal = (n) => {
     const s = ['th', 'st', 'nd', 'rd'];
     const v = n % 100;
@@ -21,11 +47,12 @@
   let retry = 0;
   let renderedRound = null;
   let renderedSeat = null;
-  const ui = { target: null, arrange: null, swapPick: null };
+  const ui = { target: null, arrange: null, swapPick: null, openMenu: null, leaveArmed: false };
+  let leaveArmTimer = 0;
 
-  // The session (room + secret token) lives in sessionStorage: it survives a
-  // refresh or a dropped connection, but each tab is its own player. If the
-  // browser is closed, rejoining by room code + the same name still works.
+  // A refresh or a dropped connection puts you straight back in your seat.
+  // Each tab is its own player, though; and if the browser is closed entirely,
+  // joining again with the same room code and the same name still finds it.
   function loadJSON(key) {
     try {
       return JSON.parse(sessionStorage.getItem(key) || 'null');
@@ -123,10 +150,10 @@
   }
 
   // --- banners -------------------------------------------------------------
-  // Big, brief announcements for the moments that matter to *this* player:
-  // their guess landed, their guess missed, or one of their cards was taken.
-  // Detected from structured events on new log entries, so they fire for
-  // whichever seat is being viewed (including test-mode switching).
+  // The moments that matter to you and nobody else: your guess landed, your
+  // guess missed, one of your cards was taken, or the round is over. Banners
+  // follow whichever seat you are looking at, and history is never replayed
+  // when you come back to a room.
   let seenLog = 0;
   let seenRound = null;
   const RANK_WORDS = { 1: 'an Ace', 8: 'an 8', 11: 'a Jack', 12: 'a Queen', 13: 'a King' };
@@ -136,16 +163,18 @@
     const g = msg.game;
     if (!g) {
       seenLog = 0;
+      dismissBanner();
       return;
     }
     if (msg.room.round !== seenRound) {
       seenRound = msg.room.round;
       seenLog = 0;
+      dismissBanner(); // a new deal clears last round's result off the screen
     }
     const fresh = g.logTotal - seenLog;
     const firstLook = seenLog === 0;
     seenLog = g.logTotal;
-    if (firstLook || fresh <= 0) return; // never replay history on (re)join
+    if (firstLook || fresh <= 0) return;
     const me = msg.you.seat;
     const who = (s) => g.names[s];
     for (const entry of g.log.slice(-fresh)) {
@@ -161,12 +190,12 @@
       if (ev.by === me) {
         if (ev.correct) {
           const last = g.phase === 'ended';
-          banner('good', 'Stolen', `${who(ev.target.seat)}'s ${nth} card was the ${ev.card}. ${last ? 'That was the last one!' : 'Guess again.'}`);
+          banner('good', 'Stolen', `${who(ev.target.seat)}'s ${nth} card was ${ev.card}. ${last ? 'That was the last one!' : 'Guess again.'}`);
         } else {
           banner('bad', 'Missed', `${who(ev.target.seat)}'s ${nth} card is not ${rankWord(ev.rank)}. The turn passes.`);
         }
       } else if (ev.correct && ev.target.seat === me) {
-        banner('exposed', 'Exposed', `${who(ev.by)} took your ${nth} card: the ${ev.card}.`);
+        banner('exposed', 'Exposed', `${who(ev.by)} took your ${nth} card: ${ev.card}.`);
         document.body.classList.remove('shake');
         void document.body.offsetWidth;
         document.body.classList.add('shake');
@@ -178,8 +207,14 @@
   let bannerBusy = false;
   let bannerTimer = 0;
   let bannerShownAt = 0;
-  const BANNER_MIN_MS = 700; // a banner gets at least this long before the next one cuts in
+  let awaitingKey = false;
+  let keyHandler = null;
+  const BANNER_MS = 3200; // how long a banner about a single guess stays up
+  const BANNER_MIN_MS = 1100; // and the least it gets before the next one cuts in
+  const RESULT_GRACE_MS = 800; // ignore a key that was already on its way down
+  const RESULT_OUT_MS = 600; // how long the end-of-round banner takes to leave
   const isResult = (b) => b.kind === 'win' || b.kind === 'lose';
+
   function banner(kind, title, sub) {
     // A streak of hits must not pile up: only the newest pending guess banner
     // survives, and the round result always plays last.
@@ -188,31 +223,69 @@
     bannerQueue.length = 0;
     if (isResult(next)) bannerQueue.push(...results, next);
     else bannerQueue.push(next, ...results);
+    if (awaitingKey) {
+      releaseKey(); // fresher news outranks a result still waiting to be read
+      return nextBanner();
+    }
     if (!bannerBusy) return nextBanner();
     clearTimeout(bannerTimer);
     bannerTimer = setTimeout(nextBanner, Math.max(0, BANNER_MIN_MS - (performance.now() - bannerShownAt)));
   }
+
   function nextBanner() {
     clearTimeout(bannerTimer);
+    releaseKey();
     const el = $('#banner');
     const b = bannerQueue.shift();
     if (!b) {
       bannerBusy = false;
       el.hidden = true;
+      el.className = 'banner';
       return;
     }
     bannerBusy = true;
     bannerShownAt = performance.now();
     el.hidden = true;
     el.className = `banner ${b.kind}`;
-    el.innerHTML = `<div class="banner-inner"><div class="banner-title">${esc(b.title)}</div><div class="banner-sub">${esc(b.sub)}</div></div>`;
+    el.innerHTML =
+      `<div class="banner-inner"><div class="banner-title">${esc(b.title)}</div><div class="banner-sub">${esc(b.sub)}</div></div>` +
+      (isResult(b) ? '<div class="banner-hint">Press any key</div>' : '');
     void el.offsetWidth; // restart the CSS animation
     el.hidden = false;
     if (b.kind === 'win') confetti();
-    bannerTimer = setTimeout(nextBanner, isResult(b) ? 3200 : 2100);
+    // The end of a round arrives the same way as everything else, then simply
+    // stays: it is yours to read for as long as you like.
+    if (isResult(b)) armKey();
+    else bannerTimer = setTimeout(nextBanner, BANNER_MS);
   }
 
-  // Brass ticker-tape, diamonds and suit glyphs rain down for a winner.
+  function armKey() {
+    awaitingKey = true;
+    const ready = performance.now() + RESULT_GRACE_MS;
+    keyHandler = (e) => {
+      if (e.type === 'keydown' && (e.metaKey || e.ctrlKey || e.altKey)) return;
+      if (performance.now() < ready) return;
+      dismissBanner();
+    };
+    addEventListener('keydown', keyHandler);
+    addEventListener('pointerdown', keyHandler);
+  }
+  function releaseKey() {
+    if (!keyHandler) return;
+    removeEventListener('keydown', keyHandler);
+    removeEventListener('pointerdown', keyHandler);
+    keyHandler = null;
+    awaitingKey = false;
+  }
+  function dismissBanner() {
+    if (!awaitingKey) return;
+    releaseKey();
+    $('#banner').classList.add('dismiss');
+    clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(nextBanner, RESULT_OUT_MS);
+  }
+
+  // Brass ticker-tape, diamonds and suit glyphs rain down on a winner.
   function confetti() {
     const c = $('#confetti');
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -290,10 +363,10 @@
   }
 
   // --- the deal ------------------------------------------------------------
-  // When a round begins, cards fly from the dealer's deck at the top of the
-  // table into every row, one to each player in turn, exactly like a real
-  // deal. Re-renders during the deal pick up mid-animation rather than
-  // restarting it.
+  // A round opens with the cards flying out of a deck above the table, one to
+  // each player in turn, exactly as they would be dealt by hand. Anything that
+  // happens mid-deal joins the deal already in progress rather than starting
+  // it over.
   const DEAL_STEP = 55; // ms between cards
   const DEAL_FLIGHT = 600; // ms each card takes
   let dealStart = 0;
@@ -310,7 +383,7 @@
     let last = 0;
     rows.forEach((row, r) => {
       row.querySelectorAll('.card').forEach((card, i) => {
-        const k = i * rows.length + r; // round-robin: everyone's 1st card, then 2nd, ...
+        const k = i * rows.length + r; // round the table: everyone's first card, then everyone's second
         const rect = card.getBoundingClientRect();
         card.style.setProperty('--dx', `${ox - (rect.left + rect.width / 2)}px`);
         card.style.setProperty('--dy', `${oy - (rect.top + rect.height / 2)}px`);
@@ -345,6 +418,9 @@
     if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'leave' }));
     saveSession(null);
     state = null;
+    ui.openMenu = null;
+    ui.leaveArmed = false;
+    dismissBanner();
     history.replaceState(null, '', '/');
     render();
   }
@@ -367,18 +443,67 @@
       renderedSeat = state.you.seat;
       ui.target = null;
       ui.arrange = null;
+      ui.openMenu = null;
     }
     app.innerHTML = state.game ? renderGame() : renderLobby();
+    settleSwitches();
     if (state.game && dealStart && performance.now() - dealStart < 26 * DEAL_STEP + DEAL_FLIGHT) animateDeal();
     const log = $('#log');
     if (log) log.scrollTop = log.scrollHeight;
+  }
+
+  // A switch. The brass tile slides to whichever option is on; the slide is
+  // started here rather than left to the markup, so it still runs after the
+  // screen has been redrawn around it.
+  const switchPos = new Map();
+  function seg(name, opts, active, disabled = false) {
+    const i = Math.max(0, active);
+    return `<div class="seg ${disabled ? 'locked' : ''}" data-seg="${name}" data-i="${i}" style="--seg-n:${opts.length}">${opts
+      .map((o, k) => `<button class="${k === i ? 'on' : ''}" ${o.attrs} ${disabled || o.off ? 'disabled' : ''}>${o.label}</button>`)
+      .join('')}</div>`;
+  }
+  function settleSwitches() {
+    document.querySelectorAll('.seg[data-seg]').forEach((el) => {
+      const key = el.dataset.seg;
+      const to = Number(el.dataset.i) || 0;
+      const from = switchPos.has(key) ? switchPos.get(key) : to;
+      switchPos.set(key, to);
+      el.style.setProperty('--seg-i', from);
+      if (from === to) return;
+      requestAnimationFrame(() => requestAnimationFrame(() => el.style.setProperty('--seg-i', to)));
+    });
+  }
+
+  // A menu, in the same brass and ink as everything around it.
+  function dropdown(name, opts, value, disabled = false) {
+    const open = ui.openMenu === name && !disabled;
+    const cur = opts.find((o) => o.value === value) || opts[0];
+    const options = opts
+      .map(
+        (o) => `<li class="dd-opt ${o.value === value ? 'on' : ''}" role="option" aria-selected="${o.value === value}"
+            data-action="dd-pick" data-dd="${name}" data-value="${esc(o.value)}">${esc(o.label)}</li>`,
+      )
+      .join('');
+    return `
+      <div class="dropdown ${open ? 'open' : ''}" data-dd="${name}">
+        <button class="dd-btn" type="button" data-action="dd-toggle" data-dd="${name}" ${disabled ? 'disabled' : ''}
+                aria-haspopup="listbox" aria-expanded="${open}">
+          <span class="dd-value">${esc(cur ? cur.label : '')}</span><span class="dd-caret"></span>
+        </button>
+        ${open ? `<ul class="dd-menu" role="listbox">${options}</ul>` : ''}
+      </div>`;
   }
 
   function topbar(extra = '') {
     const code = state.room.code;
     return `
       <div class="topbar">
-        <div class="brand"><span class="wordmark">Thievery<em>.co.uk</em></span><small>Round ${state.room.round || '–'}</small></div>
+        <div class="brand">
+          <button type="button" class="logo-btn ${ui.leaveArmed ? 'armed' : ''}" data-action="logo-leave" title="Leave this room">
+            <span class="wordmark">Thievery<em>.co.uk</em></span>
+          </button>
+          <small>Round ${state.room.round || '–'}</small>
+        </div>
         <div class="codebox">
           <span class="muted">Room</span>
           <span class="code">${esc(code)}</span>
@@ -389,7 +514,7 @@
       ${testBar()}`;
   }
 
-  // Test mode: one browser drives every seat. Pick which one to act as.
+  // Playing on your own: pick which seat to act as.
   function testBar() {
     if (!state.room.test) return '';
     const me = state.you.seat;
@@ -438,7 +563,7 @@
       const p = r.players.find((x) => x.seat === i);
       const team = teamsOn ? `<span class="pill team-${i % 2}">Team ${i % 2 === 0 ? 'A' : 'B'}</span>` : '';
       if (!p) {
-        seats.push(`<li class="empty"><span class="seat">${i + 1}</span><span class="name">Waiting for a player…</span>${team}</li>`);
+        seats.push(`<li class="empty"><span class="seat">${i + 1}</span><span class="name">Waiting for a player${DOTS}</span>${team}</li>`);
         continue;
       }
       const isMe = p.id === me.id;
@@ -489,7 +614,7 @@
                 ? `<p class="faint" style="font-size:12px;margin:10px 0 0">Hand sizes: ${handTotal(r)} of 26 cards${handTotal(r) === 26 ? '' : ' (must add up to 26)'}.</p>`
                 : ''
             }
-            ${isHost ? `<p class="faint" style="font-size:12px;margin:10px 0 0">Tip: use the arrows to change the order of play, or click two players to swap them.${teamsOn ? ' Seats 1 & 3 are Team A, 2 & 4 are Team B.' : ''}</p>` : ''}
+            ${isHost ? `<p class="faint" style="font-size:12px;margin:10px 0 0">Use the arrows to change the order of play, or click two players to swap them.${teamsOn ? ' Seats 1 & 3 are Team A, 2 & 4 are Team B.' : ''}</p>` : ''}
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:18px">
@@ -497,31 +622,51 @@
             <h2>Settings</h2>
             <div class="setting">
               <div><div class="label">Players</div><div class="hint">26 cards between them</div></div>
-              <div class="seg">
-                <button class="${r.mode === 3 ? 'on' : ''}" data-action="mode" data-mode="3" ${isHost ? '' : 'disabled'}>3</button>
-                <button class="${r.mode === 4 ? 'on' : ''}" data-action="mode" data-mode="4" ${isHost ? '' : 'disabled'}>4</button>
-              </div>
+              ${seg(
+                'mode',
+                PLAYER_COUNTS.map((m) => ({ label: m, attrs: `data-action="mode" data-mode="${m}"` })),
+                PLAYER_COUNTS.indexOf(r.mode),
+                !isHost,
+              )}
             </div>
             <div class="setting">
-              <div><div class="label">Partnerships</div><div class="hint">${r.mode === 4 ? 'Teams enable the Show step (1 & 3 vs 2 & 4)' : 'Needs 4 players'}</div></div>
-              <div class="seg">
-                <button class="${!teamsOn ? 'on' : ''}" data-action="teams" data-teams="0" ${isHost && r.mode === 4 ? '' : 'disabled'}>Solo</button>
-                <button class="${teamsOn ? 'on' : ''}" data-action="teams" data-teams="1" ${isHost && r.mode === 4 ? '' : 'disabled'}>Teams</button>
-              </div>
+              <div><div class="label">Partnerships</div><div class="hint">${
+                r.mode === 4 ? 'Play as two pairs: seats 1 & 3 against 2 & 4' : 'Only at a table of four'
+              }</div></div>
+              ${seg(
+                'teams',
+                [
+                  { label: 'Solo', attrs: 'data-action="teams" data-teams="0"' },
+                  { label: 'Teams', attrs: 'data-action="teams" data-teams="1"' },
+                ],
+                teamsOn ? 1 : 0,
+                !(isHost && r.mode === 4),
+              )}
             </div>
             <div class="setting">
-              <div><div class="label">Deal</div><div class="hint">${r.customDeal ? "Host sets each player's hand size" : `Random ${r.mode === 4 ? '7/7/6/6' : '9/9/8'} split each round`}</div></div>
-              <div class="seg">
-                <button class="${!r.customDeal ? 'on' : ''}" data-action="deal" data-custom="0" ${isHost ? '' : 'disabled'}>Random</button>
-                <button class="${r.customDeal ? 'on' : ''}" data-action="deal" data-custom="1" ${isHost ? '' : 'disabled'}>Custom</button>
-              </div>
+              <div><div class="label">Deal</div><div class="hint">${
+                r.customDeal ? 'You choose how many cards each player gets' : `A random ${SPLIT_LABEL[r.mode]} split every round`
+              }</div></div>
+              ${seg(
+                'deal',
+                [
+                  { label: 'Random', attrs: 'data-action="deal" data-custom="0"' },
+                  { label: 'Custom', attrs: 'data-action="deal" data-custom="1"' },
+                ],
+                r.customDeal ? 1 : 0,
+                !isHost,
+              )}
             </div>
             <div class="setting">
-              <div><div class="label">First to play</div><div class="hint">${r.firstPlayer ? 'Same player leads every round' : 'Random, then rotates each round'}</div></div>
-              <select data-change="first" ${isHost ? '' : 'disabled'}>
-                <option value="" ${r.firstPlayer ? '' : 'selected'}>Rotate</option>
-                ${r.players.map((p) => `<option value="${p.id}" ${r.firstPlayer === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
-              </select>
+              <div><div class="label">First to play</div><div class="hint">${
+                r.firstPlayer ? 'The same player leads every round' : 'Chosen at random, then round the table'
+              }</div></div>
+              ${dropdown(
+                'first',
+                [{ value: '', label: 'Rotate' }, ...r.players.map((p) => ({ value: p.id, label: p.name }))],
+                r.firstPlayer || '',
+                !isHost,
+              )}
             </div>
             ${
               isHost
@@ -529,7 +674,13 @@
                     <button class="btn" data-action="shuffle">Shuffle seats</button>
                     <button class="btn primary" data-action="start" ${ready ? '' : 'disabled'}>Start game</button>
                   </div>
-                  ${ready ? '' : `<div class="faint" style="font-size:12px">Waiting for ${r.mode - r.players.length} more player${r.mode - r.players.length === 1 ? '' : 's'}…</div>`}`
+                  ${
+                    ready
+                      ? ''
+                      : `<div class="faint" style="font-size:12px">Waiting for ${r.mode - r.players.length} more player${
+                          r.mode - r.players.length === 1 ? '' : 's'
+                        }${DOTS}</div>`
+                  }`
                 : `<div class="muted" style="font-size:13px">${esc(host?.name || 'The host')} will start the game once ${r.mode} players are here.</div>`
             }
           </div>
@@ -586,7 +737,7 @@
     if (won) badges.push('<span class="pill accent">Winner</span>');
 
     let status = '';
-    if (g.phase === 'arrange') status = s.locked ? 'Locked in' : mine ? 'Arrange your cards' : 'Arranging…';
+    if (g.phase === 'arrange') status = s.locked ? 'Locked in' : mine ? 'Arrange your cards' : `Arranging${DOTS}`;
     else if (g.phase === 'play') status = active ? stepLabel(g) : `${down} face down`;
     else status = `${down} face down`;
 
@@ -647,15 +798,15 @@
       .join('');
   }
 
-  // Mirrors the server rule: aces anywhere, everything else ascending.
+  // Aces go anywhere, everything else ascending — the same rule the table uses.
   function legalOrder(ids, byId) {
     const nonAces = ids.map((id) => byId.get(id)).filter((c) => c.rank !== 1);
     for (let i = 1; i < nonAces.length; i++) if (nonAces[i].rank < nonAces[i - 1].rank) return false;
     return true;
   }
 
-  // --- 3D tilt on hover ---------------------------------------------------
-  // Cards you can interact with tilt towards the pointer, with a moving gloss.
+  // --- the feel of a card --------------------------------------------------
+  // A card you can act on leans towards the pointer and catches the light.
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   function setTilt(el, px, py) {
     el.style.setProperty('--ry', `${((px - 0.5) * 30).toFixed(1)}deg`);
@@ -682,7 +833,7 @@
     true,
   );
 
-  // --- drag to arrange (pointer events: mouse + touch) ----------------------
+  // --- dragging a card into place (mouse or finger) -------------------------
   const drag = { id: null, el: null, clone: null, active: false, startX: 0, startY: 0, offX: 0, offY: 0, lastX: 0, lastY: 0, settle: 0 };
 
   function startDrag() {
@@ -725,7 +876,8 @@
     const byId = new Map(cards.map((c) => [c.id, c]));
     const els = [...document.querySelectorAll('.seat-row.me .card.draggable')].filter((el) => el.dataset.id !== drag.id);
     if (!els.length) return;
-    // Nearest other card decides the slot; left or right of its centre decides the side.
+    // The card lands beside whichever neighbour it is nearest, on the side the
+    // pointer is on.
     let nearest = null;
     let best = Infinity;
     let before = false;
@@ -745,7 +897,7 @@
     const next = [...others];
     next.splice(slot, 0, drag.id);
     if (next.join() === ui.arrange.join()) return;
-    if (!legalOrder(next, byId)) return; // illegal spot: the row simply doesn't move
+    if (!legalOrder(next, byId)) return; // a spot the rules forbid: the row just doesn't move
     ui.arrange = next;
     render();
   }
@@ -801,11 +953,11 @@
     if (g.phase === 'arrange') {
       if (g.seats[me].locked) {
         const waiting = g.seats.map((s, i) => (s.locked ? null : g.names[i])).filter(Boolean);
-        return `<p class="prompt">Locked in.</p><p class="sub">Waiting for ${esc(waiting.join(', '))}…</p>`;
+        return `<p class="prompt">Locked in.</p><p class="sub">Waiting for ${esc(waiting.join(', '))}${DOTS}</p>`;
       }
       return `
         <p class="prompt">Arrange your cards</p>
-        <p class="sub">Drag cards to reorder them. Same-rank pairs can go either way round and aces can go anywhere; the row only accepts positions the rules allow. Everyone will see your colours, but not your ranks.</p>
+        <p class="sub">Drag your cards into ascending order. Two cards of the same rank can go either way round, and an ace may sit anywhere; the row refuses any position the rules do not allow. Everyone will see your colours, never your ranks.</p>
         <div class="actions-row">
           <button class="btn primary" data-action="lock">Lock in</button>
           <button class="btn ghost" data-action="reset-order">Reset</button>
@@ -829,7 +981,7 @@
                 <button class="btn primary" data-action="new-round">New round</button>
                 <button class="btn" data-action="to-lobby">Back to lobby</button>
               </div>`
-            : `<p class="sub" style="text-align:center;margin-top:10px">Waiting for the host to start a new round…</p>`
+            : `<p class="sub" style="text-align:center;margin-top:10px">Waiting for the host to start a new round${DOTS}</p>`
         }`;
     }
 
@@ -843,15 +995,15 @@
       if (partner === g.turn) {
         body = `
           <p class="prompt">Show ${n(g.turn)} one of your cards</p>
-          <p class="sub">Click a face-down card in your row. Only your partner will see its rank.</p>
+          <p class="sub">Click a face-down card in your row. Only your partner sees its rank.</p>
           <div class="actions-row"><button class="btn" data-action="skip-show">Show nothing</button></div>`;
       } else if (myTurn) {
-        body = `<p class="prompt">Waiting for ${n(activePartner)} to show you a card…</p>`;
+        body = `<p class="prompt">Waiting for ${n(activePartner)} to show you a card${DOTS}</p>`;
         if (partnerPlayer && !partnerPlayer.connected) {
           body += `<div class="actions-row"><button class="btn" data-action="skip-show">Partner is offline — skip</button></div>`;
         }
       } else {
-        body = `<p class="prompt">${n(activePartner)} is showing ${n(g.turn)} a card…</p>`;
+        body = `<p class="prompt">${n(activePartner)} is showing ${n(g.turn)} a card${DOTS}</p>`;
       }
     } else if (g.step === 'guess') {
       if (myTurn) {
@@ -863,10 +1015,10 @@
         } else {
           body = `
             <p class="prompt">Your turn: guess a card</p>
-            <p class="sub">Click one of ${g.teams ? "your opponents'" : "another player's"} face-down cards, then pick a rank. A wrong guess just passes the turn.</p>`;
+            <p class="sub">Click one of ${g.teams ? "your opponents'" : "another player's"} face-down cards, then name a rank. Get it right and you go again; get it wrong and the turn simply passes.</p>`;
         }
       } else {
-        body = `<p class="prompt">${n(g.turn)} is guessing…</p>`;
+        body = `<p class="prompt">${n(g.turn)} is guessing${DOTS}</p>`;
       }
     }
 
@@ -889,11 +1041,37 @@
   }
 
   function act(action, d) {
+    if (ui.openMenu && action !== 'dd-toggle' && action !== 'dd-pick') ui.openMenu = null;
     switch (action) {
       case 'copy-link':
         return copyText(`${location.origin}/?code=${state.room.code}`);
       case 'leave':
         return leaveRoom();
+      case 'logo-leave': {
+        // Walking out mid-round is worth asking about twice; in a lobby or
+        // between rounds the wordmark is simply the way out.
+        const playing = state.game && state.game.phase !== 'ended';
+        if (playing && !ui.leaveArmed) {
+          ui.leaveArmed = true;
+          clearTimeout(leaveArmTimer);
+          leaveArmTimer = setTimeout(() => {
+            ui.leaveArmed = false;
+            render();
+          }, 4000);
+          toast('Leaving in the middle of a round — click the wordmark again to confirm', 'info');
+          return render();
+        }
+        clearTimeout(leaveArmTimer);
+        ui.leaveArmed = false;
+        return leaveRoom();
+      }
+      case 'dd-toggle':
+        ui.openMenu = ui.openMenu === d.dd ? null : d.dd;
+        return render();
+      case 'dd-pick':
+        ui.openMenu = null;
+        if (d.dd === 'first') send({ type: 'lobby:first', id: d.value || null });
+        return render();
       case 'mode':
         return send({ type: 'lobby:mode', mode: Number(d.mode) });
       case 'teams':
@@ -952,16 +1130,32 @@
     const el = e.target.closest('[data-change]');
     if (!el || !state) return;
     if (el.dataset.change === 'hand-size') send({ type: 'lobby:handSize', id: el.dataset.id, size: Number(el.value) });
-    if (el.dataset.change === 'first') send({ type: 'lobby:first', id: el.value || null });
   });
-  // Clicking an input or select inside a player row must not trigger the row's swap action.
+  // Typing a hand size into a player's row must not count as picking that row.
   $('#app').addEventListener(
     'click',
     (e) => {
-      if (e.target.matches('input, select')) e.stopPropagation();
+      if (e.target.matches('input')) e.stopPropagation();
     },
     true,
   );
+  // Anywhere else on the page closes an open menu.
+  document.addEventListener(
+    'click',
+    (e) => {
+      if (!ui.openMenu) return;
+      if (e.target.closest(`.dropdown[data-dd="${ui.openMenu}"]`)) return;
+      ui.openMenu = null;
+      render();
+    },
+    true,
+  );
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && ui.openMenu) {
+      ui.openMenu = null;
+      render();
+    }
+  });
 
   $('#app').addEventListener('click', (e) => {
     const el = e.target.closest('[data-action]');
@@ -974,7 +1168,17 @@
   // --- home screen ---------------------------------------------------------
   const nameInput = $('#name');
   const codeInput = $('#code');
-  nameInput.value = localStorage.getItem('thievery:name') || '';
+  const rerollBtn = $('#reroll');
+  // Turn up without a name and the house deals you one. The roller next to the
+  // box deals another; type over either and it is yours.
+  nameInput.value = localStorage.getItem('thievery:name') || randomAlias();
+  rerollBtn.addEventListener('click', () => {
+    nameInput.value = randomAlias();
+    rerollBtn.classList.remove('spun');
+    void rerollBtn.offsetWidth;
+    rerollBtn.classList.add('spun');
+    nameInput.focus();
+  });
   const urlCode = new URLSearchParams(location.search).get('code') || location.pathname.replace('/', '');
   if (urlCode && /^[A-Za-z0-9]{4}$/.test(urlCode)) codeInput.value = urlCode.toUpperCase();
 
@@ -1009,8 +1213,8 @@
   nameInput.addEventListener('keydown', (e) => e.key === 'Enter' && (codeInput.value ? $('#join') : $('#create')).click());
 
   // --- boot ----------------------------------------------------------------
-  // If we have a saved session for the room in the URL (or any session when
-  // there's no code in the URL), try to resume it silently.
+  // A room you were already in is rejoined without being asked, unless the
+  // link in the address bar points somewhere else.
   if (session && urlCode && session.code !== urlCode.toUpperCase()) saveSession(null);
   render();
   connect();

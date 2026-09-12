@@ -1,17 +1,28 @@
 // ---------------------------------------------------------------------------
-// Thievery.co.uk — pure game logic. No networking in here.
+// The rules of Thievery.
 //
-// The game object is the single source of truth and lives only on the server.
-// Clients never receive it directly; they get `viewFor(game, seat)`, which
-// strips out every rank the viewer isn't entitled to know.
+// A round runs in three stages. Everyone arranges their hand in ascending
+// order and locks it in; the rows are then turned face down, showing every
+// card's colour but no ranks. Play passes round the table: in a partnership
+// game your partner may first show you one of their cards in private, then
+// you point at an opponent's card and name a rank. A hit flips the card and
+// earns another go, a miss passes the turn. The first player or team with
+// every opponent card face up takes the round.
+//
+// Hidden ranks stay here. Each player is only ever handed the cards they are
+// entitled to see.
 // ---------------------------------------------------------------------------
 
-import { dealSplit, shuffle } from './deal.js';
+import { dealSplit, shuffle, PLAYER_COUNTS, MIN_PLAYERS, MAX_PLAYERS } from './deal.js';
 
 export const RANK_NAMES = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 export const rankName = (r) => RANK_NAMES[r - 1];
-const SUIT = { red: '♥', black: '♠' };
-export const cardName = (c) => `${rankName(c.rank)}${SUIT[c.color]}`;
+
+// Ranks are spoken, never spelled with a suit: the table can already see every
+// card's colour, and naming the suit would give away more than the rules do.
+const RANK_WORDS = { 1: 'Ace', 11: 'Jack', 12: 'Queen', 13: 'King' };
+export const rankWord = (r) => RANK_WORDS[r] || String(r);
+export const aRank = (r) => `${r === 1 || r === 8 ? 'an' : 'a'} ${rankWord(r)}`;
 
 const ordinal = (n) => {
   const s = ['th', 'st', 'nd', 'rd'];
@@ -19,6 +30,7 @@ const ordinal = (n) => {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 };
 
+// One red suit and one black suit, Ace low through King.
 export function makeDeck() {
   const deck = [];
   for (const color of ['red', 'black']) {
@@ -27,13 +39,16 @@ export function makeDeck() {
   return deck;
 }
 
-// --- construction ----------------------------------------------------------
+// --- starting a round ------------------------------------------------------
 
 export function createGame({ numPlayers, teams, startSeat, names, counts: customCounts }) {
-  if (![3, 4].includes(numPlayers)) throw new Error('Thievery.co.uk supports 3 or 4 players');
+  if (!PLAYER_COUNTS.includes(numPlayers)) throw new Error(`Thievery.co.uk supports ${MIN_PLAYERS} to ${MAX_PLAYERS} players`);
+  // Partnerships are a four-handed game: everyone has exactly one partner,
+  // sitting opposite, and exactly two opponents.
   const useTeams = !!teams && numPlayers === 4;
   const deck = shuffle(makeDeck());
-  // Hand sizes: the host may fix them per seat; otherwise use the random split.
+  // The host can fix a hand size for every seat; otherwise the round uses the
+  // shuffled split for this many players.
   const counts = customCounts ? [...customCounts] : dealSplit(numPlayers);
   if (counts.length !== numPlayers || counts.reduce((a, b) => a + b, 0) !== 26 || counts.some((c) => c < 1)) {
     throw new Error('Hand sizes must add up to 26 cards');
@@ -43,8 +58,8 @@ export function createGame({ numPlayers, teams, startSeat, names, counts: custom
   for (let s = 0; s < numPlayers; s++) {
     const hand = deck.slice(p, p + counts[s]);
     p += counts[s];
-    // Default arrangement: ascending, black before red on ties. Players can
-    // flip same-rank pairs before locking in.
+    // Everyone starts from a tidy ascending row, black before red where two
+    // cards share a rank. Same-rank pairs can be flipped before locking in.
     hand.sort((a, b) => a.rank - b.rank || (a.color === 'black' ? -1 : 1));
     seats.push({ cards: hand.map((c) => ({ ...c, faceUp: false })), locked: false });
   }
@@ -56,7 +71,7 @@ export function createGame({ numPlayers, teams, startSeat, names, counts: custom
     seats,
     turn: startSeat,
     step: null, // show | guess
-    known: seats.map(() => []), // per seat: ["seat:idx"] cards a partner has shown them
+    known: seats.map(() => []), // cards a partner has shown this player, as "seat:idx"
     result: null, // { winners: [seat], losers: [seat], text }
     log: [],
   };
@@ -64,7 +79,7 @@ export function createGame({ numPlayers, teams, startSeat, names, counts: custom
   return g;
 }
 
-// --- helpers ---------------------------------------------------------------
+// --- who is on whose side --------------------------------------------------
 
 export const teamOf = (g, seat) => (g.teams ? seat % 2 : seat);
 export const partnerOf = (g, seat) => (g.teams ? (seat + 2) % g.numPlayers : null);
@@ -88,10 +103,12 @@ export function guessTargets(g, seat) {
 
 const faceDownCount = (g, seat) => g.seats[seat].cards.filter((c) => !c.faceUp).length;
 
+// Everything that happens at the table is written to the log. A line can also
+// carry a private version, shown only to the player it belongs to.
 function log(g, text, opts = {}) {
   const entry = { text };
   if (opts.kind) entry.kind = opts.kind;
-  if (opts.event) entry.event = opts.event; // structured data the client animates from
+  if (opts.event) entry.event = opts.event;
   if (opts.privSeat !== undefined) {
     entry.privSeat = opts.privSeat;
     entry.privText = opts.privText;
@@ -129,7 +146,7 @@ function nextTurn(g) {
   startTurn(g);
 }
 
-// --- arrange phase ---------------------------------------------------------
+// --- arranging your hand ---------------------------------------------------
 
 export function lockOrder(g, seat, order) {
   if (g.phase !== 'arrange') throw new Error('Not in the arranging phase');
@@ -139,8 +156,8 @@ export function lockOrder(g, seat, order) {
   const byId = new Map(s.cards.map((c) => [c.id, c]));
   const newCards = order.map((id) => byId.get(id));
   if (newCards.some((c) => !c) || new Set(order).size !== order.length) throw new Error('Invalid card order');
-  // Aces are wild in position: they may sit anywhere in the row. Every other
-  // card must be in ascending order relative to the other non-aces.
+  // Aces are wild in position and may sit anywhere in the row. Every other
+  // card has to be in ascending order relative to the rest.
   const nonAces = newCards.filter((c) => c.rank !== 1);
   for (let i = 1; i < nonAces.length; i++) {
     if (nonAces[i].rank < nonAces[i - 1].rank) throw new Error('Cards (other than aces) must be in ascending order');
@@ -155,7 +172,7 @@ export function lockOrder(g, seat, order) {
   }
 }
 
-// --- the show --------------------------------------------------------------
+// --- the show (partnership games) ------------------------------------------
 
 export function showCard(g, seat, idx) {
   requirePlay(g);
@@ -169,7 +186,7 @@ export function showCard(g, seat, idx) {
   if (!g.known[active].includes(key)) g.known[active].push(key);
   log(g, `${g.names[seat]} showed ${g.names[active]} one of their cards.`, {
     privSeat: active,
-    privText: `${g.names[seat]} showed you their ${ordinal(idx + 1)} card: ${cardName(c)}.`,
+    privText: `${g.names[seat]} showed you their ${ordinal(idx + 1)} card: ${aRank(c.rank)}.`,
   });
   g.step = 'guess';
 }
@@ -205,22 +222,22 @@ export function guess(g, seat, target, rank) {
   if (c.faceUp) throw new Error('That card is already face up');
   validRank(rank);
 
-  const desc = `${g.names[seat]} guessed ${g.names[ts]}'s ${ordinal(idx + 1)} card is a ${rankName(rank)}`;
+  const desc = `${g.names[seat]} guessed ${g.names[ts]}'s ${ordinal(idx + 1)} card is ${aRank(rank)}`;
   const event = { type: 'guess', by: seat, target: { seat: ts, idx }, rank, correct: c.rank === rank };
   if (c.rank === rank) {
     c.faceUp = true;
-    event.card = cardName(c);
+    event.card = aRank(c.rank);
     const winner = findWinner(g);
     if (winner !== null) {
-      log(g, `${desc} — correct! It's the ${cardName(c)}.`, { kind: 'good', event });
+      log(g, `${desc} — correct!`, { kind: 'good', event });
       finishRound(g, winner);
       return;
     }
-    log(g, `${desc} — correct! It's the ${cardName(c)}. ${g.names[seat]} guesses again.`, { kind: 'good', event });
-    // A correct guess earns another guess; the turn only passes on a miss.
+    // A hit is free: the card turns over and the same player goes again.
+    log(g, `${desc} — correct! ${g.names[seat]} guesses again.`, { kind: 'good', event });
     g.step = 'guess';
   } else {
-    // A wrong guess costs nothing: the turn simply passes.
+    // A miss costs nothing but the turn.
     log(g, `${desc} — incorrect.`, { kind: 'bad', event });
     nextTurn(g);
   }
@@ -228,8 +245,8 @@ export function guess(g, seat, target, rank) {
 
 // --- ending the round ------------------------------------------------------
 
-// The round ends as soon as some player (or team) has every opponent card face
-// up. Returns that seat, or null if the round continues.
+// The round is over the moment somebody has nothing left to guess at: every
+// card belonging to their opponents is already face up.
 function findWinner(g) {
   for (let seat = 0; seat < g.numPlayers; seat++) {
     if (guessTargets(g, seat).length === 0) return seat;
@@ -247,16 +264,16 @@ function finishRound(g, seat) {
     ? `Every ${teamLabel(g, 1 - team)} card is face up — ${teamLabel(g, team)} win the round!`
     : `Every other card is face up — ${g.names[seat]} wins the round!`;
   g.result = { winners, losers, text };
-  // Everything is public once the round is over.
+  // Nothing is secret once the round is over.
   g.seats.forEach((s) => s.cards.forEach((c) => (c.faceUp = true)));
   log(g, text, { kind: 'result', event: { type: 'result', winners, losers } });
 }
 
-// --- per-player view -------------------------------------------------------
+// --- what a player is allowed to see ---------------------------------------
 //
-// This is the ONLY thing that ever leaves the server. A card's rank is
-// included only if the viewer owns it, it's face up, or their partner has
-// shown it to them. Colors are hidden until everyone has locked in.
+// You see a rank if the card is yours, if it is face up, or if your partner
+// has shown it to you. Nothing else. Colours stay hidden until everyone has
+// locked their row in, so nobody gets a head start while people arrange.
 
 export function viewFor(g, viewer) {
   const known = new Set(g.known[viewer] || []);
@@ -290,7 +307,7 @@ export function viewFor(g, viewer) {
     partnerSeat: partnerOf(g, viewer),
     result: g.result,
     seats,
-    logTotal: g.log.length, // lets the client tell which log entries are new
+    logTotal: g.log.length, // how many lines exist in total, so new ones can be spotted
     log: g.log.slice(-250).map((e) => ({
       kind: e.kind || null,
       text: e.privSeat === viewer ? e.privText : e.text,

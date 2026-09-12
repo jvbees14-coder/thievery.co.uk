@@ -1,5 +1,9 @@
-// End-to-end smoke test: boots the real server, drives real WebSocket clients
-// through complete games, and checks that hidden information never leaks.
+// A whole evening of games, played by machine.
+//
+// This starts the real server, sits several real clients down at real tables,
+// and plays rounds out to the end: partnerships, solo, tables of three up to
+// six, custom deals, people dropping out and coming back. Every snapshot any
+// client receives is checked for ranks it should never have been sent.
 //
 //   npm test
 
@@ -350,6 +354,49 @@ async function main() {
     await P.waitFor((s) => !s.game && s.room.players.length === 3, 'back to lobby');
 
     for (const c of [P, Q, R2]) c.close();
+
+    // ---------------- bigger tables: 5 and 6 players, solo ----------------
+    for (const n of [5, 6]) {
+      const host = new Client(`H${n}`);
+      await host.connect();
+      host.send({ type: 'create', name: `Host${n}` });
+      await host.waitFor((s) => s.room);
+      const bigCode = host.state.room.code;
+      host.send({ type: 'lobby:mode', mode: n });
+      await host.waitFor((s) => s.room.mode === n, `mode ${n}`);
+      // Partnerships stay a four-handed game.
+      assert.match(await host.expectError({ type: 'lobby:teams', teams: true }, `teams at ${n}`), /4 players/);
+      const table = [host];
+      for (let i = 1; i < n; i++) {
+        const c = new Client(`H${n}-${i}`);
+        await c.connect();
+        c.send({ type: 'join', code: bigCode, name: `Guest${n}${i}` });
+        await c.waitFor((s) => s.room);
+        table.push(c);
+      }
+      await host.waitFor((s) => s.room.players.length === n, `${n} seated`);
+      // One too many is still one too many.
+      const spare = new Client(`H${n}-x`);
+      await spare.connect();
+      assert.match(await spare.expectError({ type: 'join', code: bigCode, name: 'Gatecrasher' }, 'full'), /full/);
+      spare.close();
+
+      host.send({ type: 'lobby:start' });
+      await lockAll(table);
+      assert.equal(host.state.game.numPlayers, n, `${n} seats in play`);
+      assert.equal(host.state.game.teams, false, `${n} players is always solo`);
+      assert.equal(
+        host.state.game.seats.reduce((a, x) => a + x.cards.length, 0),
+        26,
+        `all 26 cards dealt at ${n}`,
+      );
+      assert.equal(host.state.game.step, 'guess', `no show step at ${n}`);
+      await playTurns(table, 4);
+      const resN = await playToEnd(table);
+      assert.equal(resN.winners.length, 1, `one winner at ${n}`);
+      assert.equal(resN.losers.length, n - 1, `everyone else loses at ${n}`);
+      for (const c of table) c.close();
+    }
 
     // ---------------- test mode: one browser drives four seats ----------------
     const T = new Client('T');

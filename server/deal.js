@@ -1,16 +1,23 @@
 // ---------------------------------------------------------------------------
-// Deal configuration
+// How the deck is shared out.
 //
-// The 26-card deck (A–K in one red suit + one black suit) is split among the
-// seated players as evenly as possible. Some tables deal it differently, so
-// the split lives here on its own. Each entry is a list of hand sizes; the
-// list is shuffled every game so a random player ends up with the short hand.
+// A round uses 26 cards: Ace to King in one red suit and one black suit. They
+// are split between the seated players as evenly as the count allows, and the
+// split is shuffled before every round so the short hand lands on a different
+// player each time. A host who prefers fixed hands can override all of this
+// from the lobby.
 // ---------------------------------------------------------------------------
 
 export const DEAL_SPLITS = {
   3: [9, 9, 8],
   4: [7, 7, 6, 6],
+  5: [6, 5, 5, 5, 5],
+  6: [5, 5, 4, 4, 4, 4],
 };
+
+export const MIN_PLAYERS = 3;
+export const MAX_PLAYERS = 6;
+export const PLAYER_COUNTS = Object.keys(DEAL_SPLITS).map(Number);
 
 export function dealSplit(numPlayers) {
   const base = DEAL_SPLITS[numPlayers];
