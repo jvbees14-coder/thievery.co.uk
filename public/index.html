@@ -5,22 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark" />
   <title>Thievery — Free Online Multiplayer Card Game</title>
-  <meta name="description" content="Thievery is a free online deduction card game for 3–6 players. Share a room code, guess your opponents' hidden cards and flip them all before they flip yours." />
+  <meta name="description" content="Thievery is a free online deduction card game for 3–8 players. Share a room code, guess your opponents' hidden cards and flip them all before they flip yours. Five or more players pair up and share a hand." />
   <link rel="canonical" href="https://thievery.co.uk/" />
 
   <!-- How a link to the table looks when it is passed around. -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Thievery.co.uk" />
   <meta property="og:title" content="Thievery — Free Online Multiplayer Card Game" />
-  <meta property="og:description" content="Steal their secrets before they steal yours. A free online deduction card game for 3–6 players — no sign-up, just a room code." />
+  <meta property="og:description" content="Steal their secrets before they steal yours. A free online deduction card game for 3–8 players — no sign-up, just a room code." />
   <meta property="og:url" content="https://thievery.co.uk/" />
   <meta property="og:image" content="https://thievery.co.uk/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="Thievery.co.uk — a free online deduction card game for 3 to 6 players" />
+  <meta property="og:image:alt" content="Thievery.co.uk — a free online deduction card game for 3 to 8 players" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Thievery — Free Online Multiplayer Card Game" />
-  <meta name="twitter:description" content="Steal their secrets before they steal yours. A free online deduction card game for 3–6 players — no sign-up, just a room code." />
+  <meta name="twitter:description" content="Steal their secrets before they steal yours. A free online deduction card game for 3–8 players — no sign-up, just a room code." />
   <meta name="twitter:image" content="https://thievery.co.uk/og-image.png" />
 
   <script type="application/ld+json">
@@ -31,10 +31,10 @@
     "alternateName": "Thievery.co.uk",
     "url": "https://thievery.co.uk/",
     "image": "https://thievery.co.uk/og-image.png",
-    "description": "Thievery is a free online multiplayer deduction card game for 3 to 6 players. Everyone arranges their hand face down in ascending order; on your turn you pick an opponent's hidden card and guess its rank. Flip every opponent card face up to win the round.",
+    "description": "Thievery is a free online multiplayer deduction card game for 3 to 8 players. The cards are dealt into three or four hands; up to four people play a hand each, and a fifth player and beyond shares a hand with someone already seated. Everyone arranges their hand face down in ascending order; on your turn you pick an opponent's hidden card and guess its rank. Flip every opponent card face up to win the round.",
     "genre": ["Card game", "Deduction", "Multiplayer"],
     "playMode": "MultiPlayer",
-    "numberOfPlayers": { "@type": "QuantitativeValue", "minValue": 3, "maxValue": 6 },
+    "numberOfPlayers": { "@type": "QuantitativeValue", "minValue": 3, "maxValue": 8 },
     "gamePlatform": "Web browser",
     "applicationCategory": "GameApplication",
     "operatingSystem": "Any browser",
@@ -53,6 +53,9 @@
   <div id="toast" class="toast" hidden></div>
   <div id="banner" class="banner" hidden></div>
   <canvas id="confetti" class="confetti" hidden></canvas>
+  <!-- Where the unsolicited offers pile up. Empty unless somebody at the
+       table signed their name with a mark. -->
+  <div id="popups" class="popups"></div>
   <div id="conn" class="conn" hidden>Reconnecting<span class="dots"><i>.</i><i>.</i><i>.</i></span></div>
 
   <!-- Home screen (static markup so typed input survives state updates) -->
@@ -60,7 +63,7 @@
     <div class="home-card">
       <p class="eyebrow">Est. for cheats, sleuths &amp; card sharps</p>
       <h1 class="logo wordmark">Thievery<em>.co.uk</em></h1>
-      <p class="tagline">Steal their secrets before they steal yours. A deduction card game for 3&ndash;6 players, one room code.</p>
+      <p class="tagline">Steal their secrets before they steal yours. A deduction card game for 3&ndash;8 players, one room code.</p>
 
       <div class="field">
         <label for="name">Your name</label>
@@ -81,12 +84,73 @@
 
       <details class="rules">
         <summary><h2>How to play</h2></summary>
-        <ol>
-          <li>Each player arranges their hand face down in ascending order (aces can go anywhere). Red cards show sideways, black cards upright, so everyone can see the colours but not the ranks.</li>
-          <li>On your turn (teams mode) your partner may privately show you one of their cards.</li>
-          <li>Pick one opponent's face-down card and guess its rank. Right: it flips face up and you guess again. Wrong: nothing happens to your cards, the turn just passes.</li>
-          <li>The first player (or team) to have <b>every opponent card face up</b> wins the round.</li>
-        </ol>
+        <div class="rules-body">
+          <p class="rules-lede">
+            Everyone can see the <b>colour</b> of every card on the table. Nobody but its owner can see the
+            <b>rank</b>. Your job is to work out the ranks in front of you and name them out loud before
+            anybody manages the same trick on you.
+          </p>
+
+          <h3>1. The deal</h3>
+          <p>
+            The deck is 26 cards &mdash; Ace to King in one red suit, Ace to King in one black suit &mdash; dealt
+            out into three or four hands, as evenly as the table allows. There is no draw pile and nothing is
+            held back: every card is in somebody&rsquo;s row from the first move to the last.
+          </p>
+          <p>
+            Up to four people play a hand each. A fifth player, and anyone after that, joins somebody already
+            seated: the two of them share that hand, see exactly the same cards, and either can play it when
+            their turn comes round. So a table of four hands holds anywhere from four to eight people.
+          </p>
+
+          <h3>2. Arrange your hand</h3>
+          <p>
+            You are dealt your cards face up &mdash; to you, and to nobody else. Drag them into
+            <b>ascending order</b>, ace low, and press <b>Lock in</b>. Two cards of the same rank can go either
+            way round, and an <b>ace is wild in position</b>: you may hide it anywhere in the row.
+          </p>
+          <p>
+            Once everyone has locked in, all the rows turn face down at once. Red cards lie sideways and black
+            cards stand upright, so from now on the whole table knows the colour and the position of every
+            card, and only you know what yours actually are.
+          </p>
+
+          <h3>3. Read the table</h3>
+          <p>
+            Because every row is in ascending order, a hidden card is fenced in by its neighbours. A face-down
+            card sitting between a face-up 4 and a face-up 7 has to be a 4, 5, 6 or 7. Colour narrows it
+            further: there is exactly one 9 of each colour in the deck, so once the black 9 has turned over
+            anywhere on the table, no other black card is a 9. Every flip tightens the picture for everybody
+            &mdash; including for the person who did the flipping.
+          </p>
+
+          <h3>4. Take your turn</h3>
+          <p>
+            Click any face-down card that is not yours and name a rank, from Ace to King.
+          </p>
+          <ul>
+            <li><b>Right:</b> the card flips face up for the whole table &mdash; and you go again. A good run can
+              empty somebody out in a single turn.</li>
+            <li><b>Wrong:</b> nothing happens. You lose no cards and give nothing away beyond the guess itself;
+              the turn simply passes to the next hand.</li>
+          </ul>
+
+          <h3>5. Win the round</h3>
+          <p>
+            The round ends the instant one hand has <b>every card it could guess at</b> face up &mdash; that is,
+            every card belonging to everyone else. That hand wins, and both players win it if the hand is
+            shared. Playing on your own account, that makes the winner the last person still holding
+            anything face down.
+          </p>
+
+          <h3>Partnerships (four hands)</h3>
+          <p>
+            A four-hand table can be played as two teams instead: hands 1 and 3 against hands 2 and 4. You only
+            guess against the hands opposite you, and at the start of your turn your partner may privately
+            <b>show</b> you one of their face-down cards &mdash; or show you nothing. It is the one way to pass
+            information across the table without handing it to the other side.
+          </p>
+        </div>
       </details>
     </div>
   </section>

@@ -3,9 +3,11 @@
 //
 // One process hosts every room, all of them in memory: no database, nothing
 // written to disk. A room is a four-character code, the people sitting at it,
-// their settings and whatever round is in progress. Anything that changes at
-// a table is pushed straight back out to everyone sitting at it, cut down to
-// what each person is allowed to know.
+// their settings and whatever round is in progress. A table is dealt three or
+// four hands; players fill those hands one each, and anybody arriving after
+// that pairs up with someone already seated and shares their hand. Anything
+// that changes at a table is pushed straight back out to everyone sitting at
+// it, cut down to what each person is allowed to know.
 //
 // Rooms survive a refresh or a dropped connection, and disappear on their own
 // once nobody has been connected for an hour.
@@ -18,7 +20,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 import * as Game from './game.js';
-import { shuffle, DEAL_SPLITS, PLAYER_COUNTS, MIN_PLAYERS, MAX_PLAYERS } from './deal.js';
+import { shuffle, DEAL_SPLITS, SEAT_COUNTS, MIN_SEATS, MAX_SEATS, MAX_PER_SEAT } from './deal.js';
 
 const PORT = Number(process.env.PORT) || 3000;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -104,11 +106,12 @@ function createRoom() {
   const room = {
     code: newRoomCode(),
     hostId: null,
-    mode: 4, // how many seats the table is set for
+    seatCount: 4, // how many hands the table is dealt
     teams: false, // partnerships, four-handed only
     customDeal: false, // the host has fixed a hand size for every seat
-    firstPlayer: null, // who leads every round, or nobody: random, then rotating
-    players: [],
+    handSizes: null, // those fixed sizes, one per seat
+    firstSeat: null, // the seat that leads every round, or nobody: random, then rotating
+    players: [], // in order of play; the first few sit alone, the rest pair up
     game: null,
     tally: {}, // wins so far this session
     round: 0,
@@ -119,16 +122,26 @@ function createRoom() {
   return room;
 }
 
+// Seats are filled straight down the list and then round again, so the first
+// three or four people each get a hand to themselves and everyone after that
+// joins a hand that is already taken. Moving people up and down the list —
+// the arrows and the swap in the lobby — is therefore also how the host
+// decides who ends up sharing with whom.
 function reseat(room) {
-  room.players.forEach((p, i) => (p.seat = i));
+  room.players.forEach((p, i) => (p.seat = i % room.seatCount));
 }
+
+const capacity = (room) => room.seatCount * MAX_PER_SEAT;
+const playersAt = (room, seat) => room.players.filter((p) => p.seat === seat);
+// What the table calls a seat: one name, or two run together.
+const seatName = (room, seat) => playersAt(room, seat).map((p) => p.name).join(' & ') || `Seat ${seat + 1}`;
+const seatNames = (room) => Array.from({ length: room.seatCount }, (_, i) => seatName(room, i));
 
 function removePlayer(room, player) {
   const i = room.players.indexOf(player);
   if (i >= 0) room.players.splice(i, 1);
   reseat(room);
   if (room.hostId === player.id) room.hostId = room.players[0]?.id ?? null;
-  if (room.firstPlayer === player.id) room.firstPlayer = null;
   if (room.players.length === 0) room.emptySince = Date.now();
 }
 
@@ -137,10 +150,12 @@ function lobbyView(room) {
     code: room.code,
     // In a test room whoever is currently being controlled acts as host.
     hostId: room.test ? (room.players.find((p) => p.ws)?.id ?? room.hostId) : room.hostId,
-    mode: room.mode,
+    seats: room.seatCount,
+    maxPlayers: capacity(room),
     teams: room.teams,
     customDeal: room.customDeal,
-    firstPlayer: room.firstPlayer,
+    hands: room.customDeal ? handSizes(room) : null,
+    firstSeat: room.firstSeat,
     round: room.round,
     test: !!room.test,
     players: room.players.map((p) => ({
@@ -148,7 +163,6 @@ function lobbyView(room) {
       name: p.name,
       seat: p.seat,
       connected: isConnected(room, p),
-      handSize: p.handSize ?? null,
     })),
   };
 }
@@ -162,16 +176,35 @@ function lobbyView(room) {
 
 const TEST_NAME = 'test67';
 
+// --- an unsigned favour to the table ---------------------------------------
+//
+// Type your name with a "/" in front of it and everybody else at the table
+// starts receiving small advertisements they have to click away; a "#" does
+// the same but spares nobody, sender included. The mark is stripped off before
+// anyone sees the name, and nothing in what a client is sent says who is
+// responsible — only whether the ads are coming for them.
+
+const MARKS = ['/', '#'];
+
+// Split a typed name into its mark and the name the table will see.
+function readName(typed) {
+  const raw = String(typed || '').trim();
+  const mark = MARKS.includes(raw[0]) ? raw[0] : null;
+  return { mark, name: (mark ? raw.slice(1) : raw).trim().slice(0, 20) };
+}
+
+const pranked = (room, player) => player.mark !== '/' && room.players.some((p) => p.mark);
+
 function isConnected(room, p) {
   return room.test ? room.players.some((x) => x.ws) : p.connected;
 }
 
 function setupTestRoom(room, ws) {
   room.test = true;
-  room.mode = 4;
+  room.seatCount = 4;
   for (let i = 0; i < 4; i++) {
     const name = i === 0 ? 'Test67' : `Test67-${i + 1}`;
-    room.players.push({ id: randomId(6), token: randomId(), name, seat: i, ws: null, connected: false, handSize: null });
+    room.players.push({ id: randomId(6), token: randomId(), name, mark: null, seat: i, ws: null, connected: false });
   }
   room.hostId = room.players[0].id;
   attach(room, room.players[0], ws);
@@ -179,15 +212,18 @@ function setupTestRoom(room, ws) {
   sendState(room);
 }
 
-// The size a seat's hand starts at when the host switches to a custom deal.
-function defaultHandSize(room, player) {
-  return DEAL_SPLITS[room.mode][player.seat] ?? 6;
+// The sizes a custom deal starts from, and what it currently stands at. They
+// belong to the seats rather than to the people, because a shared seat is
+// still one hand of cards.
+function handSizes(room) {
+  const base = DEAL_SPLITS[room.seatCount];
+  return Array.from({ length: room.seatCount }, (_, i) => room.handSizes?.[i] ?? base[i]);
 }
 
 function customCounts(room) {
   if (!room.customDeal) return null;
-  const counts = room.players.map((p) => p.handSize);
-  if (counts.some((c) => !Number.isInteger(c) || c < 1)) throw new Error('Set a hand size for every player');
+  const counts = handSizes(room);
+  if (counts.some((c) => !Number.isInteger(c) || c < 1)) throw new Error('Set a hand size for every seat');
   const total = counts.reduce((a, b) => a + b, 0);
   if (total !== 26) throw new Error(`Hand sizes must add up to 26 (currently ${total})`);
   return counts;
@@ -202,7 +238,7 @@ function sendState(room) {
     if (!p.ws) continue;
     send(p.ws, {
       type: 'state',
-      you: { id: p.id, seat: p.seat, name: p.name, token: p.token },
+      you: { id: p.id, seat: p.seat, name: p.name, token: p.token, prank: pranked(room, p) },
       room: lobbyView(room),
       game: room.game ? Game.viewFor(room.game, p.seat) : null,
       tally: room.tally,
@@ -211,16 +247,16 @@ function sendState(room) {
 }
 
 function startRound(room) {
-  const n = room.mode;
+  const n = room.seatCount;
   room.round++;
-  const first = room.players.find((p) => p.id === room.firstPlayer);
-  const start = first ? first.seat : room.lastStart < 0 ? crypto.randomInt(n) : (room.lastStart + 1) % n;
+  const first = room.firstSeat;
+  const start = first !== null && first < n ? first : room.lastStart < 0 ? crypto.randomInt(n) : (room.lastStart + 1) % n;
   room.lastStart = start;
   room.game = Game.createGame({
-    numPlayers: n,
+    numSeats: n,
     teams: n === 4 && room.teams,
     startSeat: start,
-    names: room.players.map((p) => p.name),
+    names: seatNames(room),
     counts: customCounts(room),
   });
 }
@@ -252,9 +288,7 @@ function attach(room, player, ws) {
 }
 
 function handleJoin(ws, msg) {
-  const name = String(msg.name || '')
-    .trim()
-    .slice(0, 20);
+  const { mark, name } = readName(msg.name);
   let room;
   if (msg.type === 'create') {
     if (!name) throw new Error('Enter a display name first');
@@ -281,6 +315,10 @@ function handleJoin(ws, msg) {
   let player = msg.token ? room.players.find((p) => p.token === msg.token) : null;
   if (!player && name) {
     player = room.players.find((p) => !p.connected && p.name.toLowerCase() === name.toLowerCase());
+    // Typing your way back in under a fresh mark sets it again. A reconnect
+    // carrying a saved token leaves the mark alone, so a refresh — which sends
+    // back the stripped name — cannot call the joke off by accident.
+    if (player) player.mark = mark;
   }
   if (player) {
     attach(room, player, ws);
@@ -290,13 +328,15 @@ function handleJoin(ws, msg) {
 
   if (!name) throw new Error('Enter a display name first');
   if (room.game) throw new Error('That game has already started');
-  if (room.players.length >= room.mode) throw new Error('That room is full');
+  if (room.players.length >= capacity(room)) throw new Error(`That room is full (${capacity(room)} players)`);
   if (room.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) {
     throw new Error('Someone in that room already has that name');
   }
-  player = { id: randomId(6), token: randomId(), name, seat: room.players.length, ws: null, connected: false, handSize: null };
+  // The first few arrivals get a hand each; after that a newcomer joins
+  // whoever is next round the table and the two of them share one.
+  player = { id: randomId(6), token: randomId(), name, mark, seat: 0, ws: null, connected: false };
   room.players.push(player);
-  if (room.customDeal) player.handSize = defaultHandSize(room, player);
+  reseat(room);
   if (!room.hostId) room.hostId = player.id;
   attach(room, player, ws);
   sendState(room);
@@ -367,20 +407,25 @@ function handleAction(ws, msg) {
     case 'leave':
       return handleLeave(ws);
 
-    case 'lobby:mode': {
+    case 'lobby:seats': {
       requireHost();
       requireLobby();
-      const m = Number(msg.mode);
-      if (!PLAYER_COUNTS.includes(m)) throw new Error(`A table seats ${MIN_PLAYERS} to ${MAX_PLAYERS} players`);
-      if (room.players.length > m) throw new Error(`Too many players in the room for ${m}-player mode`);
-      room.mode = m;
-      if (m !== 4) room.teams = false; // partnerships are a four-handed game
+      const n = Number(msg.seats);
+      if (!SEAT_COUNTS.includes(n)) throw new Error(`A table is dealt ${MIN_SEATS} or ${MAX_SEATS} hands`);
+      if (room.players.length > n * MAX_PER_SEAT) {
+        throw new Error(`Too many players in the room for ${n} hands (room for ${n * MAX_PER_SEAT})`);
+      }
+      room.seatCount = n;
+      room.handSizes = null; // a different number of hands needs a different split
+      if (room.firstSeat !== null && room.firstSeat >= n) room.firstSeat = null;
+      if (n !== 4) room.teams = false; // partnerships are a four-handed game
+      reseat(room);
       break;
     }
     case 'lobby:teams':
       requireHost();
       requireLobby();
-      if (room.mode !== 4) throw new Error('Partnerships need exactly 4 players');
+      if (room.seatCount !== 4) throw new Error('Partnerships need exactly 4 hands');
       room.teams = !!msg.teams;
       break;
 
@@ -388,26 +433,26 @@ function handleAction(ws, msg) {
       requireHost();
       requireLobby();
       room.customDeal = !!msg.custom;
-      if (room.customDeal) {
-        for (const p of room.players) if (!Number.isInteger(p.handSize)) p.handSize = defaultHandSize(room, p);
-      }
+      if (room.customDeal && !room.handSizes) room.handSizes = handSizes(room);
       break;
 
     case 'lobby:handSize': {
       requireHost();
       requireLobby();
-      const target = room.players.find((p) => p.id === msg.id);
-      if (!target) throw new Error('No such player');
+      const seat = Number(msg.seat);
+      if (!Number.isInteger(seat) || seat < 0 || seat >= room.seatCount) throw new Error('No such seat');
       const n = Number(msg.size);
       if (!Number.isInteger(n) || n < 1 || n > 24) throw new Error('Hand size must be between 1 and 24');
-      target.handSize = n;
+      room.handSizes = handSizes(room);
+      room.handSizes[seat] = n;
       break;
     }
     case 'lobby:first': {
       requireHost();
       requireLobby();
-      if (msg.id && !room.players.some((p) => p.id === msg.id)) throw new Error('No such player');
-      room.firstPlayer = msg.id || null;
+      const seat = msg.seat === null || msg.seat === undefined || msg.seat === '' ? null : Number(msg.seat);
+      if (seat !== null && (!Number.isInteger(seat) || seat < 0 || seat >= room.seatCount)) throw new Error('No such seat');
+      room.firstSeat = seat;
       break;
     }
     case 'lobby:shuffle':
@@ -443,8 +488,8 @@ function handleAction(ws, msg) {
     case 'lobby:start':
       requireHost();
       requireLobby();
-      if (room.players.length !== room.mode) {
-        throw new Error(`Need exactly ${room.mode} players to start (${room.players.length} in room)`);
+      if (room.players.length < room.seatCount) {
+        throw new Error(`Need at least ${room.seatCount} players to start (${room.players.length} in room)`);
       }
       customCounts(room); // check the hand sizes add up before dealing anything
       startRound(room);
@@ -462,9 +507,11 @@ function handleAction(ws, msg) {
 
     case 'show:skip': {
       requireGame();
+      // Nobody at the partner seat is around to show a card, so the active
+      // seat is allowed to move itself on.
       const partnerSeat = Game.partnerOf(g, g.turn);
-      const partner = partnerSeat === null ? null : room.players[partnerSeat];
-      Game.skipShow(g, player.seat, { allowActive: !partner || !isConnected(room, partner) });
+      const partners = partnerSeat === null ? [] : playersAt(room, partnerSeat);
+      Game.skipShow(g, player.seat, { allowActive: !partners.some((x) => isConnected(room, x)) });
       break;
     }
     case 'guess':
@@ -499,7 +546,6 @@ function handleAction(ws, msg) {
       room.players = room.players.filter((p) => isConnected(room, p));
       reseat(room);
       if (!room.players.some((p) => p.id === room.hostId)) room.hostId = room.players[0]?.id ?? null;
-      if (!room.players.some((p) => p.id === room.firstPlayer)) room.firstPlayer = null;
       break;
 
     default:

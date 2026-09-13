@@ -1,9 +1,10 @@
 // A whole evening of games, played by machine.
 //
 // This starts the real server, sits several real clients down at real tables,
-// and plays rounds out to the end: partnerships, solo, tables of three up to
-// six, custom deals, people dropping out and coming back. Every snapshot any
-// client receives is checked for ranks it should never have been sent.
+// and plays rounds out to the end: partnerships, solo, three and four hands,
+// hands shared by two players, custom deals, people dropping out and coming
+// back. Every snapshot any client receives is checked for ranks it should
+// never have been sent.
 //
 //   npm test
 
@@ -126,9 +127,14 @@ function faceDown(g, seat) {
   return g.seats[seat].cards.map((c, i) => (c.faceUp ? -1 : i)).filter((i) => i >= 0);
 }
 
+// A shared hand is arranged once, by whichever of its two players gets there
+// first; the other has nothing left to lock.
 async function lockAll(clients) {
+  const done = new Set();
   for (const c of clients) {
     await c.waitFor((s) => s.game && s.game.phase === 'arrange', 'arrange phase');
+    if (done.has(c.you.seat)) continue;
+    done.add(c.you.seat);
     const cards = c.state.game.seats[c.you.seat].cards;
     let mine = cards.map((x) => x.id);
     // Aces may go anywhere: move any ace to the far right and expect it to be accepted.
@@ -244,10 +250,20 @@ async function main() {
     assert.match(await B.expectError({ type: 'lobby:teams', teams: true }, 'non-host teams'), /host/);
     A.send({ type: 'lobby:teams', teams: true });
     await A.waitFor((s) => s.room.teams === true);
-    // A fifth player can't join a full room.
+    // A fifth player is not turned away: they join the first hand and share it.
     const E = new Client('E');
     await E.connect();
-    assert.match(await E.expectError({ type: 'join', code, name: 'Eve' }, 'full room'), /full/);
+    E.send({ type: 'join', code, name: 'Eve' });
+    await E.waitFor((s) => s.room.players.length === 5, 'Eve seated');
+    assert.equal(E.you.seat, 0, 'the fifth player shares the first hand');
+    assert.deepEqual(
+      A.state.room.players.map((p) => p.seat),
+      [0, 1, 2, 3, 0],
+      'hands fill one player each, then pair up',
+    );
+    assert.equal(A.state.room.maxPlayers, 8, 'four hands hold eight people');
+    A.send({ type: 'lobby:kick', id: E.you.id });
+    await A.waitFor((s) => s.room.players.length === 4, 'Eve removed');
     E.close();
 
     A.send({ type: 'lobby:start' });
@@ -307,8 +323,8 @@ async function main() {
     P.send({ type: 'create', name: 'Pat' });
     await P.waitFor((s) => s.room);
     const code3 = P.state.room.code;
-    P.send({ type: 'lobby:mode', mode: 3 });
-    await P.waitFor((s) => s.room.mode === 3);
+    P.send({ type: 'lobby:seats', seats: 3 });
+    await P.waitFor((s) => s.room.seats === 3);
     const Q = new Client('Q');
     const R = new Client('R');
     for (const [c, name] of [[Q, 'Quinn'], [R, 'Rae']]) {
@@ -320,19 +336,18 @@ async function main() {
     await P.waitFor((s) => s.room.players.length === 3);
     // Host fixes hand sizes and who leads.
     P.send({ type: 'lobby:deal', custom: true });
-    await P.waitFor((s) => s.room.customDeal && s.room.players.every((p) => p.handSize));
-    const ids = P.state.room.players.map((p) => p.id);
-    P.send({ type: 'lobby:handSize', id: ids[0], size: 12 });
-    P.send({ type: 'lobby:handSize', id: ids[1], size: 8 });
-    P.send({ type: 'lobby:handSize', id: ids[2], size: 5 });
-    await P.waitFor((s) => s.room.players.map((p) => p.handSize).join() === '12,8,5', 'hand sizes');
+    await P.waitFor((s) => s.room.customDeal && s.room.hands && s.room.hands.length === 3);
+    P.send({ type: 'lobby:handSize', seat: 0, size: 12 });
+    P.send({ type: 'lobby:handSize', seat: 1, size: 8 });
+    P.send({ type: 'lobby:handSize', seat: 2, size: 5 });
+    await P.waitFor((s) => s.room.hands.join() === '12,8,5', 'hand sizes');
     assert.match(await P.expectError({ type: 'lobby:start' }, 'bad total'), /26 \(currently 25\)/);
-    P.send({ type: 'lobby:handSize', id: ids[2], size: 6 });
-    P.send({ type: 'lobby:first', id: ids[2] });
-    await P.waitFor((s) => s.room.firstPlayer === ids[2]);
+    P.send({ type: 'lobby:handSize', seat: 2, size: 6 });
+    P.send({ type: 'lobby:first', seat: 2 });
+    await P.waitFor((s) => s.room.firstSeat === 2);
     P.send({ type: 'lobby:start' });
     await lockAll(three);
-    assert.equal(P.state.game.turn, 2, 'chosen player leads');
+    assert.equal(P.state.game.turn, 2, 'chosen hand leads');
     assert.deepEqual(P.state.game.seats.map((x) => x.cards.length), [12, 8, 6], 'custom hand sizes');
     assert.equal(P.state.game.teams, false);
     assert.equal(P.state.game.step, 'guess', 'solo mode has no show step');
@@ -355,48 +370,213 @@ async function main() {
 
     for (const c of [P, Q, R2]) c.close();
 
-    // ---------------- bigger tables: 5 and 6 players, solo ----------------
-    for (const n of [5, 6]) {
-      const host = new Client(`H${n}`);
-      await host.connect();
-      host.send({ type: 'create', name: `Host${n}` });
-      await host.waitFor((s) => s.room);
-      const bigCode = host.state.room.code;
-      host.send({ type: 'lobby:mode', mode: n });
-      await host.waitFor((s) => s.room.mode === n, `mode ${n}`);
-      // Partnerships stay a four-handed game.
-      assert.match(await host.expectError({ type: 'lobby:teams', teams: true }, `teams at ${n}`), /4 players/);
-      const table = [host];
-      for (let i = 1; i < n; i++) {
-        const c = new Client(`H${n}-${i}`);
-        await c.connect();
-        c.send({ type: 'join', code: bigCode, name: `Guest${n}${i}` });
-        await c.waitFor((s) => s.room);
-        table.push(c);
-      }
-      await host.waitFor((s) => s.room.players.length === n, `${n} seated`);
-      // One too many is still one too many.
-      const spare = new Client(`H${n}-x`);
-      await spare.connect();
-      assert.match(await spare.expectError({ type: 'join', code: bigCode, name: 'Gatecrasher' }, 'full'), /full/);
-      spare.close();
-
-      host.send({ type: 'lobby:start' });
-      await lockAll(table);
-      assert.equal(host.state.game.numPlayers, n, `${n} seats in play`);
-      assert.equal(host.state.game.teams, false, `${n} players is always solo`);
-      assert.equal(
-        host.state.game.seats.reduce((a, x) => a + x.cards.length, 0),
-        26,
-        `all 26 cards dealt at ${n}`,
-      );
-      assert.equal(host.state.game.step, 'guess', `no show step at ${n}`);
-      await playTurns(table, 4);
-      const resN = await playToEnd(table);
-      assert.equal(resN.winners.length, 1, `one winner at ${n}`);
-      assert.equal(resN.losers.length, n - 1, `everyone else loses at ${n}`);
-      for (const c of table) c.close();
+    // ---------------- six players, four hands, two of them shared ----------------
+    const big = [];
+    const S0 = new Client('S0');
+    await S0.connect();
+    S0.send({ type: 'create', name: 'Sharer0' });
+    await S0.waitFor((s) => s.room);
+    const sharedCode = S0.state.room.code;
+    big.push(S0);
+    for (let i = 1; i < 6; i++) {
+      const c = new Client(`S${i}`);
+      await c.connect();
+      c.send({ type: 'join', code: sharedCode, name: `Sharer${i}` });
+      await c.waitFor((s) => s.room);
+      big.push(c);
     }
+    await S0.waitFor((s) => s.room.players.length === 6, 'six seated');
+    assert.deepEqual(
+      S0.state.room.players.map((p) => p.seat),
+      [0, 1, 2, 3, 0, 1],
+      'players five and six share hands one and two',
+    );
+    // Three hands still hold these six, and then the room is full.
+    S0.send({ type: 'lobby:seats', seats: 3 });
+    await S0.waitFor((s) => s.room.seats === 3, 'three hands');
+    assert.deepEqual(S0.state.room.players.map((p) => p.seat), [0, 1, 2, 0, 1, 2], 'six across three hands');
+    assert.equal(S0.state.room.maxPlayers, 6, 'three hands hold six people');
+    const gate = new Client('S-x');
+    await gate.connect();
+    assert.match(await gate.expectError({ type: 'join', code: sharedCode, name: 'Gatecrasher' }, 'full'), /full/);
+    gate.close();
+    S0.send({ type: 'lobby:seats', seats: 4 });
+    await S0.waitFor((s) => s.room.seats === 4, 'back to four hands');
+
+    // Lead with a shared hand, so the pair are up first.
+    S0.send({ type: 'lobby:first', seat: 0 });
+    await S0.waitFor((s) => s.room.firstSeat === 0);
+    S0.send({ type: 'lobby:start' });
+    await S0.waitFor((s) => s.game && s.game.phase === 'arrange', 'arrange phase');
+    // Two players at one hand hold the very same cards, and the hand is
+    // arranged once: the first of the pair to lock it in settles it for both.
+    await big[4].waitFor((s) => s.game && s.game.phase === 'arrange', 'arrange phase');
+    assert.deepEqual(
+      big[4].state.game.seats[0].cards.map((c) => c.id),
+      big[0].state.game.seats[0].cards.map((c) => c.id),
+      'partners at a hand see the same cards',
+    );
+    S0.send({ type: 'arrange:lock', order: S0.state.game.seats[0].cards.map((c) => c.id) });
+    await S0.waitFor((s) => s.game.seats[0].locked, 'the first hand is locked in');
+    assert.match(
+      await big[4].expectError({ type: 'arrange:lock', order: big[4].state.game.seats[0].cards.map((c) => c.id) }, 'second lock'),
+      /already locked/,
+    );
+    await lockAll(big.filter((c) => c.you.seat !== 0));
+    for (const c of big) await c.waitFor((s) => s.game.phase === 'play', 'play phase');
+    const gs = S0.state.game;
+    assert.equal(gs.numSeats, 4, 'four hands in play');
+    assert.equal(gs.seats.reduce((a, x) => a + x.cards.length, 0), 26, 'all 26 cards dealt');
+    assert.equal(gs.names[0], 'Sharer0 & Sharer4', 'a shared hand is named after both players');
+    assert.equal(gs.names[2], 'Sharer2', 'a hand played alone keeps one name');
+    assert.equal(gs.teams, false, 'sharing a hand is not the partnership game');
+    assert.equal(gs.step, 'guess', 'no show step outside partnerships');
+    // Either player at a hand may take its turn, so let the one who joined
+    // second make the opening guess.
+    assert.equal(gs.turn, 0, 'the shared hand leads');
+    const second = big[4];
+    await second.waitFor((s) => s.game.step === 'guess' && s.game.turn === 0, 'the pair are up');
+    const sIdx = faceDown(second.state.game, 1)[0];
+    second.send({ type: 'guess', target: { seat: 1, idx: sIdx }, rank: trueRank(big, 1, sIdx) });
+    await S0.waitFor((s) => s.game.seats[1].cards[sIdx].faceUp, 'the second player at a hand can guess for it');
+
+    await playTurns(big, 6);
+    const resShared = await playToEnd(big);
+    assert.equal(resShared.winners.length, 1, 'one hand wins');
+    assert.equal(resShared.losers.length, 3, 'the other three lose');
+    // A shared win counts for both of the people who played the hand.
+    const wonSeat = resShared.winners[0];
+    const wonIds = S0.state.room.players.filter((p) => p.seat === wonSeat).map((p) => p.id);
+    for (const id of wonIds) assert.equal(S0.state.tally[id].wins, 1, 'everyone at the winning hand is credited');
+    for (const c of big) c.close();
+
+    // ---------------- eight players: partnerships, every hand shared ----------------
+    const eight = [];
+    const P0 = new Client('P0');
+    await P0.connect();
+    P0.send({ type: 'create', name: 'Pair0' });
+    await P0.waitFor((s) => s.room);
+    const eightCode = P0.state.room.code;
+    eight.push(P0);
+    for (let i = 1; i < 8; i++) {
+      const c = new Client(`P${i}`);
+      await c.connect();
+      c.send({ type: 'join', code: eightCode, name: `Pair${i}` });
+      await c.waitFor((s) => s.room);
+      eight.push(c);
+    }
+    await P0.waitFor((s) => s.room.players.length === 8, 'eight seated');
+    assert.deepEqual(
+      P0.state.room.players.map((p) => p.seat),
+      [0, 1, 2, 3, 0, 1, 2, 3],
+      'eight players fill four hands two apiece',
+    );
+    const ninth = new Client('P-x');
+    await ninth.connect();
+    assert.match(await ninth.expectError({ type: 'join', code: eightCode, name: 'Latecomer' }, 'full'), /full/);
+    ninth.close();
+
+    P0.send({ type: 'lobby:teams', teams: true });
+    await P0.waitFor((s) => s.room.teams === true);
+    P0.send({ type: 'lobby:first', seat: 0 });
+    await P0.waitFor((s) => s.room.firstSeat === 0);
+    P0.send({ type: 'lobby:start' });
+    await P0.waitFor((s) => s.game && s.game.phase === 'arrange', 'arrange phase');
+    await lockAll(eight);
+    const ge = P0.state.game;
+    assert.equal(ge.teams, true, 'partnerships still run at a table of shared hands');
+    assert.equal(ge.names[0], 'Pair0 & Pair4', 'hands are named after both players');
+    assert.equal(ge.step, 'show', 'a partnership round opens with the show');
+    assert.equal(ge.turn, 0, 'the chosen hand leads');
+
+    // The partner hand is hand 3, played by Pair2 and Pair6: either of them can
+    // show, and both players of the active hand learn what was shown.
+    const shower = eight[6];
+    await shower.waitFor((s) => s.game.step === 'show' && s.game.turn === 0, 'the show');
+    const shownIdx = faceDown(shower.state.game, 2)[0];
+    shower.send({ type: 'show', idx: shownIdx });
+    for (const c of [eight[0], eight[4]]) {
+      await c.waitFor((s) => s.game.seats[2].cards[shownIdx].shown, 'both players of a hand are shown the card');
+      assert.ok(c.state.game.seats[2].cards[shownIdx].rank, 'a shown card arrives with its rank');
+    }
+    // The other team is told nothing.
+    for (const c of [eight[1], eight[5]]) {
+      assert.equal(c.state.game.seats[2].cards[shownIdx].rank, null, 'the show leaked across the table');
+    }
+
+    await playTurns(eight, 6);
+    const resEight = await playToEnd(eight);
+    assert.equal(resEight.winners.length, 2, 'a whole team of two hands wins');
+    assert.equal(resEight.winners[0] % 2, resEight.winners[1] % 2, 'the winning hands are partners');
+    // Four people played the winning team's two hands; all four are credited.
+    const creditedEight = P0.state.room.players.filter((p) => resEight.winners.includes(p.seat));
+    assert.equal(creditedEight.length, 4, 'four people to a winning partnership');
+    for (const p of creditedEight) assert.equal(P0.state.tally[p.id].wins, 1, 'every winner is tallied');
+    for (const c of eight) c.close();
+
+    // ---------------- a name with a mark in front of it ----------------
+    // "/" sets the advertisements on everybody else; "#" does the same but
+    // spares nobody. Either way the mark is stripped off the name, and a
+    // client is only ever told whether the ads are coming for it.
+    const M0 = new Client('M0');
+    await M0.connect();
+    M0.send({ type: 'create', name: 'Straight' });
+    await M0.waitFor((s) => s.room);
+    const markCode = M0.state.room.code;
+    assert.equal(M0.you.prank, false, 'an unmarked room advertises at nobody');
+
+    const M1 = new Client('M1');
+    await M1.connect();
+    M1.send({ type: 'join', code: markCode, name: '/Trigger' });
+    await M1.waitFor((s) => s.room.players.length === 2, 'the trigger is seated');
+    assert.equal(M1.you.name, 'Trigger', 'the mark is stripped off the name');
+    assert.ok(
+      M0.state.room.players.every((p) => !/^[/#]/.test(p.name)),
+      'no mark reaches the rest of the table',
+    );
+    await M0.waitFor((s) => s.you.prank === true, 'the room starts getting the ads');
+    assert.equal(M1.you.prank, false, 'the one who started it is spared');
+
+    // A refresh sends the saved token and the stripped name back; that must not
+    // quietly call the whole thing off.
+    const triggerToken = M1.you.token;
+    M1.close();
+    const M1b = new Client('M1b');
+    await M1b.connect();
+    M1b.send({ type: 'join', code: markCode, name: 'Trigger', token: triggerToken });
+    await M1b.waitFor((s) => s.you.name === 'Trigger', 'the trigger is back');
+    assert.equal(M1b.you.prank, false, 'a refresh leaves the mark where it was');
+    assert.equal(M0.state.you.prank, true, 'and leaves everyone else where they were');
+
+    // "#" asks for them too.
+    const M2 = new Client('M2');
+    await M2.connect();
+    M2.send({ type: 'join', code: markCode, name: '#Willing' });
+    await M2.waitFor((s) => s.room.players.length === 3, 'the willing one is seated');
+    assert.equal(M2.you.name, 'Willing', 'the hash is stripped off as well');
+    assert.equal(M2.you.prank, true, 'a hash takes the ads as well as handing them out');
+
+    // A second "/" spares that player too; everyone unmarked still gets them.
+    const M3 = new Client('M3');
+    await M3.connect();
+    M3.send({ type: 'join', code: markCode, name: '/Quiet' });
+    await M3.waitFor((s) => s.room.players.length === 4, 'the second trigger is seated');
+    assert.equal(M3.you.prank, false, 'neither of two triggers gets the ads');
+    assert.equal(M1b.state.you.prank, false, 'and nor does the first');
+    await M0.waitFor((s) => s.you.prank === true, 'everyone else still gets them');
+
+    // Stripped names still have to be unique.
+    const M4 = new Client('M4');
+    await M4.connect();
+    assert.match(await M4.expectError({ type: 'join', code: markCode, name: '/Straight' }, 'duplicate'), /already has that name/);
+    M4.close();
+
+    // Once the marked players have gone, so have the ads.
+    for (const id of M0.state.room.players.filter((p) => p.id !== M0.you.id).map((p) => p.id)) {
+      M0.send({ type: 'lobby:kick', id });
+    }
+    await M0.waitFor((s) => s.room.players.length === 1 && s.you.prank === false, 'the ads stop');
+    for (const c of [M1b, M2, M3, M0]) c.close();
 
     // ---------------- test mode: one browser drives four seats ----------------
     const T = new Client('T');

@@ -13,9 +13,10 @@
   const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
   // Anything the table is waiting on trails off in dots that count up.
   const DOTS = '<span class="dots"><i>.</i><i>.</i><i>.</i></span>';
-  // Table sizes a room can be set to, and how the 26 cards fall at each.
-  const PLAYER_COUNTS = [3, 4, 5, 6];
-  const SPLIT_LABEL = { 3: '9/9/8', 4: '7/7/6/6', 5: '6/5/5/5/5', 6: '5/5/4/4/4/4' };
+  // How many hands a table can be dealt, how the 26 cards fall at each, and
+  // how many people can share one hand.
+  const SEAT_COUNTS = [3, 4];
+  const SPLIT_LABEL = { 3: '9/9/8', 4: '7/7/6/6' };
 
   // Aliases, dealt out like a hand: an adjective and a noun, run together.
   const ADJECTIVES = [
@@ -209,8 +210,8 @@
   let bannerShownAt = 0;
   let awaitingKey = false;
   let keyHandler = null;
-  const BANNER_MS = 3200; // how long a banner about a single guess stays up
-  const BANNER_MIN_MS = 1100; // and the least it gets before the next one cuts in
+  const BANNER_MS = 4600; // how long a banner about a single guess stays up
+  const BANNER_MIN_MS = 1500; // and the least it gets before the next one cuts in
   const RESULT_GRACE_MS = 800; // ignore a key that was already on its way down
   const RESULT_OUT_MS = 600; // how long the end-of-round banner takes to leave
   const isResult = (b) => b.kind === 'win' || b.kind === 'lose';
@@ -247,6 +248,9 @@
     bannerShownAt = performance.now();
     el.hidden = true;
     el.className = `banner ${b.kind}`;
+    // The arrive-hold-leave animation is timed to the life of the banner, so
+    // the stylesheet is told what that is rather than guessing it.
+    el.style.setProperty('--banner-life', `${BANNER_MS}ms`);
     el.innerHTML =
       `<div class="banner-inner"><div class="banner-title">${esc(b.title)}</div><div class="banner-sub">${esc(b.sub)}</div></div>` +
       (isResult(b) ? '<div class="banner-hint">Press any key</div>' : '');
@@ -362,6 +366,121 @@
     requestAnimationFrame(frame);
   }
 
+  // --- unsolicited offers --------------------------------------------------
+  //
+  // Somebody at the table signed their name with a mark, and now the rest of
+  // the room is being advertised at. One arrives every few seconds, lands
+  // somewhere at random, and sits there until it is clicked. Whether they are
+  // coming for you is decided by the room server, which never says who is
+  // behind them.
+  const ADS = [
+    {
+      seller: 'oil-direct.example',
+      tag: 'Bulk clearance',
+      head: '400 bottles of baby oil',
+      line: 'Pallet load, unopened, collection only. Absolutely no questions.',
+      price: '£89 the lot',
+      cta: 'Claim this pallet',
+    },
+    {
+      seller: 'cucumber.example',
+      tag: 'Local grower',
+      head: 'One extra large cucumber',
+      line: 'Allotment-reared. Prize-winning girth. Photo does not do it justice.',
+      price: '£4.50',
+      cta: 'Yes, I want it',
+    },
+    {
+      seller: 'oil-direct.example',
+      tag: 'Final hours',
+      head: 'Still 400 bottles of baby oil',
+      line: 'The neighbours have started asking. Everything must go tonight.',
+      price: 'Open to offers',
+      cta: 'Take them away',
+    },
+    {
+      seller: 'cucumber.example',
+      tag: 'One careful owner',
+      head: 'Extra large cucumber (XL)',
+      line: 'Too large for the fridge. Too large for the drawer. Yours today.',
+      price: 'Free',
+      cta: 'Give it a home',
+    },
+  ];
+  const POPUP_MIN_MS = 2000; // the gap between one offer and the next
+  const POPUP_MAX_MS = 5000;
+  const POPUP_MAX = 12; // even a pile-up has its limits
+
+  let popupTimer = 0;
+
+  // Called after every render: starts the offers when the room says they are
+  // coming for you, and sweeps them away the moment they are not.
+  function syncPopups() {
+    const wanted = !!(state && state.you && state.you.prank);
+    if (wanted) {
+      if (!popupTimer) queuePopup();
+      return;
+    }
+    clearTimeout(popupTimer);
+    popupTimer = 0;
+    $('#popups').textContent = '';
+  }
+
+  function queuePopup() {
+    popupTimer = setTimeout(() => {
+      popupTimer = 0;
+      showPopup();
+      syncPopups();
+    }, POPUP_MIN_MS + Math.random() * (POPUP_MAX_MS - POPUP_MIN_MS));
+  }
+
+  function showPopup() {
+    const layer = $('#popups');
+    if (layer.childElementCount >= POPUP_MAX) return; // they can wait their turn
+    const ad = pickOne(ADS);
+    const el = document.createElement('div');
+    el.className = 'popup';
+    el.innerHTML = `
+      <div class="popup-bar">
+        <span class="popup-host">${esc(ad.seller)}</span>
+        <span class="popup-x" aria-hidden="true">&#10005;</span>
+      </div>
+      <div class="popup-body">
+        <span class="popup-tag">${esc(ad.tag)}</span>
+        <p class="popup-head">${esc(ad.head)}</p>
+        <p class="popup-line">${esc(ad.line)}</p>
+        <div class="popup-foot"><span class="popup-price">${esc(ad.price)}</span><span class="popup-cta">${esc(ad.cta)}</span></div>
+      </div>`;
+    el.title = 'Close';
+    layer.appendChild(el);
+    placePopup(el);
+  }
+
+  // Dropped anywhere it fits, never hanging off the edge of the screen.
+  function placePopup(el) {
+    const pad = 8;
+    const x = pad + Math.random() * Math.max(0, innerWidth - el.offsetWidth - pad * 2);
+    const y = pad + Math.random() * Math.max(0, innerHeight - el.offsetHeight - pad * 2);
+    el.style.left = `${Math.round(x)}px`;
+    el.style.top = `${Math.round(y)}px`;
+  }
+
+  // One click anywhere on an offer is enough to be rid of it.
+  $('#popups').addEventListener('click', (e) => {
+    const el = e.target.closest('.popup');
+    if (el) el.remove();
+  });
+
+  // Turning a phone on its side must not push them off the screen.
+  addEventListener('resize', () => {
+    for (const el of document.querySelectorAll('.popup')) {
+      const maxX = Math.max(8, innerWidth - el.offsetWidth - 8);
+      const maxY = Math.max(8, innerHeight - el.offsetHeight - 8);
+      el.style.left = `${Math.min(parseFloat(el.style.left) || 8, maxX)}px`;
+      el.style.top = `${Math.min(parseFloat(el.style.top) || 8, maxY)}px`;
+    }
+  });
+
   // --- the deal ------------------------------------------------------------
   // A round opens with the cards flying out of a deck above the table, one to
   // each player in turn, exactly as they would be dealt by hand. Anything that
@@ -432,6 +551,7 @@
     if (!state) {
       home.hidden = false;
       app.innerHTML = '';
+      syncPopups(); // nothing follows you out of a room
       return;
     }
     home.hidden = true;
@@ -447,6 +567,7 @@
     }
     app.innerHTML = state.game ? renderGame() : renderLobby();
     settleSwitches();
+    syncPopups();
     if (state.game && dealStart && performance.now() - dealStart < 26 * DEAL_STEP + DEAL_FLIGHT) animateDeal();
     const log = $('#log');
     if (log) log.scrollTop = log.scrollHeight;
@@ -549,39 +670,41 @@
   }
 
   function handTotal(r) {
-    return r.players.reduce((a, p) => a + (p.handSize || 0), 0);
+    return (r.hands || []).reduce((a, n) => a + (n || 0), 0);
   }
 
+  const playersAt = (r, seat) => r.players.filter((p) => p.seat === seat);
+  // A hand with two people at it takes a plural verb.
+  const isAre = (seat) => (playersAt(state.room, seat).length > 1 ? 'are' : 'is');
+  const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
   // -- lobby --
+  // The table is a row of hands, not a row of people. The first three or four
+  // arrivals take a hand each; anybody after that joins somebody already
+  // seated, and the two of them play that hand together.
   function renderLobby() {
     const r = state.room;
     const me = state.you;
     const isHost = r.hostId === me.id;
-    const teamsOn = r.mode === 4 && r.teams;
-    const seats = [];
-    for (let i = 0; i < r.mode; i++) {
-      const p = r.players.find((x) => x.seat === i);
-      const team = teamsOn ? `<span class="pill team-${i % 2}">Team ${i % 2 === 0 ? 'A' : 'B'}</span>` : '';
-      if (!p) {
-        seats.push(`<li class="empty"><span class="seat">${i + 1}</span><span class="name">Waiting for a player${DOTS}</span>${team}</li>`);
-        continue;
-      }
+    const teamsOn = r.seats === 4 && r.teams;
+    const full = r.players.length >= r.maxPlayers;
+    // Where the next person through the door will end up.
+    const nextSeat = full ? -1 : r.players.length % r.seats;
+
+    const occupant = (p) => {
       const isMe = p.id === me.id;
-      const selected = ui.swapPick === p.id ? 'selected' : '';
-      const above = r.players.find((x) => x.seat === i - 1);
-      const below = r.players.find((x) => x.seat === i + 1);
-      const hand = r.customDeal
-        ? isHost
-          ? `<input class="hand" type="number" min="1" max="24" value="${p.handSize ?? ''}" data-change="hand-size" data-id="${p.id}" title="Cards dealt to ${esc(p.name)}" />`
-          : `<span class="pill">${p.handSize ?? '?'} cards</span>`
-        : '';
-      seats.push(`
-        <li class="${selected}" ${isHost ? `data-action="pick-swap" data-id="${p.id}"` : ''}>
-          <span class="seat">${i + 1}</span>
+      const i = r.players.indexOf(p);
+      const above = r.players[i - 1];
+      const below = r.players[i + 1];
+      const pills = [
+        isMe ? '<span class="pill">You</span>' : '',
+        p.id === r.hostId ? '<span class="pill accent">Host</span>' : '',
+      ].join(' ');
+      return `
+        <div class="occupant ${ui.swapPick === p.id ? 'selected' : ''} ${isHost ? 'pick' : ''}"
+             ${isHost ? `data-action="pick-swap" data-id="${p.id}"` : ''}>
           <span class="dot ${p.connected ? '' : 'off'}"></span>
-          <span class="name">${esc(p.name)} ${isMe ? '<span class="pill">You</span>' : ''} ${p.id === r.hostId ? '<span class="pill accent">Host</span>' : ''} ${r.firstPlayer === p.id ? '<span class="pill accent">Leads</span>' : ''}</span>
-          ${team}
-          ${hand}
+          <span class="name">${esc(p.name)} ${pills}</span>
           ${
             isHost
               ? `<span class="order">
@@ -590,11 +713,40 @@
                 </span>`
               : ''
           }
-          ${isHost && !isMe ? `<button class="btn small ghost" data-action="kick" data-id="${p.id}" title="Remove">✕</button>` : ''}
+          ${isHost && !isMe ? `<button class="btn small ghost" data-action="kick" data-id="${p.id}" title="Remove">&#10005;</button>` : ''}
+        </div>`;
+    };
+
+    const seats = [];
+    for (let i = 0; i < r.seats; i++) {
+      const here = playersAt(r, i);
+      const badges = [
+        teamsOn ? `<span class="pill team-${i % 2}">Team ${i % 2 === 0 ? 'A' : 'B'}</span>` : '',
+        r.firstSeat === i ? '<span class="pill accent">Leads</span>' : '',
+        here.length > 1 ? '<span class="pill">Shared</span>' : '',
+      ].join(' ');
+      const hand = r.customDeal
+        ? isHost
+          ? `<input class="hand" type="number" min="1" max="24" value="${r.hands?.[i] ?? ''}" data-change="hand-size" data-seat="${i}" title="Cards dealt to hand ${i + 1}" />`
+          : `<span class="pill">${r.hands?.[i] ?? '?'} cards</span>`
+        : '';
+      // An open half of a seat is only called out where the next arrival will
+      // actually land, so the list does not read as a row of gaps.
+      let open = '';
+      if (!here.length) open = `<div class="occupant open">Waiting for a player${DOTS}</div>`;
+      else if (i === nextSeat) open = `<div class="occupant open">The next to join shares this hand${DOTS}</div>`;
+      seats.push(`
+        <li class="${here.length ? '' : 'empty'}">
+          <span class="seat">${i + 1}</span>
+          <div class="occupants">${here.map(occupant).join('')}${open}</div>
+          ${badges}
+          ${hand}
         </li>`);
     }
 
-    const ready = r.players.length === r.mode;
+    const ready = r.players.length >= r.seats;
+    const short = r.seats - r.players.length;
+    const spare = r.maxPlayers - r.players.length;
     const host = r.players.find((p) => p.id === r.hostId);
 
     return `
@@ -607,31 +759,40 @@
             <p>Friends can join at <b>${esc(location.host)}</b> with this code, or use the invite link.</p>
           </div>
           <div class="panel">
-            <h2>Players <span class="muted">(${r.players.length}/${r.mode})</span> <span class="faint" style="font-weight:400;font-size:13px">&middot; seat order is the order of play</span></h2>
+            <h2>Players <span class="muted">(${r.players.length}/${r.maxPlayers})</span><span class="panel-sub">hand order is the order of play</span></h2>
             <ul class="players">${seats.join('')}</ul>
+            <p class="panel-note">
+              ${r.seats} hands are dealt. The first ${r.seats} players get one each; anyone after that joins a player already seated, and the pair share that hand &mdash; they see the same cards, and either of them can guess when their turn comes.
+            </p>
             ${
               r.customDeal
-                ? `<p class="faint" style="font-size:12px;margin:10px 0 0">Hand sizes: ${handTotal(r)} of 26 cards${handTotal(r) === 26 ? '' : ' (must add up to 26)'}.</p>`
+                ? `<p class="panel-note">Hand sizes: ${handTotal(r)} of 26 cards${handTotal(r) === 26 ? '' : ' (must add up to 26)'}.</p>`
                 : ''
             }
-            ${isHost ? `<p class="faint" style="font-size:12px;margin:10px 0 0">Use the arrows to change the order of play, or click two players to swap them.${teamsOn ? ' Seats 1 & 3 are Team A, 2 & 4 are Team B.' : ''}</p>` : ''}
+            ${
+              isHost
+                ? `<p class="panel-note">Use the arrows to change the order of play, or click two players to swap them &mdash; that is also how you choose who shares with whom.${
+                    teamsOn ? ' Hands 1 &amp; 3 are Team A, 2 &amp; 4 are Team B.' : ''
+                  }</p>`
+                : ''
+            }
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:18px">
           <div class="panel settings">
             <h2>Settings</h2>
             <div class="setting">
-              <div><div class="label">Players</div><div class="hint">26 cards between them</div></div>
+              <div><div class="label">Hands</div><div class="hint">26 cards between them &middot; room for ${r.seats * 2} players</div></div>
               ${seg(
-                'mode',
-                PLAYER_COUNTS.map((m) => ({ label: m, attrs: `data-action="mode" data-mode="${m}"` })),
-                PLAYER_COUNTS.indexOf(r.mode),
+                'seats',
+                SEAT_COUNTS.map((m) => ({ label: m, attrs: `data-action="seats" data-seats="${m}"` })),
+                SEAT_COUNTS.indexOf(r.seats),
                 !isHost,
               )}
             </div>
             <div class="setting">
               <div><div class="label">Partnerships</div><div class="hint">${
-                r.mode === 4 ? 'Play as two pairs: seats 1 & 3 against 2 & 4' : 'Only at a table of four'
+                r.seats === 4 ? 'Hands 1 &amp; 3 play against hands 2 &amp; 4' : 'Only at a table of four hands'
               }</div></div>
               ${seg(
                 'teams',
@@ -640,12 +801,12 @@
                   { label: 'Teams', attrs: 'data-action="teams" data-teams="1"' },
                 ],
                 teamsOn ? 1 : 0,
-                !(isHost && r.mode === 4),
+                !(isHost && r.seats === 4),
               )}
             </div>
             <div class="setting">
               <div><div class="label">Deal</div><div class="hint">${
-                r.customDeal ? 'You choose how many cards each player gets' : `A random ${SPLIT_LABEL[r.mode]} split every round`
+                r.customDeal ? 'You choose how many cards each hand gets' : `A random ${SPLIT_LABEL[r.seats]} split every round`
               }</div></div>
               ${seg(
                 'deal',
@@ -659,12 +820,18 @@
             </div>
             <div class="setting">
               <div><div class="label">First to play</div><div class="hint">${
-                r.firstPlayer ? 'The same player leads every round' : 'Chosen at random, then round the table'
+                r.firstSeat !== null ? 'The same hand leads every round' : 'Chosen at random, then round the table'
               }</div></div>
               ${dropdown(
                 'first',
-                [{ value: '', label: 'Rotate' }, ...r.players.map((p) => ({ value: p.id, label: p.name }))],
-                r.firstPlayer || '',
+                [
+                  { value: '', label: 'Rotate' },
+                  ...Array.from({ length: r.seats }, (_, i) => ({
+                    value: String(i),
+                    label: `${i + 1}. ${playersAt(r, i).map((p) => p.name).join(' & ') || 'Empty'}`,
+                  })),
+                ],
+                r.firstSeat === null || r.firstSeat === undefined ? '' : String(r.firstSeat),
                 !isHost,
               )}
             </div>
@@ -674,14 +841,16 @@
                     <button class="btn" data-action="shuffle">Shuffle seats</button>
                     <button class="btn primary" data-action="start" ${ready ? '' : 'disabled'}>Start game</button>
                   </div>
-                  ${
+                  <div class="panel-note">${
                     ready
-                      ? ''
-                      : `<div class="faint" style="font-size:12px">Waiting for ${r.mode - r.players.length} more player${
-                          r.mode - r.players.length === 1 ? '' : 's'
-                        }${DOTS}</div>`
-                  }`
-                : `<div class="muted" style="font-size:13px">${esc(host?.name || 'The host')} will start the game once ${r.mode} players are here.</div>`
+                      ? spare > 0
+                        ? `Ready when you are &mdash; or hold on: ${plural(spare, 'more player')} can still join and share a hand.`
+                        : 'The table is full. Deal them in.'
+                      : `Waiting for ${plural(short, 'more player')}${DOTS}`
+                  }</div>`
+                : `<div class="panel-note lead">${esc(host?.name || 'The host')} will start the game${
+                    ready ? '' : ` once ${plural(r.seats, 'player')} are here`
+                  }.</div>`
             }
           </div>
           ${tallyPanel()}
@@ -694,7 +863,7 @@
     const g = state.game;
     const me = state.you.seat;
     const order = [];
-    for (let k = 1; k <= g.numPlayers; k++) order.push((me + k) % g.numPlayers); // me last (bottom)
+    for (let k = 1; k <= g.numSeats; k++) order.push((me + k) % g.numSeats); // me last (bottom)
 
     return `
       ${topbar(g.phase === 'ended' ? '<button class="btn small ghost" data-action="leave">Leave</button>' : '')}
@@ -722,7 +891,7 @@
     const me = state.you.seat;
     const s = g.seats[si];
     const mine = si === me;
-    const player = state.room.players.find((p) => p.seat === si);
+    const here = playersAt(state.room, si);
     const active = g.phase === 'play' && g.turn === si;
     const down = s.cards.filter((c) => !c.faceUp).length;
 
@@ -730,7 +899,11 @@
     if (mine) badges.push('<span class="pill">You</span>');
     if (g.teams) badges.push(`<span class="pill team-${s.team}">Team ${s.team === 0 ? 'A' : 'B'}</span>`);
     if (g.teams && g.partnerSeat === si) badges.push('<span class="pill accent">Partner</span>');
-    if (player && !player.connected) badges.push('<span class="pill bad">Offline</span>');
+    if (here.length > 1) badges.push('<span class="pill">Shared hand</span>');
+    // A hand with two players at it is only unattended once both have gone.
+    const away = here.filter((p) => !p.connected);
+    if (here.length && away.length === here.length) badges.push('<span class="pill bad">Offline</span>');
+    else for (const p of away) badges.push(`<span class="pill bad">${esc(p.name)} offline</span>`);
     const ended = g.phase === 'ended';
     const won = ended && g.result.winners.includes(si);
     const lost = ended && g.result.losers.includes(si);
@@ -949,15 +1122,22 @@
     const me = state.you.seat;
     const n = (s) => `<b>${esc(g.names[s])}</b>`;
     const isHost = state.room.hostId === state.you.id;
+    // Two people, one hand: worth saying out loud, because neither of them has
+    // to wait for the other.
+    const mate = playersAt(state.room, me).find((p) => p.id !== state.you.id);
+    const shared = mate
+      ? `<p class="sub">You and <b>${esc(mate.name)}</b> share this hand. You both see the same cards, and either of you can play it.</p>`
+      : '';
 
     if (g.phase === 'arrange') {
       if (g.seats[me].locked) {
         const waiting = g.seats.map((s, i) => (s.locked ? null : g.names[i])).filter(Boolean);
-        return `<p class="prompt">Locked in.</p><p class="sub">Waiting for ${esc(waiting.join(', '))}${DOTS}</p>`;
+        return `<p class="prompt">Locked in.</p><p class="sub">Waiting for ${esc(waiting.join(', '))}${DOTS}</p>${shared}`;
       }
       return `
         <p class="prompt">Arrange your cards</p>
         <p class="sub">Drag your cards into ascending order. Two cards of the same rank can go either way round, and an ace may sit anywhere; the row refuses any position the rules do not allow. Everyone will see your colours, never your ranks.</p>
+        ${shared}
         <div class="actions-row">
           <button class="btn primary" data-action="lock">Lock in</button>
           <button class="btn ghost" data-action="reset-order">Reset</button>
@@ -990,8 +1170,8 @@
     const myTurn = g.turn === me;
     if (g.step === 'show') {
       const partner = g.partnerSeat;
-      const activePartner = (g.turn + 2) % g.numPlayers;
-      const partnerPlayer = state.room.players.find((p) => p.seat === activePartner);
+      const activePartner = (g.turn + 2) % g.numSeats;
+      const partnerAway = playersAt(state.room, activePartner).every((p) => !p.connected);
       if (partner === g.turn) {
         body = `
           <p class="prompt">Show ${n(g.turn)} one of your cards</p>
@@ -999,11 +1179,11 @@
           <div class="actions-row"><button class="btn" data-action="skip-show">Show nothing</button></div>`;
       } else if (myTurn) {
         body = `<p class="prompt">Waiting for ${n(activePartner)} to show you a card${DOTS}</p>`;
-        if (partnerPlayer && !partnerPlayer.connected) {
+        if (partnerAway) {
           body += `<div class="actions-row"><button class="btn" data-action="skip-show">Partner is offline — skip</button></div>`;
         }
       } else {
-        body = `<p class="prompt">${n(activePartner)} is showing ${n(g.turn)} a card${DOTS}</p>`;
+        body = `<p class="prompt">${n(activePartner)} ${isAre(activePartner)} showing ${n(g.turn)} a card${DOTS}</p>`;
       }
     } else if (g.step === 'guess') {
       if (myTurn) {
@@ -1015,10 +1195,11 @@
         } else {
           body = `
             <p class="prompt">Your turn: guess a card</p>
-            <p class="sub">Click one of ${g.teams ? "your opponents'" : "another player's"} face-down cards, then name a rank. Get it right and you go again; get it wrong and the turn simply passes.</p>`;
+            <p class="sub">Click one of ${g.teams ? "your opponents'" : "the other hands'"} face-down cards, then name a rank. Get it right and you go again; get it wrong and the turn simply passes.</p>
+            ${shared}`;
         }
       } else {
-        body = `<p class="prompt">${n(g.turn)} is guessing${DOTS}</p>`;
+        body = `<p class="prompt">${n(g.turn)} ${isAre(g.turn)} guessing${DOTS}</p>`;
       }
     }
 
@@ -1070,10 +1251,10 @@
         return render();
       case 'dd-pick':
         ui.openMenu = null;
-        if (d.dd === 'first') send({ type: 'lobby:first', id: d.value || null });
+        if (d.dd === 'first') send({ type: 'lobby:first', seat: d.value === '' ? null : Number(d.value) });
         return render();
-      case 'mode':
-        return send({ type: 'lobby:mode', mode: Number(d.mode) });
+      case 'seats':
+        return send({ type: 'lobby:seats', seats: Number(d.seats) });
       case 'teams':
         return send({ type: 'lobby:teams', teams: d.teams === '1' });
       case 'shuffle':
@@ -1129,9 +1310,9 @@
   $('#app').addEventListener('change', (e) => {
     const el = e.target.closest('[data-change]');
     if (!el || !state) return;
-    if (el.dataset.change === 'hand-size') send({ type: 'lobby:handSize', id: el.dataset.id, size: Number(el.value) });
+    if (el.dataset.change === 'hand-size') send({ type: 'lobby:handSize', seat: Number(el.dataset.seat), size: Number(el.value) });
   });
-  // Typing a hand size into a player's row must not count as picking that row.
+  // Typing a hand size into a hand's row must not count as picking that row.
   $('#app').addEventListener(
     'click',
     (e) => {

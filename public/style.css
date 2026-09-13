@@ -314,6 +314,21 @@ input[type="number"]::-webkit-inner-spin-button { appearance: none; -webkit-appe
 .rules ol { padding-left: 18px; margin: 10px 0 0; animation: unfold 0.35s ease-out; }
 .rules li { margin: 6px 0; }
 .rules li::marker { color: var(--brass); font-family: var(--mono); }
+/* The long version of the rules: a short lede, then a numbered walk through a
+   round, set close enough to read in one sitting. */
+.rules-body { margin-top: 10px; font-size: 14px; line-height: 1.65; animation: unfold 0.35s ease-out; }
+.rules-body p { margin: 8px 0; }
+.rules-body b { color: var(--ivory); font-weight: 600; }
+.rules-lede {
+  color: var(--text); border-left: 2px solid var(--brass-dim); padding: 2px 0 2px 14px;
+  margin: 0 0 18px !important;
+}
+.rules-body h3 {
+  margin: 20px 0 6px; font-family: var(--caps); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--brass);
+}
+.rules-body ul { margin: 8px 0; padding-left: 18px; }
+.rules-body ul li::marker { color: var(--brass-dim); }
 @keyframes unfold { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 
 /* --- layout ---------------------------------------------------------------- */
@@ -360,7 +375,13 @@ main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; position: rel
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 .players li.empty { color: var(--text-faint); border-style: dashed; border-color: var(--brass-faint); background: transparent; }
-.players li.selected { border-color: var(--brass); box-shadow: 0 0 0 3px var(--brass-faint); }
+/* One hand to a row; one or two people inside it, stacked. */
+.players .occupants { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.players .occupant { display: flex; align-items: center; gap: 10px; padding: 2px 0; border-radius: 3px; }
+.players .occupant.pick { cursor: pointer; }
+.players .occupant.selected { box-shadow: 0 0 0 3px var(--brass-faint); background: rgba(212, 175, 90, 0.06); }
+.players .occupant.open { color: var(--text-faint); font-size: 13px; font-style: italic; padding-left: 18px; }
+.players .occupants .occupant + .occupant { border-top: 1px dashed rgba(255, 255, 255, 0.07); padding-top: 8px; }
 .players .seat {
   position: relative; z-index: 0; width: 26px; height: 26px; flex: none;
   display: grid; place-items: center; font-family: var(--mono); font-size: 11px; color: var(--brass); font-weight: 500;
@@ -376,6 +397,18 @@ main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; position: rel
 .players .order .btn { padding: 4px 7px 3px; font-size: 10px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--jade); display: inline-block; box-shadow: 0 0 8px rgba(95, 154, 132, 0.7); flex: none; }
 .dot.off { background: var(--text-faint); box-shadow: none; }
+/* The tail of a panel heading, and the small print underneath a panel. Both
+   are set here rather than inline so a narrow screen can give them room. */
+.panel-sub {
+  font-family: var(--mono); font-weight: 400; font-size: 13px; color: var(--text-faint);
+  letter-spacing: 0; text-transform: none;
+}
+.panel-sub::before { content: "\00b7"; margin: 0 6px 0 8px; }
+.panel-note {
+  margin: 10px 0 0; font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--text-faint);
+}
+.panel-note + .panel-note { margin-top: 6px; }
+.panel-note.lead { font-family: inherit; font-size: 13px; line-height: 1.55; color: var(--text-dim); }
 .settings { display: flex; flex-direction: column; gap: 16px; }
 .setting { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .setting .label { font-weight: 600; }
@@ -580,9 +613,9 @@ main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; position: rel
 .banner::before {
   content: ""; position: absolute; left: -10%; right: -10%; top: 50%; height: clamp(150px, 26vh, 240px);
   transform: translateY(-50%) rotate(-3deg) scaleX(0);
-  animation: band 3.2s cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
+  animation: band var(--banner-life, 3.2s) cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
 }
-.banner-inner { position: relative; text-align: center; padding: 0 24px; animation: slam 3.2s cubic-bezier(0.2, 0.9, 0.2, 1) forwards; transform: rotate(-3deg); }
+.banner-inner { position: relative; text-align: center; padding: 0 24px; animation: slam var(--banner-life, 3.2s) cubic-bezier(0.2, 0.9, 0.2, 1) forwards; transform: rotate(-3deg); }
 .banner-title { font-family: var(--display); font-size: clamp(64px, 13vw, 132px); line-height: 1; letter-spacing: 0.06em; text-transform: uppercase; }
 .banner-sub { font-family: var(--caps); font-weight: 700; font-size: clamp(13px, 1.6vw, 17px); letter-spacing: 0.14em; text-transform: uppercase; margin-top: 12px; }
 .banner.good::before { background: linear-gradient(90deg, transparent, var(--brass) 12%, var(--brass-bright) 50%, var(--brass) 88%, transparent); }
@@ -591,7 +624,7 @@ main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; position: rel
 .banner.bad::before { background: linear-gradient(90deg, transparent, #14161f 12%, #1f2230 50%, #14161f 88%, transparent); box-shadow: 0 0 0 1px rgba(229, 100, 107, 0.4); }
 .banner.bad .banner-title { color: var(--bad); text-shadow: 0 0 40px rgba(229, 100, 107, 0.5); }
 .banner.bad .banner-sub { color: var(--text-dim); }
-.banner.exposed { background: radial-gradient(ellipse at center, rgba(142, 31, 46, 0.35), transparent 70%); animation: flash 3.2s ease-out forwards; }
+.banner.exposed { background: radial-gradient(ellipse at center, rgba(142, 31, 46, 0.35), transparent 70%); animation: flash var(--banner-life, 3.2s) ease-out forwards; }
 .banner.exposed::before { background: linear-gradient(90deg, transparent, var(--burgundy) 12%, #b02a3c 50%, var(--burgundy) 88%, transparent); }
 .banner.exposed .banner-title { color: var(--ivory); text-shadow: 0 4px 0 rgba(0, 0, 0, 0.35), 0 0 40px rgba(255, 255, 255, 0.35); }
 .banner.exposed .banner-sub { color: #f7d3d8; }
@@ -624,6 +657,48 @@ main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; position: rel
 @keyframes hintout { to { opacity: 0; } }
 
 .confetti { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 55; pointer-events: none; }
+
+/* --- unsolicited offers ---------------------------------------------------
+   Cheap advertisements in the house colours, dropped at random over the room
+   and cleared only by being clicked. The layer itself lets every click
+   through; the offers on it do not. They sit below the banners, so the end of
+   a round still reads over the top of the pile. */
+.popups { position: fixed; inset: 0; z-index: 45; pointer-events: none; }
+.popup {
+  position: fixed; width: 264px; pointer-events: auto; cursor: pointer;
+  background: linear-gradient(180deg, rgba(26, 31, 47, 0.99), rgba(14, 17, 26, 0.99));
+  border: 1px solid var(--brass-dim); border-radius: 3px;
+  box-shadow: var(--shadow), 0 0 0 1px rgba(0, 0, 0, 0.6), 0 18px 38px rgba(0, 0, 0, 0.55);
+  overflow: hidden; animation: popin 0.24s var(--bounce) both;
+}
+.popup:hover { border-color: var(--brass); }
+.popup-bar {
+  display: flex; align-items: center; gap: 8px; padding: 5px 8px 4px;
+  background: linear-gradient(180deg, rgba(212, 175, 90, 0.16), rgba(212, 175, 90, 0.05));
+  border-bottom: 1px solid rgba(212, 175, 90, 0.25);
+}
+.popup-host {
+  flex: 1; min-width: 0; font-family: var(--mono); font-size: 10px; color: var(--text-dim);
+  letter-spacing: 0.04em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.popup-x { flex: none; width: 16px; height: 16px; display: grid; place-items: center; font-size: 10px; color: var(--brass); border: 1px solid var(--brass-dim); border-radius: 2px; }
+.popup:hover .popup-x { background: var(--brass); color: var(--ink); border-color: var(--brass); }
+.popup-body { padding: 10px 12px 11px; }
+.popup-tag {
+  display: inline-block; font-family: var(--caps); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--bad);
+  border: 1px solid rgba(229, 100, 107, 0.4); border-radius: 2px; padding: 2px 6px 1px;
+}
+.popup-head { margin: 7px 0 4px; font-family: var(--caps); font-size: 15px; font-weight: 700; line-height: 1.25; color: var(--ivory); }
+.popup-line { margin: 0; font-size: 12px; line-height: 1.45; color: var(--text-dim); }
+.popup-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 9px; }
+.popup-price { font-family: var(--mono); font-size: 13px; color: var(--brass-bright); }
+.popup-cta {
+  font-family: var(--caps); font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink); background: var(--brass);
+  padding: 5px 9px 4px; border-radius: 2px; white-space: nowrap;
+}
+@keyframes popin { from { opacity: 0; transform: scale(0.9) translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes band {
   0% { transform: translateY(-50%) rotate(-3deg) scaleX(0); opacity: 1; }
   9.2% { transform: translateY(-50%) rotate(-3deg) scaleX(1.03); }
@@ -674,7 +749,7 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
   .card, .drag-clone { transition: none; }
   body::before, body::after, .screen.home::before, .screen.home::after, .dots i { animation: none; }
   .seg::before { transition: none; }
-  .dd-menu, .toast, .rules ol { animation: none; }
+  .dd-menu, .toast, .rules ol, .rules-body, .popup { animation: none; }
 }
 
 /* --- side panel ------------------------------------------------------------ */
@@ -763,8 +838,15 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
   body { font-size: 16px; }
   .eyebrow { font-size: 10px; letter-spacing: 0.12em; }
   .topbar { padding-bottom: 12px; margin-bottom: 14px; }
-  .codebox { flex-wrap: wrap; row-gap: 8px; }
   .topbar .brand .wordmark { font-size: 22px; }
+
+  /* The room code takes the first line and the buttons share the second,
+     rather than each item trailing off the end of the one before it. */
+  .codebox { display: grid; grid-template-columns: auto 1fr; gap: 8px; width: 100%; align-items: center; }
+  .codebox .btn { justify-content: center; text-align: center; }
+  /* Nothing beside it (mid-round, where there is no Leave): take the width. */
+  .codebox .btn:nth-child(3):last-child { grid-column: 1 / -1; }
+
   .seat-row { padding: 12px 14px 10px; }
   .seat-head { margin-bottom: 10px; }
   /* Slightly smaller cards so a full hand of seven black cards fits one line;
@@ -778,7 +860,33 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
   .card .idx { bottom: -16px; }
   .testbar { font-size: 11px; gap: 6px; }
   .banner-sub { letter-spacing: 0.1em; }
-  .setting { flex-wrap: wrap; }
-  .dd-btn { min-width: 130px; }
-  .seg button { padding: 7px 11px 5px; }
+
+  /* Every setting is a label with its control underneath. Side by side, the
+     longer hints wrap and the controls stop lining up with one another. */
+  .settings { gap: 20px; }
+  .setting { flex-direction: column; align-items: stretch; gap: 10px; }
+  .setting .seg { display: flex; width: 100%; }
+  .setting .dropdown { width: 100%; }
+  .seg button { padding: 8px 11px 6px; }
+
+  /* A heading's tail reads better on its own line than trailing off the count,
+     and the small print under a panel gets room to breathe. */
+  .panel-sub { display: block; margin-top: 6px; }
+  .panel-sub::before { content: none; }
+  .panel-note { font-size: 12.5px; line-height: 1.65; margin-top: 12px; }
+
+  /* Room for two names in one hand without the pills crowding the arrows. */
+  .players li { padding: 10px; gap: 8px; }
+  .players .occupants { gap: 8px; }
+  .players .occupant { flex-wrap: wrap; row-gap: 4px; }
+  .players .occupant .name { min-width: 0; }
+
+  /* An offer should not swallow the whole screen. */
+  .popup { width: min(244px, calc(100vw - 28px)); }
+  .popup-head { font-size: 14px; }
+  .popup-line { font-size: 11.5px; }
+
+  /* The long rules read as a column of short paragraphs on a phone. */
+  .rules-body { font-size: 14.5px; }
+  .rules-body h3 { margin-top: 22px; }
 }

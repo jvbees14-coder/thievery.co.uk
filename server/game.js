@@ -1,19 +1,25 @@
 // ---------------------------------------------------------------------------
 // The rules of Thievery.
 //
-// A round runs in three stages. Everyone arranges their hand in ascending
-// order and locks it in; the rows are then turned face down, showing every
-// card's colour but no ranks. Play passes round the table: in a partnership
-// game your partner may first show you one of their cards in private, then
-// you point at an opponent's card and name a rank. A hit flips the card and
-// earns another go, a miss passes the turn. The first player or team with
-// every opponent card face up takes the round.
+// A round runs in three stages. Every hand is arranged in ascending order and
+// locked in; the rows are then turned face down, showing every card's colour
+// but no ranks. Play passes round the table: in a partnership game the
+// partner hand may first show the active hand one of its cards, then the
+// active hand points at an opponent's card and names a rank. A hit flips the
+// card and earns another go, a miss passes the turn. The first hand or team
+// with every opponent card face up takes the round.
 //
-// Hidden ranks stay here. Each player is only ever handed the cards they are
+// A "seat" here is one hand, not one person. Up to two players can share a
+// seat: they see the same cards, and either of them may act when the seat's
+// turn comes round. Everything below is written in terms of seats, and the
+// room server hands in a name for each one — "Ivy" on a seat of one, "Ivy &
+// Sam" on a seat of two.
+//
+// Hidden ranks stay here. Each seat is only ever handed the cards it is
 // entitled to see.
 // ---------------------------------------------------------------------------
 
-import { dealSplit, shuffle, PLAYER_COUNTS, MIN_PLAYERS, MAX_PLAYERS } from './deal.js';
+import { dealSplit, shuffle, SEAT_COUNTS, MIN_SEATS, MAX_SEATS } from './deal.js';
 
 export const RANK_NAMES = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 export const rankName = (r) => RANK_NAMES[r - 1];
@@ -41,21 +47,21 @@ export function makeDeck() {
 
 // --- starting a round ------------------------------------------------------
 
-export function createGame({ numPlayers, teams, startSeat, names, counts: customCounts }) {
-  if (!PLAYER_COUNTS.includes(numPlayers)) throw new Error(`Thievery.co.uk supports ${MIN_PLAYERS} to ${MAX_PLAYERS} players`);
-  // Partnerships are a four-handed game: everyone has exactly one partner,
+export function createGame({ numSeats, teams, startSeat, names, counts: customCounts }) {
+  if (!SEAT_COUNTS.includes(numSeats)) throw new Error(`A table is dealt ${MIN_SEATS} or ${MAX_SEATS} hands`);
+  // Partnerships are a four-handed game: every seat has exactly one partner,
   // sitting opposite, and exactly two opponents.
-  const useTeams = !!teams && numPlayers === 4;
+  const useTeams = !!teams && numSeats === 4;
   const deck = shuffle(makeDeck());
   // The host can fix a hand size for every seat; otherwise the round uses the
-  // shuffled split for this many players.
-  const counts = customCounts ? [...customCounts] : dealSplit(numPlayers);
-  if (counts.length !== numPlayers || counts.reduce((a, b) => a + b, 0) !== 26 || counts.some((c) => c < 1)) {
+  // shuffled split for this many hands.
+  const counts = customCounts ? [...customCounts] : dealSplit(numSeats);
+  if (counts.length !== numSeats || counts.reduce((a, b) => a + b, 0) !== 26 || counts.some((c) => c < 1)) {
     throw new Error('Hand sizes must add up to 26 cards');
   }
   const seats = [];
   let p = 0;
-  for (let s = 0; s < numPlayers; s++) {
+  for (let s = 0; s < numSeats; s++) {
     const hand = deck.slice(p, p + counts[s]);
     p += counts[s];
     // Everyone starts from a tidy ascending row, black before red where two
@@ -64,7 +70,7 @@ export function createGame({ numPlayers, teams, startSeat, names, counts: custom
     seats.push({ cards: hand.map((c) => ({ ...c, faceUp: false })), locked: false });
   }
   const g = {
-    numPlayers,
+    numSeats,
     teams: useTeams,
     names: [...names],
     phase: 'arrange', // arrange | play | ended
@@ -75,14 +81,14 @@ export function createGame({ numPlayers, teams, startSeat, names, counts: custom
     result: null, // { winners: [seat], losers: [seat], text }
     log: [],
   };
-  log(g, `Round started. ${g.names[startSeat]} goes first. Arrange your cards in ascending order (aces can go anywhere).`, { kind: 'turn' });
+  log(g, `Round started. First to play: ${g.names[startSeat]}. Arrange your cards in ascending order (aces can go anywhere).`, { kind: 'turn' });
   return g;
 }
 
 // --- who is on whose side --------------------------------------------------
 
 export const teamOf = (g, seat) => (g.teams ? seat % 2 : seat);
-export const partnerOf = (g, seat) => (g.teams ? (seat + 2) % g.numPlayers : null);
+export const partnerOf = (g, seat) => (g.teams ? (seat + 2) % g.numSeats : null);
 export const isOpponent = (g, a, b) => a !== b && teamOf(g, a) !== teamOf(g, b);
 
 export function teamLabel(g, team) {
@@ -131,7 +137,7 @@ function startTurn(g) {
   if (g.teams) {
     const partner = partnerOf(g, g.turn);
     if (faceDownCount(g, partner) === 0) {
-      log(g, `${g.names[partner]} has no face-down cards to show.`);
+      log(g, `Nothing left to show: every card at ${g.names[partner]} is already face up.`);
       g.step = 'guess';
     } else {
       g.step = 'show';
@@ -142,7 +148,7 @@ function startTurn(g) {
 }
 
 function nextTurn(g) {
-  g.turn = (g.turn + 1) % g.numPlayers;
+  g.turn = (g.turn + 1) % g.numSeats;
   startTurn(g);
 }
 
@@ -151,7 +157,9 @@ function nextTurn(g) {
 export function lockOrder(g, seat, order) {
   if (g.phase !== 'arrange') throw new Error('Not in the arranging phase');
   const s = g.seats[seat];
-  if (s.locked) throw new Error('You have already locked in your cards');
+  // Either player at a shared seat can lock the hand in; the first to press
+  // settles it for both of them.
+  if (s.locked) throw new Error('That hand is already locked in');
   if (!Array.isArray(order) || order.length !== s.cards.length) throw new Error('Invalid card order');
   const byId = new Map(s.cards.map((c) => [c.id, c]));
   const newCards = order.map((id) => byId.get(id));
@@ -215,7 +223,7 @@ export function guess(g, seat, target, rank) {
   const ts = target?.seat;
   const idx = target?.idx;
   if (!Number.isInteger(ts) || !Number.isInteger(idx)) throw new Error('Pick a card to guess');
-  if (ts < 0 || ts >= g.numPlayers) throw new Error('No such seat');
+  if (ts < 0 || ts >= g.numSeats) throw new Error('No such seat');
   if (!isOpponent(g, seat, ts)) throw new Error("You can only guess an opponent's card");
   const c = g.seats[ts].cards[idx];
   if (!c) throw new Error('No such card');
@@ -234,7 +242,7 @@ export function guess(g, seat, target, rank) {
       return;
     }
     // A hit is free: the card turns over and the same player goes again.
-    log(g, `${desc} — correct! ${g.names[seat]} guesses again.`, { kind: 'good', event });
+    log(g, `${desc} — correct! Another guess for ${g.names[seat]}.`, { kind: 'good', event });
     g.step = 'guess';
   } else {
     // A miss costs nothing but the turn.
@@ -248,7 +256,7 @@ export function guess(g, seat, target, rank) {
 // The round is over the moment somebody has nothing left to guess at: every
 // card belonging to their opponents is already face up.
 function findWinner(g) {
-  for (let seat = 0; seat < g.numPlayers; seat++) {
+  for (let seat = 0; seat < g.numSeats; seat++) {
     if (guessTargets(g, seat).length === 0) return seat;
   }
   return null;
@@ -262,7 +270,7 @@ function finishRound(g, seat) {
   const losers = all.filter((s) => teamOf(g, s) !== team);
   const text = g.teams
     ? `Every ${teamLabel(g, 1 - team)} card is face up — ${teamLabel(g, team)} win the round!`
-    : `Every other card is face up — ${g.names[seat]} wins the round!`;
+    : `Every other card is face up — the round goes to ${g.names[seat]}!`;
   g.result = { winners, losers, text };
   // Nothing is secret once the round is over.
   g.seats.forEach((s) => s.cards.forEach((c) => (c.faceUp = true)));
@@ -271,9 +279,11 @@ function finishRound(g, seat) {
 
 // --- what a player is allowed to see ---------------------------------------
 //
-// You see a rank if the card is yours, if it is face up, or if your partner
-// has shown it to you. Nothing else. Colours stay hidden until everyone has
-// locked their row in, so nobody gets a head start while people arrange.
+// A seat sees a rank if the card is its own, if it is face up, or if its
+// partner has shown it. Nothing else. Two players sharing a seat get the same
+// view as each other, because they are playing the same hand. Colours stay
+// hidden until every row is locked in, so nobody gets a head start while
+// people arrange.
 
 export function viewFor(g, viewer) {
   const known = new Set(g.known[viewer] || []);
@@ -299,7 +309,7 @@ export function viewFor(g, viewer) {
   });
   return {
     phase: g.phase,
-    numPlayers: g.numPlayers,
+    numSeats: g.numSeats,
     teams: g.teams,
     names: g.names,
     turn: g.turn,
