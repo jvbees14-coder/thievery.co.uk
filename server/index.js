@@ -5,9 +5,11 @@
 // written to disk. A room is a four-character code, the people sitting at it,
 // their settings and whatever round is in progress. A table is dealt three or
 // four hands; players fill those hands one each, and anybody arriving after
-// that pairs up with someone already seated and shares their hand. Anything
-// that changes at a table is pushed straight back out to everyone sitting at
-// it, cut down to what each person is allowed to know.
+// that pairs up with someone already seated and shares their hand. Hands
+// nobody has taken can be dealt to the house instead, so one or two people can
+// sit down to a full table. Anything that changes at a table is pushed
+// straight back out to everyone sitting at it, cut down to what each person is
+// allowed to know.
 //
 // Rooms survive a refresh or a dropped connection, and disappear on their own
 // once nobody has been connected for an hour.
@@ -20,9 +22,12 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 import * as Game from './game.js';
+import * as Bot from './bot.js';
 import { shuffle, DEAL_SPLITS, SEAT_COUNTS, MIN_SEATS, MAX_SEATS, MAX_PER_SEAT } from './deal.js';
 
-const PORT = Number(process.env.PORT) || 3000;
+// PORT=0 is a real answer — "any port going" — so it must not be read as no
+// answer at all.
+const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
@@ -111,6 +116,7 @@ function createRoom() {
     customDeal: false, // the host has fixed a hand size for every seat
     handSizes: null, // those fixed sizes, one per seat
     firstSeat: null, // the seat that leads every round, or nobody: random, then rotating
+    botLevel: Bot.DEFAULT_BOT_LEVEL, // how hard the house plays
     players: [], // in order of play; the first few sit alone, the rest pair up
     game: null,
     tally: {}, // wins so far this session
@@ -127,11 +133,45 @@ function createRoom() {
 // joins a hand that is already taken. Moving people up and down the list —
 // the arrows and the swap in the lobby — is therefore also how the host
 // decides who ends up sharing with whom.
+//
+// Bots only ever sit at a hand nobody wanted, and never share one: a hand is
+// played by the house or by people, not by both. So the people are seated
+// first, exactly as they would be at a table with no bots at it, and the bots
+// take what is left — keeping the hand they were dealt into where they can,
+// moving along where they cannot, and giving their place up altogether once
+// enough people turn up to want it.
 function reseat(room) {
-  room.players.forEach((p, i) => (p.seat = i % room.seatCount));
+  const folk = room.players.filter((p) => !p.bot);
+  const bots = room.players.filter((p) => p.bot);
+  folk.forEach((p, i) => (p.seat = i % room.seatCount));
+  if (!bots.length) return;
+  const taken = new Set(folk.map((p) => p.seat));
+  const seated = new Set();
+  for (const b of bots) {
+    if (b.seat >= 0 && b.seat < room.seatCount && !taken.has(b.seat)) {
+      taken.add(b.seat);
+      seated.add(b);
+    }
+  }
+  for (const b of bots) {
+    if (seated.has(b)) continue;
+    for (let s = 0; s < room.seatCount; s++) {
+      if (taken.has(s)) continue;
+      b.seat = s;
+      taken.add(s);
+      seated.add(b);
+      break;
+    }
+  }
+  if (seated.size !== bots.length) room.players = room.players.filter((p) => !p.bot || seated.has(p));
 }
 
 const capacity = (room) => room.seatCount * MAX_PER_SEAT;
+const people = (room) => room.players.filter((p) => !p.bot);
+const freeSeats = (room) => {
+  const taken = new Set(room.players.map((p) => p.seat));
+  return Array.from({ length: room.seatCount }, (_, i) => i).filter((i) => !taken.has(i));
+};
 const playersAt = (room, seat) => room.players.filter((p) => p.seat === seat);
 // What the table calls a seat: one name, or two run together.
 const seatName = (room, seat) => playersAt(room, seat).map((p) => p.name).join(' & ') || `Seat ${seat + 1}`;
@@ -140,8 +180,10 @@ const seatNames = (room) => Array.from({ length: room.seatCount }, (_, i) => sea
 function removePlayer(room, player) {
   const i = room.players.indexOf(player);
   if (i >= 0) room.players.splice(i, 1);
+  // The house does not keep playing to an empty room.
+  if (!people(room).length) room.players.length = 0;
   reseat(room);
-  if (room.hostId === player.id) room.hostId = room.players[0]?.id ?? null;
+  if (room.hostId === player.id) room.hostId = people(room)[0]?.id ?? null;
   if (room.players.length === 0) room.emptySince = Date.now();
 }
 
@@ -156,12 +198,15 @@ function lobbyView(room) {
     customDeal: room.customDeal,
     hands: room.customDeal ? handSizes(room) : null,
     firstSeat: room.firstSeat,
+    botLevel: room.botLevel,
+    freeSeats: room.game ? [] : freeSeats(room),
     round: room.round,
     test: !!room.test,
     players: room.players.map((p) => ({
       id: p.id,
       name: p.name,
       seat: p.seat,
+      bot: !!p.bot,
       connected: isConnected(room, p),
     })),
   };
@@ -196,6 +241,7 @@ function readName(typed) {
 const pranked = (room, player) => player.mark !== '/' && room.players.some((p) => p.mark);
 
 function isConnected(room, p) {
+  if (p.bot) return true; // the house is never away from the table
   return room.test ? room.players.some((x) => x.ws) : p.connected;
 }
 
@@ -244,6 +290,116 @@ function sendState(room) {
       tally: room.tally,
     });
   }
+  scheduleBots(room);
+}
+
+// --- the house players -----------------------------------------------------
+//
+// A bot is handed `Game.viewFor(...)` for its own seat and nothing else, so it
+// plays on exactly what a person in that chair would know. The arithmetic
+// takes a few milliseconds; the pause in front of it is there so a bot reads
+// as somebody thinking rather than a trap springing shut.
+
+const BOT_THINK_MS = [3000, 5000]; // a fresh turn
+const BOT_STREAK_MS = [1700, 3000]; // and each further guess in the same run
+const BOT_SHOW_MS = [2200, 3600];
+const BOT_ARRANGE_MS = [1200, 2600];
+
+// The test suite plays whole rounds out and would rather not sit through the
+// good manners, so the pauses can be wound down for it.
+const BOT_PACE = Number(process.env.THIEVERY_BOT_PACE) || 1;
+const between = ([lo, hi]) => (lo + Math.random() * (hi - lo)) * BOT_PACE;
+const botAt = (room, seat) => room.players.find((p) => p.bot && p.seat === seat) || null;
+
+// Where the table stands, as one string. A bot wakes up, finds the table has
+// moved on and its key no longer matches, and quietly drops what it was doing.
+function botKey(room, job) {
+  const g = room.game;
+  if (!g) return null;
+  if (job.what === 'arrange') return `${room.round}|${g.phase}|arrange|${job.seat}|${g.seats[job.seat].locked}`;
+  return [room.round, g.phase, g.step, g.turn, g.log.length, job.what, job.seat].join('|');
+}
+
+function scheduleBots(room) {
+  const g = room.game;
+  if (!g || g.phase === 'ended') return;
+  // Nobody is watching, so there is nothing to play to. The moment somebody
+  // comes back the next snapshot starts the table up again.
+  if (!people(room).some((x) => x.connected)) return;
+  const jobs = [];
+  if (g.phase === 'arrange') {
+    for (const p of room.players) {
+      if (p.bot && !g.seats[p.seat].locked) jobs.push({ what: 'arrange', seat: p.seat, wait: BOT_ARRANGE_MS });
+    }
+  } else if (g.step === 'show') {
+    const partner = Game.partnerOf(g, g.turn);
+    if (partner === null) {
+      // nothing to do
+    } else if (botAt(room, partner)) {
+      jobs.push({ what: 'show', seat: partner, wait: BOT_SHOW_MS });
+    } else if (botAt(room, g.turn) && !playersAt(room, partner).some((x) => isConnected(room, x))) {
+      // Nobody is there to show the bot a card, so it moves itself on.
+      jobs.push({ what: 'skipShow', seat: g.turn, wait: BOT_SHOW_MS });
+    }
+  } else if (g.step === 'guess' && botAt(room, g.turn)) {
+    // A bot in the middle of a run does not stop to think as long each time.
+    const streak = g.log[g.log.length - 1]?.kind === 'good';
+    jobs.push({ what: 'guess', seat: g.turn, wait: streak ? BOT_STREAK_MS : BOT_THINK_MS });
+  }
+  for (const job of jobs) {
+    const p = botAt(room, job.seat);
+    if (!p) continue;
+    const key = botKey(room, job);
+    if (p.thinking === key) continue; // already on its way
+    p.thinking = key;
+    setTimeout(() => runBot(room, p, job, key), between(job.wait));
+  }
+}
+
+// Whatever happens, a bot has to leave the table playable: if its own move is
+// refused, it plays the dullest legal thing instead rather than sitting there
+// with the turn in its hand.
+function botFallback(room, player, job) {
+  const g = room.game;
+  if (job.what === 'arrange') return Game.lockOrder(g, player.seat, g.seats[player.seat].cards.map((c) => c.id));
+  if (job.what === 'show' || job.what === 'skipShow') return Game.skipShow(g, player.seat, { allowActive: true });
+  const open = Game.guessTargets(g, player.seat);
+  if (open.length) Game.guess(g, player.seat, open[0], 1 + Math.floor(Math.random() * 13));
+}
+
+async function runBot(room, player, job, key) {
+  const stale = () => rooms.get(room.code) !== room || player.thinking !== key || botKey(room, job) !== key;
+  if (stale()) return;
+  let move;
+  try {
+    const view = Game.viewFor(room.game, player.seat);
+    if (job.what === 'arrange') move = await Bot.chooseArrange(view, player.seat, room.botLevel);
+    else if (job.what === 'show') move = await Bot.chooseShow(view, player.seat, room.botLevel);
+    else if (job.what === 'guess') move = await Bot.chooseGuess(view, player.seat, room.botLevel);
+  } catch (err) {
+    console.error(`bot ${player.name} thinking in ${room.code}:`, err.message);
+  }
+  // Thinking gives the event loop its turn, so the table may have moved on.
+  if (stale()) return;
+  player.thinking = null;
+  try {
+    if (job.what === 'arrange') Game.lockOrder(room.game, player.seat, move);
+    else if (job.what === 'show') {
+      if (move === null) Game.skipShow(room.game, player.seat);
+      else Game.showCard(room.game, player.seat, move);
+    } else if (job.what === 'skipShow') Game.skipShow(room.game, player.seat, { allowActive: true });
+    else if (move) Game.guess(room.game, player.seat, move.target, move.rank);
+    else botFallback(room, player, job);
+  } catch (err) {
+    console.error(`bot ${player.name} playing in ${room.code}:`, err.message);
+    try {
+      botFallback(room, player, job);
+    } catch (err2) {
+      console.error(`bot ${player.name} stuck in ${room.code}:`, err2.message);
+    }
+  }
+  applyTally(room);
+  sendState(room);
 }
 
 function startRound(room) {
@@ -328,7 +484,9 @@ function handleJoin(ws, msg) {
 
   if (!name) throw new Error('Enter a display name first');
   if (room.game) throw new Error('That game has already started');
-  if (room.players.length >= capacity(room)) throw new Error(`That room is full (${capacity(room)} players)`);
+  // Bots are not counted: a person arriving takes a hand off the house before
+  // they are ever turned away.
+  if (people(room).length >= capacity(room)) throw new Error(`That room is full (${capacity(room)} players)`);
   if (room.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) {
     throw new Error('Someone in that room already has that name');
   }
@@ -369,7 +527,7 @@ function handleDisconnect(ws) {
   ws.ctx = null;
   player.ws = null;
   player.connected = false;
-  if (room.players.every((p) => !p.connected)) room.emptySince = Date.now();
+  if (!people(room).some((x) => x.connected)) room.emptySince = Date.now();
   if (!room.game && !room.test) {
     setTimeout(() => {
       if (!player.connected && rooms.get(room.code) === room && !room.game && room.players.includes(player)) {
@@ -412,7 +570,7 @@ function handleAction(ws, msg) {
       requireLobby();
       const n = Number(msg.seats);
       if (!SEAT_COUNTS.includes(n)) throw new Error(`A table is dealt ${MIN_SEATS} or ${MAX_SEATS} hands`);
-      if (room.players.length > n * MAX_PER_SEAT) {
+      if (people(room).length > n * MAX_PER_SEAT) {
         throw new Error(`Too many players in the room for ${n} hands (room for ${n * MAX_PER_SEAT})`);
       }
       room.seatCount = n;
@@ -455,10 +613,41 @@ function handleAction(ws, msg) {
       room.firstSeat = seat;
       break;
     }
+    case 'lobby:bot': {
+      requireHost();
+      requireLobby();
+      if (room.test) throw new Error('A test room comes with its own table');
+      const free = freeSeats(room);
+      if (!free.length) throw new Error('Every hand at this table has somebody at it already');
+      const want = msg.seat === undefined || msg.seat === null ? null : Number(msg.seat);
+      const seat = want !== null && free.includes(want) ? want : free[0];
+      const taken = new Set(room.players.map((p) => p.name.toLowerCase()));
+      room.players.push({
+        id: randomId(6),
+        token: null,
+        name: Bot.botName(taken),
+        mark: null,
+        bot: true,
+        seat,
+        ws: null,
+        connected: true,
+      });
+      reseat(room);
+      break;
+    }
+    case 'lobby:botLevel': {
+      requireHost();
+      requireLobby();
+      if (!Bot.BOT_LEVELS.includes(msg.level)) throw new Error('Pick how hard the house should play');
+      room.botLevel = msg.level;
+      break;
+    }
     case 'lobby:shuffle':
       requireHost();
       requireLobby();
+      // Only the people move: a bot sits where the seating left it.
       shuffle(room.players);
+      room.players.sort((a, b) => (a.bot ? 1 : 0) - (b.bot ? 1 : 0));
       reseat(room);
       break;
 
@@ -468,6 +657,7 @@ function handleAction(ws, msg) {
       const a = room.players.findIndex((p) => p.id === msg.a);
       const b = room.players.findIndex((p) => p.id === msg.b);
       if (a < 0 || b < 0) throw new Error('No such player');
+      if (room.players[a].bot || room.players[b].bot) throw new Error('A bot plays the hand it was dealt into');
       [room.players[a], room.players[b]] = [room.players[b], room.players[a]];
       reseat(room);
       break;
@@ -477,6 +667,10 @@ function handleAction(ws, msg) {
       requireLobby();
       const target = room.players.find((p) => p.id === msg.id);
       if (!target || target === player) throw new Error('No such player');
+      if (target.bot) {
+        removePlayer(room, target);
+        break;
+      }
       const tws = target.ws;
       removePlayer(room, target);
       if (tws) {
@@ -597,11 +791,14 @@ setInterval(() => {
 setInterval(() => {
   const now = Date.now();
   for (const [code, room] of rooms) {
-    const anyone = room.players.some((p) => p.connected);
+    const anyone = people(room).some((p) => p.connected);
     if (!anyone && now - room.emptySince > ROOM_TTL_MS) rooms.delete(code);
   }
 }, 60_000);
 
+// PORT=0 asks the machine for whatever port is going, which is how the tests
+// get one to themselves; the line below reports the port actually in use
+// rather than the one that was asked for.
 server.listen(PORT, () => {
-  console.log(`Thievery.co.uk is running at http://localhost:${PORT}`);
+  console.log(`Thievery.co.uk is running at http://localhost:${server.address().port}`);
 });

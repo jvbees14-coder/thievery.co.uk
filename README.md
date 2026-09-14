@@ -1,9 +1,10 @@
 # Thievery.co.uk
 
-**Thievery.co.uk** is an online version of the deduction card game, for three
-to eight players. Everyone plays from their own phone, tablet or laptop, in
-real time, with no downloads and no accounts. One person creates a room,
-shares the 4-letter code, and the game begins once everybody is in.
+**Thievery.co.uk** is an online version of the deduction card game, for one to
+eight players. Everyone plays from their own phone, tablet or laptop, in real
+time, with no downloads and no accounts. One person creates a room, shares the
+4-letter code, and the game begins once everybody is in. If there are only one
+or two of you, the empty hands can be dealt to the house instead.
 
 Play at <https://thievery.co.uk>.
 
@@ -33,6 +34,10 @@ hands, and no more: a fifth hand would be too small to hide anything in.
 So a table of four hands holds anywhere between four and eight people, and a
 table of three holds between three and six.
 
+Any hand nobody has taken can go to the house, so a table of one or two people
+still plays as a full three- or four-handed game. See [Playing the
+house](#playing-the-house).
+
 ## Starting a game
 
 1. Open the site and press **Create game**. You become the host and get a room
@@ -45,7 +50,9 @@ table of three holds between three and six.
    is already seated.
 4. Once there is at least one player per hand, the host presses **Start game**.
    There is no need to fill the table first — latecomers can only be dealt in
-   from the next round, though, so it is worth waiting for anyone close by.
+   from the next round, though, so it is worth waiting for anyone close by. If
+   nobody else is coming, press **Deal the house in** beside each empty hand
+   and play the bots instead.
 
 ### Host options in the lobby
 
@@ -62,6 +69,8 @@ table of three holds between three and six.
   two names to swap them, or press **Shuffle seats**. Since hands are filled
   one player each and then round again, this is also how you decide who ends
   up sharing with whom.
+- **The house**: how hard the bots play — **Novice**, **Sharp** or
+  **Ruthless**. It applies to every bot at the table.
 - **First to play**: pick a hand to lead every round, or leave it on
   **Rotate** so the lead passes round the table each round.
 - **Deal**: either a random split — 9/9/8 at three hands, 7/7/6/6 at four — or
@@ -115,6 +124,54 @@ press a key or click — nothing is whisked away before you have read it.
 At the end of a round all the cards are revealed. The host can start a new
 round in the same room or return everyone to the lobby. A running tally of
 wins per player is kept for the session.
+
+## Playing the house
+
+An empty hand can be dealt to a bot, so one or two people can sit down to a
+full table. Press **Deal the house in** on any hand nobody has taken. Bots
+arrange their hands, take their turns, and show their partner a card in a
+partnership game, exactly as a person would.
+
+A bot always plays a hand on its own — it never shares one — and it gives its
+hand up the moment a real player arrives to want it, so filling the table with
+bots never keeps a friend out of the room. The host can also send one home with
+the **×** beside its name. Bots count towards the tally of wins like anybody
+else, and they sit still while nobody is connected.
+
+### How hard they play
+
+One setting covers every bot at the table:
+
+- **Novice** knows the rule and no more. It picks a card that caught its eye,
+  works out what the cards either side of it allow, and takes one of those at
+  random. It never looks at the next card along to see whether that is the
+  better bet, and it leaves its own aces sitting at the front of its hand where
+  anyone who has played a couple of rounds will look for them first.
+- **Sharp** shops around. Because every hand is in ascending order, a face-down
+  card is fenced in by the face-up cards either side of it; this one works that
+  fence out for every card on the table, finds the narrowest, and plays the
+  best rank it leaves.
+- **Ruthless** reads the whole table at once. Ascending rows, wild aces, every
+  colour on show and all 26 cards accounted for between the hands: together
+  that is enough to put a number on every hidden card at the table, and it
+  plays the best of them. Roughly two guesses in five are dead certainties by
+  the time it makes them. It is a very hard game.
+
+Everybody, bots included, also remembers every guess that has already missed —
+those are said out loud at the table, and they narrow things down as surely as
+a card turning over.
+
+A bot is handed exactly the same view of the table as a person sitting in its
+chair: its own cards, whatever is face up, and anything its partner has shown
+it. Hidden ranks are no more available to a bot than to anybody else, so the
+harder levels are winning on arithmetic rather than on a peek at the deck.
+
+### How long they take
+
+A bot waits three to five seconds before playing, so the table does not snap
+back at you — and a shorter beat, under three seconds, for each further guess
+in a run it is already on. The thinking itself takes a few milliseconds; the
+pause is manners.
 
 ## Fair play
 
@@ -174,7 +231,9 @@ this folder deploy it to Render, Fly.io, or any Docker host.
 
 ### Test mode
 
-To try the game out on your own, create a game with the display name
-**Test67**. The room fills with four players and starts straight away, and a
-bar at the top of the page lets you switch between the seats so you can play
-every hand yourself. A dot marks whose turn it is.
+To play a real game on your own, deal the house into the empty hands — see
+[Playing the house](#playing-the-house). Test mode is for looking at the game
+from every side at once: create a game with the display name **Test67** and the
+room fills with four players and starts straight away, with a bar at the top of
+the page to switch between the seats so you can play every hand yourself. A dot
+marks whose turn it is.

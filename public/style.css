@@ -227,6 +227,7 @@ input[type="number"]::-webkit-inner-spin-button { appearance: none; -webkit-appe
 .pill.accent { color: var(--brass); border-color: var(--brass-dim); background: var(--brass-ghost); }
 .pill.good { color: var(--jade-bright); border-color: rgba(95, 154, 132, 0.5); }
 .pill.bad { color: var(--bad); border-color: rgba(229, 100, 107, 0.45); }
+.pill.bot { color: var(--jade-pale); border-color: rgba(95, 154, 132, 0.45); background: rgba(95, 154, 132, 0.08); }
 .pill.team-0 { color: var(--team-a); border-color: rgba(127, 211, 204, 0.4); }
 .pill.team-1 { color: var(--team-b); border-color: rgba(233, 162, 184, 0.4); }
 
@@ -380,7 +381,9 @@ main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; position: rel
 .players .occupant { display: flex; align-items: center; gap: 10px; padding: 2px 0; border-radius: 3px; }
 .players .occupant.pick { cursor: pointer; }
 .players .occupant.selected { box-shadow: 0 0 0 3px var(--brass-faint); background: rgba(212, 175, 90, 0.06); }
-.players .occupant.open { color: var(--text-faint); font-size: 13px; font-style: italic; padding-left: 18px; }
+.players .occupant.open { color: var(--text-faint); font-size: 13px; font-style: italic; padding-left: 18px; gap: 12px; }
+.players .occupant.open span { flex: 1; }
+.players .occupant.open .btn { font-style: normal; flex: none; }
 .players .occupants .occupant + .occupant { border-top: 1px dashed rgba(255, 255, 255, 0.07); padding-top: 8px; }
 .players .seat {
   position: relative; z-index: 0; width: 26px; height: 26px; flex: none;
@@ -397,6 +400,8 @@ main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; position: rel
 .players .order .btn { padding: 4px 7px 3px; font-size: 10px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--jade); display: inline-block; box-shadow: 0 0 8px rgba(95, 154, 132, 0.7); flex: none; }
 .dot.off { background: var(--text-faint); box-shadow: none; }
+/* A hand played by the house: lit, but in brass rather than jade. */
+.dot.bot { background: var(--brass); box-shadow: 0 0 8px rgba(212, 175, 90, 0.6); }
 /* The tail of a panel heading, and the small print underneath a panel. Both
    are set here rather than inline so a narrow screen can give them room. */
 .panel-sub {

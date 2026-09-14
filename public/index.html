@@ -5,22 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark" />
   <title>Thievery — Free Online Multiplayer Card Game</title>
-  <meta name="description" content="Thievery is a free online deduction card game for 3–8 players. Share a room code, guess your opponents' hidden cards and flip them all before they flip yours. Five or more players pair up and share a hand." />
+  <meta name="description" content="Thievery is a free online deduction card game for 1–8 players. Share a room code, guess your opponents' hidden cards and flip them all before they flip yours. Five or more players pair up and share a hand; play on your own against the house." />
   <link rel="canonical" href="https://thievery.co.uk/" />
 
   <!-- How a link to the table looks when it is passed around. -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Thievery.co.uk" />
   <meta property="og:title" content="Thievery — Free Online Multiplayer Card Game" />
-  <meta property="og:description" content="Steal their secrets before they steal yours. A free online deduction card game for 3–8 players — no sign-up, just a room code." />
+  <meta property="og:description" content="Steal their secrets before they steal yours. A free online deduction card game for 1–8 players — no sign-up, just a room code." />
   <meta property="og:url" content="https://thievery.co.uk/" />
   <meta property="og:image" content="https://thievery.co.uk/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="Thievery.co.uk — a free online deduction card game for 3 to 8 players" />
+  <meta property="og:image:alt" content="Thievery.co.uk — a free online deduction card game for 1 to 8 players" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Thievery — Free Online Multiplayer Card Game" />
-  <meta name="twitter:description" content="Steal their secrets before they steal yours. A free online deduction card game for 3–8 players — no sign-up, just a room code." />
+  <meta name="twitter:description" content="Steal their secrets before they steal yours. A free online deduction card game for 1–8 players — no sign-up, just a room code." />
   <meta name="twitter:image" content="https://thievery.co.uk/og-image.png" />
 
   <script type="application/ld+json">
@@ -31,10 +31,10 @@
     "alternateName": "Thievery.co.uk",
     "url": "https://thievery.co.uk/",
     "image": "https://thievery.co.uk/og-image.png",
-    "description": "Thievery is a free online multiplayer deduction card game for 3 to 8 players. The cards are dealt into three or four hands; up to four people play a hand each, and a fifth player and beyond shares a hand with someone already seated. Everyone arranges their hand face down in ascending order; on your turn you pick an opponent's hidden card and guess its rank. Flip every opponent card face up to win the round.",
+    "description": "Thievery is a free online multiplayer deduction card game for 1 to 8 players. The cards are dealt into three or four hands; up to four people play a hand each, and a fifth player and beyond shares a hand with someone already seated. A hand nobody has taken can be played by the house at one of three levels, so one or two people can still play a full table. Everyone arranges their hand face down in ascending order; on your turn you pick an opponent's hidden card and guess its rank. Flip every opponent card face up to win the round.",
     "genre": ["Card game", "Deduction", "Multiplayer"],
-    "playMode": "MultiPlayer",
-    "numberOfPlayers": { "@type": "QuantitativeValue", "minValue": 3, "maxValue": 8 },
+    "playMode": ["SinglePlayer", "MultiPlayer"],
+    "numberOfPlayers": { "@type": "QuantitativeValue", "minValue": 1, "maxValue": 8 },
     "gamePlatform": "Web browser",
     "applicationCategory": "GameApplication",
     "operatingSystem": "Any browser",
@@ -63,7 +63,7 @@
     <div class="home-card">
       <p class="eyebrow">Est. for cheats, sleuths &amp; card sharps</p>
       <h1 class="logo wordmark">Thievery<em>.co.uk</em></h1>
-      <p class="tagline">Steal their secrets before they steal yours. A deduction card game for 3&ndash;8 players, one room code.</p>
+      <p class="tagline">Steal their secrets before they steal yours. A deduction card game for 1&ndash;8 players, one room code.</p>
 
       <div class="field">
         <label for="name">Your name</label>
@@ -101,6 +101,13 @@
             Up to four people play a hand each. A fifth player, and anyone after that, joins somebody already
             seated: the two of them share that hand, see exactly the same cards, and either can play it when
             their turn comes round. So a table of four hands holds anywhere from four to eight people.
+          </p>
+          <p>
+            A hand nobody has taken can be dealt to <b>the house</b> instead, so one or two of you can still
+            play a full table. Bots come at three levels &mdash; a <b>Novice</b> who only plays the colours, a
+            <b>Sharp</b> one who reads the row, and a <b>Ruthless</b> one who counts the whole table &mdash;
+            and they see no more of your cards than anybody else does. A bot hands its seat straight back
+            when a real player turns up to want it.
           </p>
 
           <h3>2. Arrange your hand</h3>

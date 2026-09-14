@@ -78,6 +78,10 @@ export function createGame({ numSeats, teams, startSeat, names, counts: customCo
     turn: startSeat,
     step: null, // show | guess
     known: seats.map(() => []), // cards a partner has shown this player, as "seat:idx"
+    // Every guess that missed, as [seat, idx, rank]. It is said out loud at
+    // the table and it is in the log, so it belongs to everybody: that card is
+    // not that rank, and nobody need try it again.
+    misses: [],
     result: null, // { winners: [seat], losers: [seat], text }
     log: [],
   };
@@ -245,7 +249,8 @@ export function guess(g, seat, target, rank) {
     log(g, `${desc} — correct! Another guess for ${g.names[seat]}.`, { kind: 'good', event });
     g.step = 'guess';
   } else {
-    // A miss costs nothing but the turn.
+    // A miss costs nothing but the turn — but it is on the record.
+    g.misses.push([ts, idx, rank]);
     log(g, `${desc} — incorrect.`, { kind: 'bad', event });
     nextTurn(g);
   }
@@ -317,6 +322,7 @@ export function viewFor(g, viewer) {
     partnerSeat: partnerOf(g, viewer),
     result: g.result,
     seats,
+    misses: g.misses,
     logTotal: g.log.length, // how many lines exist in total, so new ones can be spotted
     log: g.log.slice(-250).map((e) => ({
       kind: e.kind || null,

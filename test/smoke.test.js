@@ -15,16 +15,24 @@ import { fileURLToPath } from 'node:url';
 import WebSocket from 'ws';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PORT = 3999 + Math.floor(Math.random() * 500);
+// The server is asked for any free port rather than a guessed one, so two runs
+// at once cannot land on the same one and confuse each other.
+let PORT = 0;
 
 function startServer() {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [path.join(__dirname, '..', 'server', 'index.js')], {
-      env: { ...process.env, PORT: String(PORT) },
+      // Bots pause for three to five seconds before playing; a test that plays
+      // twenty-six cards out does not want to wait for all of it.
+      env: { ...process.env, PORT: '0', THIEVERY_BOT_PACE: '0.012' },
       stdio: ['ignore', 'pipe', 'inherit'],
     });
     child.stdout.on('data', (d) => {
-      if (String(d).includes('running')) resolve(child);
+      const at = String(d).match(/running at http:\/\/localhost:(\d+)/);
+      if (at) {
+        PORT = Number(at[1]);
+        resolve(child);
+      }
     });
     child.on('exit', (code) => reject(new Error(`server exited early (${code})`)));
   });
@@ -61,8 +69,17 @@ class Client {
     this.ws.send(JSON.stringify(obj));
   }
   // Resolve when a state matching `pred` arrives (checks the current one first).
+  //
+  // Even when the state to hand already matches, the wait goes through
+  // setImmediate rather than resolving on the spot. Awaiting a promise that is
+  // already settled only drains the microtask queue, so a loop whose every
+  // wait is satisfied by what it has already got never gives the event loop a
+  // turn — which means no socket message is ever delivered, the state it is
+  // waiting to change never changes, and the loop spins until the heap is
+  // gone. Handing control back once here costs nothing and makes that
+  // impossible.
   waitFor(pred, what = 'state', ms = 4000) {
-    if (this.state && pred(this.state)) return Promise.resolve(this.state);
+    if (this.state && pred(this.state)) return new Promise((r) => setImmediate(() => r(this.state)));
     return new Promise((resolve, reject) => {
       const t = setTimeout(() => reject(new Error(`${this.label}: timed out waiting for ${what}`)), ms);
       this.waiters.push((s) => {
@@ -132,8 +149,11 @@ function faceDown(g, seat) {
 async function lockAll(clients) {
   const done = new Set();
   for (const c of clients) {
-    await c.waitFor((s) => s.game && s.game.phase === 'arrange', 'arrange phase');
-    if (done.has(c.you.seat)) continue;
+    // Wait for the deal, not for the arranging: a hand shared by two people is
+    // arranged once, and by the time the second of them is asked the last hand
+    // may already have gone in and the round started without them.
+    await c.waitFor((s) => s.game && (s.game.phase === 'arrange' || s.game.phase === 'play'), 'the deal');
+    if (done.has(c.you.seat) || c.state.game.phase !== 'arrange') continue;
     done.add(c.you.seat);
     const cards = c.state.game.seats[c.you.seat].cards;
     let mine = cards.map((x) => x.id);
@@ -216,6 +236,82 @@ async function playTurns(clients, maxTurns, { alwaysCorrect = false } = {}) {
   return ref.state.game;
 }
 
+// A guess that keeps the round moving without helping it along. Best is one
+// that cannot possibly land: there is one card of each rank in each colour, so
+// a rank this seat holds itself is not also in somebody else's row. A rank
+// already ruled out at that card is no use — the table has been told about
+// those — and once they run out, anything still legal will do, even if it
+// lands. `sure` says which kind came back.
+function dullGuess(c) {
+  const g = c.state.game;
+  const me = c.you.seat;
+  const mine = g.seats[me].cards;
+  const ruled = (si, idx, rank) => g.misses.some(([s2, i2, r]) => s2 === si && i2 === idx && r === rank);
+  let any = null;
+  for (let si = 0; si < g.numSeats; si++) {
+    if (si === me || g.seats[si].team === g.seats[me].team) continue;
+    for (let idx = 0; idx < g.seats[si].cards.length; idx++) {
+      if (g.seats[si].cards[idx].faceUp) continue;
+      const held = mine.find((x) => x.color === g.seats[si].cards[idx].color && !ruled(si, idx, x.rank));
+      if (held) return { target: { seat: si, idx }, rank: held.rank, sure: true };
+      if (any) continue;
+      for (let r = 1; r <= 13; r++) {
+        if (!ruled(si, idx, r)) {
+          any = { target: { seat: si, idx }, rank: r, sure: false };
+          break;
+        }
+      }
+    }
+  }
+  return any;
+}
+
+// Sit at a table of bots, miss every guess on purpose, and let the house play
+// the round out. Records which seats guessed and which asked us for a show.
+//
+// "Not our turn yet" and "the round is over" have to be told apart carefully:
+// every client is sent the same snapshot but does not always read it at the
+// same moment, so the only sound test for the end of a round is `ended`.
+async function missUntilOver(clients, guessed = new Set(), showed = new Set()) {
+  const ref = clients[0];
+  const over = (s) => s.game.phase === 'ended';
+  for (const c of clients) await c.waitFor((s) => s.game.phase !== 'arrange', 'everyone is in play');
+  // A round of deliberate misses runs long, and the log a client is sent is
+  // trimmed to its last 250 lines — so progress is counted off `logTotal`,
+  // which is the whole of it.
+  for (let step = 0; step < 2000 && !over(ref.state); step++) {
+    const g = ref.state.game;
+    const partner = g.numSeats === 4 && g.teams ? (g.turn + 2) % 4 : null;
+    const us = clients.find((c) => c.you.seat === g.turn);
+    const asked = g.step === 'show' && clients.find((c) => c.you.seat === partner);
+    const before = g.logTotal;
+    if (asked) {
+      showed.add(g.turn);
+      await asked.waitFor((s) => over(s) || (s.game.step === 'show' && s.game.turn === g.turn), 'the show');
+      if (over(asked.state)) break;
+      asked.send({ type: 'show:skip' });
+    } else if (g.step === 'guess' && us) {
+      await us.waitFor((s) => over(s) || (s.game.turn === us.you.seat && s.game.step === 'guess'), 'our turn');
+      if (over(us.state)) break;
+      const bad = dullGuess(us);
+      assert.ok(bad, 'something legal left to guess at');
+      us.send({ type: 'guess', target: bad.target, rank: bad.rank });
+      await ref.waitFor((s) => over(s) || s.game.logTotal > before, 'the guess lands somewhere');
+      if (bad.sure) {
+        assert.ok(
+          ref.state.game.misses.some(([s2, i2, r]) => s2 === bad.target.seat && i2 === bad.target.idx && r === bad.rank),
+          'a miss goes on the public record',
+        );
+      }
+      continue;
+    } else {
+      guessed.add(g.turn);
+    }
+    await ref.waitFor((s) => over(s) || s.game.logTotal > before, 'the house plays', 15000);
+  }
+  for (const c of clients) await c.waitFor(over, 'the round to end', 15000);
+}
+
 // Play correct guesses until the round ends; every client sees the result.
 async function playToEnd(clients) {
   const g = await playTurns(clients, Infinity, { alwaysCorrect: true });
@@ -256,6 +352,9 @@ async function main() {
     E.send({ type: 'join', code, name: 'Eve' });
     await E.waitFor((s) => s.room.players.length === 5, 'Eve seated');
     assert.equal(E.you.seat, 0, 'the fifth player shares the first hand');
+    // Everyone is told at the same moment but does not read it at the same
+    // moment, so wait for the seat being asked about before asking it.
+    await A.waitFor((s) => s.room.players.length === 5, 'Ada sees Eve arrive');
     assert.deepEqual(
       A.state.room.players.map((p) => p.seat),
       [0, 1, 2, 3, 0],
@@ -369,6 +468,148 @@ async function main() {
     await P.waitFor((s) => !s.game && s.room.players.length === 3, 'back to lobby');
 
     for (const c of [P, Q, R2]) c.close();
+
+    // ---------------- one player, three bots ----------------
+    // A table nobody else turned up to. The house takes the empty hands, plays
+    // them off the same view of the table a person in that chair would get,
+    // and hands them back the moment somebody arrives to want one.
+    const H = new Client('H');
+    await H.connect();
+    H.send({ type: 'create', name: 'Lonely' });
+    await H.waitFor((s) => s.room);
+    const botCode = H.state.room.code;
+    assert.deepEqual(H.state.room.freeSeats, [1, 2, 3], 'three hands are going begging');
+
+    for (let i = 0; i < 3; i++) H.send({ type: 'lobby:bot' });
+    await H.waitFor((s) => s.room.players.length === 4, 'the house sits down');
+    const botsOf = (c) => c.state.room.players.filter((p) => p.bot);
+    assert.equal(botsOf(H).length, 3, 'three bots');
+    assert.deepEqual(H.state.room.players.map((p) => p.seat).sort(), [0, 1, 2, 3], 'a hand each');
+    assert.equal(new Set(H.state.room.players.map((p) => p.name)).size, 4, 'no two players share a name');
+    assert.deepEqual(H.state.room.freeSeats, [], 'the table is full');
+    assert.match(await H.expectError({ type: 'lobby:bot' }, 'a fifth bot'), /already/);
+
+    // A person arriving takes a hand off the house rather than being turned away.
+    const H2 = new Client('H2');
+    await H2.connect();
+    H2.send({ type: 'join', code: botCode, name: 'Company' });
+    await H2.waitFor((s) => s.room.players.length === 4, 'company seated');
+    await H.waitFor((s) => s.room.players.filter((p) => p.bot).length === 2, 'a bot gives up its hand');
+    assert.deepEqual(
+      H.state.room.players.filter((p) => !p.bot).map((p) => p.seat),
+      [0, 1],
+      'the people take the first hands',
+    );
+    assert.match(
+      await H.expectError({ type: 'lobby:swap', a: H.you.id, b: botsOf(H)[0].id }, 'swapping a bot'),
+      /dealt into/,
+    );
+    // The host can send one home, and deal another in.
+    H.send({ type: 'lobby:kick', id: botsOf(H)[0].id });
+    await H.waitFor((s) => s.room.players.length === 3, 'a bot sent home');
+    H.send({ type: 'lobby:bot', seat: 3 });
+    await H.waitFor((s) => s.room.players.length === 4, 'and another dealt in');
+
+    // Fewer hands than there are bodies at the table: the people keep theirs
+    // and the house gives up whatever is left over.
+    H.send({ type: 'lobby:seats', seats: 3 });
+    await H.waitFor((s) => s.room.seats === 3, 'three hands');
+    assert.equal(H.state.room.players.length, 3, 'a bot gives its hand up to make the table fit');
+    assert.equal(H.state.room.players.filter((p) => p.bot).length, 1, 'two people and one bot');
+    assert.deepEqual(H.state.room.players.map((p) => p.seat).sort(), [0, 1, 2], 'and everyone left has a hand each');
+    H.send({ type: 'lobby:seats', seats: 4 });
+    H.send({ type: 'lobby:bot' });
+    await H.waitFor((s) => s.room.seats === 4 && s.room.players.length === 4, 'back to four hands');
+
+    assert.match(await H2.expectError({ type: 'lobby:botLevel', level: 'ruthless' }, 'non-host level'), /host/);
+    assert.match(await H.expectError({ type: 'lobby:botLevel', level: 'cheating' }, 'bad level'), /how hard/);
+    H.send({ type: 'lobby:botLevel', level: 'ruthless' });
+    await H.waitFor((s) => s.room.botLevel === 'ruthless', 'the house plays it straight');
+
+    H.send({ type: 'lobby:start' });
+    for (const c of [H, H2]) {
+      await c.waitFor((s) => s.game && s.game.phase === 'arrange', 'arrange phase');
+      c.send({ type: 'arrange:lock', order: c.state.game.seats[c.you.seat].cards.map((x) => x.id) });
+    }
+    // The bots arrange their own hands, in their own time.
+    await H.waitFor((s) => s.game.phase === 'play', 'the bots lock in too', 12000);
+    assert.ok(
+      H.state.game.seats.every((x) => x.locked),
+      'every hand is locked in',
+    );
+
+    // Play the round out. Neither person can see a bot's cards, so both guess
+    // as dully as the table allows and leave the work to the house.
+    const seenGuessing = new Set();
+    await missUntilOver([H, H2], seenGuessing);
+    assert.equal(H.state.game.phase, 'ended', 'the bots played the round out');
+    assert.ok(seenGuessing.size >= 2, 'both bots took turns');
+    // The round goes to the last hand still holding anything, so missing every
+    // guess on purpose is no bar to winning it — what matters is that the
+    // house did the work and that the winner is tallied either way.
+    const botSeats = new Set(H.state.room.players.filter((p) => p.bot).map((p) => p.seat));
+    assert.ok(
+      H.state.game.log.some((e) => e.event?.type === 'guess' && e.event.correct && botSeats.has(e.event.by)),
+      'the house turned cards over',
+    );
+    const winner = H.state.room.players.find((p) => H.state.game.result.winners.includes(p.seat));
+    assert.ok(winner, 'somebody took the round');
+    assert.equal(H.state.tally[winner.id].wins, 1, 'and a bot is tallied like anybody else');
+    // Nothing a bot was holding leaked to a person while it was hidden: every
+    // snapshot either client saw has already been checked for that.
+
+    // ---------------- a bot for a partner ----------------
+    // Partnerships with the house: the bot opposite shows you a card at the
+    // start of your turn, and asks you for one at the start of its own.
+    H.send({ type: 'toLobby' });
+    await H.waitFor((s) => !s.game, 'back to the lobby');
+    H.send({ type: 'lobby:kick', id: H2.you.id });
+    await H2.waitFor((s) => !s.room, 'company sent home').catch(() => {});
+    await H.waitFor((s) => s.room.players.filter((p) => !p.bot).length === 1, 'on our own again');
+    H.send({ type: 'lobby:bot' });
+    H.send({ type: 'lobby:teams', teams: true });
+    H.send({ type: 'lobby:first', seat: 0 });
+    await H.waitFor((s) => s.room.teams && s.room.players.length === 4 && s.room.firstSeat === 0, 'partnerships set');
+    assert.equal(H.you.seat, 0, 'we lead');
+
+    H.send({ type: 'lobby:start' });
+    await H.waitFor((s) => s.game && s.game.phase === 'arrange', 'arrange phase');
+    H.send({ type: 'arrange:lock', order: H.state.game.seats[0].cards.map((x) => x.id) });
+    await H.waitFor((s) => s.game.phase === 'play', 'the bots lock in', 12000);
+    assert.equal(H.state.game.teams, true, 'partnerships are on');
+    assert.equal(H.state.game.partnerSeat, 2, 'the hand opposite is ours');
+
+    // Our partner is a bot, and it shows us a card off its own bat.
+    await H.waitFor((s) => s.game.step === 'guess' && s.game.turn === 0, 'the bot shows us a card', 12000);
+    const shownByBot = H.state.game.seats[2].cards.filter((c) => c.shown);
+    assert.equal(shownByBot.length, 1, 'the bot showed exactly one card');
+    assert.ok(shownByBot[0].rank, 'and we can see its rank');
+    assert.ok(
+      H.state.game.seats[1].cards.every((c) => c.faceUp || c.rank === null),
+      'the other side is still hidden from us',
+    );
+
+    // Miss on purpose and let the partnership play itself out. Whenever the
+    // hand we are partnered with is up, the table waits on us for the show,
+    // and takes "nothing" for an answer.
+    const skipped = new Set();
+    await missUntilOver([H], new Set(), skipped);
+    assert.ok(skipped.size > 0, 'the bot waited on us for the show at least once');
+    assert.equal(H.state.game.phase, 'ended', 'the partnership round finished');
+    assert.equal(H.state.game.result.winners.length, 2, 'a whole team wins');
+
+    // The house does not play on to an empty room: once the last person walks
+    // out, the bots clear the table with them.
+    H.send({ type: 'leave' });
+    await new Promise((r) => setTimeout(r, 200));
+    const after = new Client('H-x');
+    await after.connect();
+    after.send({ type: 'join', code: botCode, name: 'Nobody' });
+    await after.waitFor((s) => s.room, 'the room is still there');
+    assert.deepEqual(after.state.room.players.map((p) => p.name), ['Nobody'], 'nothing was left sitting at it');
+    after.send({ type: 'leave' });
+    after.close();
+    for (const c of [H, H2]) c.close();
 
     // ---------------- six players, four hands, two of them shared ----------------
     const big = [];

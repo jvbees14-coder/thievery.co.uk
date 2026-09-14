@@ -17,6 +17,14 @@
   // how many people can share one hand.
   const SEAT_COUNTS = [3, 4];
   const SPLIT_LABEL = { 3: '9/9/8', 4: '7/7/6/6' };
+  // How hard the house plays a hand nobody wanted.
+  const BOT_LEVELS = ['novice', 'sharp', 'ruthless'];
+  const BOT_LEVEL_LABEL = { novice: 'Novice', sharp: 'Sharp', ruthless: 'Ruthless' };
+  const BOT_LEVEL_HINT = {
+    novice: 'Guesses inside the rule, but never shops around &mdash; kind to a beginner',
+    sharp: 'Reads the row: a hidden card is fenced in by the ones either side',
+    ruthless: 'Counts the whole table. It will take every card you let it',
+  };
 
   // Aliases, dealt out like a hand: an adjective and a noun, run together.
   const ADJECTIVES = [
@@ -687,33 +695,40 @@
     const me = state.you;
     const isHost = r.hostId === me.id;
     const teamsOn = r.seats === 4 && r.teams;
-    const full = r.players.length >= r.maxPlayers;
+    // Bots do not take up a person's place: they hand their hand back rather
+    // than keep anybody out, so the room is only full of people.
+    const folk = r.players.filter((p) => !p.bot);
+    const full = folk.length >= r.maxPlayers;
     // Where the next person through the door will end up.
-    const nextSeat = full ? -1 : r.players.length % r.seats;
+    const nextSeat = full ? -1 : folk.length % r.seats;
 
+    // A bot holds its hand and nothing else: it cannot be moved around the
+    // table, so it gets no arrows and takes no part in a swap.
     const occupant = (p) => {
       const isMe = p.id === me.id;
-      const i = r.players.indexOf(p);
-      const above = r.players[i - 1];
-      const below = r.players[i + 1];
+      const i = folk.indexOf(p);
+      const above = folk[i - 1];
+      const below = folk[i + 1];
       const pills = [
         isMe ? '<span class="pill">You</span>' : '',
         p.id === r.hostId ? '<span class="pill accent">Host</span>' : '',
+        p.bot ? `<span class="pill bot">${BOT_LEVEL_LABEL[r.botLevel] || 'Bot'}</span>` : '',
       ].join(' ');
+      const movable = isHost && !p.bot;
       return `
-        <div class="occupant ${ui.swapPick === p.id ? 'selected' : ''} ${isHost ? 'pick' : ''}"
-             ${isHost ? `data-action="pick-swap" data-id="${p.id}"` : ''}>
-          <span class="dot ${p.connected ? '' : 'off'}"></span>
+        <div class="occupant ${ui.swapPick === p.id ? 'selected' : ''} ${movable ? 'pick' : ''}"
+             ${movable ? `data-action="pick-swap" data-id="${p.id}"` : ''}>
+          <span class="dot ${p.bot ? 'bot' : p.connected ? '' : 'off'}"></span>
           <span class="name">${esc(p.name)} ${pills}</span>
           ${
-            isHost
+            movable
               ? `<span class="order">
                   <button class="btn small ghost" data-action="move" data-a="${p.id}" data-b="${above?.id || ''}" ${above ? '' : 'disabled'} title="Move up">&#9650;</button>
                   <button class="btn small ghost" data-action="move" data-a="${p.id}" data-b="${below?.id || ''}" ${below ? '' : 'disabled'} title="Move down">&#9660;</button>
                 </span>`
               : ''
           }
-          ${isHost && !isMe ? `<button class="btn small ghost" data-action="kick" data-id="${p.id}" title="Remove">&#10005;</button>` : ''}
+          ${isHost && !isMe ? `<button class="btn small ghost" data-action="kick" data-id="${p.id}" title="${p.bot ? 'Send it home' : 'Remove'}">&#10005;</button>` : ''}
         </div>`;
     };
 
@@ -731,10 +746,20 @@
           : `<span class="pill">${r.hands?.[i] ?? '?'} cards</span>`
         : '';
       // An open half of a seat is only called out where the next arrival will
-      // actually land, so the list does not read as a row of gaps.
+      // actually land, so the list does not read as a row of gaps — and a hand
+      // the house is holding is handed over rather than shared.
       let open = '';
-      if (!here.length) open = `<div class="occupant open">Waiting for a player${DOTS}</div>`;
-      else if (i === nextSeat) open = `<div class="occupant open">The next to join shares this hand${DOTS}</div>`;
+      const sharingNext = i === nextSeat && here.length && !here.some((p) => p.bot);
+      if (!here.length) {
+        open = `<div class="occupant open">
+            <span>Waiting for a player${DOTS}</span>
+            ${isHost ? `<button class="btn small" data-action="add-bot" data-seat="${i}">Deal the house in</button>` : ''}
+          </div>`;
+      } else if (sharingNext) {
+        open = `<div class="occupant open"><span>The next to join shares this hand${DOTS}</span></div>`;
+      } else if (i === nextSeat) {
+        open = `<div class="occupant open"><span>The next to join takes this hand back off the house${DOTS}</span></div>`;
+      }
       seats.push(`
         <li class="${here.length ? '' : 'empty'}">
           <span class="seat">${i + 1}</span>
@@ -746,7 +771,7 @@
 
     const ready = r.players.length >= r.seats;
     const short = r.seats - r.players.length;
-    const spare = r.maxPlayers - r.players.length;
+    const spare = r.maxPlayers - folk.length;
     const host = r.players.find((p) => p.id === r.hostId);
 
     return `
@@ -763,6 +788,9 @@
             <ul class="players">${seats.join('')}</ul>
             <p class="panel-note">
               ${r.seats} hands are dealt. The first ${r.seats} players get one each; anyone after that joins a player already seated, and the pair share that hand &mdash; they see the same cards, and either of them can guess when their turn comes.
+            </p>
+            <p class="panel-note">
+              A hand nobody has taken can go to the house instead, so one or two of you can still play a full table. Bots never share a hand, and give theirs up the moment a person arrives to want it.
             </p>
             ${
               r.customDeal
@@ -819,6 +847,15 @@
               )}
             </div>
             <div class="setting">
+              <div><div class="label">The house</div><div class="hint">${BOT_LEVEL_HINT[r.botLevel]}</div></div>
+              ${seg(
+                'botLevel',
+                BOT_LEVELS.map((l) => ({ label: BOT_LEVEL_LABEL[l], attrs: `data-action="bot-level" data-level="${l}"` })),
+                BOT_LEVELS.indexOf(r.botLevel),
+                !isHost,
+              )}
+            </div>
+            <div class="setting">
               <div><div class="label">First to play</div><div class="hint">${
                 r.firstSeat !== null ? 'The same hand leads every round' : 'Chosen at random, then round the table'
               }</div></div>
@@ -844,9 +881,13 @@
                   <div class="panel-note">${
                     ready
                       ? spare > 0
-                        ? `Ready when you are &mdash; or hold on: ${plural(spare, 'more player')} can still join and share a hand.`
+                        ? `Ready when you are &mdash; or hold on: ${plural(spare, 'more player')} can still join${
+                            folk.length < r.players.length ? ', the first of them taking a hand back off the house' : ' and share a hand'
+                          }.`
                         : 'The table is full. Deal them in.'
-                      : `Waiting for ${plural(short, 'more player')}${DOTS}`
+                      : `Waiting for ${plural(short, 'more player')}, or deal the house into ${
+                          short === 1 ? 'the empty hand' : 'the empty hands'
+                        }${DOTS}`
                   }</div>`
                 : `<div class="panel-note lead">${esc(host?.name || 'The host')} will start the game${
                     ready ? '' : ` once ${plural(r.seats, 'player')} are here`
@@ -900,8 +941,9 @@
     if (g.teams) badges.push(`<span class="pill team-${s.team}">Team ${s.team === 0 ? 'A' : 'B'}</span>`);
     if (g.teams && g.partnerSeat === si) badges.push('<span class="pill accent">Partner</span>');
     if (here.length > 1) badges.push('<span class="pill">Shared hand</span>');
+    if (here.some((p) => p.bot)) badges.push(`<span class="pill bot">${BOT_LEVEL_LABEL[state.room.botLevel] || 'Bot'} bot</span>`);
     // A hand with two players at it is only unattended once both have gone.
-    const away = here.filter((p) => !p.connected);
+    const away = here.filter((p) => !p.connected && !p.bot);
     if (here.length && away.length === here.length) badges.push('<span class="pill bad">Offline</span>');
     else for (const p of away) badges.push(`<span class="pill bad">${esc(p.name)} offline</span>`);
     const ended = g.phase === 'ended';
@@ -910,8 +952,9 @@
     if (won) badges.push('<span class="pill accent">Winner</span>');
 
     let status = '';
+    const house = here.some((p) => p.bot);
     if (g.phase === 'arrange') status = s.locked ? 'Locked in' : mine ? 'Arrange your cards' : `Arranging${DOTS}`;
-    else if (g.phase === 'play') status = active ? stepLabel(g) : `${down} face down`;
+    else if (g.phase === 'play') status = active ? (house && g.step === 'guess' ? `Thinking${DOTS}` : stepLabel(g)) : `${down} face down`;
     else status = `${down} face down`;
 
     let cards;
@@ -1199,7 +1242,8 @@
             ${shared}`;
         }
       } else {
-        body = `<p class="prompt">${n(g.turn)} ${isAre(g.turn)} guessing${DOTS}</p>`;
+        const house = playersAt(state.room, g.turn).some((p) => p.bot);
+        body = `<p class="prompt">${n(g.turn)} ${isAre(g.turn)} ${house ? 'thinking' : 'guessing'}${DOTS}</p>`;
       }
     }
 
@@ -1255,6 +1299,10 @@
         return render();
       case 'seats':
         return send({ type: 'lobby:seats', seats: Number(d.seats) });
+      case 'add-bot':
+        return send({ type: 'lobby:bot', seat: Number(d.seat) });
+      case 'bot-level':
+        return send({ type: 'lobby:botLevel', level: d.level });
       case 'teams':
         return send({ type: 'lobby:teams', teams: d.teams === '1' });
       case 'shuffle':
