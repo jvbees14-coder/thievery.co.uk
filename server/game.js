@@ -64,9 +64,11 @@ export function createGame({ numSeats, teams, startSeat, names, counts: customCo
   for (let s = 0; s < numSeats; s++) {
     const hand = deck.slice(p, p + counts[s]);
     p += counts[s];
-    // Everyone starts from a tidy ascending row, black before red where two
-    // cards share a rank. Same-rank pairs can be flipped before locking in.
-    hand.sort((a, b) => a.rank - b.rank || (a.color === 'black' ? -1 : 1));
+    // Everyone starts from a tidy ascending row. The deck is shuffled and the
+    // sort is stable, so where two cards share a rank they come out whichever
+    // way round they were dealt — no colour always leads. Same-rank pairs can
+    // be flipped before locking in.
+    hand.sort((a, b) => a.rank - b.rank);
     seats.push({ cards: hand.map((c) => ({ ...c, faceUp: false })), locked: false });
   }
   const g = {
