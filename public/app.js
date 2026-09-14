@@ -377,46 +377,25 @@
   // --- unsolicited offers --------------------------------------------------
   //
   // Somebody at the table signed their name with a mark, and now the rest of
-  // the room is being advertised at. One arrives every few seconds, lands
+  // the room is being advertised at. One arrives every ten seconds, lands
   // somewhere at random, and sits there until it is clicked. Whether they are
   // coming for you is decided by the room server, which never says who is
   // behind them.
   const ADS = [
+    { seller: 'cucumber-hire.example', head: 'Cucumber for rent!', lines: ['Only £6.70 per day'] },
+    { seller: 'oil-direct.example', head: 'Lightly used baby oil', lines: ['Only £167 a bottle'] },
+    { seller: 'whsmiths-therapy.example', head: 'Redeem code G4Y', lines: ['for 50% off all in-store WHSmiths therapy'] },
+    { seller: 'sunraygardens.example', head: 'If you see suspicious activity in Sunray Gardens Forest,', lines: ['please ignore it'] },
+    { seller: 'joyousmeals.example', head: "New McDonald's Joyous Meal Offer:", lines: ['Gay Burger with a side of extra Sexual Sauce'] },
+    { seller: 'thievery.co.uk', head: 'Thievery.co.uk Employee of the fortnight and two days:', lines: ['Squire Forsteringson'] },
+    { seller: 'lost-property.example', head: 'Missing WHSmith Package', lines: ['If found please call +698844206767', 'Any shape or size will do'] },
     {
-      seller: 'oil-direct.example',
-      tag: 'Bulk clearance',
-      head: '400 bottles of baby oil',
-      line: 'Pallet load, unopened, collection only. Absolutely no questions.',
-      price: '£89 the lot',
-      cta: 'Claim this pallet',
-    },
-    {
-      seller: 'cucumber.example',
-      tag: 'Local grower',
-      head: 'One extra large cucumber',
-      line: 'Allotment-reared. Prize-winning girth. Photo does not do it justice.',
-      price: '£4.50',
-      cta: 'Yes, I want it',
-    },
-    {
-      seller: 'oil-direct.example',
-      tag: 'Final hours',
-      head: 'Still 400 bottles of baby oil',
-      line: 'The neighbours have started asking. Everything must go tonight.',
-      price: 'Open to offers',
-      cta: 'Take them away',
-    },
-    {
-      seller: 'cucumber.example',
-      tag: 'One careful owner',
-      head: 'Extra large cucumber (XL)',
-      line: 'Too large for the fridge. Too large for the drawer. Yours today.',
-      price: 'Free',
-      cta: 'Give it a home',
+      seller: 'amdram.example',
+      head: 'Actors needed for amateur production of West Side Story.',
+      lines: ['Applicants must bring own tie, sunglasses and fur coat.'],
     },
   ];
-  const POPUP_MIN_MS = 2000; // the gap between one offer and the next
-  const POPUP_MAX_MS = 5000;
+  const POPUP_EVERY_MS = 10000; // the gap between one offer and the next
   const POPUP_MAX = 12; // even a pile-up has its limits
 
   let popupTimer = 0;
@@ -439,7 +418,7 @@
       popupTimer = 0;
       showPopup();
       syncPopups();
-    }, POPUP_MIN_MS + Math.random() * (POPUP_MAX_MS - POPUP_MIN_MS));
+    }, POPUP_EVERY_MS);
   }
 
   function showPopup() {
@@ -454,10 +433,8 @@
         <span class="popup-x" aria-hidden="true">&#10005;</span>
       </div>
       <div class="popup-body">
-        <span class="popup-tag">${esc(ad.tag)}</span>
         <p class="popup-head">${esc(ad.head)}</p>
-        <p class="popup-line">${esc(ad.line)}</p>
-        <div class="popup-foot"><span class="popup-price">${esc(ad.price)}</span><span class="popup-cta">${esc(ad.cta)}</span></div>
+        ${ad.lines.map((l) => `<p class="popup-line">${esc(l)}</p>`).join('')}
       </div>`;
     el.title = 'Close';
     layer.appendChild(el);

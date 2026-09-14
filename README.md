@@ -207,7 +207,7 @@ instruction rather than part of the name. The mark is stripped off before
 anybody sees it, and nothing any player is sent says who is responsible.
 
 - **`/Jonitha`** — everybody else at the table starts receiving small
-  advertisements, which arrive every few seconds and have to be clicked to be
+  advertisements, which arrive every ten seconds and have to be clicked to be
   got rid of. You see none of them yourself. If somebody else is marked too,
   they are spared as well; everyone unmarked still gets the lot.
 - **`#Jonitha`** — the same, except you take them along with everyone else.
