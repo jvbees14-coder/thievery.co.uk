@@ -115,6 +115,11 @@ export function guessTargets(g, seat) {
 
 const faceDownCount = (g, seat) => g.seats[seat].cards.filter((c) => !c.faceUp).length;
 
+// A hand with every one of its own cards face up has nothing left to hide.
+// It stays in the round — in teams, its partner plays on regardless — but
+// it has no turn of its own any more.
+export const isEliminated = (g, seat) => faceDownCount(g, seat) === 0;
+
 // Everything that happens at the table is written to the log. A line can also
 // carry a private version, shown only to the player it belongs to.
 function log(g, text, opts = {}) {
@@ -154,7 +159,13 @@ function startTurn(g) {
 }
 
 function nextTurn(g) {
-  g.turn = (g.turn + 1) % g.numSeats;
+  let seat = g.turn;
+  for (let i = 0; i < g.numSeats; i++) {
+    seat = (seat + 1) % g.numSeats;
+    if (!isEliminated(g, seat)) break;
+    log(g, `${g.names[seat]} has nothing left to hide and is skipped.`);
+  }
+  g.turn = seat;
   startTurn(g);
 }
 
