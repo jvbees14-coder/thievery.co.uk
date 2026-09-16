@@ -343,11 +343,55 @@ async function run() {
     const { child, port, out } = await bootServer({ NODE_ENV: 'production' });
     try {
       assert.match(out(), /NO DURABLE STORAGE/, `expected the warning, got:\n${out()}`);
+      assert.match(out(), /Missing: R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME/);
+      assert.match(out(), /Already set: none of the four/);
       assert.equal((await fetch(`http://localhost:${port}/`)).status, 200, 'the game should still run');
       assert.equal((await fetch(`http://localhost:${port}/flashcards`)).status, 503);
     } finally {
       child.kill();
     }
+  });
+
+  await check('a half-configured service is told exactly which one is absent', async () => {
+    // The case that actually happened: three set, one not, and the log has to
+    // say which rather than making somebody check all four by hand.
+    const { child, out } = await bootServer({
+      NODE_ENV: 'production',
+      R2_ENDPOINT: 'https://example.r2.cloudflarestorage.com',
+      R2_ACCESS_KEY_ID: 'present',
+      R2_SECRET_ACCESS_KEY: 'present',
+      R2_BUCKET_NAME: '', // the missing one
+    });
+    try {
+      assert.match(out(), /Missing: R2_BUCKET_NAME/);
+      assert.match(out(), /Already set: R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY/);
+      // And never the values themselves.
+      assert.ok(!out().includes('present'), 'a variable value reached the log');
+    } finally {
+      child.kill();
+    }
+  });
+
+  await check('whitespace around a pasted value does not count as set', async () => {
+    const { child, out } = await bootServer({
+      NODE_ENV: 'production',
+      R2_ENDPOINT: 'https://example.r2.cloudflarestorage.com',
+      R2_ACCESS_KEY_ID: 'present',
+      R2_SECRET_ACCESS_KEY: '   \n',
+      R2_BUCKET_NAME: 'a-bucket',
+    });
+    try {
+      assert.match(out(), /Missing: R2_SECRET_ACCESS_KEY/);
+    } finally {
+      child.kill();
+    }
+  });
+
+  await check('a refused key is named as a refused key', async () => {
+    const hint = (name, status) => R2.hintFor({ name, $metadata: { httpStatusCode: status } });
+    assert.match(hint('AccessDenied', 403), /key was refused/i);
+    assert.match(hint('NoSuchBucket', 404), /no such bucket/i);
+    assert.match(hint('ENOTFOUND'), /endpoint could not be reached/i);
   });
 
   await check('and opens again when that is deliberate', async () => {

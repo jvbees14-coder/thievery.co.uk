@@ -140,9 +140,12 @@ export async function open(use = null) {
   } catch (err) {
     // The refusal described at the top of the file. Do not start empty; do not
     // let the next save overwrite what is out there.
+    // The original is carried along as the cause, so whoever catches this can
+    // tell a refused key from an unreachable host and say which it was.
     throw new Error(
-      `flashcards: could not read ${backend.describe()} — refusing to start rather than ` +
-        `risk saving an empty document over it. (${err.name || 'Error'}: ${err.message})`
+      `Could not read ${backend.describe()} — refusing to start rather than ` +
+        `risk saving an empty document over it. (${err.name || 'Error'}: ${err.message})`,
+      { cause: err }
     );
   }
 

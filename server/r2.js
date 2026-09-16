@@ -29,14 +29,74 @@
 
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
-const ENDPOINT = process.env.R2_ENDPOINT || '';
-const ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID || '';
-const SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY || '';
+// Trimmed on the way in. A value pasted into a dashboard field very often
+// arrives with a trailing space or newline attached, and a key with an
+// invisible character on the end fails to authenticate in a way that looks
+// nothing like the cause.
+const env = (name) => (process.env[name] || '').trim();
 
-export const BUCKET = process.env.R2_BUCKET_NAME || '';
+const ENDPOINT = env('R2_ENDPOINT');
+const ACCESS_KEY_ID = env('R2_ACCESS_KEY_ID');
+const SECRET_ACCESS_KEY = env('R2_SECRET_ACCESS_KEY');
+
+export const BUCKET = env('R2_BUCKET_NAME');
+
+/** All four, in the order a person would set them. */
+export const REQUIRED_VARS = ['R2_ENDPOINT', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET_NAME'];
+
+const VALUES = {
+  R2_ENDPOINT: ENDPOINT,
+  R2_ACCESS_KEY_ID: ACCESS_KEY_ID,
+  R2_SECRET_ACCESS_KEY: SECRET_ACCESS_KEY,
+  R2_BUCKET_NAME: BUCKET,
+};
+
+/**
+ * Which of the four are absent or empty, by name.
+ *
+ * Only ever the names. Whether a variable is set is a thing worth putting in a
+ * log; what it is set to is not, and a secret that reaches a log has reached
+ * everywhere the logs go.
+ */
+export const missing = () => REQUIRED_VARS.filter((name) => !VALUES[name]);
+
+/** And which did arrive, so a half-configured service is obvious at a glance. */
+export const present = () => REQUIRED_VARS.filter((name) => VALUES[name]);
 
 /** Whether there is enough in the environment to talk to R2 at all. */
-export const configured = Boolean(ENDPOINT && ACCESS_KEY_ID && SECRET_ACCESS_KEY && BUCKET);
+export const configured = missing().length === 0;
+
+/**
+ * A guess at what went wrong, for the log. These are the three that actually
+ * happen, and each has a different fix, so naming them saves a lot of staring
+ * at an error that only says the request failed.
+ */
+export function hintFor(err) {
+  // The useful label can be on the error, or on something it wraps, and it can
+  // be any of three properties depending on whether it came from the SDK
+  // (name/Code) or from the socket underneath it (code). So the whole chain is
+  // searched rather than just the top.
+  const labels = [];
+  let statuses = [];
+  for (let e = err, depth = 0; e && depth < 8; e = e.cause, depth++) {
+    for (const key of ['name', 'code', 'Code']) if (e[key]) labels.push(String(e[key]));
+    if (e.$metadata?.httpStatusCode) statuses.push(e.$metadata.httpStatusCode);
+  }
+  const has = (...names) => names.some((n) => labels.includes(n));
+  const status = (n) => statuses.includes(n);
+
+  if (has('AccessDenied', 'InvalidAccessKeyId', 'SignatureDoesNotMatch', 'Forbidden') || status(403)) {
+    return 'The key was refused. Check it covers this bucket, and that a rotated token was copied into the environment.';
+  }
+  if (has('NoSuchBucket') || status(404)) {
+    return 'There is no such bucket under this account. Check R2_BUCKET_NAME.';
+  }
+  if (has('ENOTFOUND', 'EAI_AGAIN', 'ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT', 'TimeoutError') ||
+      labels.some((l) => l.includes('Timeout'))) {
+    return 'The endpoint could not be reached. Check R2_ENDPOINT, which is the account-id host, not the bucket URL.';
+  }
+  return 'Check the four R2_* variables and that the bucket exists.';
+}
 
 /**
  * The client. R2 wants region "auto" — it has no regions in the AWS sense —

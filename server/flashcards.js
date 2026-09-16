@@ -695,13 +695,16 @@ export async function start() {
   // anyone who genuinely means it.
   if (process.env.NODE_ENV === 'production' && !R2.configured && process.env.THIEVERY_ALLOW_EPHEMERAL !== '1') {
     outage = { reason: 'no durable storage is configured' };
+    const absent = R2.missing();
+    const here = R2.present();
     console.error(
       'flashcards: NO DURABLE STORAGE. The room is closed.\n' +
-        '  This is production and the four R2_* variables are not all set, so the\n' +
-        '  only place to keep accounts would be a disk that is wiped on the next\n' +
-        '  deploy or spin-down. Set R2_ENDPOINT, R2_ACCESS_KEY_ID,\n' +
-        '  R2_SECRET_ACCESS_KEY and R2_BUCKET_NAME — or set\n' +
-        '  THIEVERY_ALLOW_EPHEMERAL=1 if losing everything is genuinely fine.\n' +
+        `  Missing: ${absent.join(', ')}\n` +
+        `  Already set: ${here.length ? here.join(', ') : 'none of the four'}\n` +
+        '  This is production, so the only place left to keep accounts would be a\n' +
+        '  disk that is wiped on the next deploy or spin-down. Set the missing\n' +
+        '  variables above — or set THIEVERY_ALLOW_EPHEMERAL=1 if losing\n' +
+        '  everything really is fine.\n' +
         '  The card game is unaffected and is running normally.'
     );
     return;
@@ -719,6 +722,7 @@ export async function start() {
     outage = { reason: 'the ledger could not be read' };
     console.error(
       `flashcards: THE ROOM IS CLOSED. ${err.message}\n` +
+        `  ${R2.hintFor(err.cause || err)}\n` +
         '  Nothing will be written while it is closed, so the stored data is safe.\n' +
         '  The card game is unaffected and is running normally.'
     );
