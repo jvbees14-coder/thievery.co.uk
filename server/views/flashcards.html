@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Flashcards — Thievery.co.uk</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c14'/%3E%3Cpath d='M16 4l10 12-10 12L6 16z' fill='none' stroke='%23d4af5a' stroke-width='2'/%3E%3Cpath d='M16 10l5 6-5 6-5-6z' fill='%23d4af5a'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Limelight&family=Cinzel:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Cutive+Mono&display=swap" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/flashcards.css" />
+</head>
+<body class="fc-app">
+  <div id="toast" class="toast" hidden></div>
+
+  <header class="fc-bar">
+    <a class="fc-mark wordmark" href="/flashcards">Flash<em>cards</em></a>
+    <nav class="fc-tabs" role="tablist">
+      <button class="fc-tab is-on" data-tab="collection" role="tab">Collection</button>
+      <button class="fc-tab" data-tab="make" role="tab">Make a card</button>
+      <button class="fc-tab" data-tab="trade" role="tab">Trading post</button>
+      <button class="fc-tab" data-tab="print" role="tab">Print</button>
+      <button class="fc-tab fc-tab-admin" data-tab="panel" role="tab" hidden>The House</button>
+    </nav>
+    <div class="fc-who">
+      <button id="who" class="fc-who-btn" type="button" aria-haspopup="true" aria-expanded="false"></button>
+      <div id="who-menu" class="fc-menu" hidden>
+        <button data-act="account" type="button">Account settings</button>
+        <a href="/">Back to the table</a>
+        <button data-act="signout" type="button">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="fc-main">
+
+    <!-- ------------------------------------------------------- collection -->
+    <section id="tab-collection" class="fc-pane">
+      <div id="ledger" class="fc-ledger"></div>
+
+      <div class="fc-toolbar">
+        <input id="search" class="fc-search" type="search" placeholder="Search fronts, backs, categories&hellip;" />
+        <select id="filter-rarity" class="fc-select" aria-label="Filter by rarity">
+          <option value="">Every rarity</option>
+        </select>
+        <select id="sort" class="fc-select" aria-label="Sort">
+          <option value="new">Newest first</option>
+          <option value="old">Oldest first</option>
+          <option value="value">Worth, high to low</option>
+          <option value="craft">Craft, high to low</option>
+          <option value="rarity">Rarity, high to low</option>
+          <option value="mint">Mint number</option>
+        </select>
+      </div>
+
+      <div id="cards" class="fc-grid"></div>
+      <p id="cards-empty" class="fc-empty" hidden>
+        Nothing in the collection yet. <button class="linkish" data-goto="make" type="button">Make a card</button>.
+      </p>
+    </section>
+
+    <!-- ------------------------------------------------------------- make -->
+    <section id="tab-make" class="fc-pane" hidden>
+      <div class="fc-make">
+        <form id="make" class="fc-form" autocomplete="off">
+          <h2 class="fc-h">Cut a new card</h2>
+          <p class="fc-lede">
+            The house appraises what you write, not how much of it. A real question,
+            an answer that adds something, and the small courtesies &mdash; that is
+            what moves the mark.
+          </p>
+
+          <div class="field">
+            <label for="f-front">Front <span class="count" id="c-front"></span></label>
+            <textarea id="f-front" rows="2" maxlength="120" placeholder="What is photosynthesis?" required></textarea>
+          </div>
+          <div class="field">
+            <label for="f-back">Back <span class="count" id="c-back"></span></label>
+            <textarea id="f-back" rows="5" maxlength="400" placeholder="The process by which green plants convert light energy into glucose&hellip;" required></textarea>
+          </div>
+          <div class="fc-row">
+            <div class="field">
+              <label for="f-hint">Hint <span class="opt">optional</span></label>
+              <input id="f-hint" maxlength="120" placeholder="Nudge, not the answer" />
+            </div>
+            <div class="field">
+              <label for="f-category">Category <span class="opt">optional</span></label>
+              <input id="f-category" maxlength="24" placeholder="Biology" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="f-tags">Tags <span class="opt">up to four, comma separated</span></label>
+            <input id="f-tags" maxlength="80" placeholder="plants, energy, gcse" />
+          </div>
+
+          <div class="fc-actions">
+            <button id="mint" class="btn primary" type="submit">Strike the card</button>
+            <button id="make-clear" class="btn ghost" type="button">Clear</button>
+          </div>
+          <p id="edit-note" class="fc-editing" hidden></p>
+        </form>
+
+        <aside class="fc-appraisal">
+          <h3 class="fc-h3">The appraisal</h3>
+          <div class="fc-meter">
+            <div class="fc-meter-track"><div id="craft-fill" class="fc-meter-fill"></div></div>
+            <div class="fc-meter-num"><b id="craft-num">0</b><span>/100 craft</span></div>
+          </div>
+          <ul id="craft-parts" class="fc-parts"></ul>
+
+          <h4 class="fc-h4">Odds at this craft</h4>
+          <ul id="odds" class="fc-odds"></ul>
+          <p class="fc-note">
+            The rarity is rolled when the card is struck, against a seed that does
+            not exist until then. Better writing buys better odds and never buys
+            the result &mdash; and re-cutting a card later never re-rolls it.
+          </p>
+        </aside>
+      </div>
+
+      <div id="reveal" class="fc-reveal" hidden>
+        <div class="fc-reveal-inner">
+          <p class="fc-reveal-cap">Struck</p>
+          <div id="reveal-card"></div>
+          <button class="btn primary" data-act="reveal-close" type="button">Into the collection</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------ trade -->
+    <section id="tab-trade" class="fc-pane" hidden>
+      <div>
+        <h2 class="fc-h">The trading post</h2>
+        <p class="fc-lede">
+          Lay a card on the table and it is gone the moment the numbers work.
+          What comes back is whatever the other side happened to be offering
+          &mdash; one card, or five &mdash; adding up to what yours was worth.
+          You choose neither. That is the deal.
+        </p>
+      </div>
+
+      <div class="fc-trade-cols">
+        <div>
+          <h3 class="fc-h3">Yours, on the table <span id="mine-count" class="fc-tally"></span></h3>
+          <div id="my-offers" class="fc-offers"></div>
+          <p id="my-offers-empty" class="fc-empty">
+            Nothing offered. Open the collection and press <b>Offer</b> on a card.
+          </p>
+
+          <h3 class="fc-h3">Everything on the table <span id="pool-count" class="fc-tally"></span></h3>
+          <div id="pool" class="fc-offers"></div>
+          <p id="pool-empty" class="fc-empty" hidden>The table is bare.</p>
+        </div>
+
+        <div>
+          <h3 class="fc-h3">The ledger</h3>
+          <div id="trades" class="fc-trades"></div>
+          <p id="trades-empty" class="fc-empty">No trades yet.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------ print -->
+    <section id="tab-print" class="fc-pane" hidden>
+      <h2 class="fc-h">Print a sheet</h2>
+      <p class="fc-lede">
+        Nine cards to an A4 sheet, cut to 63.5 &times; 88.9mm &mdash; the size of a
+        playing card. Fronts on one side, backs on the next with the columns
+        mirrored, so a duplex printer set to flip on the long edge lands them
+        back to back.
+      </p>
+
+      <div class="fc-print-opts">
+        <label class="fc-check"><input id="p-backs" type="checkbox" checked /> Print backs too</label>
+        <label class="fc-check"><input id="p-marks" type="checkbox" checked /> Cut marks</label>
+        <label class="fc-check"><input id="p-hints" type="checkbox" checked /> Include hints</label>
+        <label class="fc-check"><input id="p-stamp" type="checkbox" checked /> House stamp &amp; mint number</label>
+        <span class="fc-print-count" id="p-count">0 selected</span>
+        <button id="p-all" class="btn ghost" type="button">Select all</button>
+        <button id="p-none" class="btn ghost" type="button">Select none</button>
+        <button id="p-go" class="btn primary" type="button">Print</button>
+      </div>
+
+      <div id="print-pick" class="fc-pick"></div>
+    </section>
+
+    <!-- ------------------------------------------------------------ panel -->
+    <section id="tab-panel" class="fc-pane" hidden>
+      <h2 class="fc-h">The House</h2>
+      <div id="panel-stats" class="fc-ledger"></div>
+
+      <div class="fc-panel-cols">
+        <div>
+          <h3 class="fc-h3">Strike a mythic</h3>
+          <p class="fc-note">
+            Mythics cannot be rolled, only given. They carry a name, a line of
+            flavour and thirteen times the ordinary multiplier &mdash; or whatever
+            number you write on it.
+          </p>
+          <form id="mythic" class="fc-form" autocomplete="off">
+            <div class="field">
+              <label for="m-title">Name of the card</label>
+              <input id="m-title" maxlength="48" placeholder="The Gilded Magpie" />
+            </div>
+            <div class="field">
+              <label for="m-front">Front</label>
+              <textarea id="m-front" rows="2" maxlength="120" required></textarea>
+            </div>
+            <div class="field">
+              <label for="m-back">Back</label>
+              <textarea id="m-back" rows="4" maxlength="400" required></textarea>
+            </div>
+            <div class="fc-row">
+              <div class="field">
+                <label for="m-hint">Hint <span class="opt">optional</span></label>
+                <input id="m-hint" maxlength="120" />
+              </div>
+              <div class="field">
+                <label for="m-category">Category <span class="opt">optional</span></label>
+                <input id="m-category" maxlength="24" />
+              </div>
+            </div>
+            <div class="field">
+              <label for="m-flavour">Flavour line <span class="opt">optional</span></label>
+              <input id="m-flavour" maxlength="140" placeholder="Struck once, and never again." />
+            </div>
+            <div class="fc-row">
+              <div class="field">
+                <label for="m-to">Give it to</label>
+                <input id="m-to" maxlength="20" list="usernames" placeholder="username, or leave blank" autocapitalize="none" spellcheck="false" />
+                <datalist id="usernames"></datalist>
+                <p class="hint">Blank means a random member who is not you.</p>
+              </div>
+              <div class="field">
+                <label for="m-value">Worth <span class="opt">optional</span></label>
+                <input id="m-value" type="number" min="1" step="1" placeholder="auto" />
+              </div>
+            </div>
+            <button class="btn primary" type="submit">Strike and give</button>
+          </form>
+          <div id="mythic-result" class="fc-mythic-result" hidden></div>
+        </div>
+
+        <div>
+          <h3 class="fc-h3">Accounts <span id="acct-count" class="fc-tally"></span></h3>
+          <input id="acct-search" class="fc-search" type="search" placeholder="Search accounts&hellip;" />
+          <div id="accounts" class="fc-accounts"></div>
+        </div>
+      </div>
+
+      <h3 class="fc-h3">Every trade</h3>
+      <div id="all-trades" class="fc-trades"></div>
+    </section>
+  </main>
+
+  <!-- The account drawer, and the panel's account editor, share this shell. -->
+  <div id="modal" class="fc-modal" hidden>
+    <div class="fc-modal-box" role="dialog" aria-modal="true">
+      <button class="fc-modal-x" data-act="modal-close" type="button" aria-label="Close">&times;</button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Where the print sheet is assembled. Off-screen until the printer asks. -->
+  <div id="sheet" class="fc-sheet" aria-hidden="true"></div>
+
+  <script src="/flashcards.js"></script>
+</body>
+</html>

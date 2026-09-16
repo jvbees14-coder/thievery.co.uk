@@ -8,12 +8,23 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
-    "test": "node test/smoke.test.js"
+    "test": "node test/smoke.test.js && node test/flashcards.test.js && node test/r2.test.js",
+    "test:game": "node test/smoke.test.js",
+    "test:flashcards": "node test/flashcards.test.js",
+    "test:r2": "node test/r2.test.js"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1133.0",
     "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.132.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "workerd@1.20260915.1": true
   }
 }

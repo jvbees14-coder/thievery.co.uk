@@ -6,4 +6,13 @@
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
+  <!-- The flashcards room is behind a login, and what a crawler is served at
+       this address is the door: a real page describing what is behind it.
+       Everything past the door answers with noindex. -->
+  <url>
+    <loc>https://thievery.co.uk/flashcards</loc>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
 </urlset>

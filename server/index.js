@@ -23,6 +23,7 @@ import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 import * as Game from './game.js';
 import * as Bot from './bot.js';
+import * as Flashcards from './flashcards.js';
 import { shuffle, DEAL_SPLITS, SEAT_COUNTS, MIN_SEATS, MAX_SEATS, MAX_PER_SEAT } from './deal.js';
 
 // PORT=0 is a real answer — "any port going" — so it must not be read as no
@@ -50,6 +51,12 @@ const MIME = {
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x');
+
+  // The flashcards live behind a login and keep their own state on disk, so
+  // they answer for themselves. Asked first, because /flashcards must not
+  // fall through to the room page below.
+  if (Flashcards.handle(req, res, url)) return;
+
   let file = decodeURIComponent(url.pathname);
   if (file === '/' || file === '') file = '/index.html';
   if (file === '/health') {
@@ -795,6 +802,10 @@ setInterval(() => {
     if (!anyone && now - room.emptySince > ROOM_TTL_MS) rooms.delete(code);
   }
 }, 60_000);
+
+// The admin account, if the environment has a password to give it, before the
+// door is opened to anybody.
+await Flashcards.start();
 
 // PORT=0 asks the machine for whatever port is going, which is how the tests
 // get one to themselves; the line below reports the port actually in use

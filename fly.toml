@@ -15,3 +15,30 @@ primary_region = "lhr"
 [[vm]]
   size = "shared-cpu-1x"
   memory = "256mb"
+
+# The game keeps nothing, but /flashcards keeps accounts and collections. The
+# simplest answer is Cloudflare R2, which works the same here as it does on
+# Render and needs no volume and no pinning to one machine:
+#
+#   fly secrets set R2_ENDPOINT='https://<account id>.r2.cloudflarestorage.com'
+#   fly secrets set R2_ACCESS_KEY_ID='...'
+#   fly secrets set R2_SECRET_ACCESS_KEY='...'
+#   fly secrets set R2_BUCKET_NAME='...'
+#   fly secrets set THIEVERY_ADMIN_USERNAME=jvbee THIEVERY_ADMIN_PASSWORD='...'
+#
+# The bucket must be private: the object holds every password hash and session
+# digest on the site.
+#
+# If you would rather keep it on a volume than in a bucket, leave the R2
+# variables unset and instead create one:
+#
+#   fly volumes create thievery_data --region lhr --size 1
+#
+# then uncomment both blocks below. A volume pins the app to one machine.
+#
+# [mounts]
+#   source = "thievery_data"
+#   destination = "/data"
+#
+# [env]
+#   THIEVERY_DATA_DIR = "/data"

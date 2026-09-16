@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Flashcards — Thievery.co.uk</title>
+  <meta name="description" content="Make flashcards, have them appraised, print them on card and trade them blind for cards of equal worth. A members' room at Thievery.co.uk." />
+  <link rel="canonical" href="https://thievery.co.uk/flashcards" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Thievery.co.uk" />
+  <meta property="og:title" content="Flashcards — Thievery.co.uk" />
+  <meta property="og:description" content="Write a card, have it appraised, print it, and trade it blind for cards of equal worth. Members only." />
+  <meta property="og:url" content="https://thievery.co.uk/flashcards" />
+  <meta property="og:image" content="https://thievery.co.uk/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c14'/%3E%3Cpath d='M16 4l10 12-10 12L6 16z' fill='none' stroke='%23d4af5a' stroke-width='2'/%3E%3Cpath d='M16 10l5 6-5 6-5-6z' fill='%23d4af5a'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Limelight&family=Cinzel:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Cutive+Mono&display=swap" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/flashcards.css" />
+</head>
+<body>
+  <div id="toast" class="toast" hidden></div>
+
+  <section class="screen home">
+    <div class="home-card door-card">
+      <p class="eyebrow">Members&rsquo; room &middot; est. behind the green door</p>
+      <h1 class="logo wordmark">Flash<em>cards</em></h1>
+      <p class="tagline">
+        Write a card. The house appraises it, stamps it and mints it. Print it on
+        real card, or lay it on the table and trade it blind for whatever comes
+        back &mdash; different cards, same worth.
+      </p>
+
+      <div class="door-tabs" role="tablist">
+        <button class="door-tab is-on" data-pane="signin" role="tab" aria-selected="true">Sign in</button>
+        <button class="door-tab" data-pane="join" role="tab" aria-selected="false">Open an account</button>
+      </div>
+
+      <form id="signin" class="door-pane" autocomplete="on">
+        <div class="field">
+          <label for="si-user">Username</label>
+          <input id="si-user" name="username" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" required />
+        </div>
+        <div class="field">
+          <label for="si-pass">Password</label>
+          <input id="si-pass" name="password" type="password" maxlength="200" autocomplete="current-password" required />
+        </div>
+        <button class="btn primary" type="submit">Sign in</button>
+      </form>
+
+      <form id="join" class="door-pane" hidden autocomplete="on">
+        <div class="field">
+          <label for="jo-user">Username</label>
+          <input id="jo-user" name="username" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" required />
+          <p class="hint">3 to 20 characters: letters, numbers, dots, dashes, underscores.</p>
+        </div>
+        <div class="field">
+          <label for="jo-name">Display name <span class="opt">optional</span></label>
+          <div class="input-row">
+            <input id="jo-name" name="displayName" maxlength="24" autocomplete="nickname" placeholder="How the table sees you" />
+            <button id="jo-roll" class="icon-btn" type="button" title="Deal me an alias" aria-label="Deal me an alias">&#10227;</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="jo-pass">Password</label>
+          <input id="jo-pass" name="password" type="password" maxlength="200" autocomplete="new-password" required />
+          <p class="hint">At least 10 characters. Length beats punctuation.</p>
+        </div>
+        <button class="btn primary" type="submit">Open an account</button>
+        <p class="hint">
+          Three cards are dealt to a new account, so you arrive with something to trade.
+        </p>
+      </form>
+
+      <p id="door-error" class="door-error" hidden></p>
+      <p class="door-foot"><a href="/">&larr; back to the table</a></p>
+    </div>
+  </section>
+
+  <script src="/flashcards-door.js"></script>
+</body>
+</html>

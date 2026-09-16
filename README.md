@@ -215,10 +215,228 @@ anybody sees it, and nothing any player is sent says who is responsible.
 They stop the moment the last marked player leaves the room. Refreshing does
 not call them off; rejoining without the mark does.
 
+## Flashcards
+
+<https://thievery.co.uk/flashcards> is a second room on the site, and the only
+part of it behind a login. You write flashcards; the house appraises them,
+stamps them with a rarity and a mint number, and from then on they are things
+you own. You can print them on real card, and you can trade them away.
+
+It shares the site's look and nothing else: the game keeps no accounts and
+forgets a table within the hour, whereas this keeps accounts and collections
+on disk. See [Where the flashcards are kept](#where-the-flashcards-are-kept).
+
+### Making a card
+
+A card has a front, a back, and optionally a hint, a category and up to four
+tags. As you type, the panel beside the form shows the **craft** mark out of
+100 and the odds it buys. The appraisal is built around one idea: *a card is
+worth what it took to make, not what it took to type.*
+
+- **Depth** — enough on each side to be worth carrying. Roughly 40 characters
+  makes a good question and 150 a good answer; past 90 and 320 the marks drain
+  away again, because a question that will not fit on a card is not a
+  flashcard.
+- **Variety** — how much of the card is different words. Saying the same thing
+  eleven times to look substantial earns nothing: every measure of length
+  counts *distinct* writing only.
+- **Extras** — a hint, a category, tags.
+- **Craft** — whether the front asks something, and whether the back adds
+  anything the front did not already say. An answer that restates its question
+  is the cheapest card there is.
+- **Polish** — written like prose rather than shouted.
+
+The ratio-based marks are scaled by how much there is to have an opinion
+about, so a two-word card cannot score well by having perfect variety and
+nothing repeated. A card of three words scores about 5; a padded one about 26;
+a genuine one 75 or more.
+
+### Rarity and worth
+
+Craft buys **odds**, never an outcome. When the card is struck, the rarity is
+rolled against a seed of fresh random bytes that did not exist until that
+moment.
+
+| Craft | Common | Uncommon | Rare | Epic | Legendary |
+|------:|-------:|---------:|-----:|-----:|----------:|
+| 0     | 62%    | 24%      | 9%   | 4%   | 1%        |
+| 50    | 43%    | 24%      | 17%  | 10%  | 6%        |
+| 100   | 22%    | 26%      | 25%  | 16%  | 11%       |
+
+Worth is then `(12 + craft × 1.1) × the rarity's multiplier`, give or take a
+few per cent — from about 12 for a lazy common to around 880 for a superb
+legendary.
+
+Two things are deliberately impossible. Submitting the same text over and over
+does not walk the odds upwards, because each attempt is a fresh seed. And
+**re-cutting a card never re-rolls its rarity** — editing until it comes up
+legendary is the one thing the seed exists to prevent. Re-cutting does move
+the craft mark and the worth, since the card really has changed.
+
+A new account is dealt three cards about the game, so it has something to
+trade on its first visit. They are struck common however well they score:
+they are reprints, and a card everybody has cannot be rare.
+
+**Mythic** is not on the table at all. There is no craft score that can roll
+one — they are struck by the house and given away.
+
+### The trading post
+
+Lay a card on the table and it is gone the moment the numbers work. What comes
+back is whatever the other side happened to be offering. You choose neither
+the cards nor the person.
+
+What *is* guaranteed is the value. Since two cards rarely appraise at the same
+number, the other side is made up of however many it takes to reach yours —
+one card for five, or five for one, up to eight, within 12% or 8 points,
+whichever is larger.
+
+Two rules keep it honest:
+
+- **A swap is always between two people.** The bundle you receive comes from
+  one other collection, not assembled out of four different strangers.
+- **Nothing leaves a collection that was not offered.** Laying a card on the
+  table is the consent, which is why the post can settle a trade while both
+  people are asleep. Take a card back at any time before it goes.
+
+The table shows every card on offer with its worth and rarity — never the
+back, and never the hint.
+
+### Printing
+
+Pick cards, press **Print**, and you get nine to an A4 sheet at 63.5 × 88.9mm,
+the size of a playing card. Fronts on one sheet and backs on the next with the
+columns mirrored, so a duplex printer set to *flip on the long edge* lands
+each answer behind its own question. Cut marks, hints, and the thievery.co.uk
+stamp with the mint number can each be switched off.
+
+### The House
+
+One account is the admin, and it is named by the environment rather than by
+anything in the data file, so the name cannot be claimed by whoever registers
+first. Set both of these before the first boot:
+
+```bash
+THIEVERY_ADMIN_USERNAME=jvbee
+THIEVERY_ADMIN_PASSWORD=something-long-and-unguessable
+```
+
+The account is created on the first boot that has a password to give it, and
+never silently reset afterwards. If it is ever lost, set
+`THIEVERY_ADMIN_RESET=1` for one boot and unset it again.
+
+Behind the panel: every account with what it holds and what it is worth;
+changing anybody's display name, username or password; suspending or closing
+an account; a private note against each one; the whole trade ledger; and the
+mint, where a **mythic** is written, named, given a line of flavour text and
+handed either to a named member or to a random one. Its worth defaults to
+thirteen times the ordinary multiplier, or you can write your own number on
+it.
+
+An ordinary member asking for any of those addresses is told *404 Not found*,
+the same as for a route that does not exist. The panel does not announce
+itself.
+
+### Signing in
+
+Passwords are never stored — what is stored is a scrypt hash with a random
+salt, in a self-describing format so the cost can be raised later without
+stranding existing accounts. Sessions are a random 256-bit token in an
+HttpOnly, SameSite=Lax cookie, of which the server keeps only the SHA-256, so
+a copy of the data file is not a drawer full of working keys.
+
+Wrong guesses are counted against the account and against the address on
+different terms: five failures at one account starts a doubling wait, but an
+address is given twenty-five, because behind one public address there may be a
+whole office, and shutting them all out because one person mistyped is
+something anybody could trigger on purpose.
+
+One address can open ten accounts an hour. Only accounts that actually
+opened are counted, so getting the form wrong does not spend the allowance.
+
+Changing your password signs out every other device but leaves the one you are
+using signed in.
+
+### Where the flashcards are kept
+
+Everything — accounts, cards, the trading pool, the ledger — is one JSON
+document, held in memory and written back a moment after it changes. Where it
+is written back to depends on the environment, and the two cases are the same
+shape: read one blob of text, write one blob of text.
+
+**In production: Cloudflare R2.** Render's free tier hands the process a fresh,
+empty filesystem on every deploy and every wake from a spin-down, so a file on
+local disk lasts until the first quiet evening. R2 is an S3-compatible object
+store that does not evaporate. Set all four of these and the server uses it:
+
+```
+R2_ENDPOINT             https://<account id>.r2.cloudflarestorage.com
+R2_ACCESS_KEY_ID
+R2_SECRET_ACCESS_KEY
+R2_BUCKET_NAME
+```
+
+The document goes to the key `flashcards.json`. Nothing is configured in code
+and no value appears in this repository; `render.yaml` declares all four as
+`sync: false`, which is Render's way of saying "set this in the dashboard, not
+in git".
+
+**The bucket must be private.** That one object holds every account's scrypt
+password hash and the SHA-256 of every live session token. It must be
+reachable only through the S3 API with these credentials — never over a public
+`r2.dev` or custom-domain URL. If the bucket also serves public assets, put
+this somewhere else.
+
+**On a laptop, and in the tests: a local file.** Leave the four variables unset
+and it falls back to `THIEVERY_DATA_DIR/flashcards.json` (default `./data`),
+written atomically through a temporary file and a rename. Running with no
+credentials is a supported state, not a broken one — `npm test` never touches
+the network.
+
+To move an existing local file into a bucket, upload it as `flashcards.json`;
+the name is deliberately the same on both sides so nothing has to be renamed.
+
+#### What happens when R2 misbehaves
+
+The failure that matters is not the obvious one. A **missing** object means
+first run, and the server starts with an empty shelf. A read that **fails** —
+a network blip, an expired key, a 500 from Cloudflare — means the data is
+probably fine and merely out of reach, and starting empty would let the next
+save write an empty document over every account on the site.
+
+So on a read error the flashcards room **closes**: every address under
+`/flashcards` answers 503 with a page saying so, and nothing is written while
+it is shut. A 403 from a wrong or expired key counts as an error, never as
+"there is nothing here yet".
+
+**The card game is unaffected.** It keeps nothing and needs none of this, so a
+bucket being unreachable must not take the tables down with it. Room codes,
+the home page and `/health` all carry on exactly as before. Fix the
+credentials, restart, and the room opens again with everything still in it.
+
+The same applies to a misconfiguration. If `NODE_ENV=production` and the four
+`R2_*` variables are not all set, the room closes rather than quietly falling
+back to a disk that is wiped on the next spin-down — which would look like it
+was working right up until every account vanished. Set
+`THIEVERY_ALLOW_EPHEMERAL=1` if you really do want the throwaway disk in
+production.
+
+The rest is ordinary care. Writes are coalesced, so a burst of trades is one
+upload rather than a pile of overlapping ones racing to be last; a change made
+while an upload is in the air gets its own upload afterwards rather than being
+lost. A failed write keeps the change and tries again. A document that will not
+parse is copied aside under a dated key before the server carries on, so the
+damage can be looked at instead of being quietly overwritten.
+
+On the way out, `SIGTERM` — which on Render's free tier is most evenings — is
+awaited properly, because the last save is now a network round trip rather
+than a write to a local disk.
+
 ## Running your own copy
 
-The whole game is a small Node.js server with no database. If you would rather
-host it yourself, install Node 18 or newer and run:
+The whole game is a small Node.js server with no database — the flashcards
+room keeps one JSON document, and nothing else on the site keeps anything. If
+you would rather host it yourself, install Node 18 or newer and run:
 
 ```bash
 npm install

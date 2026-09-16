@@ -5,7 +5,10 @@ services:
     name: logic
     runtime: node
     plan: free
-    buildCommand: npm ci
+    # --omit=dev matters here: wrangler drags in workerd, sharp and esbuild,
+    # which is about 120MB of platform binaries the server never loads. Only
+    # `ws` and the S3 client are needed to run.
+    buildCommand: npm ci --omit=dev
     startCommand: npm start
     healthCheckPath: /health
     # Custom domain. Render issues the TLS certificate once the DNS records
@@ -13,6 +16,33 @@ services:
     domains:
       - thievery.co.uk
       - www.thievery.co.uk
+    # /flashcards keeps accounts and collections, and the free plan's disk is
+    # thrown away on every deploy and every wake from sleep. So the document
+    # does not live on the disk at all: it is one object in a Cloudflare R2
+    # bucket, and the free plan is fine as it is. No disk block needed.
+    #
+    # `sync: false` means "this one is set in the dashboard, not in git".
+    # Render will prompt for each on first deploy. Nothing secret belongs in
+    # this file — it is committed.
     envVars:
       - key: NODE_VERSION
         value: 22
+      # Who the flashcards admin is. Public; the password beside it is not.
+      - key: THIEVERY_ADMIN_USERNAME
+        value: jvbee
+      - key: THIEVERY_ADMIN_PASSWORD
+        sync: false
+      # Cloudflare R2. The endpoint carries the account id, so that is a secret
+      # here too. The bucket must be PRIVATE: the object holds every password
+      # hash and session digest on the site.
+      - key: R2_ENDPOINT
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET_NAME
+        sync: false
+    # With all four of those set, THIEVERY_DATA_DIR is ignored. Leave them
+    # unset and the server falls back to a local file under it, which is what
+    # happens on a laptop and in the tests.

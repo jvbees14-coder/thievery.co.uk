@@ -1,0 +1,489 @@
+/* Thievery.co.uk — the flashcards room.
+ *
+ * An extension of "The Vault", not a second skin: the tokens, the fonts, the
+ * sunburst and the buttons all come from style.css, which is loaded first.
+ * What is here is only the furniture that room needs — a card that turns
+ * over, an appraisal dial, a table to trade across, and a print sheet that
+ * throws the whole website away and leaves nine cards on a sheet of A4.
+ */
+
+/* --- things style.css does not cover -------------------------------------- */
+
+textarea, select {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--brass-dim);
+  color: var(--ivory);
+  padding: 12px 14px;
+  border-radius: 3px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  width: 100%;
+}
+textarea { resize: vertical; line-height: 1.5; }
+textarea::placeholder { color: var(--text-faint); }
+textarea:focus, select:focus, input:focus {
+  border-color: var(--brass);
+  box-shadow: 0 0 0 3px var(--brass-faint);
+}
+
+/* A label's <span> is brass caps by inheritance from style.css. These two are
+   asides within the label and should whisper instead. */
+.field > label .opt, .field > label .count {
+  color: var(--text-faint);
+  letter-spacing: 0.08em;
+  font-weight: 400;
+}
+.hint { margin: 0; font-size: 13px; color: var(--text-dim); }
+.linkish {
+  appearance: none; background: none; border: 0; padding: 0;
+  color: var(--brass); font: inherit; cursor: pointer; text-decoration: underline;
+  text-underline-offset: 3px; text-decoration-color: var(--brass-dim);
+}
+.linkish:hover { color: var(--brass-bright); }
+
+/* --- the door ------------------------------------------------------------- */
+
+.door-card { width: min(100%, 440px); }
+.door-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--brass-faint); }
+.door-tab {
+  appearance: none; background: none; border: 0; border-bottom: 2px solid transparent;
+  padding: 10px 14px 9px; margin-bottom: -1px; cursor: pointer;
+  font-family: var(--caps); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-faint);
+  transition: color 0.15s, border-color 0.15s;
+}
+.door-tab:hover { color: var(--text-dim); }
+.door-tab.is-on { color: var(--brass); border-bottom-color: var(--brass); }
+.door-pane { display: flex; flex-direction: column; gap: 16px; }
+.door-error {
+  margin: 0; padding: 10px 14px; border-radius: 3px; font-size: 14px;
+  background: rgba(142, 31, 46, 0.18); border: 1px solid rgba(229, 100, 107, 0.45); color: #f6c9cc;
+}
+.door-foot { margin: 4px 0 0; text-align: center; font-size: 13px; }
+.door-foot a { color: var(--text-faint); text-decoration: none; }
+.door-foot a:hover { color: var(--brass); }
+
+/* --- the room ------------------------------------------------------------- */
+
+.fc-app { min-height: 100vh; }
+.fc-bar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  padding: 12px clamp(14px, 3vw, 32px);
+  background: rgba(10, 12, 20, 0.88);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--brass-faint);
+}
+.fc-mark { font-size: 22px; text-decoration: none; color: var(--ivory); white-space: nowrap; }
+.fc-mark em { font-style: normal; color: var(--brass); }
+.fc-tabs { display: flex; gap: 2px; flex: 1; flex-wrap: wrap; }
+.fc-tab {
+  appearance: none; background: none; border: 1px solid transparent; border-radius: 3px;
+  padding: 9px 13px 7px; cursor: pointer;
+  font-family: var(--caps); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint);
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+.fc-tab:hover { color: var(--text); background: var(--brass-ghost); }
+.fc-tab.is-on { color: var(--brass); border-color: var(--brass-dim); background: var(--brass-ghost); }
+.fc-tab-admin { color: var(--team-b); }
+.fc-tab-admin.is-on { color: var(--team-b); border-color: rgba(233, 162, 184, 0.4); }
+
+.fc-who { position: relative; }
+.fc-who-btn {
+  appearance: none; background: none; border: 1px solid var(--brass-dim); border-radius: 3px;
+  padding: 8px 13px; cursor: pointer; color: var(--ivory);
+  font-family: var(--caps); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+}
+.fc-who-btn:hover { border-color: var(--brass); background: var(--brass-ghost); }
+.fc-menu {
+  position: absolute; right: 0; top: calc(100% + 6px); min-width: 190px; z-index: 30;
+  display: flex; flex-direction: column;
+  background: var(--ink-3); border: 1px solid var(--brass-dim); border-radius: 3px;
+  box-shadow: var(--shadow); overflow: hidden;
+}
+.fc-menu button, .fc-menu a {
+  appearance: none; background: none; border: 0; text-align: left; cursor: pointer;
+  padding: 11px 15px; color: var(--text); font: inherit; font-size: 14px; text-decoration: none;
+}
+.fc-menu button:hover, .fc-menu a:hover { background: var(--brass-ghost); color: var(--ivory); }
+
+.fc-main { padding: clamp(18px, 3vw, 34px) clamp(14px, 3vw, 32px) 80px; max-width: 1240px; margin: 0 auto; }
+.fc-pane { animation: fcin 0.3s ease both; }
+@keyframes fcin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.fc-h { font-family: var(--caps); font-weight: 600; font-size: 22px; letter-spacing: 0.04em; color: var(--ivory); margin: 0 0 8px; }
+.fc-h3 { font-family: var(--caps); font-weight: 600; font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--brass); margin: 26px 0 12px; display: flex; align-items: baseline; gap: 10px; }
+.fc-h4 { font-family: var(--caps); font-weight: 600; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--brass); margin: 22px 0 8px; }
+.fc-lede { margin: 0 0 20px; color: var(--text-dim); max-width: 62ch; }
+.fc-note { margin: 10px 0 0; font-size: 13px; color: var(--text-faint); line-height: 1.5; }
+.fc-tally { font-family: var(--mono); font-size: 12px; color: var(--text-faint); letter-spacing: 0; text-transform: none; }
+.fc-empty { color: var(--text-faint); font-style: italic; padding: 18px 2px; }
+
+/* --- the strip of numbers ------------------------------------------------- */
+
+.fc-ledger {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 1px;
+  background: var(--brass-faint); border: 1px solid var(--brass-faint); border-radius: 4px;
+  overflow: hidden; margin-bottom: 22px;
+}
+.fc-stat { background: var(--ink-2); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+.fc-stat b { font-family: var(--display); font-size: 25px; font-weight: 400; color: var(--ivory); line-height: 1; }
+.fc-stat span { font-family: var(--caps); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); }
+.fc-stat[data-rarity] b { color: var(--r-ink, var(--ivory)); }
+
+/* --- toolbar -------------------------------------------------------------- */
+
+.fc-toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+.fc-search { flex: 1; min-width: 200px; }
+.fc-select { width: auto; min-width: 150px; }
+
+/* --- a card --------------------------------------------------------------- */
+
+.fc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 16px; }
+
+.fc-card {
+  --r-ink: var(--text-dim);
+  position: relative; perspective: 1400px; min-height: 212px;
+}
+.fc-card[data-rarity="uncommon"]  { --r-ink: var(--jade); }
+.fc-card[data-rarity="rare"]      { --r-ink: var(--team-a); }
+.fc-card[data-rarity="epic"]      { --r-ink: #b79ae0; }
+.fc-card[data-rarity="legendary"] { --r-ink: var(--brass); }
+.fc-card[data-rarity="mythic"]    { --r-ink: var(--team-b); }
+
+.fc-flip {
+  position: relative; width: 100%; height: 100%; min-height: 212px;
+  transition: transform 0.55s var(--bounce); transform-style: preserve-3d;
+}
+.fc-card.is-turned .fc-flip { transform: rotateY(180deg); }
+.fc-face {
+  position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 15px 16px 13px; border-radius: 5px; cursor: pointer;
+  background: linear-gradient(170deg, rgba(23, 27, 40, 0.97), rgba(13, 16, 25, 0.97));
+  border: 1px solid var(--brass-faint);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.2s, transform 0.2s;
+}
+.fc-face::before {
+  /* A hairline in the rarity's colour, down the spine of the card. */
+  content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 2px;
+  background: var(--r-ink); opacity: 0.55; border-radius: 0 2px 2px 0;
+}
+.fc-face:hover { border-color: var(--brass-dim); }
+.fc-back { transform: rotateY(180deg); }
+
+.fc-cardtop { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.fc-rarity {
+  font-family: var(--caps); font-size: 9.5px; font-weight: 700; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--r-ink);
+}
+.fc-worth { font-family: var(--mono); font-size: 12px; color: var(--brass); white-space: nowrap; }
+.fc-title { font-family: var(--display); font-size: 15px; color: var(--r-ink); margin: 0; }
+.fc-text { margin: 0; font-size: 15.5px; line-height: 1.45; color: var(--text); flex: 1; overflow: hidden; }
+.fc-back .fc-text { color: var(--ivory-dim); font-size: 14.5px; }
+.fc-hint { margin: 0; font-size: 12.5px; color: var(--text-faint); font-style: italic; }
+.fc-flavour { margin: 0; font-size: 12.5px; color: var(--r-ink); font-style: italic; opacity: 0.85; }
+.fc-cardfoot {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding-top: 9px; border-top: 1px solid var(--brass-ghost);
+  font-family: var(--mono); font-size: 11px; color: var(--text-faint);
+}
+.fc-cardfoot .fc-sep { opacity: 0.4; }
+.fc-tag {
+  font-family: var(--caps); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  border: 1px solid var(--brass-faint); border-radius: 999px; padding: 2px 7px 1px; color: var(--text-faint);
+}
+.fc-ops { display: flex; gap: 5px; margin-top: 9px; flex-wrap: wrap; }
+.fc-op {
+  appearance: none; background: none; border: 1px solid var(--brass-faint); border-radius: 3px;
+  padding: 5px 9px 4px; cursor: pointer; color: var(--text-dim);
+  font-family: var(--caps); font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.fc-op:hover { color: var(--ivory); border-color: var(--brass-dim); background: var(--brass-ghost); }
+.fc-op.danger:hover { color: #f6c9cc; border-color: rgba(229, 100, 107, 0.5); background: rgba(142, 31, 46, 0.15); }
+.fc-op.on { color: var(--jade-bright); border-color: rgba(95, 154, 132, 0.5); }
+.fc-card.is-pooled .fc-face { border-color: rgba(95, 154, 132, 0.4); }
+
+/* --- making one ----------------------------------------------------------- */
+
+.fc-make { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(250px, 0.85fr); gap: 28px; align-items: start; }
+.fc-form { display: flex; flex-direction: column; gap: 16px; }
+.fc-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.fc-actions { display: flex; gap: 10px; align-items: center; }
+.fc-editing { margin: 0; font-size: 13px; color: var(--jade-bright); }
+
+.fc-appraisal {
+  position: sticky; top: 84px;
+  padding: 20px 20px 22px; border-radius: 5px;
+  background: linear-gradient(170deg, rgba(23, 27, 40, 0.9), rgba(13, 16, 25, 0.9));
+  border: 1px solid var(--brass-faint);
+}
+.fc-meter { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.fc-meter-track { flex: 1; height: 7px; border-radius: 999px; background: rgba(0, 0, 0, 0.45); overflow: hidden; border: 1px solid var(--brass-ghost); }
+.fc-meter-fill {
+  height: 100%; width: 0%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--burgundy) 0%, var(--brass) 55%, var(--brass-bright) 100%);
+  transition: width 0.4s var(--bounce);
+}
+.fc-meter-num { display: flex; align-items: baseline; gap: 5px; }
+.fc-meter-num b { font-family: var(--display); font-size: 27px; font-weight: 400; color: var(--ivory); }
+.fc-meter-num span { font-family: var(--caps); font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); }
+
+.fc-parts, .fc-odds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.fc-parts li, .fc-odds li { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--text-dim); }
+.fc-parts li span:first-child, .fc-odds li span:first-child { flex: 0 0 96px; font-family: var(--caps); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); }
+.fc-bar-track { flex: 1; height: 4px; border-radius: 999px; background: rgba(0, 0, 0, 0.4); overflow: hidden; }
+.fc-bar-fill { display: block; height: 100%; background: var(--brass-dim); border-radius: 999px; transition: width 0.4s ease; }
+.fc-odds .fc-bar-fill { background: var(--r-ink, var(--brass-dim)); }
+.fc-parts li b, .fc-odds li b { font-family: var(--mono); font-size: 11.5px; color: var(--text-dim); min-width: 46px; text-align: right; }
+
+.fc-reveal {
+  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center;
+  background: rgba(6, 8, 14, 0.85); backdrop-filter: blur(6px); padding: 20px;
+  animation: fcin 0.3s ease both;
+}
+.fc-reveal-inner { display: flex; flex-direction: column; gap: 18px; align-items: center; width: min(100%, 330px); }
+.fc-reveal-cap { margin: 0; font-family: var(--caps); font-size: 11px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; color: var(--brass); }
+.fc-reveal .fc-card { width: 100%; animation: strike 0.7s var(--bounce) both; }
+@keyframes strike {
+  from { opacity: 0; transform: rotateY(-95deg) scale(0.85); }
+  to { opacity: 1; transform: none; }
+}
+
+/* --- the trading post ----------------------------------------------------- */
+
+.fc-trade-cols { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.9fr); gap: 30px; align-items: start; }
+.fc-offers { display: flex; flex-direction: column; gap: 8px; }
+.fc-offer {
+  --r-ink: var(--text-dim);
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px; border-radius: 4px;
+  background: rgba(16, 19, 29, 0.85); border: 1px solid var(--brass-faint);
+  border-left: 3px solid var(--r-ink);
+}
+.fc-offer[data-rarity="uncommon"]  { --r-ink: var(--jade); }
+.fc-offer[data-rarity="rare"]      { --r-ink: var(--team-a); }
+.fc-offer[data-rarity="epic"]      { --r-ink: #b79ae0; }
+.fc-offer[data-rarity="legendary"] { --r-ink: var(--brass); }
+.fc-offer[data-rarity="mythic"]    { --r-ink: var(--team-b); }
+.fc-offer.is-mine { background: rgba(23, 34, 31, 0.8); }
+.fc-offer-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.fc-offer-front { font-size: 14.5px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fc-offer-meta { font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+.fc-offer-worth { font-family: var(--mono); font-size: 13px; color: var(--brass); white-space: nowrap; }
+
+.fc-trades { display: flex; flex-direction: column; gap: 10px; }
+.fc-trade {
+  padding: 13px 15px; border-radius: 4px;
+  background: rgba(16, 19, 29, 0.85); border: 1px solid var(--brass-faint);
+}
+.fc-trade-when { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-bottom: 7px; }
+.fc-trade-line { display: flex; gap: 8px; font-size: 13.5px; color: var(--text-dim); padding: 2px 0; }
+.fc-trade-line em { font-style: normal; font-family: var(--caps); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; flex: 0 0 42px; padding-top: 3px; }
+.fc-trade-line.gave em { color: var(--bad); }
+.fc-trade-line.got em { color: var(--jade-bright); }
+.fc-trade-line ul { list-style: none; margin: 0; padding: 0; flex: 1; }
+.fc-trade-line li { overflow: hidden; text-overflow: ellipsis; }
+
+/* --- the print picker ----------------------------------------------------- */
+
+.fc-print-opts {
+  display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+  padding: 14px 16px; margin-bottom: 18px; border-radius: 4px;
+  background: rgba(16, 19, 29, 0.85); border: 1px solid var(--brass-faint);
+}
+.fc-check { display: flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--text-dim); cursor: pointer; }
+.fc-check input { width: auto; accent-color: var(--brass); }
+.fc-print-count { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--text-faint); }
+
+.fc-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.fc-pick-item {
+  --r-ink: var(--text-dim);
+  display: flex; gap: 11px; align-items: flex-start; cursor: pointer;
+  padding: 11px 13px; border-radius: 4px;
+  background: rgba(16, 19, 29, 0.85); border: 1px solid var(--brass-faint);
+  border-left: 3px solid var(--r-ink);
+  transition: border-color 0.15s, background 0.15s;
+}
+.fc-pick-item[data-rarity="uncommon"]  { --r-ink: var(--jade); }
+.fc-pick-item[data-rarity="rare"]      { --r-ink: var(--team-a); }
+.fc-pick-item[data-rarity="epic"]      { --r-ink: #b79ae0; }
+.fc-pick-item[data-rarity="legendary"] { --r-ink: var(--brass); }
+.fc-pick-item[data-rarity="mythic"]    { --r-ink: var(--team-b); }
+.fc-pick-item:hover { border-color: var(--brass-dim); }
+.fc-pick-item.is-on { background: rgba(23, 34, 31, 0.8); border-color: rgba(95, 154, 132, 0.45); }
+.fc-pick-item input { width: auto; margin-top: 3px; accent-color: var(--brass); }
+.fc-pick-body { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.fc-pick-front { font-size: 14px; color: var(--text); }
+.fc-pick-meta { font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+
+/* --- the panel ------------------------------------------------------------ */
+
+.fc-panel-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+.fc-accounts { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; max-height: 620px; overflow-y: auto; padding-right: 4px; }
+.fc-acct {
+  display: flex; align-items: center; gap: 12px; text-align: left; width: 100%;
+  appearance: none; cursor: pointer;
+  padding: 11px 14px; border-radius: 4px;
+  background: rgba(16, 19, 29, 0.85); border: 1px solid var(--brass-faint);
+  color: var(--text); font: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+.fc-acct:hover { border-color: var(--brass-dim); background: var(--brass-ghost); }
+.fc-acct.is-admin { border-color: rgba(233, 162, 184, 0.35); }
+.fc-acct.is-off { opacity: 0.5; }
+.fc-acct-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.fc-acct-name { font-size: 14.5px; color: var(--ivory); }
+.fc-acct-meta { font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+.fc-acct-worth { font-family: var(--mono); font-size: 12px; color: var(--brass); text-align: right; white-space: nowrap; }
+.fc-mythic-result {
+  margin-top: 16px; padding: 14px 16px; border-radius: 4px;
+  background: rgba(35, 20, 28, 0.8); border: 1px solid rgba(233, 162, 184, 0.4);
+  color: var(--text); font-size: 14px;
+}
+
+/* --- the modal ------------------------------------------------------------ */
+
+.fc-modal {
+  position: fixed; inset: 0; z-index: 70; display: grid; place-items: center;
+  background: rgba(6, 8, 14, 0.82); backdrop-filter: blur(6px); padding: 20px;
+  animation: fcin 0.25s ease both;
+}
+.fc-modal-box {
+  position: relative; width: min(100%, 560px); max-height: 86vh; overflow-y: auto;
+  padding: 30px 30px 28px; border-radius: 5px;
+  background: linear-gradient(180deg, rgba(20, 24, 39, 0.98), rgba(16, 19, 29, 0.99));
+  border: 1px solid var(--brass-dim); box-shadow: var(--shadow);
+}
+.fc-modal-x {
+  position: absolute; right: 12px; top: 10px; appearance: none; background: none; border: 0;
+  color: var(--text-faint); font-size: 26px; line-height: 1; cursor: pointer; padding: 4px 8px;
+}
+.fc-modal-x:hover { color: var(--ivory); }
+.fc-modal-box h3 { font-family: var(--caps); font-weight: 600; font-size: 18px; color: var(--ivory); margin: 0 0 16px; }
+.fc-danger-zone { margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(229, 100, 107, 0.25); }
+
+/* --- narrow screens ------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .fc-make, .fc-trade-cols, .fc-panel-cols { grid-template-columns: minmax(0, 1fr); }
+  .fc-appraisal { position: static; }
+}
+@media (max-width: 560px) {
+  .fc-bar { gap: 10px; padding: 10px 14px; }
+  .fc-mark { font-size: 18px; }
+  .fc-tabs { order: 3; width: 100%; }
+  .fc-who { margin-left: auto; }
+  .fc-row { grid-template-columns: 1fr; }
+  .fc-grid { grid-template-columns: 1fr; }
+}
+
+/* ===========================================================================
+   The print sheet.
+
+   Everything above is for a screen and none of it survives contact with a
+   printer, so printing throws the whole page away and lays out nine cards on
+   a sheet of A4 instead: 63.5 x 88.9mm each, the size of a playing card,
+   three across and three down with the margins that leaves.
+
+   Backs are printed on the following page with the columns reversed, which is
+   what a duplex printer flipping on the long edge needs in order to put the
+   answer behind its own question.
+   =========================================================================== */
+
+.fc-sheet { display: none; }
+
+@media print {
+  /* The room, the sunburst and the coloured light are all screen furniture. */
+  body::before, body::after { display: none !important; }
+  body > *:not(.fc-sheet) { display: none !important; }
+  html, body { background: #fff; margin: 0; padding: 0; }
+
+  @page { size: A4 portrait; margin: 0; }
+
+  .fc-sheet { display: block; }
+
+  .fc-page {
+    width: 210mm; height: 297mm;
+    padding: 15.1mm 9.7mm;
+    display: grid;
+    grid-template-columns: repeat(3, 63.5mm);
+    grid-template-rows: repeat(3, 88.9mm);
+    box-sizing: border-box;
+    page-break-after: always;
+    break-after: page;
+  }
+  .fc-page:last-child { page-break-after: auto; break-after: auto; }
+
+  .fc-print-card {
+    position: relative;
+    width: 63.5mm; height: 88.9mm;
+    padding: 6mm 5.4mm 5mm;
+    box-sizing: border-box;
+    display: flex; flex-direction: column; gap: 2.2mm;
+    color: #14161f;
+    background: #fff;
+    overflow: hidden;
+    /* An ivory card with a hairline border, so the cut line is visible even
+       when the cut marks are switched off. */
+    border: 0.3mm solid #c9bfa6;
+    font-family: "EB Garamond", Georgia, serif;
+  }
+  .fc-print-card.is-blank { border: 0.3mm dashed #e4ddcc; }
+
+  /* The deco rule down the spine, in the rarity's ink. */
+  .fc-print-card::before {
+    content: ""; position: absolute; left: 0; top: 6mm; bottom: 6mm; width: 0.9mm;
+    background: var(--r-ink, #8a8372);
+  }
+  .fc-print-card[data-rarity="common"]    { --r-ink: #8a8372; }
+  .fc-print-card[data-rarity="uncommon"]  { --r-ink: #4a7d69; }
+  .fc-print-card[data-rarity="rare"]      { --r-ink: #3f8f95; }
+  .fc-print-card[data-rarity="epic"]      { --r-ink: #7c5fb0; }
+  .fc-print-card[data-rarity="legendary"] { --r-ink: #a8801f; }
+  .fc-print-card[data-rarity="mythic"]    { --r-ink: #a8365c; }
+
+  .fc-print-top {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: "Cinzel", Georgia, serif; font-size: 6.2pt; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .fc-print-rarity { color: var(--r-ink, #8a8372); }
+  .fc-print-worth { color: #8a8372; font-family: "Cutive Mono", monospace; letter-spacing: 0; }
+
+  .fc-print-name { font-family: "Limelight", "Cinzel", Georgia, serif; font-size: 10pt; color: var(--r-ink, #14161f); margin: 0; }
+  .fc-print-text { margin: 0; font-size: 12pt; line-height: 1.34; flex: 1; overflow: hidden; }
+  .fc-print-card.back .fc-print-text { font-size: 10.5pt; }
+  .fc-print-hint { margin: 0; font-size: 8pt; font-style: italic; color: #6c6555; }
+  .fc-print-flavour { margin: 0; font-size: 8pt; font-style: italic; color: var(--r-ink, #6c6555); }
+
+  .fc-print-foot {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 2mm;
+    padding-top: 1.6mm; border-top: 0.25mm solid #ddd5c2;
+    font-family: "Cutive Mono", monospace; font-size: 6pt; color: #8a8372;
+  }
+  .fc-print-foot b { font-family: "Cinzel", Georgia, serif; font-weight: 700; letter-spacing: 0.1em; color: #6c6555; }
+
+  /* Cut marks: a hairline crossing each corner, printed just outside the card
+     so the blade has something to follow. */
+  .fc-page.marks .fc-print-card::after {
+    content: ""; position: absolute; inset: -2.2mm;
+    background:
+      linear-gradient(#b9b0997f, #b9b0997f) 0 2.2mm / 2mm 0.2mm no-repeat,
+      linear-gradient(#b9b0997f, #b9b0997f) 100% 2.2mm / 2mm 0.2mm no-repeat,
+      linear-gradient(#b9b0997f, #b9b0997f) 0 calc(100% - 2.2mm) / 2mm 0.2mm no-repeat,
+      linear-gradient(#b9b0997f, #b9b0997f) 100% calc(100% - 2.2mm) / 2mm 0.2mm no-repeat,
+      linear-gradient(#b9b0997f, #b9b0997f) 2.2mm 0 / 0.2mm 2mm no-repeat,
+      linear-gradient(#b9b0997f, #b9b0997f) 2.2mm 100% / 0.2mm 2mm no-repeat,
+      linear-gradient(#b9b0997f, #b9b0997f) calc(100% - 2.2mm) 0 / 0.2mm 2mm no-repeat,
+      linear-gradient(#b9b0997f, #b9b0997f) calc(100% - 2.2mm) 100% / 0.2mm 2mm no-repeat;
+    pointer-events: none;
+  }
+
+  /* Printers drop background colour by default; these ask for it politely and
+     the card still reads correctly in plain black if the request is refused. */
+  .fc-print-card, .fc-print-card::before, .fc-page { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
