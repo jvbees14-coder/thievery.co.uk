@@ -44,7 +44,7 @@ export const DATA_DIR = process.env.THIEVERY_DATA_DIR
 // The name the document goes under. Deliberately the same on both backends, so
 // a bucket can be seeded by uploading the local file and nothing has to be
 // renamed on the way.
-const FILENAME = 'flashcards.json';
+export const FILENAME = 'flashcards.json';
 
 // How long a change may sit in memory before it is written back. Long enough
 // that a burst of edits is one write, short enough that losing it costs
