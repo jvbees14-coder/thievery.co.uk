@@ -464,6 +464,9 @@
       el.style.left = `${Math.min(parseFloat(el.style.left) || 8, maxX)}px`;
       el.style.top = `${Math.min(parseFloat(el.style.top) || 8, maxY)}px`;
     }
+    // The switches are measured in pixels, so a new window width means they
+    // have to be measured again.
+    settleSwitches();
   });
 
   // --- the deal ------------------------------------------------------------
@@ -568,15 +571,26 @@
       .map((o, k) => `<button class="${k === i ? 'on' : ''}" ${o.attrs} ${disabled || o.off ? 'disabled' : ''}>${o.label}</button>`)
       .join('')}</div>`;
   }
+  // Where the tile belongs, taken off the button itself. The options are all
+  // the same width wherever there is room for them to be, but on a narrow
+  // screen a long label keeps its own width, and then a fraction of the box
+  // would leave the tile lying across the gap between two words.
+  function placeTile(el, i) {
+    const btn = el.children[i];
+    if (!btn) return;
+    el.style.setProperty('--seg-i', i);
+    el.style.setProperty('--seg-x', `${btn.offsetLeft}px`);
+    el.style.setProperty('--seg-w', `${btn.offsetWidth}px`);
+  }
   function settleSwitches() {
     document.querySelectorAll('.seg[data-seg]').forEach((el) => {
       const key = el.dataset.seg;
       const to = Number(el.dataset.i) || 0;
       const from = switchPos.has(key) ? switchPos.get(key) : to;
       switchPos.set(key, to);
-      el.style.setProperty('--seg-i', from);
+      placeTile(el, from);
       if (from === to) return;
-      requestAnimationFrame(() => requestAnimationFrame(() => el.style.setProperty('--seg-i', to)));
+      requestAnimationFrame(() => requestAnimationFrame(() => placeTile(el, to)));
     });
   }
 
