@@ -7,8 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm start              # serve on PORT (default 3000)
 npm run dev            # same, with --watch
-npm test               # all three suites, in order; any failure stops the run
+npm test               # all four suites, in order; any failure stops the run
 npm run test:game      # the card game: real server, real clients, whole rounds played out
+npm run test:powerups  # the five/six-hand power-up rules, played against game.js directly
 npm run test:flashcards # the flashcards room over HTTP
 npm run test:r2        # the storage layer, against a stub S3 client
 npm run r2:check       # are the four R2_* variables real? needs them in the environment
@@ -28,8 +29,8 @@ server-backed suites ask for `PORT=0` so concurrent runs cannot collide.
 The repo is one server hosting two things that share almost nothing but a look
 and a port:
 
-**The card game** (`server/game.js`, `bot.js`, `deal.js`, `index.js`;
-`public/index.html`, `app.js`) is deliberately stateless. Rooms live in a
+**The card game** (`server/game.js`, `bot.js`, `deal.js`, `powerups.js`,
+`index.js`; `public/index.html`, `app.js`) is deliberately stateless. Rooms live in a
 `Map` in `server/index.js`, survive a refresh, and are forgotten an hour after
 the last person disconnects. Nothing is written to disk, there are no accounts,
 and a room code stops working within the hour.
@@ -53,10 +54,41 @@ catches its own errors and latches an outage; see "The never-overwrite rule".
 ## The game: hands are not players
 
 The single idea that makes the rest of the code readable. A table is dealt
-three or four *hands*; the first few people get one each and everybody after
+three to six *hands*; the first few people get one each and everybody after
 that shares a hand with someone already seated, seeing the same cards and able
-to play them. So a four-hand table holds four to eight people. Hands nobody
-takes can go to the house (`bot.js`).
+to play them. So a four-hand table holds four to eight people and a six-hand
+table up to twelve. Hands nobody takes can go to the house (`bot.js`).
+
+## Five and six hands are a different game
+
+The deck does not grow with the table. `DEAL_SPLITS` in `deal.js` spreads the
+same 26 cards over however many hands there are, so a six-hand row is four or
+five cards against a four-hand row's six or seven — and the deduction the game
+runs on, a face-down card fenced in by what is showing either side of it, has
+much less to fence with.
+
+So those two sizes are dealt **power-ups**, and there is no switch for it:
+`usesPowerUps(numSeats)` is the only thing that decides, `createGame` sets
+`g.powered` from it, and a three or four-hand table can no more turn them on
+than a six-hand one can turn them off. The catalog and the draw are in
+`powerups.js`; every rule about what one *does* is in `game.js` under "the
+power-ups", because they are rules.
+
+Three things there are easy to break:
+
+- **A reveal goes through `g.known`,** the same per-viewer list a partner's
+  show uses. That is deliberately the only route by which a rank reaches
+  somebody who does not own it, which is what keeps `test/smoke.test.js`
+  honest: it checks every snapshot for a rank without `shown` on it.
+- **`guessTargets` decides who has won and must not know about stakeouts.**
+  `openTargets` is the one that filters them out. Fold the two together and a
+  player wins the round by shielding the table.
+- **The house never draws.** `createGame` takes `botSeats` for that and
+  nothing else.
+
+`test/powerups.test.js` plays `game.js` directly rather than over a socket,
+because a draw is random and a test that waits for somebody to draw a stakeout
+waits a long time and then fails for the wrong reason.
 
 `Game.viewFor(g, viewer)` is the only thing that decides what a client is
 allowed to know, and every snapshot pushed over the WebSocket goes through it.

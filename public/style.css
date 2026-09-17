@@ -230,6 +230,7 @@ input[type="number"]::-webkit-inner-spin-button { appearance: none; -webkit-appe
 .pill.bot { color: var(--jade-pale); border-color: rgba(95, 154, 132, 0.45); background: rgba(95, 154, 132, 0.08); }
 .pill.team-0 { color: var(--team-a); border-color: rgba(127, 211, 204, 0.4); }
 .pill.team-1 { color: var(--team-b); border-color: rgba(233, 162, 184, 0.4); }
+.pill.watch { color: #b79ae0; border-color: rgba(183, 154, 224, 0.45); background: rgba(183, 154, 224, 0.08); }
 
 /* Deco frame: every panel gets a hairline border and brass corner marks. */
 .panel, .home-card, .seat-row {
@@ -785,6 +786,50 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 .ranks button:active { transform: translateY(1px) scale(0.95); }
 .actions-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .actions-row .btn { flex: 1; }
+/* A row of hands to point a power-up at. There can be five of them, so they
+   wrap and take their own width rather than stretching to a fifth each. */
+.actions-row.wrap .btn { flex: 0 1 auto; }
+
+/* --- power-ups -------------------------------------------------------------
+   Only ever on a five or six-hand table. They are dealt from the same pack the
+   room is furnished from: a brass hairline up the spine, the tier whispered
+   above the name, and the rarer ones lit a little warmer than the commons so
+   a very rare reads as one across the room. */
+.powerups h3 .faint { float: right; font-family: var(--mono); font-size: 11px; font-weight: 400; }
+.pu-chain {
+  margin: 0 0 10px; padding: 7px 10px; border-radius: 3px;
+  background: rgba(142, 31, 46, 0.16); border: 1px solid rgba(229, 100, 107, 0.35);
+  font-family: var(--caps); font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: #f6c9cc;
+}
+.pu-hand { display: flex; flex-direction: column; gap: 8px; }
+.pu {
+  --pu-ink: var(--text-dim);
+  position: relative; display: block; width: 100%; text-align: left;
+  appearance: none; cursor: pointer; overflow: hidden;
+  padding: 9px 12px 10px 14px; border-radius: 4px;
+  background: linear-gradient(170deg, rgba(23, 27, 40, 0.95), rgba(13, 16, 25, 0.95));
+  border: 1px solid var(--brass-faint);
+  transition: border-color 0.15s, transform 0.15s, background 0.15s;
+}
+.pu::before {
+  content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px;
+  background: var(--pu-ink); opacity: 0.7; border-radius: 0 2px 2px 0;
+}
+.pu.common { --pu-ink: var(--text-dim); }
+.pu.uncommon { --pu-ink: var(--jade); }
+.pu.rare { --pu-ink: var(--team-a); }
+.pu.veryRare { --pu-ink: var(--brass); }
+.pu:hover:not(:disabled) { border-color: var(--brass-dim); transform: translateX(2px); }
+.pu:disabled, .pu.idle { cursor: default; opacity: 0.45; }
+.pu.chosen { border-color: var(--brass); background: var(--brass-ghost); }
+.pu-tier {
+  display: block; font-family: var(--caps); font-size: 8.5px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--pu-ink);
+}
+.pu-name { display: block; font-family: var(--display); font-size: 15px; color: var(--ivory); margin-top: 2px; }
+.pu-blurb { display: block; font-size: 12.5px; line-height: 1.4; color: var(--text-dim); margin-top: 4px; }
+.sub.accent { color: var(--brass); }
 .result { text-align: center; padding: 10px 0 6px; }
 .result .headline { font-family: var(--display); font-weight: 400; font-size: 30px; margin: 0 0 8px; letter-spacing: 0.02em; }
 .result.lose .headline { color: var(--bad); }

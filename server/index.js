@@ -24,7 +24,8 @@ import { WebSocketServer } from 'ws';
 import * as Game from './game.js';
 import * as Bot from './bot.js';
 import * as Flashcards from './flashcards.js';
-import { shuffle, DEAL_SPLITS, SEAT_COUNTS, MIN_SEATS, MAX_SEATS, MAX_PER_SEAT } from './deal.js';
+import { shuffle, DEAL_SPLITS, SEAT_COUNTS, MIN_SEATS, MAX_SEATS, MAX_PER_SEAT, usesPowerUps } from './deal.js';
+import * as PowerUps from './powerups.js';
 
 // PORT=0 is a real answer — "any port going" — so it must not be read as no
 // answer at all.
@@ -202,6 +203,10 @@ function lobbyView(room) {
     seats: room.seatCount,
     maxPlayers: capacity(room),
     teams: room.teams,
+    // Five and six hands are dealt with power-ups and there is no switch for
+    // it, so the lobby states it rather than offering it.
+    powerUps: usesPowerUps(room.seatCount),
+    seatCounts: SEAT_COUNTS,
     customDeal: room.customDeal,
     hands: room.customDeal ? handSizes(room) : null,
     firstSeat: room.firstSeat,
@@ -421,6 +426,9 @@ function startRound(room) {
     startSeat: start,
     names: seatNames(room),
     counts: customCounts(room),
+    // The house does not draw power-ups, so the game has to know which hands
+    // it is sitting at.
+    botSeats: room.players.filter((p) => p.bot).map((p) => p.seat),
   });
 }
 
@@ -448,6 +456,9 @@ function attach(room, player, ws) {
   player.ws = ws;
   player.connected = true;
   ws.ctx = { room, player };
+  // The power-up catalog never changes, so it is sent once when a socket
+  // arrives rather than riding along with every snapshot after it.
+  send(ws, { type: 'catalog', powerUps: PowerUps.catalog() });
 }
 
 function handleJoin(ws, msg) {
@@ -576,7 +587,7 @@ function handleAction(ws, msg) {
       requireHost();
       requireLobby();
       const n = Number(msg.seats);
-      if (!SEAT_COUNTS.includes(n)) throw new Error(`A table is dealt ${MIN_SEATS} or ${MAX_SEATS} hands`);
+      if (!SEAT_COUNTS.includes(n)) throw new Error(`A table is dealt ${MIN_SEATS} to ${MAX_SEATS} hands`);
       if (people(room).length > n * MAX_PER_SEAT) {
         throw new Error(`Too many players in the room for ${n} hands (room for ${n * MAX_PER_SEAT})`);
       }
@@ -718,6 +729,14 @@ function handleAction(ws, msg) {
     case 'guess':
       requireGame();
       Game.guess(g, player.seat, msg.target, Number(msg.rank));
+      break;
+
+    case 'powerup':
+      requireGame();
+      // Everything about whether this hand may play this now — whose turn it
+      // is, whether the alarm has a run to stop, whether a pickpocket is too
+      // late — is the game's to decide, not the room's.
+      Game.playPowerUp(g, player.seat, String(msg.id || ''), msg.opts || {});
       break;
 
     case 'test:switch': {

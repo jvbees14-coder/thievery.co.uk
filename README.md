@@ -54,12 +54,59 @@ house](#playing-the-house).
    nobody else is coming, press **Deal the house in** beside each empty hand
    and play the bots instead.
 
+### Five and six hands: power-ups
+
+The deck does not get any bigger when the table does. At six hands the same 26
+cards are spread 5/5/4/4/4/4, so every row is four or five cards instead of six
+or seven, and there is far less either side of a face-down card to fence it in
+with. Two things suffer: there is less to deduce, exactly when there are more
+people wanting to deduce it, and one hot streak can run through half the table
+before anybody else gets a turn.
+
+So at five and six hands everybody draws a **power-up** at the start of each of
+their own turns — one per turn, never one per guess — and may carry three at a
+time. You never draw a second copy of something you are already holding, and a
+hand at three draws nothing until it has spent something. Bots draw none: they
+are the players' answer to a thin table.
+
+Everyone can have a hand of their own at these sizes, and anyone past the sixth
+doubles up exactly as they would at a smaller table. A shared hand shares its
+power-ups too, the same way it shares its cards.
+
+| | What it does |
+| --- | --- |
+| **Casing the joint** | Read one face-down card that is not yours. You learn its rank, it stays face down, and nobody is told. |
+| **Loose lips** | Name a rank and hear how many of it are still face down across the whole table. A count, never a place. |
+| **Tip-off** | Show one of your own face-down cards to one other player, privately. Whatever you get for it is between you. |
+| **Second storey** | Your next wrong guess this turn does not end it. One to a turn. |
+| **Pickpocket** | An extra guess at a hand of your choosing, played at the start of your turn. |
+| **Trip the alarm** | Ends the run of correct guesses going on now. Anybody may pull it, at any time, including out of turn. |
+| **Stakeout** | Nobody may guess against the hand you name until that hand plays again. Not your own. |
+| **Misdirection** | Send another player's next guess at a hand you choose. They still pick the rank. |
+| **Crack the vault** | Turn any face-down card that is not yours face up, no guessing about it. It counts as a correct guess, so you go again. |
+
+The commons are the ones you will mostly see; a vault crack turns up about
+three times in a hundred. Two rules keep a good run from becoming everybody
+else's afternoon:
+
+- **A pickpocket cannot extend a run.** It is playable at the start of your
+  turn, before you have guessed, and never part-way through.
+- **The alarm belongs to the table.** It is the release valve: if somebody is
+  six correct guesses deep and showing no sign of stopping, anyone holding one
+  can end it there and then. It is the likeliest of the rares for exactly that
+  reason.
+
+A stakeout blocks guesses; it does not count towards winning. You cannot shield
+the table into handing you the round.
+
 ### Host options in the lobby
 
-- **Hands**: three or four. The 26 cards are split as evenly as the table
-  allows, so four hands means smaller hands — and, in solo play, a longer
-  round, since you have to turn over everybody else's cards to win. Three
-  hands seat up to six people, four hands up to eight.
+- **Hands**: three, four, five or six. The 26 cards are split as evenly as the
+  table allows, so more hands means smaller hands — and, in solo play, a
+  longer round, since you have to turn over everybody else's cards to win.
+  Three hands seat up to six people, four up to eight, five up to ten and six
+  up to twelve. **Five and six hands are dealt with power-ups** (below), which
+  is not optional at those sizes.
 - **Teams**: at a table of four hands you can play as two partnerships
   instead. Hands 1 and 3 are one team, hands 2 and 4 the other. Partnerships
   need exactly four hands, because the Show step depends on each hand having a

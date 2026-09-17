@@ -15,8 +15,8 @@
   const DOTS = '<span class="dots"><i>.</i><i>.</i><i>.</i></span>';
   // How many hands a table can be dealt, how the 26 cards fall at each, and
   // how many people can share one hand.
-  const SEAT_COUNTS = [3, 4];
-  const SPLIT_LABEL = { 3: '9/9/8', 4: '7/7/6/6' };
+  const SEAT_COUNTS = [3, 4, 5, 6];
+  const SPLIT_LABEL = { 3: '9/9/8', 4: '7/7/6/6', 5: '6/5/5/5/5', 6: '5/5/4/4/4/4' };
   // How hard the house plays a hand nobody wanted.
   const BOT_LEVELS = ['novice', 'sharp', 'ruthless'];
   const BOT_LEVEL_LABEL = { novice: 'Novice', sharp: 'Sharp', ruthless: 'Ruthless' };
@@ -56,7 +56,8 @@
   let retry = 0;
   let renderedRound = null;
   let renderedSeat = null;
-  const ui = { target: null, arrange: null, swapPick: null, openMenu: null, leaveArmed: false };
+  const ui = { target: null, arrange: null, swapPick: null, openMenu: null, leaveArmed: false, pu: null };
+  let catalog = null; // the power-up catalog, sent once when the socket opens
   let leaveArmTimer = 0;
 
   // A refresh or a dropped connection puts you straight back in your seat.
@@ -135,6 +136,11 @@
         render();
         break;
       }
+      case 'catalog':
+        // Static, and sent once rather than with every snapshot.
+        catalog = Object.fromEntries(msg.powerUps.map((p) => [p.id, p]));
+        if (state) render();
+        break;
       case 'error':
         toast(msg.message);
         if (!state) {
@@ -780,6 +786,16 @@
             <p class="panel-note">
               ${r.seats} hands are dealt. The first ${r.seats} players get one each; anyone after that joins a player already seated, and the pair share that hand &mdash; they see the same cards, and either of them can guess when their turn comes.
             </p>
+            ${
+              r.powerUps
+                ? `<p class="panel-note">
+                     At ${r.seats} hands the same 26 cards are spread ${SPLIT_LABEL[r.seats]}, so every row is short and there is far less to fence a hidden card in with. That is why this size is dealt with <b>power-ups</b> &mdash; one drawn at the start of each of your turns, three in hand at most &mdash; to hand back the reading the short rows take away, and to give the table a way to cut somebody's run short. There is no switching them off at this size.
+                   </p>
+                   <p class="panel-note">
+                     Five and six are still ${r.seats} hands rather than ${r.seats} people: everyone can have a hand of their own, and anyone past the ${r.seats === 5 ? 'fifth' : 'sixth'} doubles up exactly as they would at a smaller table. A shared hand shares its power-ups too.
+                   </p>`
+                : ''
+            }
             <p class="panel-note">
               A hand nobody has taken can go to the house instead, so one or two of you can still play a full table. Bots never share a hand, and give theirs up the moment a person arrives to want it.
             </p>
@@ -801,7 +817,11 @@
           <div class="panel settings">
             <h2>Settings</h2>
             <div class="setting">
-              <div><div class="label">Hands</div><div class="hint">26 cards between them &middot; room for ${r.seats * 2} players</div></div>
+              <div><div class="label">Hands</div><div class="hint">${
+                r.powerUps
+                  ? `${SPLIT_LABEL[r.seats]} &middot; dealt with power-ups &middot; room for ${r.seats * 2} players`
+                  : `26 cards between them &middot; room for ${r.seats * 2} players`
+              }</div></div>
               ${seg(
                 'seats',
                 SEAT_COUNTS.map((m) => ({ label: m, attrs: `data-action="seats" data-seats="${m}"` })),
@@ -903,6 +923,7 @@
         <div class="table">${order.map((si) => seatRow(si)).join('')}</div>
         <div class="side">
           <div class="panel action ${g.phase === 'ended' && g.result.winners.includes(me) ? 'celebrate' : ''}">${actionPanel()}</div>
+          ${powerPanel()}
           ${tallyPanel()}
           <div class="panel">
             <h3>Log</h3>
@@ -937,6 +958,11 @@
     const away = here.filter((p) => !p.connected && !p.bot);
     if (here.length && away.length === here.length) badges.push('<span class="pill bad">Offline</span>');
     else for (const p of away) badges.push(`<span class="pill bad">${esc(p.name)} offline</span>`);
+    const pu = g.powerUps;
+    if (pu && pu.shielded[si]) badges.push('<span class="pill watch">Stakeout</span>');
+    if (pu && pu.forcedAll[si] !== null && pu.forcedAll[si] !== undefined) {
+      badges.push(`<span class="pill watch">Sent after ${esc(g.names[pu.forcedAll[si]])}</span>`);
+    }
     const ended = g.phase === 'ended';
     const won = ended && g.result.winners.includes(si);
     const lost = ended && g.result.losers.includes(si);
@@ -973,10 +999,31 @@
     const opts = { mine: si === me, index: true };
     if (g.phase !== 'play' || c.faceUp) return opts;
     const myTurn = g.turn === me;
+    // A power-up waiting on a card takes over the table: only the cards it
+    // could legally be pointed at light up.
+    const want = ui.pu ? puWants() : null;
+    if (want === 'card') {
+      if (si !== me) opts.selectable = true;
+      return opts;
+    }
+    if (want === 'ownCard') {
+      if (si === me) opts.selectable = true;
+      return opts;
+    }
+    if (ui.pu) return opts;
     if (g.step === 'show' && g.partnerSeat === g.turn && si === me) opts.selectable = true;
     if (g.step === 'guess' && myTurn && g.seats[si].team !== g.seats[me].team) {
-      opts.selectable = true;
-      if (ui.target && ui.target.seat === si && ui.target.idx === ci) opts.selected = true;
+      const pu = g.powerUps;
+      // A hand under a stakeout is nobody's to shoot at until it plays again,
+      // and a hand that has been sent somewhere may only shoot there. Both
+      // are refused by the server either way; leaving the cards lit would only
+      // invite a click that comes back as an error.
+      const watched = pu && pu.shielded[si];
+      const sentElsewhere = pu && pu.forced !== null && pu.forced !== undefined && pu.forced !== si;
+      if (!watched && !sentElsewhere) {
+        opts.selectable = true;
+        if (ui.target && ui.target.seat === si && ui.target.idx === ci) opts.selected = true;
+      }
     }
     return opts;
   }
@@ -1147,6 +1194,134 @@
   document.addEventListener('pointerup', endDrag);
   document.addEventListener('pointercancel', endDrag);
 
+  // --- power-ups -----------------------------------------------------------
+  //
+  // Five and six hands are dealt with these; smaller tables never see any of
+  // this. Playing one is a little conversation: pick it, then nominate
+  // whatever it needs — a card, a rank, a hand, somebody to send somewhere —
+  // and it goes the moment the last of those is answered. `ui.pu` is where
+  // that half-finished conversation lives.
+
+  const puCard = (id) => catalog && catalog[id];
+
+  // What the power-up being played still wants nominated, in order.
+  function puWants() {
+    if (!ui.pu) return null;
+    const card = puCard(ui.pu.id);
+    if (!card) return null;
+    return card.targets.find((t) => ui.pu.picked[t] === undefined) || null;
+  }
+
+  function puBegin(id) {
+    const card = puCard(id);
+    if (!card) return;
+    ui.pu = { id, picked: {} };
+    // Nothing to nominate: it goes straight out.
+    if (!card.targets.length) return puSend();
+    render();
+  }
+
+  function puPick(what, value) {
+    if (!ui.pu) return;
+    ui.pu.picked[what] = value;
+    if (!puWants()) return puSend();
+    render();
+  }
+
+  function puSend() {
+    const { id, picked } = ui.pu;
+    const opts = {};
+    if (picked.card) opts.target = picked.card;
+    if (picked.ownCard !== undefined) opts.idx = picked.ownCard;
+    if (picked.rank !== undefined) opts.rank = picked.rank;
+    if (picked.hand !== undefined) opts.hand = picked.hand;
+    if (picked.player !== undefined) opts.player = picked.player;
+    ui.pu = null;
+    send({ type: 'powerup', id, opts });
+    render();
+  }
+
+  // The hands somebody can be pointed at, as buttons. Used for both 'hand'
+  // and 'player', because a player is named here by the hand they are at.
+  function handButtons(what, { allowSelf = false, exclude = [] } = {}) {
+    const g = state.game;
+    const me = state.you.seat;
+    const list = [];
+    for (let si = 0; si < g.numSeats; si++) {
+      if (!allowSelf && si === me) continue;
+      if (exclude.includes(si)) continue;
+      list.push(`<button class="btn small" data-action="pu-hand" data-what="${what}" data-seat="${si}">${esc(g.names[si])}</button>`);
+    }
+    return `<div class="actions-row wrap">${list.join('')}</div>`;
+  }
+
+  // The side panel: what this hand is carrying, and what it may play now.
+  function powerPanel() {
+    const g = state.game;
+    if (!g.powered || !g.powerUps || !catalog) return '';
+    const p = g.powerUps;
+    const me = state.you.seat;
+    const myTurn = g.turn === me && g.step === 'guess' && g.phase === 'play';
+
+    const held = p.kit.map((id) => {
+      const c = puCard(id);
+      if (!c) return '';
+      // The alarm is the one you can pull when it is not your turn.
+      const playable =
+        g.phase === 'play' && (id === 'alarm_trip' ? p.chain > 0 : myTurn && !ui.pu);
+      const chosen = ui.pu && ui.pu.id === id;
+      return `
+        <button class="pu ${c.tier} ${playable ? '' : 'idle'} ${chosen ? 'chosen' : ''}"
+                data-action="pu-play" data-id="${id}" ${playable ? '' : 'disabled'}>
+          <span class="pu-tier">${esc(c.tierLabel)}</span>
+          <span class="pu-name">${esc(c.name)}</span>
+          <span class="pu-blurb">${esc(c.blurb)}</span>
+        </button>`;
+    }).join('');
+
+    const empty = '<p class="sub">Nothing in hand. You draw one at the start of your turn.</p>';
+    const chain = p.chain > 1
+      ? `<p class="pu-chain">${esc(g.names[g.turn])} ${plural(p.chain, 'card')} into a run.</p>`
+      : '';
+
+    return `
+      <div class="panel powerups">
+        <h3>Power-ups <span class="faint">${p.kit.length}/${p.limit}</span></h3>
+        ${chain}
+        ${p.kit.length ? `<div class="pu-hand">${held}</div>` : empty}
+        ${p.spare ? `<p class="sub">${plural(p.spare, 'wrong guess')} will not end your turn.</p>` : ''}
+      </div>`;
+  }
+
+  // What the action panel says while a power-up is waiting on a nomination.
+  function puPrompt() {
+    const g = state.game;
+    const card = puCard(ui.pu.id);
+    const want = puWants();
+    const cancel = '<div class="actions-row"><button class="btn ghost" data-action="pu-cancel">Put it back</button></div>';
+    const head = `<p class="prompt">${esc(card.name)}</p>`;
+
+    if (want === 'card') {
+      return `${head}<p class="sub">Click any face-down card that is not your own.</p>${cancel}`;
+    }
+    if (want === 'ownCard') {
+      return `${head}<p class="sub">Click one of your own face-down cards to show it.</p>${cancel}`;
+    }
+    if (want === 'rank') {
+      return `${head}<p class="sub">Name the rank to listen for.</p>${rankButtons()}${cancel}`;
+    }
+    if (want === 'player') {
+      const already = ui.pu.picked.hand === undefined ? [] : [ui.pu.picked.hand];
+      return `${head}<p class="sub">${ui.pu.id === 'tip_off' ? 'Who should see it?' : 'Whose next guess are you sending?'}</p>${handButtons('player', { exclude: already })}${cancel}`;
+    }
+    if (want === 'hand') {
+      const already = ui.pu.picked.player === undefined ? [] : [ui.pu.picked.player];
+      const what = { pickpocket: 'Whose pocket?', stakeout: 'Which hand are you watching?', misdirection: 'Send them after which hand?' }[ui.pu.id];
+      return `${head}<p class="sub">${esc(what || 'Pick a hand.')}</p>${handButtons('hand', { allowSelf: ui.pu.id === 'misdirection', exclude: already })}${cancel}`;
+    }
+    return `${head}${cancel}`;
+  }
+
   function rankButtons() {
     return `<div class="ranks">${RANKS.map((r, i) => `<button data-action="rank" data-rank="${i + 1}">${r}</button>`).join('')}</div>`;
   }
@@ -1200,6 +1375,9 @@
     }
 
     // phase === 'play'
+    // A power-up half-played owns the panel until it is finished or put back.
+    if (ui.pu) return puPrompt();
+
     let body = '';
     const myTurn = g.turn === me;
     if (g.step === 'show') {
@@ -1227,10 +1405,17 @@
             ${rankButtons()}
             <div class="actions-row"><button class="btn ghost" data-action="cancel-target">Pick a different card</button></div>`;
         } else {
+          const pu = g.powerUps;
+          const sent = pu && pu.forced !== null && pu.forced !== undefined
+            ? `<p class="sub accent">This guess has to go at ${n(pu.forced)}.</p>`
+            : '';
+          const spare = pu && pu.spare
+            ? `<p class="sub accent">${plural(pu.spare, 'wrong guess')} will not end your turn.</p>`
+            : '';
           body = `
             <p class="prompt">Your turn: guess a card</p>
             <p class="sub">Click one of ${g.teams ? "your opponents'" : "the other hands'"} face-down cards, then name a rank. Get it right and you go again; get it wrong and the turn simply passes.</p>
-            ${shared}`;
+            ${sent}${spare}${shared}`;
         }
       } else {
         const house = playersAt(state.room, g.turn).some((p) => p.bot);
@@ -1248,9 +1433,24 @@
     const me = state.you.seat;
     const card = g.seats[seat].cards[idx];
     if (!card || card.faceUp) return;
+    const want = ui.pu ? puWants() : null;
+    if (want === 'card') {
+      if (seat === me) return toast('Pick a card that is not your own.');
+      return puPick('card', { seat, idx });
+    }
+    if (want === 'ownCard') {
+      if (seat !== me) return toast('Pick one of your own cards.');
+      return puPick('ownCard', idx);
+    }
+    if (ui.pu) return;
     if (g.step === 'show' && g.partnerSeat === g.turn && seat === me) {
       send({ type: 'show', idx });
     } else if (g.step === 'guess' && g.turn === me && g.seats[seat].team !== g.seats[me].team) {
+      const pu = g.powerUps;
+      if (pu && pu.shielded[seat]) return toast(`${g.names[seat]} is under a stakeout.`);
+      if (pu && pu.forced !== null && pu.forced !== undefined && pu.forced !== seat) {
+        return toast(`This guess has to go at ${g.names[pu.forced]}.`);
+      }
       ui.target = { seat, idx };
       render();
     }
@@ -1328,6 +1528,8 @@
         return send({ type: 'show:skip' });
       case 'rank': {
         const rank = Number(d.rank);
+        // The same row of ranks answers a guess and a power-up that wants one.
+        if (ui.pu && puWants() === 'rank') return puPick('rank', rank);
         if (ui.target) {
           send({ type: 'guess', target: ui.target, rank });
           ui.target = null;
@@ -1336,6 +1538,17 @@
       }
       case 'cancel-target':
         ui.target = null;
+        return render();
+
+      case 'pu-play':
+        // Picking up a second one puts the first back.
+        if (ui.pu && ui.pu.id === d.id) { ui.pu = null; return render(); }
+        ui.target = null;
+        return puBegin(d.id);
+      case 'pu-hand':
+        return puPick(d.what, Number(d.seat));
+      case 'pu-cancel':
+        ui.pu = null;
         return render();
       case 'test-switch':
         return send({ type: 'test:switch', seat: Number(d.seat) });

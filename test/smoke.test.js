@@ -58,6 +58,8 @@ class Client {
           this.you = msg.you;
           checkPrivacy(msg);
           this.waiters = this.waiters.filter((w) => !w(msg));
+        } else if (msg.type === 'catalog') {
+          this.catalog = msg.powerUps;
         } else if (msg.type === 'error') {
           this.errors.push(msg.message);
           this.waiters = this.waiters.filter((w) => !w(null, msg.message));
@@ -864,6 +866,145 @@ async function main() {
     assert.match(await T2.expectError({ type: 'join', code: testCode, name: 'Test67-2' }, 'test room gone'), /not found/);
     T.close();
     T2.close();
+
+    // ---------------- 6 hands, dealt with power-ups ----------------
+    //
+    // The rules themselves are pinned down in test/powerups.test.js, which
+    // plays the engine directly and can put a chosen power-up into a chosen
+    // hand. What matters here is the wiring: that six hands can actually be
+    // seated over a socket, that the catalog and the draws arrive, that the
+    // house is not dealt any, and that none of it leaks — every snapshot
+    // below has already gone through checkPrivacy on the way in.
+    const six = [];
+    for (let i = 0; i < 6; i++) six.push(new Client(`P${i}`));
+    await six[0].connect();
+    six[0].send({ type: 'create', name: 'Pip' });
+    await six[0].waitFor((s) => s.room && s.room.code, 'six-hand room');
+    const sixCode = six[0].state.room.code;
+
+    assert.ok(six[0].catalog, 'the power-up catalog is sent when a socket opens');
+    assert.equal(six[0].catalog.length, 9, 'nine power-ups in the catalog');
+    for (const c of six[0].catalog) {
+      assert.ok(c.id && c.name && c.blurb && c.tierLabel, `catalog entry ${c.id} is complete`);
+      assert.ok(Array.isArray(c.targets), 'and says what it needs nominated');
+    }
+
+    assert.equal(six[0].state.room.powerUps, false, 'four hands are dealt without them');
+    six[0].send({ type: 'lobby:seats', seats: 6 });
+    await six[0].waitFor((s) => s.room.seats === 6, 'six hands');
+    assert.equal(six[0].state.room.powerUps, true, 'six hands are dealt with them');
+    assert.equal(six[0].state.room.maxPlayers, 12, 'and still hold two people to a hand');
+
+    for (let i = 1; i < 6; i++) {
+      await six[i].connect();
+      six[i].send({ type: 'join', code: sixCode, name: `Player${i}` });
+      await six[i].waitFor((s) => s.room, `P${i} joined`);
+    }
+    await six[0].waitFor((s) => s.room.players.length === 6, 'six seated');
+    assert.deepEqual(
+      six[0].state.room.players.map((p) => p.seat),
+      [0, 1, 2, 3, 4, 5],
+      'six players take a hand each rather than doubling up',
+    );
+
+    six[0].send({ type: 'lobby:start' });
+    await lockAll(six);
+    assert.deepEqual(
+      six.map((c) => c.state.game.seats[c.you.seat].cards.length).sort(),
+      [4, 4, 4, 4, 5, 5],
+      'six hands are dealt 5/5/4/4/4/4',
+    );
+    assert.equal(
+      six[0].state.game.seats.reduce((n, s) => n + s.cards.length, 0),
+      26,
+      'out of the same 26 cards',
+    );
+
+    // The hand on turn has drawn; nobody else has yet.
+    const firstUp = six[0].state.game.turn;
+    const onTurn = bySeat(six, firstUp);
+    await onTurn.waitFor((s) => s.game.powerUps && s.game.powerUps.kit.length === 1, 'first draw');
+    assert.equal(onTurn.state.game.powered, true);
+    assert.equal(onTurn.state.game.powerUps.limit, 3, 'three in hand at most');
+    const known = new Set(six[0].catalog.map((c) => c.id));
+    assert.ok(known.has(onTurn.state.game.powerUps.kit[0]), 'and drew something from the catalog');
+
+    // You are told how many everybody holds, never which.
+    const seen = onTurn.state.game.powerUps;
+    assert.equal(seen.held.length, 6, 'a count for every hand');
+    assert.equal(seen.held[firstUp], 1);
+    assert.equal(seen.held.reduce((a, b) => a + b, 0), 1, 'only the hand on turn has drawn');
+    // Play a few turns: draws keep arriving, and nothing ever exceeds the cap.
+    await playTurns(six, 10);
+
+    // By now several hands are carrying something, so there is actually
+    // something a snapshot could have leaked.
+    const carrying = six.filter((c) => c.state.game.powerUps.kit.length);
+    assert.ok(carrying.length >= 2, 'at least two hands should be carrying by now');
+    for (const viewer of six) {
+      const raw = JSON.stringify(viewer.state.game.powerUps);
+      for (const other of six) {
+        if (other.you.seat === viewer.you.seat) continue;
+        for (const id of other.state.game.powerUps.kit) {
+          // Unless the viewer holds one of the same name, which is their own
+          // and quite legitimately in their snapshot.
+          if (viewer.state.game.powerUps.kit.includes(id)) continue;
+          assert.ok(!raw.includes(id), `seat ${other.you.seat}'s ${id} reached seat ${viewer.you.seat}`);
+        }
+      }
+    }
+    for (const c of six) {
+      const kit = c.state.game.powerUps.kit;
+      assert.ok(kit.length <= 3, `seat ${c.you.seat} is over the cap`);
+      assert.equal(new Set(kit).size, kit.length, 'and holds no duplicates');
+    }
+
+    // A power-up that needs no target can be played straight from the hand.
+    // Whoever is on turn holding a second storey plays it; if nobody has one
+    // yet, nothing is proved and nothing is broken.
+    const active = bySeat(six, six[0].state.game.turn);
+    if (active.state.game.powerUps.kit.includes('second_story')) {
+      active.send({ type: 'powerup', id: 'second_story' });
+      await active.waitFor((s) => s.game.powerUps.spare === 1, 'second storey played');
+      assert.ok(!active.state.game.powerUps.kit.includes('second_story'), 'and spent');
+    }
+    // Nobody may play what they are not carrying.
+    assert.match(
+      await active.expectError({ type: 'powerup', id: 'vault_crack', opts: { target: { seat: (active.you.seat + 1) % 6, idx: 0 } } }, 'not carried'),
+      /not carrying|No such power-up|turn/,
+    );
+
+    for (const c of six) c.close();
+
+    // ---------------- the house is dealt no power-ups ----------------
+    const solo = new Client('Solo');
+    await solo.connect();
+    solo.send({ type: 'create', name: 'Lone' });
+    await solo.waitFor((s) => s.room && s.room.code, 'solo room');
+    solo.send({ type: 'lobby:seats', seats: 5 });
+    await solo.waitFor((s) => s.room.seats === 5, 'five hands');
+    assert.equal(solo.state.room.powerUps, true, 'five hands are dealt with power-ups too');
+    for (let i = 0; i < 4; i++) {
+      solo.send({ type: 'lobby:bot' });
+      await solo.waitFor((s) => s.room.players.filter((p) => p.bot).length === i + 1, `bot ${i + 1}`);
+    }
+    solo.send({ type: 'lobby:start' });
+    await solo.waitFor((s) => s.game, 'five-hand game');
+    solo.send({ type: 'arrange:lock', order: solo.state.game.seats[solo.you.seat].cards.map((c) => c.id) });
+    await solo.waitFor((s) => s.game.phase === 'play', 'five-hand game in play', 8000);
+    assert.deepEqual(
+      solo.state.game.seats.map((s) => s.cards.length).sort(),
+      [5, 5, 5, 5, 6],
+      'five hands are dealt 6/5/5/5/5',
+    );
+    // Let the bots take some turns, then look at what they are carrying.
+    await solo.waitFor((s) => s.game.powerUps.held.reduce((a, b) => a + b, 0) > 0, 'somebody has drawn', 8000);
+    const mySeat = solo.you.seat;
+    const botHoldings = solo.state.game.powerUps.held.filter((_, i) => i !== mySeat);
+    assert.equal(botHoldings.length, 4, 'four hands at this table are the house');
+    assert.deepEqual(botHoldings, [0, 0, 0, 0], 'the house was dealt power-ups');
+    assert.ok(solo.state.game.powerUps.kit.length > 0, 'and the one person at the table was not');
+    solo.close();
 
     console.log(`OK — ${snapshotsChecked} snapshots checked for leaks`);
   } finally {

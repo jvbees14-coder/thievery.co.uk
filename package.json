@@ -9,8 +9,9 @@
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
     "r2:check": "node scripts/r2-check.js",
-    "test": "node test/smoke.test.js && node test/flashcards.test.js && node test/r2.test.js",
+    "test": "node test/smoke.test.js && node test/powerups.test.js && node test/flashcards.test.js && node test/r2.test.js",
     "test:game": "node test/smoke.test.js",
+    "test:powerups": "node test/powerups.test.js",
     "test:flashcards": "node test/flashcards.test.js",
     "test:r2": "node test/r2.test.js"
   },
