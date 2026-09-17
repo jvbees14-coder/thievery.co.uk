@@ -13,10 +13,13 @@
   const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
   // Anything the table is waiting on trails off in dots that count up.
   const DOTS = '<span class="dots"><i>.</i><i>.</i><i>.</i></span>';
-  // How many hands a table can be dealt, how the 26 cards fall at each, and
-  // how many people can share one hand.
-  const SEAT_COUNTS = [3, 4, 5, 6];
-  const SPLIT_LABEL = { 3: '9/9/8', 4: '7/7/6/6', 5: '6/5/5/5/5', 6: '5/5/4/4/4/4' };
+  // How many hands a table can be dealt and how the 26 cards fall at each.
+  // The room sends both when a socket opens, because they are the deal and
+  // the deal is the server's to describe; what is written here is only what
+  // to draw with before the first message lands, and if the two ever disagree
+  // the wire wins.
+  let SEAT_COUNTS = [3, 4, 5, 6];
+  let SPLIT_LABEL = { 3: '9/9/8', 4: '7/7/6/6', 5: '6/5/5/5/5', 6: '5/5/4/4/4/4' };
   // How hard the house plays a hand nobody wanted.
   const BOT_LEVELS = ['novice', 'sharp', 'ruthless'];
   const BOT_LEVEL_LABEL = { novice: 'Novice', sharp: 'Sharp', ruthless: 'Ruthless' };
@@ -46,6 +49,10 @@
     const v = n % 100;
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
   };
+  // A name already ending in an s takes the apostrophe and nothing after it.
+  // The same rule the log uses, for the same reason: it is on screen constantly
+  // and "Fingers's" reads as a typo.
+  const possessive = (name) => `${name}${/s$/i.test(String(name)) ? "'" : "'s"}`;
 
   // --- state ---------------------------------------------------------------
   let ws = null;
@@ -139,6 +146,8 @@
       case 'catalog':
         // Static, and sent once rather than with every snapshot.
         catalog = Object.fromEntries(msg.powerUps.map((p) => [p.id, p]));
+        if (Array.isArray(msg.seatCounts) && msg.seatCounts.length) SEAT_COUNTS = msg.seatCounts;
+        if (msg.splits) SPLIT_LABEL = Object.fromEntries(Object.entries(msg.splits).map(([n, split]) => [n, split.join('/')]));
         if (state) render();
         break;
       case 'error':
@@ -205,9 +214,9 @@
       if (ev.by === me) {
         if (ev.correct) {
           const last = g.phase === 'ended';
-          banner('good', 'Stolen', `${who(ev.target.seat)}'s ${nth} card was ${ev.card}. ${last ? 'That was the last one!' : 'Guess again.'}`);
+          banner('good', 'Stolen', `${possessive(who(ev.target.seat))} ${nth} card was ${ev.card}. ${last ? 'That was the last one!' : 'Guess again.'}`);
         } else {
-          banner('bad', 'Missed', `${who(ev.target.seat)}'s ${nth} card is not ${rankWord(ev.rank)}. The turn passes.`);
+          banner('bad', 'Missed', `${possessive(who(ev.target.seat))} ${nth} card is not ${rankWord(ev.rank)}. The turn passes.`);
         }
       } else if (ev.correct && ev.target.seat === me) {
         banner('exposed', 'Exposed', `${who(ev.by)} took your ${nth} card: ${ev.card}.`);
@@ -527,6 +536,53 @@
     );
   }
 
+  // A phone has a share sheet, and it is a better answer than the clipboard:
+  // the code goes straight into whatever they were going to paste it into.
+  // A desktop keeps the clipboard, where sharing usually means a browser
+  // dialogue nobody asked for — hence the pointer test rather than a bare
+  // feature test.
+  const CAN_SHARE = !!navigator.share && matchMedia('(hover: none)').matches;
+
+  function shareRoom() {
+    const url = `${location.origin}/?code=${state.room.code}`;
+    if (!CAN_SHARE) return copyText(url);
+    navigator
+      .share({ title: 'Thievery.co.uk', text: `Come and play — the room code is ${state.room.code}`, url })
+      .catch(() => {}); // cancelling a share sheet is not an error worth saying
+  }
+
+  // --- the table is waiting on you -----------------------------------------
+  //
+  // A tab at the back of the pile has no way of knowing its turn has come
+  // round, and people put phones in pockets. The title carries the news, and
+  // only while the page is out of sight: a tab somebody is looking at does not
+  // need to be shouted at.
+  const BASE_TITLE = document.title;
+  let titleTimer = 0;
+  let titleFlipped = false;
+
+  function syncTitle() {
+    const g = state && state.game;
+    const yours = g && g.phase === 'play' && g.turn === state.you.seat && !document.hasFocus();
+    if (!yours) {
+      if (titleTimer) clearInterval(titleTimer);
+      titleTimer = 0;
+      titleFlipped = false;
+      if (document.title !== BASE_TITLE) document.title = BASE_TITLE;
+      return;
+    }
+    if (titleTimer) return;
+    document.title = '● Your turn — Thievery';
+    titleFlipped = true;
+    titleTimer = setInterval(() => {
+      titleFlipped = !titleFlipped;
+      document.title = titleFlipped ? '● Your turn — Thievery' : BASE_TITLE;
+    }, 1300);
+  }
+
+  addEventListener('focus', syncTitle);
+  addEventListener('blur', syncTitle);
+
   function leaveRoom() {
     if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'leave' }));
     saveSession(null);
@@ -546,6 +602,7 @@
       home.hidden = false;
       app.innerHTML = '';
       syncPopups(); // nothing follows you out of a room
+      syncTitle();
       return;
     }
     home.hidden = true;
@@ -563,6 +620,7 @@
     settleSwitches();
     syncPopups();
     if (state.game && dealStart && performance.now() - dealStart < 26 * DEAL_STEP + DEAL_FLIGHT) animateDeal();
+    syncTitle();
     const log = $('#log');
     if (log) log.scrollTop = log.scrollHeight;
   }
@@ -633,7 +691,7 @@
         <div class="codebox">
           <span class="muted">Room</span>
           <span class="code">${esc(code)}</span>
-          <button class="btn small" data-action="copy-link">Copy invite link</button>
+          <button class="btn small" data-action="copy-link">${CAN_SHARE ? 'Share invite' : 'Copy invite link'}</button>
           ${extra}
         </div>
       </div>
@@ -693,8 +751,11 @@
     const isHost = r.hostId === me.id;
     const teamsOn = r.seats === 4 && r.teams;
     // Bots do not take up a person's place: they hand their hand back rather
-    // than keep anybody out, so the room is only full of people.
-    const folk = r.players.filter((p) => !p.bot);
+    // than keep anybody out, so the room is only full of people. Anybody who
+    // arrived mid-round is holding a place rather than a hand, and is counted
+    // for the room but seated nowhere until the next deal.
+    const queue = r.players.filter((p) => p.waiting);
+    const folk = r.players.filter((p) => !p.bot && !p.waiting);
     const full = folk.length >= r.maxPlayers;
     // Where the next person through the door will end up.
     const nextSeat = full ? -1 : folk.length % r.seats;
@@ -775,6 +836,18 @@
       ${topbar('<button class="btn small ghost" data-action="leave">Leave</button>')}
       <div class="lobby">
         <div style="display:flex;flex-direction:column;gap:18px">
+          ${
+            me.waiting
+              ? `<div class="panel waiting-note">
+                   <h2>You are in &mdash; dealt next round</h2>
+                   <p class="panel-note lead">
+                     A round is already being played and its cards are dealt, so there is no hand to give you
+                     until it finishes. You have a place at this table and will be dealt in the moment it does.
+                     Nothing of the round in progress is sent to you in the meantime.
+                   </p>
+                 </div>`
+              : ''
+          }
           <div class="panel big-code">
             <div class="muted" style="margin-bottom:8px">Share this code</div>
             <span class="code">${esc(r.code)}</span>
@@ -794,6 +867,11 @@
                    <p class="panel-note">
                      Five and six are still ${r.seats} hands rather than ${r.seats} people: everyone can have a hand of their own, and anyone past the ${r.seats === 5 ? 'fifth' : 'sixth'} doubles up exactly as they would at a smaller table. A shared hand shares its power-ups too.
                    </p>`
+                : ''
+            }
+            ${
+              queue.length
+                ? `<p class="panel-note">Waiting for the next deal: ${queue.map((p) => esc(p.name)).join(', ')}. They have places here and take hands when this round ends.</p>`
                 : ''
             }
             <p class="panel-note">
@@ -920,7 +998,7 @@
     return `
       ${topbar(g.phase === 'ended' ? '<button class="btn small ghost" data-action="leave">Leave</button>' : '')}
       <div class="game">
-        <div class="table">${order.map((si) => seatRow(si)).join('')}</div>
+        <div class="table ${ui.target ? 'picking' : ''}">${order.map((si) => seatRow(si)).join('')}</div>
         <div class="side">
           <div class="panel action ${g.phase === 'ended' && g.result.winners.includes(me) ? 'celebrate' : ''}">${actionPanel()}</div>
           ${powerPanel()}
@@ -939,6 +1017,17 @@
     return { show: 'being shown a card', guess: 'guessing' }[g.step] || '';
   }
 
+  // Whose turn comes after this one. A hand with nothing left to hide has no
+  // turn of its own any more and is skipped, exactly as the rules skip it.
+  function nextUp(g) {
+    if (g.phase !== 'play') return null;
+    for (let k = 1; k <= g.numSeats; k++) {
+      const s = (g.turn + k) % g.numSeats;
+      if (g.seats[s].cards.some((c) => !c.faceUp)) return s;
+    }
+    return null;
+  }
+
   function seatRow(si) {
     const g = state.game;
     const me = state.you.seat;
@@ -950,6 +1039,10 @@
 
     const badges = [];
     if (mine) badges.push('<span class="pill">You</span>');
+    // At five and six hands the order of play is worth stating rather than
+    // counting: a row outlined as active says whose turn it is and nothing
+    // about whose it is about to be.
+    if (!active && si === nextUp(g)) badges.push('<span class="pill next">Next</span>');
     if (g.teams) badges.push(`<span class="pill team-${s.team}">Team ${s.team === 0 ? 'A' : 'B'}</span>`);
     if (g.teams && g.partnerSeat === si) badges.push('<span class="pill accent">Partner</span>');
     if (here.length > 1) badges.push('<span class="pill">Shared hand</span>');
@@ -993,17 +1086,74 @@
       </div>`;
   }
 
+  // --- what a card cannot be -----------------------------------------------
+  //
+  // Every miss is said out loud at the table and written into the log, and
+  // there is exactly one card of each rank in each colour. Between them that
+  // rules certain ranks out of certain cards for everybody, and the house has
+  // always played on it — `readTable` in bot.js gathers up precisely this.
+  // A person had to scroll the log for it, which in practice meant guessing a
+  // rank the whole table already knew was wrong.
+  //
+  // The fence is deliberately *not* in here. Working out what the cards either
+  // side of a hidden one allow is the game itself; doing that for people would
+  // leave them nothing to play.
+
+  // Which ranks have already missed at this exact card, as their labels.
+  function missesAt(seat, idx) {
+    return (state.game.misses || [])
+      .filter(([s, i]) => s === seat && i === idx)
+      .map(([, , rank]) => RANKS[rank - 1]);
+  }
+
+  // And the whole of it, as rank numbers, for the card being guessed at.
+  function ruledOut(target) {
+    const g = state.game;
+    const out = new Set();
+    const card = g.seats[target.seat] && g.seats[target.seat].cards[target.idx];
+    if (!card) return out;
+    // Somebody has shown us this one, or we cased it. Then we know, and every
+    // other rank is out.
+    if (card.rank) {
+      for (let r = 1; r <= 13; r++) if (r !== card.rank) out.add(r);
+      return out;
+    }
+    for (const [seat, idx, rank] of g.misses || []) {
+      if (seat === target.seat && idx === target.idx) out.add(rank);
+    }
+    // One card of each rank in each colour: a card of this colour whose rank
+    // we can already see is a rank this card cannot be. Our own hand counts,
+    // and so does anything a partner has shown us.
+    g.seats.forEach((s, si) => {
+      s.cards.forEach((c, ci) => {
+        if (si === target.seat && ci === target.idx) return;
+        if (c.rank && c.color === card.color) out.add(c.rank);
+      });
+    });
+    return out;
+  }
+
   function cardOpts(si, ci, c) {
     const g = state.game;
     const me = state.you.seat;
     const opts = { mine: si === me, index: true };
+    // Carried on every face-down card that is not ours, whosever turn it is:
+    // it is the table's knowledge, not the active player's.
+    if (!opts.mine && !c.faceUp && g.phase !== 'arrange') {
+      const no = missesAt(si, ci);
+      if (no.length) opts.ruled = no;
+    }
     if (g.phase !== 'play' || c.faceUp) return opts;
     const myTurn = g.turn === me;
     // A power-up waiting on a card takes over the table: only the cards it
     // could legally be pointed at light up.
     const want = ui.pu ? puWants() : null;
     if (want === 'card') {
-      if (si !== me) opts.selectable = true;
+      // A vault cannot be cracked through a stakeout, so that hand does not
+      // light up: the server refuses it either way, and a lit card that comes
+      // back as an error message is a card that should not have been lit.
+      const watched = ui.pu.id === 'vault_crack' && g.powerUps && g.powerUps.shielded[si];
+      if (si !== me && !watched) opts.selectable = true;
       return opts;
     }
     if (want === 'ownCard') {
@@ -1038,9 +1188,27 @@
     if (opts.selected) cls.push('selected');
     if (opts.target) cls.push('target');
     const rank = c.rank ? RANKS[c.rank - 1] : '';
-    const title = c.shown ? 'Shown to you by your partner' : '';
-    return `<div class="${cls.join(' ')}" data-action="card" data-seat="${si}" data-idx="${ci}" ${opts.draggable ? `data-id="${c.id}"` : ''} title="${title}">
-      <span class="rank">${rank}</span><i class="gloss"></i>${opts.index ? `<span class="idx">${ci + 1}</span>` : ''}
+    const ruled = opts.ruled && opts.ruled.length
+      ? `<span class="ruled" title="Ruled out already: ${esc(opts.ruled.join(', '))}">${opts.ruled.length}</span>`
+      : '';
+    const title = c.shown
+      ? 'Shown to you by your partner'
+      : opts.ruled && opts.ruled.length
+        ? `Not ${opts.ruled.join(', not ')}`
+        : '';
+    // A card you can act on has to be reachable from a keyboard as well as
+    // from a pointer, so it is announced as a button and can be tabbed to.
+    // The label is what a card actually is to somebody who cannot see it: a
+    // colour, a place in the row, and whatever the table has ruled out.
+    const reachable = opts.selectable || opts.draggable;
+    const label = c.faceUp
+      ? `${rank} of ${c.color}, face up`
+      : `${opts.mine || c.shown ? `${rank}, ` : ''}${c.color || 'unknown'} card, position ${ci + 1}${
+          opts.ruled && opts.ruled.length ? `, ruled out: ${opts.ruled.join(', ')}` : ''
+        }`;
+    return `<div class="${cls.join(' ')}" data-action="card" data-seat="${si}" data-idx="${ci}" ${opts.draggable ? `data-id="${c.id}"` : ''}
+      ${reachable ? 'role="button" tabindex="0"' : ''} aria-label="${esc(label)}" title="${esc(title)}">
+      <span class="rank">${rank}</span><i class="gloss"></i>${ruled}${opts.index ? `<span class="idx">${ci + 1}</span>` : ''}
     </div>`;
   }
 
@@ -1246,11 +1414,23 @@
   function handButtons(what, { allowSelf = false, exclude = [] } = {}) {
     const g = state.game;
     const me = state.you.seat;
+    const pu = g.powerUps;
     const list = [];
     for (let si = 0; si < g.numSeats; si++) {
       if (!allowSelf && si === me) continue;
       if (exclude.includes(si)) continue;
-      list.push(`<button class="btn small" data-action="pu-hand" data-what="${what}" data-seat="${si}">${esc(g.names[si])}</button>`);
+      // Why this hand is not on offer, if it is not. A pickpocket is the only
+      // one of these the rules can refuse outright, and offering a hand that
+      // will come back as an error is offering nothing.
+      let no = null;
+      if (what === 'hand' && ui.pu && ui.pu.id === 'pickpocket') {
+        if (pu && pu.shielded[si]) no = 'Under a stakeout until they play again';
+        else if (!g.seats[si].cards.some((c) => !c.faceUp)) no = 'Every card in that hand is face up';
+      }
+      list.push(
+        `<button class="btn small" data-action="pu-hand" data-what="${what}" data-seat="${si}"
+                 ${no ? `disabled title="${esc(no)}"` : ''}>${esc(g.names[si])}</button>`,
+      );
     }
     return `<div class="actions-row wrap">${list.join('')}</div>`;
   }
@@ -1322,14 +1502,26 @@
     return `${head}${cancel}`;
   }
 
-  function rankButtons() {
-    return `<div class="ranks">${RANKS.map((r, i) => `<button data-action="rank" data-rank="${i + 1}">${r}</button>`).join('')}</div>`;
+  // The row of ranks. Given a card, the ones the table has already ruled out
+  // are shown struck through and refused; a power-up asking for a rank gets
+  // the plain row, because "how many Jacks are left" is a fair question
+  // whatever has already missed where.
+  function rankButtons(target = null) {
+    const out = target ? ruledOut(target) : new Set();
+    return `<div class="ranks">${RANKS.map((r, i) => {
+      const rank = i + 1;
+      if (!out.has(rank)) return `<button data-action="rank" data-rank="${rank}">${r}</button>`;
+      return `<button class="out" disabled title="Already ruled out">${r}</button>`;
+    }).join('')}</div>`;
   }
 
   function actionPanel() {
     const g = state.game;
     const me = state.you.seat;
     const n = (s) => `<b>${esc(g.names[s])}</b>`;
+    // The same, possessive. Taken from the name rather than from the markup,
+    // which ends in a tag and never in an s.
+    const nOwn = (s) => `<b>${esc(possessive(g.names[s]))}</b>`;
     const isHost = state.room.hostId === state.you.id;
     // Two people, one hand: worth saying out loud, because neither of them has
     // to wait for the other.
@@ -1378,6 +1570,22 @@
     // A power-up half-played owns the panel until it is finished or put back.
     if (ui.pu) return puPrompt();
 
+    // Nobody is at the hand the table is waiting on. Left alone this is where
+    // an evening ends: everybody sits looking at a row that will not move
+    // until a dead phone comes back or the room expires.
+    const atTurn = playersAt(state.room, g.turn);
+    const turnAway = g.turn !== me && atTurn.length > 0 && atTurn.every((p) => !p.connected && !p.bot);
+    if (turnAway) {
+      return `
+        <p class="prompt">${n(g.turn)} ${isAre(g.turn)} offline</p>
+        <p class="sub">The table is waiting on a hand nobody is at. Passing it costs them only the go &mdash; no card turns over and nothing is given away.</p>
+        ${
+          isHost
+            ? '<div class="actions-row"><button class="btn" data-action="pass-turn">Pass their turn</button></div>'
+            : '<p class="sub">The host can pass it.</p>'
+        }`;
+    }
+
     let body = '';
     const myTurn = g.turn === me;
     if (g.step === 'show') {
@@ -1400,9 +1608,11 @@
     } else if (g.step === 'guess') {
       if (myTurn) {
         if (ui.target) {
+          const gone = missesAt(ui.target.seat, ui.target.idx);
           body = `
-            <p class="prompt">${n(ui.target.seat)}'s ${ordinal(ui.target.idx + 1)} card is a…</p>
-            ${rankButtons()}
+            <p class="prompt">${nOwn(ui.target.seat)} ${ordinal(ui.target.idx + 1)} card is a…</p>
+            ${rankButtons(ui.target)}
+            ${gone.length ? `<p class="sub">The table has already heard it is not ${esc(gone.join(', not '))}.</p>` : ''}
             <div class="actions-row"><button class="btn ghost" data-action="cancel-target">Pick a different card</button></div>`;
         } else {
           const pu = g.powerUps;
@@ -1460,7 +1670,7 @@
     if (ui.openMenu && action !== 'dd-toggle' && action !== 'dd-pick') ui.openMenu = null;
     switch (action) {
       case 'copy-link':
-        return copyText(`${location.origin}/?code=${state.room.code}`);
+        return shareRoom();
       case 'leave':
         return leaveRoom();
       case 'logo-leave': {
@@ -1539,6 +1749,8 @@
       case 'cancel-target':
         ui.target = null;
         return render();
+      case 'pass-turn':
+        return send({ type: 'turn:pass' });
 
       case 'pu-play':
         // Picking up a second one puts the first back.
@@ -1596,6 +1808,17 @@
     // Buttons nested inside a clickable <li> (kick inside pick-swap) win.
     e.stopPropagation();
     act(el.dataset.action, el.dataset);
+  });
+
+  // A card is a div rather than a button, because it has to be draggable and a
+  // button fights that. So the two keys a button would answer to are wired up
+  // by hand, and the whole game can be played without a pointer.
+  $('#app').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+    const el = e.target.closest && e.target.closest('.card[role="button"]');
+    if (!el || !state) return;
+    e.preventDefault();
+    act('card', el.dataset);
   });
 
   // --- home screen ---------------------------------------------------------

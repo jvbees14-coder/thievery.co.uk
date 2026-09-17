@@ -7,18 +7,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm start              # serve on PORT (default 3000)
 npm run dev            # same, with --watch
-npm test               # all four suites, in order; any failure stops the run
+npm test               # all five suites, in order; any failure stops the run
+npm run test:source    # the source as bytes: no literal control characters
 npm run test:game      # the card game: real server, real clients, whole rounds played out
 npm run test:powerups  # the five/six-hand power-up rules, played against game.js directly
 npm run test:flashcards # the flashcards room over HTTP
 npm run test:r2        # the storage layer, against a stub S3 client
 npm run r2:check       # are the four R2_* variables real? needs them in the environment
+npm run icons          # redraw public/icons/*.png from the mark in the script
+npm run fonts          # refetch public/fonts/*.woff2 and public/fonts.css
 ```
 
 There is no build step, no linter and no test framework — the suites are plain
 Node scripts using `node:assert/strict` that exit non-zero on failure. To run a
 single case, comment out the others in the relevant `test/*.js`; the checks run
 sequentially and many depend on state left by earlier ones.
+
+`.github/workflows/test.yml` runs `npm test` on Node 20 and 22 for every push
+and pull request. It needs no secrets, because the suites need none.
+
+The last two commands write files that are committed. Neither runs on deploy;
+they exist so the icons and the fonts can be regenerated rather than being
+binaries nobody can account for.
 
 The tests need no credentials and no network. `test/smoke.test.js` sets
 `THIEVERY_BOT_PACE=0.012` so bots do not pause for real seconds, and both
@@ -59,6 +69,13 @@ that shares a hand with someone already seated, seeing the same cards and able
 to play them. So a four-hand table holds four to eight people and a six-hand
 table up to twelve. Hands nobody takes can go to the house (`bot.js`).
 
+A third state exists in the room but never in the rules: somebody who arrives
+after the deal is `waiting`, holds seat `-1`, and is dealt in by `startRound`.
+They are sent `game: null` rather than a spectator's view, deliberately —
+`viewFor` answers the question "what may this seat know", and there is no
+answer to it for a seat that does not exist. Anything counting seats has to
+skip them, which is why `reseat` sets `-1` rather than leaving a seat behind.
+
 ## Five and six hands are a different game
 
 The deck does not grow with the table. `DEAL_SPLITS` in `deal.js` spreads the
@@ -69,7 +86,7 @@ much less to fence with.
 
 So those two sizes are dealt **power-ups**, and there is no switch for it:
 `usesPowerUps(numSeats)` is the only thing that decides, `createGame` sets
-`g.powered` from it, and a three or four-hand table can no more turn them on
+`g.powered` from it, and a three or four-hand table can no more switch them on
 than a six-hand one can turn them off. The catalog and the draw are in
 `powerups.js`; every rule about what one *does* is in `game.js` under "the
 power-ups", because they are rules.
@@ -81,8 +98,12 @@ Three things there are easy to break:
   somebody who does not own it, which is what keeps `test/smoke.test.js`
   honest: it checks every snapshot for a rank without `shown` on it.
 - **`guessTargets` decides who has won and must not know about stakeouts.**
-  `openTargets` is the one that filters them out. Fold the two together and a
-  player wins the round by shielding the table.
+  `openTargets` is the one that filters them out, and `legalTargets` narrows
+  that again to whatever hand an order currently points at. Fold any of them
+  into `guessTargets` and a player wins the round by shielding the table.
+  The house picks its move out of `legalTargets`, because a bot that chooses
+  something the rules refuse leaves the turn stuck in its own hand — the room
+  reschedules the same thinking every few seconds and the table waits forever.
 - **The house never draws.** `createGame` takes `botSeats` for that and
   nothing else.
 
@@ -117,10 +138,17 @@ can drive every failure path with a stub.
 The most important invariant in the codebase: **an empty document must never be
 saved over a full one.**
 
-- A *missing* object means first run — start empty.
+- A *missing* object means first run — start empty. "Missing" means the key
+  said so by name (`NoSuchKey`/`NotFound`) and nothing else: a bare 404 is not
+  enough, because a misspelt bucket answers with one too.
 - A read that *fails* means the data is out of reach, not gone. `Store.open()`
   throws, `Flashcards.start()` catches it and closes the room: everything under
   `/flashcards` answers 503, nothing is written, and the game carries on.
+- A document that *will not parse* — or parses to something that is not an
+  object — is copied aside under a dated key and then closes the room too. It
+  used to carry on with an empty shelf, which was the same loss in slower
+  motion: the quarantine copy is safe, but the live key still holds the real
+  thing and the session's first save would go straight over it.
 - `open()` clears `ready` on entry, and `touch()`/`flush()` no-op while it is
   false, so a failed re-open cannot leave stale data that a later save writes
   out.
@@ -186,10 +214,19 @@ British spelling throughout, in code comments and user-facing copy alike. The
 domain vocabulary is a card table: hands, the house, striking a card, the
 trading post, laying a card down.
 
-Dependencies are `ws` and `@aws-sdk/client-s3`, and that is meant to stay a
-short list.
+Dependencies are `ws` and `@aws-sdk/client-s3`, there are no dev dependencies,
+and that is meant to stay true. The fonts and the icons are served out of
+`public/` rather than fetched from anywhere at runtime, so the site makes no
+third-party request at all.
 
 Keep `\uXXXX` escapes as escapes in source. A literal control character —
 easily introduced when writing a regex or a string containing `\u0000` — makes
 git treat the whole file as binary and the diff disappears. `server/cards.js`
 has two such escapes in `hash01` and `clean`.
+
+It is worth knowing how this one bites: almost every tool that writes a file
+will turn the escape into the character it stands for, and nothing looks wrong
+afterwards until a diff comes back empty and git calls the file binary.
+`test/source.test.js` reads every text file as bytes and fails on any literal
+control character, so `npm test` catches it. When it fires, the fix is to put
+the six characters back — not to delete the line.

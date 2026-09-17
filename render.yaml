@@ -5,9 +5,9 @@ services:
     name: logic
     runtime: node
     plan: free
-    # --omit=dev matters here: wrangler drags in workerd, sharp and esbuild,
-    # which is about 120MB of platform binaries the server never loads. Only
-    # `ws` and the S3 client are needed to run.
+    # Only `ws` and the S3 client are needed to run, and there are no dev
+    # dependencies left to skip — but --omit=dev stays, so that adding one
+    # later cannot quietly start shipping it to the live host.
     buildCommand: npm ci --omit=dev
     startCommand: npm start
     healthCheckPath: /health
@@ -27,6 +27,11 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 22
+      # The flashcards room refuses to open on an ephemeral disk in production,
+      # which is the point: it is what turns "R2 is misconfigured" from a
+      # silent data loss into an obvious outage. See THIEVERY_ALLOW_EPHEMERAL.
+      - key: NODE_ENV
+        value: production
       # Who the flashcards admin is. Public; the password beside it is not.
       - key: THIEVERY_ADMIN_USERNAME
         value: jvbee

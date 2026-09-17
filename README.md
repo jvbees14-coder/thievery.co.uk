@@ -1,7 +1,7 @@
 # Thievery.co.uk
 
 **Thievery.co.uk** is an online version of the deduction card game, for one to
-eight players. Everyone plays from their own phone, tablet or laptop, in real
+twelve players. Everyone plays from their own phone, tablet or laptop, in real
 time, with no downloads and no accounts. One person creates a room, shares the
 4-letter code, and the game begins once everybody is in. If there are only one
 or two of you, the empty hands can be dealt to the house instead.
@@ -10,7 +10,7 @@ Play at <https://thievery.co.uk>.
 
 ## The idea
 
-Half a deck of cards is dealt out face down into three or four *hands*. Each
+Half a deck of cards is dealt out face down into three to six *hands*. Each
 hand is lined up in ascending order, so the *colours* are on show but the
 *ranks* are hidden. On your turn you point at an opponent's card and guess
 what it is. Guess right and it flips over, letting you guess again. Guess
@@ -23,20 +23,25 @@ further for everyone at the table.
 
 ## Hands and people
 
-A hand is not the same thing as a player. The table is dealt three or four
-hands, and no more: a fifth hand would be too small to hide anything in.
+A hand is not the same thing as a player. The table is dealt three, four, five
+or six hands, and the host says how many before the round starts.
 
-- The first three or four people to arrive play a hand each.
+- The first few people to arrive — as many as there are hands — play one each.
 - Anybody after that joins somebody already seated. The two of them share that
   hand: they see exactly the same cards, and either of them can play it when
   its turn comes round.
 
-So a table of four hands holds anywhere between four and eight people, and a
-table of three holds between three and six.
+Two to a hand and no more, so the number of hands decides how full the room
+can get: three hands hold up to six people, four up to eight, five up to ten
+and six up to twelve.
+
+The deck does not grow with the table, though, and five and six hands deal
+thin enough to be a different game. Those two sizes are dealt **power-ups**,
+which is not optional at those sizes — see [Five and six hands:
+power-ups](#five-and-six-hands-power-ups).
 
 Any hand nobody has taken can go to the house, so a table of one or two people
-still plays as a full three- or four-handed game. See [Playing the
-house](#playing-the-house).
+still plays a full round. See [Playing the house](#playing-the-house).
 
 ## Starting a game
 
@@ -49,10 +54,11 @@ house](#playing-the-house).
    The first few get a hand each; anyone after that pairs up with a player who
    is already seated.
 4. Once there is at least one player per hand, the host presses **Start game**.
-   There is no need to fill the table first — latecomers can only be dealt in
-   from the next round, though, so it is worth waiting for anyone close by. If
-   nobody else is coming, press **Deal the house in** beside each empty hand
-   and play the bots instead.
+   There is no need to fill the table first. Anybody arriving after the deal
+   is let into the room and dealt in at the next round — they are shown
+   nothing of the round in progress while they wait — so it is still worth
+   waiting for anyone close by. If nobody else is coming, press **Deal the
+   house in** beside each empty hand and play the bots instead.
 
 ### Five and six hands: power-ups
 
@@ -158,6 +164,13 @@ to King.
 
 Keep going for as long as you keep guessing correctly.
 
+Ranks the table has already ruled out are struck through and cannot be picked:
+a guess that has missed at that card, and any rank whose card of that colour
+you can already see somewhere. All of it is public — every miss is announced
+and every flip is on the table — and the bots have always played on it, so it
+is only a matter of not making you scroll the log for it. The *fence* is left
+alone: working out what the cards either side allow is the game itself.
+
 ### 4. Winning
 
 The round ends the moment one hand (or, in teams mode, one team) has every
@@ -237,6 +250,9 @@ playing the same cards. Hidden ranks never leave the server.
   same room code and the same name to pick up where you left off.
 - Other players see an **Offline** badge next to anyone who has dropped. If a
   partner is offline during the show step, the active player can skip it.
+- If the table is waiting on a hand nobody is at, the host can **pass their
+  turn**. It costs that hand only the go: no card turns over, nothing is
+  revealed, and everything it was carrying is still there when they come back.
 - Rooms are kept in memory and disappear after about an hour of inactivity.
 
 ## Leaving
@@ -483,7 +499,7 @@ than a write to a local disk.
 
 The whole game is a small Node.js server with no database — the flashcards
 room keeps one JSON document, and nothing else on the site keeps anything. If
-you would rather host it yourself, install Node 18 or newer and run:
+you would rather host it yourself, install Node 20 or newer and run:
 
 ```bash
 npm install

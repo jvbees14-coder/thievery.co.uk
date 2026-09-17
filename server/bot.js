@@ -2,7 +2,7 @@
 // The house players.
 //
 // A table can be filled out with bots, so one or two people can sit down to a
-// three- or four-handed game. A bot is a player like any other: it holds a
+// full table at any of its sizes. A bot is a player like any other: it holds a
 // hand, arranges it, takes its turn, and is only ever handed the same view of
 // the table as a person in its seat would be. Everything below works from
 // `Game.viewFor(...)` and nothing else, so a bot cannot see a rank it has not
@@ -325,15 +325,28 @@ function fencedOdds(t, seat, idx) {
 
 // --- taking a turn ---------------------------------------------------------
 
-function targets(t) {
+// What this seat may actually shoot at now. At a five or six-hand table two of
+// the power-ups narrow it: a hand under a stakeout is nobody's to guess at
+// until it plays again, and a hand that has been sent somewhere may only guess
+// there. A bot that ignores either picks a move the rules refuse, and a
+// refused move leaves the turn in its hand with the table waiting on it.
+//
+// An order that has become impossible lapses rather than traps anybody — the
+// rule is in game.js and this reads it the same way — so it is honoured only
+// while the hand it names still has something open in it.
+function targets(t, powerUps) {
   const out = [];
   t.hands.forEach((h, si) => {
     if (!isOpponent(t, si)) return;
+    if (powerUps && powerUps.shielded[si]) return;
     h.slots.forEach((s, idx) => {
       if (!s.faceUp) out.push({ seat: si, idx, color: s.color });
     });
   });
-  return out;
+  const sent = powerUps ? powerUps.forced : null;
+  if (sent === null || sent === undefined) return out;
+  const there = out.filter((o) => o.seat === sent);
+  return there.length ? there : out;
 }
 
 // The likeliest rank a set of odds points at, and how likely it is.
@@ -369,7 +382,7 @@ const asMove = (shot) => ({ target: { seat: shot.seat, idx: shot.idx }, rank: sh
 
 export async function chooseGuess(view, me, level) {
   const t = readTable(view, me);
-  const open = targets(t);
+  const open = targets(t, view.powerUps);
   if (!open.length) return null;
 
   if (level === 'novice') {

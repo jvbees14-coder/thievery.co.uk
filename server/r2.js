@@ -135,9 +135,14 @@ export const client = configured ? makeClient() : null;
 // is treated as an error worth refusing to start over.
 
 export function isNotFound(err) {
+  // Only the *key* being absent counts, and it has to say so by name. A bare
+  // 404 is not enough: a bucket that does not exist answers with one too, and
+  // reading that as "there is nothing here yet" is the whole disaster in one
+  // step — the room opens empty on a name nobody has ever written to, and the
+  // first save writes that emptiness down. A typo in R2_BUCKET_NAME is a
+  // reason to close the room, not to start a new one.
   const code = err?.name || err?.Code;
-  const status = err?.$metadata?.httpStatusCode;
-  return code === 'NoSuchKey' || code === 'NotFound' || status === 404;
+  return code === 'NoSuchKey' || code === 'NotFound';
 }
 
 /**

@@ -1,0 +1,41 @@
+# The four suites, on every push.
+#
+# They need no credentials and no network: the flashcards fall back to a file
+# under a temporary directory when the R2_* variables are unset, which is the
+# same path a laptop takes. So there is nothing to configure here and nothing
+# secret to leak into a log.
+#
+# Two versions of Node, because package.json says 20 or newer and "it works on
+# mine" is not the same claim.
+
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      # The server only ever loads `ws` and the S3 client, and that is what the
+      # live host installs too.
+      - run: npm ci --omit=dev
+
+      - run: npm test

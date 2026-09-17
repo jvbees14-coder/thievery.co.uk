@@ -121,7 +121,17 @@ function cookies(req) {
   for (const part of String(req.headers.cookie || '').split(';')) {
     const at = part.indexOf('=');
     if (at < 0) continue;
-    out[part.slice(0, at).trim()] = decodeURIComponent(part.slice(at + 1).trim());
+    const raw = part.slice(at + 1).trim();
+    // A cookie is whatever the browser was holding, which need not be anything
+    // this server wrote and need not decode at all. A jar that will not open
+    // is somebody with no session rather than a reason to stop.
+    let value;
+    try {
+      value = decodeURIComponent(raw);
+    } catch {
+      value = raw;
+    }
+    out[part.slice(0, at).trim()] = value;
   }
   return out;
 }
@@ -147,9 +157,25 @@ function sessionCookie(req, token, maxAge) {
   return bits.join('; ');
 }
 
+/**
+ * Who is asking, for the purpose of counting what they have been up to.
+ *
+ * Behind one proxy the entry worth having is the *last* one. The chain is
+ * written client-first and every hop appends the address it actually saw, so
+ * the rightmost is the address that reached the proxy; the leftmost is
+ * whatever the client claimed on the way in. Counting failed logins against
+ * the leftmost is counting them against a number anybody can make up afresh
+ * on every request, which is a limit that has never stopped anybody.
+ */
 function clientIp(req) {
-  const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
-  return forwarded || req.socket.remoteAddress || 'unknown';
+  // Fly names the real one outright, which beats reading a chain.
+  const direct = String(req.headers['fly-client-ip'] || '').trim();
+  if (direct) return direct;
+  const chain = String(req.headers['x-forwarded-for'] || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return chain[chain.length - 1] || req.socket.remoteAddress || 'unknown';
 }
 
 /**
@@ -307,8 +333,18 @@ async function handleAccount(req, res) {
 
   // Changing anything that matters means proving you are still the person who
   // signed in, not just the person holding the laptop.
+  //
+  // A 401 would be the wrong word for it. The browser reads that as a session
+  // that has died underneath it and takes itself back to the door, losing
+  // whatever was in the form; this is somebody very much signed in who has
+  // mistyped a password, and they should be told so without being moved.
   if (body.password || body.username) {
-    await Accounts.authenticate({ username: user.username, password: body.currentPassword, ip: clientIp(req) });
+    try {
+      await Accounts.authenticate({ username: user.username, password: body.currentPassword, ip: clientIp(req) });
+    } catch (err) {
+      if (err.status === 401) throw Object.assign(new Error('That is not your current password.'), { status: 403 });
+      throw err;
+    }
   }
   if (body.displayName != null) {
     const name = String(body.displayName).trim().slice(0, 24);
@@ -695,7 +731,17 @@ export function handle(req, res, url) {
   }
 
   const route = pathname.replace(/^\/api\/flashcards\/?/, '');
-  const [head, a, b] = route.split('/').map((s) => decodeURIComponent(s || ''));
+  // Percent-encoding off the wire can be malformed, and decoding it then
+  // throws. This runs before the promise below catches anything, so an
+  // unguarded decode here is an exception with nothing underneath it to land
+  // on — which takes the whole process, card game and all.
+  let head, a, b;
+  try {
+    [head, a, b] = route.split('/').map((s) => decodeURIComponent(s || ''));
+  } catch {
+    send(res, 400, { error: 'That address will not decode.' });
+    return true;
+  }
   const method = req.method;
 
   done(

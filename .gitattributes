@@ -1,1 +1,5 @@
 * text=auto eol=lf
+
+# Fonts and icons are binary; never normalise their line endings.
+*.woff2 binary
+*.png binary

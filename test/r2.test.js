@@ -165,6 +165,27 @@ async function run() {
     await assert.rejects(() => store(s3).read(), /Access Denied/);
   });
 
+  await check('a missing bucket is not mistaken for a missing object', async () => {
+    // The other half of the same confusion, and the one a typo actually
+    // causes: a bucket nobody has created answers 404 as surely as an absent
+    // key does. Starting empty on it would open the room on a name that has
+    // never held anything and then save that over the bucket that has.
+    const s3 = stubS3({
+      onSend: (kind) => {
+        if (kind === 'get') {
+          throw Object.assign(new Error('The specified bucket does not exist.'), {
+            name: 'NoSuchBucket',
+            $metadata: { httpStatusCode: 404 },
+          });
+        }
+      },
+    });
+    assert.equal(R2.isNotFound({ name: 'NoSuchBucket', $metadata: { httpStatusCode: 404 } }), false);
+    await assert.rejects(() => store(s3).read(), /bucket does not exist/);
+    await assert.rejects(() => Store.open(store(s3)), /refusing to start/);
+    assert.equal(s3.countOf('put'), 0, 'a wrong bucket name must never be written to');
+  });
+
   await check('a delete sends DeleteObject', async () => {
     const s3 = stubS3({ objects: new Map([['flashcards.json', '{}']]) });
     await store(s3).remove();
@@ -263,13 +284,22 @@ async function run() {
     assert.equal(JSON.parse(s3.objects.get('flashcards.json')).mints, 42);
   });
 
-  await check('a document that will not parse is kept, not overwritten', async () => {
+  await check('a document that will not parse is kept, and closes the room', async () => {
     const s3 = stubS3({ objects: new Map([['flashcards.json', 'this is not json {{{']]) });
-    await Store.open(store(s3));
+    await assert.rejects(() => Store.open(store(s3)), /refusing to start/);
     const kept = [...s3.objects.keys()].find((k) => k.includes('.corrupt-'));
     assert.ok(kept, 'the damaged document should have been copied aside');
     assert.equal(s3.objects.get(kept), 'this is not json {{{');
-    assert.deepEqual(Store.data().users, {}, 'and the server carries on with an empty shelf');
+    // And the live key is left exactly as it was found. Opening empty on it
+    // would put the whole document one save away from being lost.
+    assert.equal(s3.objects.get('flashcards.json'), 'this is not json {{{');
+  });
+
+  await check('a document that parses but is not an object closes the room too', async () => {
+    for (const raw of ['null', '42', '["a list"]', '"a string"']) {
+      const s3 = stubS3({ objects: new Map([['flashcards.json', raw]]) });
+      await assert.rejects(() => Store.open(store(s3)), /not a JSON object/, `${raw} was accepted`);
+    }
   });
 
   await check('open() refuses to start when the read fails', async () => {

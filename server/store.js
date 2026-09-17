@@ -155,19 +155,39 @@ export async function open(use = null) {
     return { fresh: true, where: backend.describe() };
   }
 
+  let parsed = null;
+  let problem = null;
   try {
-    db = { ...empty(), ...JSON.parse(raw) };
+    parsed = JSON.parse(raw);
+    // A file holding `null`, or a number, or a list, is not this document
+    // either, and spreading one of those produces an empty shelf that looks
+    // perfectly healthy.
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) problem = 'it is not a JSON object';
   } catch (err) {
-    // It exists but will not parse. Keep a copy before carrying on, so the
-    // damage can be looked at rather than silently written over.
+    problem = err.message;
+  }
+
+  if (problem) {
+    // It is there and it is not the document. A copy is set aside first, so
+    // the damage can be looked at, and then the room closes exactly as it does
+    // for a read that failed.
+    //
+    // Carrying on with an empty shelf would be the same disaster in slower
+    // motion. The quarantine copy is safe, but the live key still holds
+    // whatever it holds, and the first save of the session would write an
+    // empty document straight over it. A room that is shut can be fixed by
+    // hand; a document that has been overwritten cannot.
     let kept = '(could not be set aside)';
     try {
       kept = await backend.quarantine(raw);
-    } catch { /* the copy is a courtesy; failing it must not stop the boot */ }
-    console.error(`flashcards: ${backend.describe()} would not parse (${err.message}); kept a copy at ${kept}`);
-    db = empty();
+    } catch { /* the copy is a courtesy; failing it must not change the answer */ }
+    throw new Error(
+      `${backend.describe()} will not parse (${problem}) — refusing to start rather than ` +
+        `risk saving an empty document over it. A copy of it is at ${kept}.`
+    );
   }
 
+  db = { ...empty(), ...parsed };
   ready = true;
   return { fresh: false, where: backend.describe() };
 }
@@ -250,13 +270,6 @@ export function data() {
     throw new Error('flashcards: store.open() has not finished yet.');
   }
   return db;
-}
-
-/** Only the tests need this. */
-export function replaceAll(next) {
-  db = { ...empty(), ...next };
-  ready = true;
-  touch();
 }
 
 // --- shutting down ---------------------------------------------------------

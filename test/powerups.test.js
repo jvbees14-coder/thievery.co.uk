@@ -14,6 +14,7 @@
 
 import assert from 'node:assert/strict';
 import * as Game from '../server/game.js';
+import * as Bot from '../server/bot.js';
 import * as PowerUps from '../server/powerups.js';
 import { DEAL_SPLITS, SEAT_COUNTS, usesPowerUps } from '../server/deal.js';
 
@@ -23,6 +24,19 @@ let passed = 0;
 function check(what, fn) {
   try {
     fn();
+    console.log(`  ok  ${what}`);
+    passed++;
+  } catch (err) {
+    console.error(`  FAILED: ${what}`);
+    throw err;
+  }
+}
+
+// The house thinks with a promise in front of it, so the handful of checks
+// that ask it for a move have to be awaited. Everything else here is plain.
+async function checkAsync(what, fn) {
+  try {
+    await fn();
     console.log(`  ok  ${what}`);
     passed++;
   } catch (err) {
@@ -468,6 +482,70 @@ check('a hand with nothing it may shoot at passes rather than stalls', () => {
   assert.equal(g.turn, 1, 'and landed on the next hand, whose own watch has now lifted');
   assert.equal(g.shielded[1], false);
   assert.ok(openShots(g, 1).length > 0, 'which does have somewhere to shoot');
+});
+
+// --- the house, at a table that has power-ups on it -------------------------
+//
+// Bots draw none of these, but they are played *at* them, and a bot that picks
+// a move the rules refuse leaves the turn in its own hand: the room reschedules
+// the same thinking every few seconds and the table waits on it for good.
+
+const LEVELS = ['novice', 'sharp', 'ruthless'];
+
+await checkAsync('the house does not guess at a hand under a stakeout', async () => {
+  for (const level of LEVELS) {
+    for (let run = 0; run < 25; run++) {
+      const g = table(6, { botSeats: [1] });
+      g.turn = 1;
+      g.step = 'guess';
+      // Every hand but one is being watched, so a bot reading none of it has
+      // five chances in six of picking somewhere it may not shoot.
+      for (const si of [0, 2, 3, 4]) g.shielded[si] = true;
+      const move = await Bot.chooseGuess(Game.viewFor(g, 1), 1, level);
+      assert.ok(move, `${level} found nothing to play`);
+      assert.equal(g.shielded[move.target.seat], false, `${level} aimed at a staked-out hand`);
+      Game.guess(g, 1, move.target, move.rank); // and the rules accept it
+    }
+  }
+});
+
+await checkAsync('the house goes where a misdirection sends it', async () => {
+  for (const level of LEVELS) {
+    for (let run = 0; run < 25; run++) {
+      const g = table(6, { botSeats: [1] });
+      g.turn = 1;
+      g.step = 'guess';
+      g.forced[1] = 4;
+      const move = await Bot.chooseGuess(Game.viewFor(g, 1), 1, level);
+      assert.equal(move.target.seat, 4, `${level} ignored an order to guess at hand 4`);
+      Game.guess(g, 1, move.target, move.rank);
+    }
+  }
+});
+
+await checkAsync('an order it cannot follow lets the house shoot anywhere', async () => {
+  const g = table(6, { botSeats: [1] });
+  g.turn = 1;
+  g.step = 'guess';
+  g.forced[1] = 4;
+  g.shielded[4] = true; // the hand it was sent at is now nobody's to guess at
+  const move = await Bot.chooseGuess(Game.viewFor(g, 1), 1, 'sharp');
+  assert.notEqual(move.target.seat, 4, 'it followed an order that had lapsed');
+  Game.guess(g, 1, move.target, move.rank);
+});
+
+check('the fallback move the room plays is one the rules allow', () => {
+  // What the room reaches for when a bot's own move is refused. It has to be
+  // legal too, or the turn never leaves that seat.
+  const g = table(6, { botSeats: [1] });
+  g.turn = 1;
+  g.step = 'guess';
+  for (const si of [0, 2, 3]) g.shielded[si] = true;
+  g.forced[1] = 5;
+  const open = Game.legalTargets(g, 1);
+  assert.ok(open.length, 'there is always something left to shoot at');
+  assert.deepEqual([...new Set(open.map((t) => t.seat))], [5], 'and it is where the order points');
+  Game.guess(g, 1, open[0], 1);
 });
 
 console.log(`\n${passed} checks passed.`);

@@ -46,6 +46,12 @@ const ordinal = (n) => {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 };
 
+// A name that already ends in an s takes the apostrophe and nothing after it.
+// This is in the log every single turn, and "Fingers's 1st card" reads as a
+// mistake however well it can be defended. A shared hand is "Ivy & Sam", which
+// ends in the second name and so follows the same rule.
+const possessive = (name) => `${name}${/s$/i.test(String(name)) ? "'" : "'s"}`;
+
 // One red suit and one black suit, Ace low through King.
 export function makeDeck() {
   const deck = [];
@@ -180,7 +186,7 @@ function startTurn(g) {
   }
   drawPowerUp(g, g.turn);
 
-  log(g, `It's ${g.names[g.turn]}'s turn.`, { kind: 'turn' });
+  log(g, `It's ${possessive(g.names[g.turn])} turn.`, { kind: 'turn' });
 
   // Stakeouts do not count towards winning, but between them they can leave a
   // hand with nothing it is allowed to shoot at. Rather than stall the round
@@ -227,6 +233,25 @@ function nextTurn(g) {
 // round by making the table look empty.
 function openTargets(g, seat) {
   return guessTargets(g, seat).filter((t) => !g.shielded[t.seat]);
+}
+
+/**
+ * What a seat may actually guess at this moment: the above, narrowed to one
+ * hand while an order to shoot there still stands. An order whose hand has
+ * since been shielded or turned entirely face up has lapsed, exactly as
+ * `guess` below reads it, so it stops narrowing anything.
+ *
+ * This is for the house, which has to pick a move it knows will be allowed —
+ * a refused move leaves the turn sitting in a bot's hand and the table
+ * waiting on it. `guessTargets` decides who has won and must stay blind to
+ * every word of it.
+ */
+export function legalTargets(g, seat) {
+  const open = openTargets(g, seat);
+  const sent = g.forced[seat];
+  if (sent === null || sent === undefined) return open;
+  const there = open.filter((t) => t.seat === sent);
+  return there.length ? there : open;
 }
 
 // One draw at the start of your own turn, and never one per guess: a long run
@@ -320,7 +345,7 @@ export function playPowerUp(g, seat, id, opts = {}) {
       reveal(g, seat, opts.target.seat, opts.target.idx);
       log(g, `${g.names[seat]} cased the joint.`, {
         privSeat: seat,
-        privText: `${g.names[opts.target.seat]}'s ${ordinal(opts.target.idx + 1)} card is ${aRank(c.rank)}. Nobody else was told.`,
+        privText: `${possessive(g.names[opts.target.seat])} ${ordinal(opts.target.idx + 1)} card is ${aRank(c.rank)}. Nobody else was told.`,
       });
       break;
     }
@@ -373,7 +398,7 @@ export function playPowerUp(g, seat, id, opts = {}) {
       spend(g, seat, id);
       g.spare[seat] += 1;
       g.forced[seat] = hand;
-      log(g, `${g.names[seat]} picked ${g.names[hand]}'s pocket: an extra guess at that hand, and a wrong one will not cost the turn.`);
+      log(g, `${g.names[seat]} picked ${possessive(g.names[hand])} pocket: an extra guess at that hand, and a wrong one will not cost the turn.`);
       break;
     }
 
@@ -416,7 +441,7 @@ export function playPowerUp(g, seat, id, opts = {}) {
       g.chain += 1;
       g.guessed = true;
       g.forced[seat] = null;
-      const desc = `${g.names[seat]} cracked the vault on ${g.names[opts.target.seat]}'s ${ordinal(opts.target.idx + 1)} card: ${aRank(c.rank)}`;
+      const desc = `${g.names[seat]} cracked the vault on ${possessive(g.names[opts.target.seat])} ${ordinal(opts.target.idx + 1)} card: ${aRank(c.rank)}`;
       const event = { type: 'guess', by: seat, target: { seat: opts.target.seat, idx: opts.target.idx }, rank: c.rank, correct: true, card: aRank(c.rank) };
       const winner = findWinner(g);
       if (winner !== null) {
@@ -496,6 +521,22 @@ export function skipShow(g, seat, { allowActive = false } = {}) {
   g.step = 'guess';
 }
 
+/**
+ * Give a turn up without playing it.
+ *
+ * Nobody is at the hand the table is waiting on — a phone has died, or
+ * somebody has walked off — and a round that cannot move is a round everybody
+ * else has to abandon. The host may pass it, and it costs that hand nothing
+ * but the go: no card turns over, nothing is revealed, and anything it was
+ * carrying is still there when whoever owns it comes back.
+ */
+export function passTurn(g, seat) {
+  requirePlay(g);
+  requireTurn(g, seat);
+  log(g, `${g.names[seat]} was away, so their turn passed.`, { kind: 'bad' });
+  nextTurn(g);
+}
+
 // --- the guess -------------------------------------------------------------
 
 export function guess(g, seat, target, rank) {
@@ -528,7 +569,7 @@ export function guess(g, seat, target, rank) {
   g.forced[seat] = null;
   g.guessed = true;
 
-  const desc = `${g.names[seat]} guessed ${g.names[ts]}'s ${ordinal(idx + 1)} card is ${aRank(rank)}`;
+  const desc = `${g.names[seat]} guessed ${possessive(g.names[ts])} ${ordinal(idx + 1)} card is ${aRank(rank)}`;
   const event = { type: 'guess', by: seat, target: { seat: ts, idx }, rank, correct: c.rank === rank };
   if (c.rank === rank) {
     c.faceUp = true;

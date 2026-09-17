@@ -3,8 +3,8 @@
 //
 // One process hosts every room, all of them in memory: no database, nothing
 // written to disk. A room is a four-character code, the people sitting at it,
-// their settings and whatever round is in progress. A table is dealt three or
-// four hands; players fill those hands one each, and anybody arriving after
+// their settings and whatever round is in progress. A table is dealt three to
+// six hands; players fill those hands one each, and anybody arriving after
 // that pairs up with someone already seated and shares their hand. Hands
 // nobody has taken can be dealt to the house instead, so one or two people can
 // sit down to a full table. Anything that changes at a table is pushed
@@ -48,9 +48,35 @@ const MIME = {
   '.png': 'image/png',
   '.ico': 'image/x-icon',
   '.webmanifest': 'application/manifest+json',
+  '.woff2': 'font/woff2',
 };
 
-const server = http.createServer((req, res) => {
+// The flashcards set these on every reply of their own and the game's pages
+// had none. Not one of them costs anything here: this page is never framed,
+// its types are never worth guessing at, and no full address of ours is any
+// other site's business.
+const SAFE_HEADERS = {
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'same-origin',
+  'Content-Security-Policy': "frame-ancestors 'none'",
+};
+
+// A path off the wire is not a string worth trusting. The percent-encoding can
+// be malformed, in which case decoding it throws; and a null byte is the old
+// trick for walking out of a directory, which makes fs throw rather than
+// answer. Neither is a file anybody could be served, so both come back as
+// null, and a null is a 400.
+function safePath(pathname) {
+  let decoded;
+  try {
+    decoded = decodeURIComponent(pathname);
+  } catch {
+    return null;
+  }
+  return decoded.includes('\u0000') ? null : decoded;
+}
+
+function serve(req, res) {
   const url = new URL(req.url, 'http://x');
 
   // The flashcards live behind a login and keep their own state on disk, so
@@ -58,19 +84,27 @@ const server = http.createServer((req, res) => {
   // fall through to the room page below.
   if (Flashcards.handle(req, res, url)) return;
 
-  let file = decodeURIComponent(url.pathname);
+  let file = safePath(url.pathname);
+  if (file === null) {
+    res.writeHead(400, { 'Content-Type': 'text/plain' });
+    return res.end('Bad request');
+  }
   if (file === '/' || file === '') file = '/index.html';
   if (file === '/health') {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    return res.end('ok');
+    // The game is what this address is really answering for, so a shut
+    // flashcards room is reported rather than failed on: the tables are up,
+    // and something that watches this must not restart the process over a
+    // bucket it cannot reach.
+    res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+    return res.end(Flashcards.isOpen() ? 'ok' : 'ok (flashcards closed)');
   }
   const abs = path.normalize(path.join(PUBLIC_DIR, file));
   if (!abs.startsWith(PUBLIC_DIR)) {
     res.writeHead(403);
     return res.end();
   }
-  fs.readFile(abs, (err, data) => {
-    if (err) {
+  fs.stat(abs, (statErr, stat) => {
+    if (statErr || !stat.isFile()) {
       // A bare room link like /ABCD is a page, not a file: serve the game.
       // Every room is the same page and a code stops working within the hour,
       // so search engines are told to keep those links out of the index.
@@ -80,19 +114,50 @@ const server = http.createServer((req, res) => {
             res.writeHead(404);
             return res.end('Not found');
           }
-          res.writeHead(200, { 'Content-Type': MIME['.html'], 'X-Robots-Tag': 'noindex, follow' });
+          res.writeHead(200, { 'Content-Type': MIME['.html'], 'X-Robots-Tag': 'noindex, follow', ...SAFE_HEADERS });
           res.end(html);
         });
       }
       res.writeHead(404);
       return res.end('Not found');
     }
-    res.writeHead(200, {
-      'Content-Type': MIME[path.extname(abs)] || 'application/octet-stream',
-      'Cache-Control': 'no-cache',
+    // Everything here is still revalidated on every visit — a room code in the
+    // address bar has to reach today's markup rather than last week's — but a
+    // browser that already holds the file is told to keep it instead of being
+    // sent the whole stylesheet again for nothing.
+    const modified = stat.mtime.toUTCString();
+    if (req.headers['if-modified-since'] === modified) {
+      res.writeHead(304, { 'Last-Modified': modified, 'Cache-Control': 'no-cache' });
+      return res.end();
+    }
+    fs.readFile(abs, (err, data) => {
+      if (err) {
+        res.writeHead(404);
+        return res.end('Not found');
+      }
+      res.writeHead(200, {
+        'Content-Type': MIME[path.extname(abs)] || 'application/octet-stream',
+        'Cache-Control': 'no-cache',
+        'Last-Modified': modified,
+        ...SAFE_HEADERS,
+      });
+      res.end(data);
     });
-    res.end(data);
   });
+}
+
+// Nothing one request does may take the whole process down with it. A table is
+// memory and nothing else, so a crash empties every room in play — far too
+// much to lose over a single malformed address, and something anybody could
+// send on purpose.
+const server = http.createServer((req, res) => {
+  try {
+    serve(req, res);
+  } catch (err) {
+    console.error(`request failed: ${req.method} ${req.url} —`, err.message);
+    if (!res.headersSent) res.writeHead(500, { 'Content-Type': 'text/plain' });
+    res.end('Something went wrong');
+  }
 });
 
 // --- rooms -----------------------------------------------------------------
@@ -137,8 +202,8 @@ function createRoom() {
 }
 
 // Seats are filled straight down the list and then round again, so the first
-// three or four people each get a hand to themselves and everyone after that
-// joins a hand that is already taken. Moving people up and down the list —
+// few people — as many as there are hands — each get one to themselves and
+// everyone after that joins a hand already taken. Moving people up and down —
 // the arrows and the swap in the lobby — is therefore also how the host
 // decides who ends up sharing with whom.
 //
@@ -149,7 +214,12 @@ function createRoom() {
 // moving along where they cannot, and giving their place up altogether once
 // enough people turn up to want it.
 function reseat(room) {
-  const folk = room.players.filter((p) => !p.bot);
+  // Somebody who arrived after the deal is holding a place rather than a hand,
+  // and takes one at the next round. A seat of -1 keeps them out of everything
+  // that counts seats without needing a second list to keep in step.
+  const waiting = room.players.filter((p) => p.waiting);
+  for (const p of waiting) p.seat = -1;
+  const folk = room.players.filter((p) => !p.bot && !p.waiting);
   const bots = room.players.filter((p) => p.bot);
   folk.forEach((p, i) => (p.seat = i % room.seatCount));
   if (!bots.length) return;
@@ -192,7 +262,14 @@ function removePlayer(room, player) {
   if (!people(room).length) room.players.length = 0;
   reseat(room);
   if (room.hostId === player.id) room.hostId = people(room)[0]?.id ?? null;
-  if (room.players.length === 0) room.emptySince = Date.now();
+  if (room.players.length === 0) {
+    room.emptySince = Date.now();
+    // Nobody at the table and no round to come back to: that code will never
+    // be typed again, and keeping it for the hour is only somewhere for a
+    // script opening rooms in a loop to pile them up. A room with a round in
+    // progress is kept, because the people in it may yet return to it.
+    if (!room.game) rooms.delete(room.code);
+  }
 }
 
 function lobbyView(room) {
@@ -214,11 +291,15 @@ function lobbyView(room) {
     freeSeats: room.game ? [] : freeSeats(room),
     round: room.round,
     test: !!room.test,
+    // Whether a round is being played at all, which is what tells a latecomer
+    // they are waiting on one rather than on the host pressing start.
+    playing: !!room.game && room.game.phase !== 'ended',
     players: room.players.map((p) => ({
       id: p.id,
       name: p.name,
       seat: p.seat,
       bot: !!p.bot,
+      waiting: !!p.waiting,
       connected: isConnected(room, p),
     })),
   };
@@ -294,11 +375,16 @@ function send(ws, obj) {
 function sendState(room) {
   for (const p of room.players) {
     if (!p.ws) continue;
+    // A hand of -1 is somebody waiting for the next round, and they are sent
+    // no view of the table at all. Handing `viewFor` a seat that does not
+    // exist would sooner or later answer something, and what a spectator may
+    // know is not a question this game has ever had to answer.
+    const seated = p.seat >= 0;
     send(p.ws, {
       type: 'state',
-      you: { id: p.id, seat: p.seat, name: p.name, token: p.token, prank: pranked(room, p) },
+      you: { id: p.id, seat: p.seat, name: p.name, token: p.token, prank: pranked(room, p), waiting: !!p.waiting },
       room: lobbyView(room),
-      game: room.game ? Game.viewFor(room.game, p.seat) : null,
+      game: room.game && seated ? Game.viewFor(room.game, p.seat) : null,
       tally: room.tally,
     });
   }
@@ -375,7 +461,11 @@ function botFallback(room, player, job) {
   const g = room.game;
   if (job.what === 'arrange') return Game.lockOrder(g, player.seat, g.seats[player.seat].cards.map((c) => c.id));
   if (job.what === 'show' || job.what === 'skipShow') return Game.skipShow(g, player.seat, { allowActive: true });
-  const open = Game.guessTargets(g, player.seat);
+  // Whatever it may still legally shoot at, which at a powered table is not
+  // the same list as everything face down: a stakeout takes a hand off the
+  // table and a misdirection can pin the guess to one. A fallback that is
+  // itself refused leaves the turn exactly where the trouble started.
+  const open = Game.legalTargets(g, player.seat);
   if (open.length) Game.guess(g, player.seat, open[0], 1 + Math.floor(Math.random() * 13));
 }
 
@@ -416,6 +506,16 @@ async function runBot(room, player, job, key) {
 
 function startRound(room) {
   const n = room.seatCount;
+  // Anybody who turned up part-way through the last round has been waiting for
+  // exactly this moment, so they are dealt in before the cards are.
+  let seated = false;
+  for (const p of room.players) {
+    if (p.waiting) {
+      p.waiting = false;
+      seated = true;
+    }
+  }
+  if (seated) reseat(room);
   room.round++;
   const first = room.firstSeat;
   const start = first !== null && first < n ? first : room.lastStart < 0 ? crypto.randomInt(n) : (room.lastStart + 1) % n;
@@ -456,9 +556,11 @@ function attach(room, player, ws) {
   player.ws = ws;
   player.connected = true;
   ws.ctx = { room, player };
-  // The power-up catalog never changes, so it is sent once when a socket
-  // arrives rather than riding along with every snapshot after it.
-  send(ws, { type: 'catalog', powerUps: PowerUps.catalog() });
+  // None of this changes, so it is sent once when a socket arrives rather than
+  // riding along with every snapshot after it. The deal is in here as well as
+  // the power-ups: how the 26 cards fall at each size is the server's to say,
+  // and a copy of it written out in the page drifts the moment either moves.
+  send(ws, { type: 'catalog', powerUps: PowerUps.catalog(), seatCounts: SEAT_COUNTS, splits: DEAL_SPLITS });
 }
 
 function handleJoin(ws, msg) {
@@ -501,16 +603,21 @@ function handleJoin(ws, msg) {
   }
 
   if (!name) throw new Error('Enter a display name first');
-  if (room.game) throw new Error('That game has already started');
   // Bots are not counted: a person arriving takes a hand off the house before
   // they are ever turned away.
   if (people(room).length >= capacity(room)) throw new Error(`That room is full (${capacity(room)} players)`);
   if (room.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) {
     throw new Error('Someone in that room already has that name');
   }
+  // Turning up mid-round used to be a closed door and a message telling you to
+  // try again later, which meant sitting on the home screen guessing at when
+  // "later" was. The round cannot be joined — the cards are dealt — but the
+  // room can, so a latecomer waits in it and is dealt in at the next round.
+  // They are shown nothing of the table while they wait.
+  const waiting = !!room.game;
   // The first few arrivals get a hand each; after that a newcomer joins
   // whoever is next round the table and the two of them share one.
-  player = { id: randomId(6), token: randomId(), name, mark, seat: 0, ws: null, connected: false };
+  player = { id: randomId(6), token: randomId(), name, mark, seat: waiting ? -1 : 0, waiting, ws: null, connected: false };
   room.players.push(player);
   reseat(room);
   if (!room.hostId) room.hostId = player.id;
@@ -530,7 +637,9 @@ function handleLeave(ws) {
     rooms.delete(room.code);
     return;
   }
-  if (!room.game || room.game.phase === 'ended') {
+  // Somebody waiting for the next round holds no cards, so there is nothing to
+  // keep their place for: they leave the moment they say so.
+  if (!room.game || room.game.phase === 'ended' || player.waiting) {
     removePlayer(room, player);
     if (room.game && room.players.length === 0) room.game = null;
   }
@@ -546,9 +655,9 @@ function handleDisconnect(ws) {
   player.ws = null;
   player.connected = false;
   if (!people(room).some((x) => x.connected)) room.emptySince = Date.now();
-  if (!room.game && !room.test) {
+  if ((!room.game || player.waiting) && !room.test) {
     setTimeout(() => {
-      if (!player.connected && rooms.get(room.code) === room && !room.game && room.players.includes(player)) {
+      if (!player.connected && rooms.get(room.code) === room && (!room.game || player.waiting) && room.players.includes(player)) {
         removePlayer(room, player);
         sendState(room);
       }
@@ -759,10 +868,24 @@ function handleAction(ws, msg) {
       startRound(room);
       break;
 
+    case 'turn:pass': {
+      requireHost();
+      requireGame();
+      if (g.phase !== 'play') throw new Error('The round is not in progress');
+      const here = playersAt(room, g.turn);
+      if (here.some((x) => isConnected(room, x))) {
+        throw new Error('Somebody is at that hand — give them a moment');
+      }
+      Game.passTurn(g, g.turn);
+      break;
+    }
+
     case 'toLobby':
       requireHost();
       requireEnded();
       room.game = null;
+      // Back in the lobby there is no round to be waiting for.
+      for (const p of room.players) p.waiting = false;
       room.players = room.players.filter((p) => isConnected(room, p));
       reseat(room);
       if (!room.players.some((p) => p.id === room.hostId)) room.hostId = room.players[0]?.id ?? null;
@@ -778,7 +901,10 @@ function handleAction(ws, msg) {
 
 // --- the connection --------------------------------------------------------
 
-const wss = new WebSocketServer({ server });
+// Nothing a client has to say is large. The longest message at the table is a
+// hand being locked in, which is twenty-six short card ids; the default ceiling
+// is a hundred megabytes, and a socket is open to anybody who asks.
+const wss = new WebSocketServer({ server, maxPayload: 16 * 1024 });
 
 wss.on('connection', (ws) => {
   ws.isAlive = true;

@@ -867,6 +867,91 @@ async function main() {
     T.close();
     T2.close();
 
+    // ---------------- turning up after the deal ----------------
+    //
+    // A latecomer used to meet a closed door and a message telling them to try
+    // again, with no way of knowing when. They are let into the room instead,
+    // shown nothing whatever of the round in progress, and dealt a hand at the
+    // next one.
+    const L0 = new Client('L0');
+    await L0.connect();
+    L0.send({ type: 'create', name: 'Early' });
+    await L0.waitFor((s) => s.room, 'a room to be late to');
+    const lateCode = L0.state.room.code;
+    L0.send({ type: 'lobby:seats', seats: 3 });
+    await L0.waitFor((s) => s.room.seats === 3, 'three hands');
+    const L1 = new Client('L1');
+    const L2 = new Client('L2');
+    for (const [c, name] of [[L1, 'Onetime'], [L2, 'Twotime']]) {
+      await c.connect();
+      c.send({ type: 'join', code: lateCode, name });
+      await c.waitFor((s) => s.room, `${name} joined`);
+    }
+    await L0.waitFor((s) => s.room.players.length === 3, 'three seated');
+    L0.send({ type: 'lobby:start' });
+    await lockAll([L0, L1, L2]);
+
+    const late = new Client('Late');
+    await late.connect();
+    late.send({ type: 'join', code: lateCode, name: 'Latecomer' });
+    await late.waitFor((s) => s.room && s.you.waiting === true, 'the latecomer is let in');
+    assert.equal(late.state.game, null, 'a latecomer is sent no view of the round in progress');
+    assert.equal(late.state.you.seat, -1, 'and holds no hand while they wait');
+    await L0.waitFor((s) => s.room.players.some((p) => p.waiting), 'the table is told somebody is waiting');
+    assert.deepEqual(
+      L0.state.room.players.filter((p) => !p.waiting).map((p) => p.seat).sort(),
+      [0, 1, 2],
+      'and the three hands in play are left exactly as they were',
+    );
+
+    await playToEnd([L0, L1, L2]);
+    L0.send({ type: 'newRound' });
+    await late.waitFor((s) => s.game && s.you.seat >= 0, 'the latecomer is dealt in at the next round');
+    assert.equal(late.state.you.waiting, false, 'and is not waiting for anything any more');
+    for (const c of [L0, L1, L2, late]) c.close();
+
+    // ---------------- a hand nobody is at ----------------
+    //
+    // Somebody's phone dies on their turn. Without a way past it the table
+    // waits until they come back or the room expires, which is how an evening
+    // ends; the host may pass the turn, and it costs that hand only the go.
+    const W0 = new Client('W0');
+    await W0.connect();
+    W0.send({ type: 'create', name: 'Warden' });
+    await W0.waitFor((s) => s.room, 'a room to wait in');
+    const waitCode = W0.state.room.code;
+    W0.send({ type: 'lobby:seats', seats: 3 });
+    await W0.waitFor((s) => s.room.seats === 3, 'three hands');
+    const W1 = new Client('W1');
+    const W2 = new Client('W2');
+    for (const [c, name] of [[W1, 'Vanisher'], [W2, 'Witness']]) {
+      await c.connect();
+      c.send({ type: 'join', code: waitCode, name });
+      await c.waitFor((s) => s.room, `${name} joined`);
+    }
+    await W0.waitFor((s) => s.room.players.length === 3, 'three seated');
+    // Lead with a hand that is not the host's, so the one that goes quiet is
+    // somebody else's to pass.
+    W0.send({ type: 'lobby:first', seat: 1 });
+    await W0.waitFor((s) => s.room.firstSeat === 1, 'hand two leads');
+    W0.send({ type: 'lobby:start' });
+    await lockAll([W0, W1, W2]);
+    assert.equal(W0.state.game.turn, 1, 'and does');
+
+    W1.close();
+    await W0.waitFor((s) => s.room.players.find((p) => p.seat === 1).connected === false, 'the hand goes quiet');
+    assert.match(await W2.expectError({ type: 'turn:pass' }, 'a passer-by passing'), /host/);
+    W0.send({ type: 'turn:pass' });
+    await W0.waitFor((s) => s.game.turn !== 1, 'the host passes it');
+    assert.equal(W0.state.game.phase, 'play', 'and the round carries on');
+    assert.ok(
+      W0.state.game.seats[1].cards.every((c) => !c.faceUp || c.rank),
+      'passing turns nothing over',
+    );
+    // It is only for a hand nobody is at; somebody present keeps their turn.
+    assert.match(await W0.expectError({ type: 'turn:pass' }, 'a hand somebody is at'), /give them a moment/);
+    for (const c of [W0, W2]) c.close();
+
     // ---------------- 6 hands, dealt with power-ups ----------------
     //
     // The rules themselves are pinned down in test/powerups.test.js, which
@@ -875,8 +960,11 @@ async function main() {
     // seated over a socket, that the catalog and the draws arrive, that the
     // house is not dealt any, and that none of it leaks — every snapshot
     // below has already gone through checkPrivacy on the way in.
+    // Labelled apart from the eight-player table above, which also ran P0 to
+    // P5: a failure here reading as "P5" sends whoever is looking at it to the
+    // wrong half of this file.
     const six = [];
-    for (let i = 0; i < 6; i++) six.push(new Client(`P${i}`));
+    for (let i = 0; i < 6; i++) six.push(new Client(`Six${i}`));
     await six[0].connect();
     six[0].send({ type: 'create', name: 'Pip' });
     await six[0].waitFor((s) => s.room && s.room.code, 'six-hand room');
@@ -968,9 +1056,16 @@ async function main() {
       await active.waitFor((s) => s.game.powerUps.spare === 1, 'second storey played');
       assert.ok(!active.state.game.powerUps.kit.includes('second_story'), 'and spent');
     }
-    // Nobody may play what they are not carrying.
+    // Nobody may play what they are not carrying. Which one that is has to be
+    // read off the hand rather than picked in advance: the draw is random, and
+    // naming a power-up this seat happens to be holding asks the server to
+    // refuse something it should quite properly allow.
+    const notCarried = six[0].catalog
+      .map((c) => c.id)
+      .find((id) => id !== 'alarm_trip' && !active.state.game.powerUps.kit.includes(id));
+    assert.ok(notCarried, 'a hand of three cannot be holding all nine');
     assert.match(
-      await active.expectError({ type: 'powerup', id: 'vault_crack', opts: { target: { seat: (active.you.seat + 1) % 6, idx: 0 } } }, 'not carried'),
+      await active.expectError({ type: 'powerup', id: notCarried, opts: { target: { seat: (active.you.seat + 1) % 6, idx: 0 } } }, 'not carried'),
       /not carrying|No such power-up|turn/,
     );
 

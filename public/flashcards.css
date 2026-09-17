@@ -403,6 +403,27 @@ textarea:focus, select:focus, input:focus {
 .fc-modal-box h3 { font-family: var(--caps); font-weight: 600; font-size: 18px; color: var(--ivory); margin: 0 0 16px; }
 .fc-danger-zone { margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(229, 100, 107, 0.25); }
 
+/* The room asking whether you meant it. Sits above the modal, because that is
+   usually where it is asked from, and the question is set larger than the
+   detail underneath it: whatever is about to happen is not coming back. */
+.fc-confirm {
+  position: fixed; inset: 0; z-index: 80; display: grid; place-items: center;
+  background: rgba(6, 8, 14, 0.86); backdrop-filter: blur(6px); padding: 20px;
+  animation: fcin 0.2s ease both;
+}
+.fc-confirm-box {
+  width: min(100%, 420px); padding: 26px 26px 22px; border-radius: 5px;
+  background: linear-gradient(180deg, rgba(26, 20, 24, 0.99), rgba(16, 19, 29, 0.99));
+  border: 1px solid rgba(229, 100, 107, 0.45);
+  box-shadow: var(--shadow), 0 0 0 1px rgba(0, 0, 0, 0.6);
+}
+.fc-confirm-box h3 {
+  margin: 0 0 10px; font-family: var(--caps); font-weight: 600; font-size: 19px; color: var(--ivory);
+}
+.fc-confirm-box .fc-actions { margin-top: 20px; }
+.fc-confirm-box .btn:not(.ghost) { border-color: rgba(229, 100, 107, 0.55); color: #f6c9cc; }
+.fc-confirm-box .btn:not(.ghost):hover { background: rgba(142, 31, 46, 0.22); border-color: var(--bad); }
+
 /* The panel's view of one card. A card's faces are out of the flow so they can
    stack for the turn, which leaves the card nothing to be as wide as — the
    frame it sits in has to carry the width, exactly as the reveal does. It is

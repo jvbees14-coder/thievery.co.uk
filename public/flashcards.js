@@ -537,6 +537,54 @@
   }
   const closeModal = () => { $('#modal').hidden = true; };
 
+  /**
+   * A question the room asks in its own voice.
+   *
+   * The browser's own confirm box works perfectly well and looks like it
+   * belongs to a different website — grey, square, and system-font in a room
+   * that is neither. Since every one of these is about something that cannot
+   * be undone, it is worth the reader actually reading it.
+   *
+   * Resolves true only if they press the one button that says yes. Escape,
+   * the dark behind it and the other button all mean no.
+   */
+  function ask(question, detail, yesLabel) {
+    return new Promise((resolve) => {
+      const el = $('#confirm');
+      el.innerHTML = `
+        <div class="fc-confirm-box" role="alertdialog" aria-modal="true" aria-label="${esc(question)}">
+          <h3>${esc(question)}</h3>
+          <p class="fc-note">${esc(detail)}</p>
+          <div class="fc-actions">
+            <button class="btn" data-answer="yes" type="button">${esc(yesLabel)}</button>
+            <button class="btn ghost" data-answer="no" type="button">Keep it</button>
+          </div>
+        </div>`;
+      el.hidden = false;
+      $('#confirm [data-answer="no"]').focus();
+
+      const done = (answer) => {
+        el.hidden = true;
+        el.innerHTML = '';
+        el.removeEventListener('click', onClick);
+        document.removeEventListener('keydown', onKey, true);
+        resolve(answer);
+      };
+      const onClick = (ev) => {
+        if (ev.target.closest('[data-answer="yes"]')) return done(true);
+        // The dark behind the box counts as backing out, like the modal.
+        if (ev.target === el || ev.target.closest('[data-answer="no"]')) return done(false);
+      };
+      const onKey = (ev) => {
+        if (ev.key !== 'Escape') return;
+        ev.stopPropagation(); // and it does not also shut whatever is underneath
+        done(false);
+      };
+      el.addEventListener('click', onClick);
+      document.addEventListener('keydown', onKey, true);
+    });
+  }
+
   function accountModal() {
     const u = state.user;
     openModal(`
@@ -662,7 +710,12 @@
         await loadPanel();
       }
       if (act === 'ad-delete') {
-        if (!confirm(`Delete ${a.username} and every card they hold? This cannot be undone.`)) return;
+        const sure = await ask(
+          `Close @${a.username}?`,
+          `The account goes, and so does every one of the ${plural(detail.cards.length, 'card', 'cards')} it holds. There is no undoing it.`,
+          'Close the account',
+        );
+        if (!sure) return;
         await api('admin/users/' + encodeURIComponent(a.id), { method: 'DELETE' });
         closeModal();
         await loadPanel();
@@ -802,7 +855,12 @@
       if (!button) return;
       if (button.dataset.act === 'ac-back') return adminAccountModal(account.id);
       if (button.dataset.act === 'ac-burn') {
-        if (!confirm(`Burn ${mintNo(card.mint)}? It is gone for good, worth and all.`)) return;
+        const sure = await ask(
+          `Burn ${mintNo(card.mint)}?`,
+          `${snip(card.front)} — worth ${card.value}. It is gone for good, and so is the worth.`,
+          'Burn it',
+        );
+        if (!sure) return;
         await api('admin/cards/' + encodeURIComponent(card.id), { method: 'DELETE' });
         await loadPanel();
         toast('Burnt.', 'info');
@@ -839,6 +897,44 @@
     drawCollection();
     drawTrade();
     if (!$('#tab-print').hidden) drawPicker();
+    rememberTrades();
+  }
+
+  // --- what happened while you were out --------------------------------------
+  //
+  // The post settles trades while both sides are asleep — that is the whole
+  // point of it — so a collection can be a different collection by the next
+  // visit, and until now nothing said so. The newest trade this browser has
+  // been shown is remembered, and anything past it is announced once.
+  //
+  // It is a convenience and nothing more, so it is wrapped: a browser with
+  // storage turned off simply never gets told, which is where it started.
+
+  const SEEN_TRADE = 'thievery:fc:lastTrade';
+
+  function rememberTrades() {
+    const newest = state.trades[0];
+    if (!newest) return;
+    try {
+      localStorage.setItem(SEEN_TRADE, newest.id);
+    } catch { /* nothing to remember with; no matter */ }
+  }
+
+  function announceMissedTrades(seen) {
+    if (!seen || !state.trades.length) return;
+    const at = state.trades.findIndex((t) => t.id === seen);
+    // Not in the ledger any more means every trade here is newer than the last
+    // one we showed.
+    const fresh = at === -1 ? state.trades.length : at;
+    if (!fresh) return;
+    const got = state.trades.slice(0, fresh).flatMap((t) => t.got);
+    if (!got.length) return;
+    banner(
+      'traded',
+      'While you were out',
+      `${plural(fresh, 'swap', 'swaps')} settled — ${plural(got.length, 'card', 'cards')} in, worth ${worthOf(got)}`,
+      { ink: state.rarities[bestRarity(got)].ink },
+    );
   }
 
   // --- wiring ----------------------------------------------------------------
@@ -918,7 +1014,12 @@
     }
     if (act === 'burn') {
       const card = state.cards.find((c) => c.id === id);
-      if (!confirm(`Burn "${card.front}"? It is gone for good, worth and all.`)) return;
+      const sure = await ask(
+        'Burn this card?',
+        `${snip(card.front)} — worth ${card.value}. It is gone for good, and the worth with it.`,
+        'Burn it',
+      );
+      if (!sure) return;
       state = await api('cards/' + encodeURIComponent(id), { method: 'DELETE' });
       drawAll();
       banner('burnt', 'Burnt', `${snip(card.front)} — ${card.value} gone with it`);
@@ -1012,6 +1113,12 @@
   // --- go --------------------------------------------------------------------
 
   (async () => {
+    // Read before the first draw, because drawing writes it.
+    let seenTrade = null;
+    try {
+      seenTrade = localStorage.getItem(SEEN_TRADE);
+    } catch { /* no storage, so nothing was seen */ }
+
     try {
       state = await api('me');
     } catch {
@@ -1021,5 +1128,6 @@
     drawAll();
     countUp();
     scheduleAppraisal();
+    announceMissedTrades(seenTrade);
   })();
 })();

@@ -5,22 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark" />
   <title>Thievery — Free Online Multiplayer Card Game</title>
-  <meta name="description" content="Thievery is a free online deduction card game for 1–8 players. Share a room code, guess your opponents' hidden cards and flip them all before they flip yours. Five or more players pair up and share a hand; play on your own against the house." />
+  <meta name="description" content="Thievery is a free online deduction card game for 1 to 12 players. Share a room code, guess your opponents' hidden cards and flip them all before they flip yours. Three to six hands, with power-ups at the larger sizes; play on your own against the house." />
   <link rel="canonical" href="https://thievery.co.uk/" />
 
   <!-- How a link to the table looks when it is passed around. -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Thievery.co.uk" />
   <meta property="og:title" content="Thievery — Free Online Multiplayer Card Game" />
-  <meta property="og:description" content="Steal their secrets before they steal yours. A free online deduction card game for 1–8 players — no sign-up, just a room code." />
+  <meta property="og:description" content="Steal their secrets before they steal yours. A free online deduction card game for 1 to 12 players — no sign-up, just a room code." />
   <meta property="og:url" content="https://thievery.co.uk/" />
   <meta property="og:image" content="https://thievery.co.uk/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="Thievery.co.uk — a free online deduction card game for 1 to 8 players" />
+  <meta property="og:image:alt" content="Thievery.co.uk — a free online deduction card game for 1 to 12 players" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Thievery — Free Online Multiplayer Card Game" />
-  <meta name="twitter:description" content="Steal their secrets before they steal yours. A free online deduction card game for 1–8 players — no sign-up, just a room code." />
+  <meta name="twitter:description" content="Steal their secrets before they steal yours. A free online deduction card game for 1 to 12 players — no sign-up, just a room code." />
   <meta name="twitter:image" content="https://thievery.co.uk/og-image.png" />
 
   <script type="application/ld+json">
@@ -31,10 +31,10 @@
     "alternateName": "Thievery.co.uk",
     "url": "https://thievery.co.uk/",
     "image": "https://thievery.co.uk/og-image.png",
-    "description": "Thievery is a free online multiplayer deduction card game for 1 to 8 players. The cards are dealt into three or four hands; up to four people play a hand each, and a fifth player and beyond shares a hand with someone already seated. A hand nobody has taken can be played by the house at one of three levels, so one or two people can still play a full table. Everyone arranges their hand face down in ascending order; on your turn you pick an opponent's hidden card and guess its rank. Flip every opponent card face up to win the round.",
+    "description": "Thievery is a free online multiplayer deduction card game for 1 to 12 players. The cards are dealt into three, four, five or six hands; the first few players take a hand each, and anybody after that shares a hand with someone already seated, two to a hand. Five and six hands are dealt power-ups, because the same 26 cards spread that thin leave much less to deduce from. A hand nobody has taken can be played by the house at one of three levels, so one or two people can still play a full table. Everyone arranges their hand face down in ascending order; on your turn you pick an opponent's hidden card and guess its rank. Flip every opponent card face up to win the round.",
     "genre": ["Card game", "Deduction", "Multiplayer"],
     "playMode": ["SinglePlayer", "MultiPlayer"],
-    "numberOfPlayers": { "@type": "QuantitativeValue", "minValue": 1, "maxValue": 8 },
+    "numberOfPlayers": { "@type": "QuantitativeValue", "minValue": 1, "maxValue": 12 },
     "gamePlatform": "Web browser",
     "applicationCategory": "GameApplication",
     "operatingSystem": "Any browser",
@@ -44,9 +44,12 @@
   }
   </script>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c14'/%3E%3Cpath d='M16 4l10 12-10 12L6 16z' fill='none' stroke='%23d4af5a' stroke-width='2'/%3E%3Cpath d='M16 10l5 6-5 6-5-6z' fill='%23d4af5a'/%3E%3C/svg%3E" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Limelight&family=Cinzel:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Cutive+Mono&display=swap" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="apple-touch-icon" href="/icons/icon-180.png" />
+  <meta name="theme-color" content="#0a0c14" />
+  <link rel="preload" href="/fonts/limelight-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/eb-garamond-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/fonts.css" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
@@ -63,7 +66,7 @@
     <div class="home-card">
       <p class="eyebrow">Est. for cheats, sleuths &amp; card sharps</p>
       <h1 class="logo wordmark">Thievery<em>.co.uk</em></h1>
-      <p class="tagline">Steal their secrets before they steal yours. A deduction card game for 1&ndash;8 players, one room code.</p>
+      <p class="tagline">Steal their secrets before they steal yours. A deduction card game for 1&ndash;12 players, one room code.</p>
 
       <div class="field">
         <label for="name">Your name</label>
@@ -94,13 +97,13 @@
           <h3>1. The deal</h3>
           <p>
             The deck is 26 cards &mdash; Ace to King in one red suit, Ace to King in one black suit &mdash; dealt
-            out into three or four hands, as evenly as the table allows. There is no draw pile and nothing is
-            held back: every card is in somebody&rsquo;s row from the first move to the last.
+            out into three, four, five or six hands, as evenly as the table allows. There is no draw pile and
+            nothing is held back: every card is in somebody&rsquo;s row from the first move to the last.
           </p>
           <p>
-            Up to four people play a hand each. A fifth player, and anyone after that, joins somebody already
-            seated: the two of them share that hand, see exactly the same cards, and either can play it when
-            their turn comes round. So a table of four hands holds anywhere from four to eight people.
+            The first few players &mdash; as many as there are hands &mdash; take one each. Anyone after that joins
+            somebody already seated: the two of them share that hand, see exactly the same cards, and either can
+            play it when their turn comes round. Two to a hand and no more, so six hands seat up to twelve people.
           </p>
           <p>
             A hand nobody has taken can be dealt to <b>the house</b> instead, so one or two of you can still
@@ -123,6 +126,51 @@
           </p>
 
           <h3>3. Read the table</h3>
+          <!-- The one idea the whole game turns on, drawn rather than described:
+               a row runs low to high, so whatever is showing either side of a
+               hidden card fences it in. Inline because it is four rectangles
+               and a line, and a request for a picture of four rectangles is a
+               request too many. -->
+          <figure class="rules-figure">
+            <svg viewBox="0 0 236 96" role="img" aria-labelledby="fence-title fence-desc">
+              <title id="fence-title">How a hidden card is fenced in</title>
+              <desc id="fence-desc">
+                A row of four cards. A red card lies sideways and is face down. Then a black card face up
+                showing 4, a black card face down, and a black card face up showing 7. The hidden black
+                card sits between the 4 and the 7, so it can only be a 4, 5, 6 or 7.
+              </desc>
+              <defs>
+                <pattern id="fence-lattice" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                  <line x1="0" y1="0" x2="0" y2="6" stroke="#d4af5a" stroke-opacity="0.3" stroke-width="1" />
+                </pattern>
+              </defs>
+
+              <!-- A red card, lying on its side, face down. -->
+              <rect x="2" y="15" width="66" height="46" rx="4" fill="#3a1119" stroke="#7a2634" />
+              <rect x="6" y="19" width="58" height="38" rx="2" fill="url(#fence-lattice)" stroke="#d4af5a" stroke-opacity="0.3" />
+
+              <!-- A black 4, face up. -->
+              <rect x="76" y="5" width="46" height="66" rx="4" fill="#f4ecd8" stroke="#c9bfa5" />
+              <text x="99" y="44" text-anchor="middle" fill="#111420" font-family="Cinzel, Georgia, serif" font-size="19" font-weight="700">4</text>
+
+              <!-- The card in question, face down and upright, so black. -->
+              <rect x="130" y="5" width="46" height="66" rx="4" fill="#1c2130" stroke="#3a4157" />
+              <rect x="134" y="9" width="38" height="58" rx="2" fill="url(#fence-lattice)" stroke="#d4af5a" stroke-opacity="0.3" />
+              <text x="153" y="44" text-anchor="middle" fill="#d4af5a" font-family="Cinzel, Georgia, serif" font-size="19" font-weight="700">?</text>
+
+              <!-- And a black 7, face up. -->
+              <rect x="184" y="5" width="46" height="66" rx="4" fill="#f4ecd8" stroke="#c9bfa5" />
+              <text x="207" y="44" text-anchor="middle" fill="#111420" font-family="Cinzel, Georgia, serif" font-size="19" font-weight="700">7</text>
+
+              <!-- The fence itself. -->
+              <path d="M99 80 v5 H207 v-5" fill="none" stroke="#d4af5a" stroke-opacity="0.65" />
+              <text x="153" y="94" text-anchor="middle" fill="#d4af5a" font-family="Cinzel, Georgia, serif" font-size="9" letter-spacing="1.4">4 5 6 7</text>
+            </svg>
+            <figcaption>
+              Red lies sideways and black stands upright, so every colour is public. The row runs low to high,
+              which fences the hidden card in: it can only be a 4, 5, 6 or 7.
+            </figcaption>
+          </figure>
           <p>
             Because every row is in ascending order, a hidden card is fenced in by its neighbours. A face-down
             card sitting between a face-up 4 and a face-up 7 has to be a 4, 5, 6 or 7. Colour narrows it
@@ -150,6 +198,27 @@
             anything face down.
           </p>
 
+          <h3>Five and six hands: power-ups</h3>
+          <p>
+            The deck does not grow with the table. At six hands the same 26 cards are spread 5/5/4/4/4/4, so
+            every row is four or five cards instead of six or seven &mdash; and a hidden card with almost no
+            neighbours is barely fenced in at all. There is less to deduce, exactly when there are more people
+            wanting to deduce it, and one hot streak can run through half the table before anybody else gets
+            a turn.
+          </p>
+          <p>
+            So at <b>five and six hands</b> everybody draws a <b>power-up</b> at the start of each of their own
+            turns &mdash; one per turn, never one per guess &mdash; and may carry three at a time. You never draw
+            a second copy of something you are already holding. There is no switch for it: those two sizes are
+            always dealt with them, and three and four hands never are. The house draws none.
+          </p>
+          <p>
+            Most of them buy information: read one hidden card, hear how many of a rank are still face down,
+            show one of your own cards to somebody privately. The rarer ones interrupt: <b>trip the alarm</b> ends
+            whatever run is going on, and anybody may pull it at any time, including out of turn. That is the
+            table&rsquo;s way of stopping somebody six correct guesses deep.
+          </p>
+
           <h3>Partnerships (four hands)</h3>
           <p>
             A four-hand table can be played as two teams instead: hands 1 and 3 against hands 2 and 4. You only
@@ -159,6 +228,12 @@
           </p>
         </div>
       </details>
+
+      <!-- The other half of the site. Nothing on this page pointed at it, so
+           the only way in was knowing the address already. -->
+      <p class="home-foot">
+        <a href="/flashcards">The members&rsquo; room &mdash; write flashcards, have them appraised, trade them</a>
+      </p>
     </div>
   </section>
 

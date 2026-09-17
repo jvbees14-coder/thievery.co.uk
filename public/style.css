@@ -16,7 +16,10 @@
   --ivory-dim: #d8d0bc;
   --text: #ece5d4;
   --text-dim: #a49d8c;
-  --text-faint: #6a6559;
+  /* Lifted from #6a6559, which came out at about 3:1 against the panels and
+     was being used for whole paragraphs of lobby copy rather than the odd
+     aside. Small print still has to be readable print. */
+  --text-faint: #8a8375;
   --burgundy: #8e1f2e;
   --burgundy-deep: #3a1119;
   /* Jade and verdigris sit beside brass the way they do on a deco panel. */
@@ -27,6 +30,12 @@
   --team-a: #7fd3cc;
   --team-b: #e9a2b8;
   --radius: 6px;
+  /* A card is one size written down once. A black card stands upright and a
+     red one lies on its side, so the two measurements simply swap over, and
+     the table can be scaled at a breakpoint by moving these two numbers. */
+  --card-w: 46px;
+  --card-h: 66px;
+  --card-rank: 18px;
   --shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
   --display: "Limelight", "Cinzel", Georgia, serif;
   --caps: "Cinzel", "Limelight", Georgia, "Times New Roman", serif;
@@ -231,6 +240,9 @@ input[type="number"]::-webkit-inner-spin-button { appearance: none; -webkit-appe
 .pill.team-0 { color: var(--team-a); border-color: rgba(127, 211, 204, 0.4); }
 .pill.team-1 { color: var(--team-b); border-color: rgba(233, 162, 184, 0.4); }
 .pill.watch { color: #b79ae0; border-color: rgba(183, 154, 224, 0.45); background: rgba(183, 154, 224, 0.08); }
+/* Whose turn it is about to be. Quieter than the brass on the active row, so
+   the two read as an order rather than as two of the same thing. */
+.pill.next { color: var(--text-dim); border-color: rgba(212, 175, 90, 0.22); border-style: dashed; }
 
 /* Deco frame: every panel gets a hairline border and brass corner marks. */
 .panel, .home-card, .seat-row {
@@ -331,6 +343,16 @@ input[type="number"]::-webkit-inner-spin-button { appearance: none; -webkit-appe
 }
 .rules-body ul { margin: 8px 0; padding-left: 18px; }
 .rules-body ul li::marker { color: var(--brass-dim); }
+/* The fence, drawn. It is the one thing in the rules worth a picture, so it is
+   given room and a caption rather than being squeezed in beside the prose. */
+.rules-figure { margin: 14px 0 6px; padding: 14px 10px 10px; border: 1px solid var(--brass-faint); border-radius: 4px; background: rgba(0, 0, 0, 0.22); }
+.rules-figure svg { display: block; width: 100%; max-width: 280px; height: auto; margin: 0 auto; }
+.rules-figure figcaption { margin-top: 10px; font-size: 13px; line-height: 1.55; color: var(--text-dim); text-align: center; }
+
+/* The way through to the other half of the site. */
+.home-foot { margin: 2px 0 0; text-align: center; font-size: 13px; }
+.home-foot a { color: var(--text-dim); text-decoration: none; border-bottom: 1px solid var(--brass-faint); padding-bottom: 1px; transition: color 0.15s, border-color 0.15s; }
+.home-foot a:hover { color: var(--brass); border-bottom-color: var(--brass-dim); }
 @keyframes unfold { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 
 /* --- layout ---------------------------------------------------------------- */
@@ -505,6 +527,10 @@ main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; position: rel
 .dd-opt.on { color: var(--brass-bright); }
 .dd-opt.on::before { background: var(--brass); border-color: var(--brass); }
 
+/* Somebody who arrived after the deal, told plainly that they are in. */
+.waiting-note { border-color: var(--brass); }
+.waiting-note h2 { color: var(--brass); margin-bottom: 6px; }
+
 .lobby-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 .lobby-actions .primary { flex: 1; }
 
@@ -542,7 +568,14 @@ main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; position: rel
 .seat-head .name { font-family: var(--caps); font-weight: 700; font-size: 16px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ivory); }
 .seat-head .status { color: var(--text-dim); font-size: 12px; margin-left: auto; font-family: var(--caps); letter-spacing: 0.08em; text-transform: uppercase; }
 .seat-row.active .seat-head .status { color: var(--brass); }
-.cards { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-height: 68px; perspective: 700px; }
+.cards { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-height: calc(var(--card-h) + 2px); perspective: 700px; }
+
+/* A wide screen was leaving each row more than half empty while the cards sat
+   at the size a phone needs them to be. The table is the thing worth looking
+   at, so on a desktop it is given the room it already had. */
+@media (min-width: 1100px) {
+  .game .table { --card-w: 58px; --card-h: 82px; --card-rank: 21px; }
+}
 
 /* Cards. Face down they show an ink back with a brass lattice; face up they
    are ivory card stock. Red cards lie sideways and black cards stand upright,
@@ -551,7 +584,7 @@ main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; position: rel
   position: relative;
   display: grid; place-items: center;
   border-radius: 4px;
-  font-family: var(--caps); font-weight: 700; font-size: 18px; line-height: 1;
+  font-family: var(--caps); font-weight: 700; font-size: var(--card-rank); line-height: 1;
   padding-top: 2px;
   user-select: none;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
@@ -560,9 +593,9 @@ main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; position: rel
   background: #1c2130;
   color: var(--text);
 }
-.card.black { width: 46px; height: 66px; }
-.card.red { width: 66px; height: 46px; border-color: #7a2634; background: var(--burgundy-deep); color: #f0b3b9; }
-.card.unknown { width: 46px; height: 66px; border-style: dashed; border-color: var(--text-faint); background: transparent; box-shadow: none; }
+.card.black { width: var(--card-w); height: var(--card-h); }
+.card.red { width: var(--card-h); height: var(--card-w); border-color: #7a2634; background: var(--burgundy-deep); color: #f0b3b9; }
+.card.unknown { width: var(--card-w); height: var(--card-h); border-style: dashed; border-color: var(--text-faint); background: transparent; box-shadow: none; }
 .card.down:not(.mine):not(.shown) .rank { display: none; }
 .card.down::after {
   content: ""; position: absolute; inset: 4px; border-radius: 2px;
@@ -592,10 +625,21 @@ main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; position: rel
 .card { --rx: 0deg; --ry: 0deg; --gx: 50%; --gy: 50%; transform-style: preserve-3d; }
 .card .gloss {
   position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 3; opacity: 0;
-  background: radial-gradient(circle at var(--gx) var(--gy), rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.1) 32%, transparent 62%);
+  /* Screen blend at 0.42 white turned a face-down card into a bright smear
+     with no card left in it, which is a poor thing to be about to bet on.
+     Enough to catch the light, not enough to wash the lattice out. */
+  background: radial-gradient(circle at var(--gx) var(--gy), rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.06) 34%, transparent 62%);
   mix-blend-mode: screen; transition: opacity 0.15s;
 }
-.card.selectable { cursor: pointer; }
+
+/* A card you may act on says so without being pointed at. The hover and the
+   cursor were the only cues, which is no cue at all on a phone: the whole
+   table looked alike and nothing said where to tap. */
+.card.selectable {
+  cursor: pointer;
+  border-color: var(--brass-dim);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--brass-faint);
+}
 .card.selectable:hover, .card.draggable:hover, .card.selected {
   transform: rotateX(var(--rx)) rotateY(var(--ry)) translateY(-8px) translateZ(24px);
   transition: transform 0.07s linear, box-shadow 0.15s, border-color 0.15s;
@@ -603,8 +647,23 @@ main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; position: rel
   box-shadow: 0 18px 28px rgba(0, 0, 0, 0.55), 0 0 0 2px var(--brass-faint), 0 0 22px rgba(212, 175, 90, 0.3);
   z-index: 2;
 }
-.card.selectable:hover .gloss, .card.draggable:hover .gloss, .card.selected .gloss { opacity: 1; }
-.card.selected { border-color: var(--brass-bright); }
+.card.selectable:hover .gloss, .card.draggable:hover .gloss { opacity: 1; }
+/* The one you have actually picked is held by a brass ring rather than by more
+   light, so it still reads as a card. */
+.card.selected {
+  border-color: var(--brass-bright);
+  box-shadow: 0 18px 28px rgba(0, 0, 0, 0.55), 0 0 0 2px var(--brass), 0 0 26px rgba(212, 175, 90, 0.45);
+}
+.card.selected .gloss { opacity: 0.4; }
+/* Tabbed to rather than pointed at. The ring has to clear the card's own
+   brass, so it is drawn in ivory. */
+.card:focus-visible {
+  outline: none;
+  box-shadow: 0 18px 28px rgba(0, 0, 0, 0.55), 0 0 0 2px var(--ivory), 0 0 22px rgba(244, 236, 216, 0.35);
+  z-index: 3;
+}
+/* And once one is picked, the rest of the row steps back out of the way. */
+.table.picking .card.selectable:not(.selected) { opacity: 0.42; }
 .card.target { border-color: var(--brass); box-shadow: 0 0 0 3px var(--brass-faint), 0 0 22px rgba(212, 175, 90, 0.4); animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 .card .idx { position: absolute; bottom: -17px; font-family: var(--mono); font-size: 10px; color: var(--text-faint); font-weight: 400; padding: 0; }
@@ -784,6 +843,23 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 .ranks button:hover { border-color: var(--brass); background: var(--brass); color: #1c1506; transform: translateY(-2px); }
 .ranks button:focus-visible { outline: none; border-color: var(--brass); box-shadow: 0 0 0 3px var(--brass-faint); }
 .ranks button:active { transform: translateY(1px) scale(0.95); }
+/* A rank the whole table has already been told this card is not. Struck
+   through rather than hidden, because which ones have gone is itself worth
+   reading. */
+.ranks button.out {
+  color: var(--text-faint); border-color: rgba(255, 255, 255, 0.07); background: transparent;
+  cursor: not-allowed; text-decoration: line-through; text-decoration-color: var(--bad);
+}
+.ranks button.out:hover { transform: none; background: transparent; color: var(--text-faint); border-color: rgba(255, 255, 255, 0.07); }
+
+/* And the same knowledge sitting on the card itself: how many ranks are out
+   of it already, with the list in the tooltip. */
+.card .ruled {
+  position: absolute; top: -8px; left: -6px; z-index: 2;
+  min-width: 15px; padding: 1px 3px 0; border-radius: 999px;
+  font-family: var(--mono); font-size: 9px; line-height: 1.4; text-align: center;
+  color: var(--bad); background: var(--ink); border: 1px solid rgba(229, 100, 107, 0.45);
+}
 .actions-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .actions-row .btn { flex: 1; }
 /* A row of hands to point a power-up at. There can be five of them, so they
@@ -915,9 +991,7 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
      hands that still wrap get enough row gap for the index labels. */
   .cards { gap: 24px 7px; min-height: 56px; }
   .cards.indexed { margin-bottom: 12px; }
-  .card { font-size: 15px; }
-  .card.black, .card.unknown { width: 40px; height: 56px; }
-  .card.red { width: 56px; height: 40px; }
+  .game .table { --card-w: 40px; --card-h: 56px; --card-rank: 15px; }
   .card.down.mine .rank, .card.down.shown .rank { font-size: 13px; }
   .card .idx { bottom: -16px; }
   .testbar { font-size: 11px; gap: 6px; }
