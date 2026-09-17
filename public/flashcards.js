@@ -76,6 +76,77 @@
 
   const mintNo = (n) => 'No. ' + String(n).padStart(4, '0');
 
+  // A card's front, cut down to a headline. Banners are read at a glance and a
+  // hundred-character question laid across the screen is not a glance. The cut
+  // falls back to the last space, because a word broken in half reads as a
+  // fault rather than as an abbreviation.
+  const snip = (text, n = 46) => {
+    const s = String(text);
+    if (s.length <= n) return s;
+    const cut = s.slice(0, n - 1);
+    const space = cut.lastIndexOf(' ');
+    return (space > n * 0.6 ? cut.slice(0, space) : cut.trimEnd()) + '…';
+  };
+
+  // The worth of a handful of cards, and the best rarity among them.
+  const worthOf = (cards) => cards.reduce((n, c) => n + c.value, 0);
+  const bestRarity = (cards) =>
+    cards.map((c) => c.rarity).sort((a, b) => RARITY_ORDER.indexOf(b) - RARITY_ORDER.indexOf(a))[0] || 'common';
+
+  // --- banners ---------------------------------------------------------------
+  // The table's banners, brought through the door: a band slashes across the
+  // screen and the word slams onto it. style.css draws and times the whole
+  // thing, so what is here is the queue and the three moments this room has to
+  // announce — a card struck, a swap settled, a card burnt.
+  //
+  // None of them wait for a keypress, unlike the one that ends a round at the
+  // table. Nothing here is the end of anything, and after a strike the card
+  // itself is what you came to look at, so the band says its piece and leaves.
+
+  const BANNER_MS = 2600; // how long one holds the screen, arrival and exit included
+  const bannerQueue = [];
+  let bannerBusy = false;
+  let bannerTimer = 0;
+  let bannerThen = null; // what the room does once the screen is its own again
+
+  /**
+   * Announce something. `ink` is the colour the band comes up in — the
+   * rarity's own, for a strike — and `then` runs when the queue has emptied,
+   * which is how the reveal knows to wait its turn.
+   */
+  function banner(kind, title, sub, { ink = null, then = null } = {}) {
+    bannerQueue.push({ kind, title, sub, ink });
+    if (then) bannerThen = then;
+    if (!bannerBusy) nextBanner();
+  }
+
+  function nextBanner() {
+    clearTimeout(bannerTimer);
+    const el = $('#banner');
+    const b = bannerQueue.shift();
+    if (!b) {
+      bannerBusy = false;
+      el.hidden = true;
+      el.className = 'banner';
+      const then = bannerThen;
+      bannerThen = null;
+      if (then) then();
+      return;
+    }
+    bannerBusy = true;
+    el.hidden = true;
+    el.className = `banner fc ${b.kind}`;
+    el.style.setProperty('--r-ink', b.ink || 'var(--brass)');
+    // The stylesheet times the arrive-hold-leave to the life of the banner
+    // rather than guessing at it, so it has to be told what that is.
+    el.style.setProperty('--banner-life', `${BANNER_MS}ms`);
+    el.innerHTML =
+      `<div class="banner-inner"><div class="banner-title">${esc(b.title)}</div><div class="banner-sub">${esc(b.sub)}</div></div>`;
+    void el.offsetWidth; // restart the CSS animation
+    el.hidden = false;
+    bannerTimer = setTimeout(nextBanner, BANNER_MS);
+  }
+
   // --- drawing a card --------------------------------------------------------
 
   function cardHtml(card, { ops = true } = {}) {
@@ -549,7 +620,7 @@
                     <div class="fc-offer-meta">${esc(c.rarityLabel)} &middot; ${mintNo(c.mint)}${c.pooled ? ' &middot; on the table' : ''}</div>
                   </div>
                   <div class="fc-offer-worth">${c.value}</div>
-                  <button class="fc-op" data-act="ad-price" data-id="${c.id}" data-value="${c.value}">Re-price</button>
+                  <button class="fc-op" data-act="ad-open" data-id="${c.id}">Open</button>
                   <button class="fc-op danger" data-act="ad-burn" data-id="${c.id}">Burn</button>
                 </div>`).join('')
             : '<p class="fc-empty">No cards.</p>'}
@@ -582,17 +653,8 @@
         await api('admin/users/' + encodeURIComponent(a.id), { method: 'POST', body: { signOut: true } });
         toast('Signed out everywhere.', 'info');
       }
-      if (act === 'ad-price') {
-        const asked = prompt('What is this card worth?', button.dataset.value);
-        if (asked === null) return;
-        const res = await api('admin/cards/' + encodeURIComponent(button.dataset.id), {
-          method: 'POST',
-          body: { value: asked },
-        });
-        button.dataset.value = res.card.value;
-        button.closest('.fc-offer').querySelector('.fc-offer-worth').textContent = res.card.value;
-        await loadPanel();
-        toast('Re-priced.', 'info');
+      if (act === 'ad-open') {
+        return adminCardModal(detail.cards.find((c) => c.id === button.dataset.id), a);
       }
       if (act === 'ad-burn') {
         await api('admin/cards/' + encodeURIComponent(button.dataset.id), { method: 'DELETE' });
@@ -608,6 +670,146 @@
       }
     }));
   });
+
+  /**
+   * The house's view of one card: the thing itself, both faces, and the means
+   * to put any of it right.
+   *
+   * It is the author's own re-cut form plus the two things an author may not
+   * touch — the rarity the roll gave the card, and the worth the post will
+   * honour. The card above the form is the same one the owner sees, drawn by
+   * the same function, so there is no second idea of what a card looks like
+   * for the panel to drift away from.
+   */
+  function adminCardModal(card, account) {
+    const mythic = card.rarity === 'mythic';
+    const facts = [
+      esc(card.rarityLabel),
+      mintNo(card.mint),
+      `craft ${card.craft}`,
+      `struck ${when(card.created)}`,
+      card.edited ? `re-cut ${when(card.edited)}` : null,
+      `by ${esc(card.authorName || 'anon')}`,
+      card.traded ? plural(card.traded, 'trade', 'trades') : 'never traded',
+      card.pooled ? 'on the table' : null,
+    ].filter(Boolean).join(' &middot; ');
+
+    openModal(`
+      <button class="linkish fc-backlink" data-act="ac-back" type="button">&larr; ${esc(account.displayName)}&rsquo;s cards</button>
+      <h3>${esc(card.title || card.front)}</h3>
+      <p class="fc-note">${facts}</p>
+
+      <div class="fc-cardshow">${cardHtml(card, { ops: false })}</div>
+      <p class="fc-note">Click the card to turn it over. A long back is cut to fit the card; the whole of it is in the form below.</p>
+
+      <form id="ac-form" class="fc-form" autocomplete="off">
+        <h4 class="fc-h4">The card</h4>
+        <div class="field">
+          <label for="ac-front">Front</label>
+          <textarea id="ac-front" rows="2" maxlength="${state.limits.front}">${esc(card.front)}</textarea>
+        </div>
+        <div class="field">
+          <label for="ac-back">Back</label>
+          <textarea id="ac-back" rows="5" maxlength="${state.limits.back}">${esc(card.back)}</textarea>
+        </div>
+        <div class="fc-row">
+          <div class="field">
+            <label for="ac-hint">Hint <span class="opt">optional</span></label>
+            <input id="ac-hint" maxlength="${state.limits.hint}" value="${esc(card.hint || '')}" />
+          </div>
+          <div class="field">
+            <label for="ac-category">Category <span class="opt">optional</span></label>
+            <input id="ac-category" maxlength="${state.limits.category}" value="${esc(card.category || '')}" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="ac-tags">Tags <span class="opt">up to ${state.limits.tags}, comma separated</span></label>
+          <input id="ac-tags" value="${esc((card.tags || []).join(', '))}" />
+        </div>
+        ${mythic ? `
+          <div class="fc-row">
+            <div class="field">
+              <label for="ac-title">Name</label>
+              <input id="ac-title" maxlength="48" value="${esc(card.title || '')}" />
+            </div>
+            <div class="field">
+              <label for="ac-flavour">Flavour</label>
+              <input id="ac-flavour" maxlength="140" value="${esc(card.flavour || '')}" />
+            </div>
+          </div>` : ''}
+
+        <h4 class="fc-h4">What its owner cannot change</h4>
+        <div class="fc-row">
+          <div class="field">
+            <label for="ac-rarity">Rarity</label>
+            <select id="ac-rarity">
+              ${RARITY_ORDER.map((r) => `<option value="${r}"${r === card.rarity ? ' selected' : ''}>${esc(state.rarities[r].label)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field">
+            <label for="ac-value">Worth</label>
+            <input id="ac-value" type="number" min="1" value="${card.value}" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="ac-owner">Held by</label>
+          <input id="ac-owner" list="usernames" value="${esc(account.username)}" autocapitalize="none" spellcheck="false" />
+        </div>
+        <p class="hint">
+          Saving re-cuts the card: its craft is scored again and its worth moves with it.
+          Leave the worth alone to take that new appraisal, or type a number to overrule it.
+          The rarity is never re-rolled &mdash; set it here if it needs setting.
+        </p>
+        <div class="fc-actions">
+          <button class="btn primary" type="submit">Save the card</button>
+          <button class="btn ghost" data-act="ac-burn" type="button">Burn it</button>
+        </div>
+      </form>`);
+
+    $('#ac-form').addEventListener('submit', guard(async (ev) => {
+      ev.preventDefault();
+      const body = {
+        front: $('#ac-front').value,
+        back: $('#ac-back').value,
+        hint: $('#ac-hint').value,
+        category: $('#ac-category').value,
+        tags: $('#ac-tags').value.split(',').map((t) => t.trim()).filter(Boolean),
+      };
+      if (mythic) {
+        body.title = $('#ac-title').value;
+        body.flavour = $('#ac-flavour').value;
+      }
+      // Only what the admin actually moved is sent. The re-cut works the worth
+      // out again, and posting back the number already on the screen would
+      // overrule that fresh appraisal with the stale one every single time.
+      if ($('#ac-rarity').value !== card.rarity) body.rarity = $('#ac-rarity').value;
+      if (Number($('#ac-value').value) !== card.value) body.value = $('#ac-value').value;
+      const owner = $('#ac-owner').value.trim();
+      if (owner.toLowerCase() !== account.username) body.ownerId = owner;
+
+      const res = await api('admin/cards/' + encodeURIComponent(card.id), { method: 'POST', body });
+      await loadPanel();
+      if (res.card.ownerId !== account.id) {
+        toast(`Moved to ${res.owner.displayName}.`, 'info');
+        return adminAccountModal(account.id);
+      }
+      toast(res.unpooled ? 'Saved, and taken off the table — its worth changed.' : 'Saved.', 'info');
+      adminCardModal(res.card, account);
+    }));
+
+    $('#modal-body').addEventListener('click', guard(async (ev) => {
+      const button = ev.target.closest('[data-act]');
+      if (!button) return;
+      if (button.dataset.act === 'ac-back') return adminAccountModal(account.id);
+      if (button.dataset.act === 'ac-burn') {
+        if (!confirm(`Burn ${mintNo(card.mint)}? It is gone for good, worth and all.`)) return;
+        await api('admin/cards/' + encodeURIComponent(card.id), { method: 'DELETE' });
+        await loadPanel();
+        toast('Burnt.', 'info');
+        return adminAccountModal(account.id);
+      }
+    }));
+  }
 
   // --- tabs ------------------------------------------------------------------
 
@@ -687,12 +889,22 @@
       const settled = result.settled;
       state = result;
       drawAll();
-      toast(
-        settled
-          ? `Traded on the spot — ${plural(settled, 'swap', 'swaps')} settled. The ledger has the detail.`
-          : 'On the table. It will go the moment somebody offers a match.',
-        'info'
+      if (!settled) {
+        toast('On the table. It will go the moment somebody offers a match.', 'info');
+        return;
+      }
+      // A swap that settled the instant it was offered is the whole point of
+      // the post, so it is announced rather than muttered. The band takes the
+      // colour of the best thing that came back.
+      const swap = state.trades[0];
+      const more = settled > 1 ? ` (and ${plural(settled - 1, 'swap', 'swaps')} more)` : '';
+      banner(
+        'traded',
+        'Traded',
+        `${plural(swap.got.length, 'card', 'cards')} from ${swap.withName}, worth ${worthOf(swap.got)}${more}`,
+        { ink: state.rarities[bestRarity(swap.got)].ink }
       );
+      toast('The ledger has the detail.', 'info');
       return;
     }
     if (act === 'withdraw') {
@@ -709,7 +921,7 @@
       if (!confirm(`Burn "${card.front}"? It is gone for good, worth and all.`)) return;
       state = await api('cards/' + encodeURIComponent(id), { method: 'DELETE' });
       drawAll();
-      toast('Burnt.', 'info');
+      banner('burnt', 'Burnt', `${snip(card.front)} — ${card.value} gone with it`);
       return;
     }
     if (act === 'acct') return adminAccountModal(id);
@@ -744,8 +956,14 @@
       showTab('collection');
     } else {
       // A new card is worth looking at before it disappears into the pile.
-      $('#reveal-card').innerHTML = cardHtml(result.card, { ops: false });
-      $('#reveal').hidden = false;
+      // The band goes first and says what was rolled — it would lie straight
+      // across the card otherwise — and the card is waiting behind it.
+      const card = result.card;
+      $('#reveal-card').innerHTML = cardHtml(card, { ops: false });
+      banner('struck', card.rarityLabel, `${snip(card.front)} — worth ${card.value}`, {
+        ink: state.rarities[card.rarity].ink,
+        then: () => { $('#reveal').hidden = false; },
+      });
     }
   }));
 

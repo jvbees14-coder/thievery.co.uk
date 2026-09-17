@@ -15,6 +15,19 @@
 </head>
 <body class="fc-app">
   <div id="toast" class="toast" hidden></div>
+  <div id="banner" class="banner" hidden></div>
+
+  <!-- The reveal covers the whole page, so it lives out here with the toast and
+       the banner rather than inside the tab that opens it: a pane carries an
+       animation, an animation leaves a transform behind, and a transform makes
+       the pane the frame that everything fixed inside it is measured against. -->
+  <div id="reveal" class="fc-reveal" hidden>
+    <div class="fc-reveal-inner">
+      <p class="fc-reveal-cap">Struck</p>
+      <div id="reveal-card" class="fc-reveal-card"></div>
+      <button class="btn primary" data-act="reveal-close" type="button">Into the collection</button>
+    </div>
+  </div>
 
   <header class="fc-bar">
     <a class="fc-mark wordmark" href="/flashcards">Flash<em>cards</em></a>
@@ -119,14 +132,6 @@
             the result &mdash; and re-cutting a card later never re-rolls it.
           </p>
         </aside>
-      </div>
-
-      <div id="reveal" class="fc-reveal" hidden>
-        <div class="fc-reveal-inner">
-          <p class="fc-reveal-cap">Struck</p>
-          <div id="reveal-card"></div>
-          <button class="btn primary" data-act="reveal-close" type="button">Into the collection</button>
-        </div>
       </div>
     </section>
 

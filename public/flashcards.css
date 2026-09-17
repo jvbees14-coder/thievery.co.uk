@@ -247,11 +247,48 @@ textarea:focus, select:focus, input:focus {
 }
 .fc-reveal-inner { display: flex; flex-direction: column; gap: 18px; align-items: center; width: min(100%, 330px); }
 .fc-reveal-cap { margin: 0; font-family: var(--caps); font-size: 11px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; color: var(--brass); }
+/* A card's two faces are both taken out of the flow so they can sit on top of
+   each other, which leaves the card itself nothing to be as wide as. In the
+   collection the grid column decides and the question never comes up; here the
+   holder has to be told, or it shrinks to fit nothing at all and the card
+   arrives as a slit. */
+.fc-reveal-card { width: 100%; }
 .fc-reveal .fc-card { width: 100%; animation: strike 0.7s var(--bounce) both; }
 @keyframes strike {
   from { opacity: 0; transform: rotateY(-95deg) scale(0.85); }
   to { opacity: 1; transform: none; }
 }
+
+/* --- banners ---------------------------------------------------------------
+   The table's banners, borrowed. style.css already cuts the band, slams the
+   words onto it and times the whole arrival; what is here is only the ink the
+   three moments in this room arrive in.
+
+   A strike comes up in the colour of whatever was rolled, so a legendary
+   announces itself in brass and a common turns up in the same grey it is
+   printed in — the band has told you what you got before you have read a word
+   of it. Every rarity's ink is a light tone, so the words go on in near-black
+   exactly as they do on the table's brass band. */
+.banner.fc { --r-ink: var(--brass); z-index: 70; }
+.banner.fc::before {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0) 32%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0) 68%),
+    linear-gradient(90deg, transparent, var(--r-ink) 12%, var(--r-ink) 88%, transparent);
+}
+.banner.fc .banner-title { color: #16120a; text-shadow: 0 2px 0 rgba(255, 255, 255, 0.35); }
+/* A card's front is longer than a scoreline, so the line it is set on is given
+   a width to wrap inside rather than being allowed to run off the band. */
+.banner.fc .banner-sub { color: #332a17; max-width: min(84vw, 46ch); margin-inline: auto; }
+
+/* A burn is the one announcement here that is not a gain, so it is given none
+   of the sheen: an unlit band, and the words in the red the room keeps for the
+   things it will not undo. */
+.banner.fc.burnt::before {
+  background: linear-gradient(90deg, transparent, #0c0e15 12%, #171a26 50%, #0c0e15 88%, transparent);
+  box-shadow: 0 0 0 1px rgba(229, 100, 107, 0.4);
+}
+.banner.fc.burnt .banner-title { color: var(--bad); text-shadow: 0 0 40px rgba(229, 100, 107, 0.45); }
+.banner.fc.burnt .banner-sub { color: var(--text-dim); }
 
 /* --- the trading post ----------------------------------------------------- */
 
@@ -365,6 +402,19 @@ textarea:focus, select:focus, input:focus {
 .fc-modal-x:hover { color: var(--ivory); }
 .fc-modal-box h3 { font-family: var(--caps); font-weight: 600; font-size: 18px; color: var(--ivory); margin: 0 0 16px; }
 .fc-danger-zone { margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(229, 100, 107, 0.25); }
+
+/* The panel's view of one card. A card's faces are out of the flow so they can
+   stack for the turn, which leaves the card nothing to be as wide as — the
+   frame it sits in has to carry the width, exactly as the reveal does. It is
+   given a little more height than one in the collection, because the house is
+   reading somebody else's writing rather than glancing at its own. */
+.fc-cardshow { width: min(100%, 300px); margin: 18px auto 0; }
+.fc-cardshow .fc-card, .fc-cardshow .fc-flip { width: 100%; min-height: 250px; }
+.fc-backlink {
+  display: inline-block; margin-bottom: 14px;
+  font-family: var(--caps); font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+}
 
 /* --- narrow screens ------------------------------------------------------- */
 

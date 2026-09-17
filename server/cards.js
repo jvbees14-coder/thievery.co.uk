@@ -36,6 +36,9 @@ export const HINT_MAX = 120;
 export const CATEGORY_MAX = 24;
 export const TAGS_MAX = 4;
 export const TAG_MAX = 16;
+// Only a mythic carries these two, and only the house writes them.
+export const TITLE_MAX = 48;
+export const FLAVOUR_MAX = 140;
 
 // How many cards one account may hold. High enough that nobody sensible meets
 // it, low enough that the data file cannot be made enormous by one person.
@@ -79,6 +82,12 @@ function sweetSpot(n, floor, best, tooMuch) {
   if (n <= best) return (n - floor) / (best - floor);
   if (n >= tooMuch) return 0.25; // never nothing: a long card is still a card
   return 1 - 0.75 * ((n - best) / (tooMuch - best));
+}
+
+/** Whether two lists of words hold the same things in the same order. */
+function sameList(a, b) {
+  const other = b || [];
+  return a.length === other.length && a.every((item, i) => item === other[i]);
 }
 
 /**
@@ -322,12 +331,38 @@ export function createCard(owner, input) {
  * stay; the rarity is deliberately *not* re-rolled, because editing a card
  * until it comes up legendary is the one thing the seed exists to prevent.
  * Craft and value do move, since the card really has changed.
+ *
+ * `naming` lets the title and the flavour line be written too. It is off by
+ * default and the members' route never turns it on: a name is what marks a
+ * card as the house's own work, and a card anybody can name is not marked at
+ * all. The panel passes it, because the house may fix its own typing.
  */
-export function editCard(card, input) {
+export function editCard(card, input, { naming = false } = {}) {
   const content = cleanContent({ ...card, ...input });
   const problem = contentProblem(content);
   if (problem) throw Object.assign(new Error(problem), { status: 400 });
+  const named = naming
+    ? {
+        title: input.title != null ? clean(input.title, TITLE_MAX) : card.title,
+        flavour: input.flavour != null ? clean(input.flavour, FLAVOUR_MAX) : card.flavour,
+      }
+    : null;
+
+  // A save that changes nothing is not a re-cut, and is left well alone. It
+  // would otherwise stamp the card as rewritten when nobody had rewritten it,
+  // and — because the panel may have set a price by hand — quietly undo that
+  // price by appraising the card all over again.
+  const same =
+    content.front === card.front &&
+    content.back === card.back &&
+    content.hint === card.hint &&
+    content.category === card.category &&
+    sameList(content.tags, card.tags) &&
+    (!named || (named.title === card.title && named.flavour === card.flavour));
+  if (same) return card;
+
   Object.assign(card, content);
+  if (named) Object.assign(card, named);
   card.craft = craftScore(content).total;
   card.value = valueFor(card.craft, card.rarity, card.seed);
   card.edited = Date.now();
@@ -366,8 +401,8 @@ export function mintMythic(recipient, input, { value = null, mintedBy = 'The Hou
     ownerId: recipient.id,
     created: Date.now(),
     pooled: false,
-    title: clean(input.title, 48),
-    flavour: clean(input.flavour, 140),
+    title: clean(input.title, TITLE_MAX),
+    flavour: clean(input.flavour, FLAVOUR_MAX),
     mythic: true,
     history: [{ at: Date.now(), event: 'struck', to: recipient.id }],
   };
@@ -394,7 +429,12 @@ export function deleteCard(card) {
   touch();
 }
 
-/** A card as the browser sees it. `mine` decides whether the back is sent. */
+/**
+ * A card as the browser sees it, back and all. Nothing here is fit for a
+ * stranger: every caller is either somebody's own collection or the panel,
+ * and the table's own view of a card is `publicPool` in trading.js, which
+ * sends the front and never the answer. `mine` says whose it is.
+ */
 export function publicCard(card, viewerId) {
   const mine = card.ownerId === viewerId;
   return {

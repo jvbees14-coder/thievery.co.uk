@@ -542,27 +542,76 @@ async function adminMythic(req, res) {
   });
 }
 
+// The text of a card, as the panel may rewrite it. Anything outside this list
+// is either the card's identity (its mint number, its seed) or settled further
+// down by hand.
+const CARD_TEXT = ['front', 'back', 'hint', 'category', 'tags', 'title', 'flavour'];
+
+/**
+ * Put a card right. The house may rewrite it, overrule the roll, name its own
+ * price and move it between collections, in that order: each step is allowed
+ * to undo the worth the step above it worked out, so the last number the admin
+ * actually typed is the one that sticks.
+ */
 async function adminPatchCard(req, res, id) {
   requireAdmin(req);
   const card = Cards.byId(id);
   if (!card) throw Object.assign(new Error('No such card.'), { status: 404 });
   const body = await readBody(req);
+  const worthBefore = card.value;
 
+  // The text first. This goes through the same re-cut the author's own form
+  // uses, so it is cleaned and checked the same way, the craft is scored
+  // again, and the seed stays where it is — the house can rewrite a card but
+  // cannot roll it a better rarity by rewriting it, any more than its author
+  // can. `naming` is the one thing the author's route does not get.
+  const text = {};
+  for (const key of CARD_TEXT) if (body[key] != null) text[key] = body[key];
+  if (Object.keys(text).length) Cards.editCard(card, text, { naming: true });
+
+  // Then the rarity, which the roll decided and only the house may overrule.
+  // Its worth follows the new rarity, unless a price is named below.
+  if (body.rarity != null) {
+    if (!Cards.RARITIES.includes(body.rarity)) {
+      throw Object.assign(new Error('That is not a rarity.'), { status: 400 });
+    }
+    if (body.rarity !== card.rarity) {
+      card.rarity = body.rarity;
+      card.value = Cards.valueFor(card.craft, card.rarity, card.seed);
+    }
+  }
+
+  // And last a price set by hand, which overrules everything above it.
   if (body.value != null) {
     const v = Number(body.value);
     if (!Number.isFinite(v) || v < 1) throw Object.assign(new Error('A value is a number of at least 1.'), { status: 400 });
     card.value = Math.round(v);
   }
-  if (body.rarity && Cards.RARITIES.includes(body.rarity)) card.rarity = body.rarity;
+
   if (body.ownerId != null) {
     const to = Accounts.byId(String(body.ownerId)) || Accounts.findByUsername(String(body.ownerId));
     if (!to) throw Object.assign(new Error('No such account.'), { status: 404 });
-    Trading.unpool(card);
-    (card.history ||= []).push({ at: Date.now(), event: 'moved', from: card.ownerId, to: to.id });
-    card.ownerId = to.id;
+    if (to.id !== card.ownerId) {
+      Trading.unpool(card);
+      (card.history ||= []).push({ at: Date.now(), event: 'moved', from: card.ownerId, to: to.id });
+      card.ownerId = to.id;
+    }
   }
+
+  // A card on the table is an offer of a particular worth, and the post
+  // settles against that number while both parties are asleep. Change it and
+  // the offer is no longer the one anybody made, so it comes off the table
+  // rather than trading at a price nobody agreed to.
+  const unpooled = card.pooled && card.value !== worthBefore;
+  if (unpooled) Trading.unpool(card);
+
   touch();
-  send(res, 200, { card: { ...Cards.publicCard(card, card.ownerId), back: card.back } });
+  const owner = Accounts.byId(card.ownerId);
+  send(res, 200, {
+    card: { ...Cards.publicCard(card, card.ownerId), ownerId: card.ownerId },
+    owner: owner ? { id: owner.id, username: owner.username, displayName: owner.displayName } : null,
+    unpooled,
+  });
 }
 
 function adminDeleteCard(req, res, id) {

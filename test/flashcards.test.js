@@ -421,6 +421,121 @@ async function run() {
     assert.ok(!bobNow.cards.some((c) => c.id === card.id), 'the card is still in the old collection');
   });
 
+  await check('the panel sees the whole of a card, not just its front', async () => {
+    const overview = ok(await house.call('admin/overview'), 'overview');
+    const bobId = overview.users.find((u) => u.username === 'bob').id;
+    const card = ok(await house.call('admin/users/' + bobId), 'detail').cards[0];
+    for (const field of ['front', 'back', 'rarity', 'rarityLabel', 'value', 'craft', 'mint', 'created', 'ownerId']) {
+      assert.ok(card[field] != null, `the panel was not sent ${field}`);
+    }
+    assert.ok('hint' in card && 'category' in card && 'tags' in card, 'the panel was not sent the extras');
+  });
+
+  await check('the admin can re-cut a card that is not its own', async () => {
+    const overview = ok(await house.call('admin/overview'), 'overview');
+    const bobId = overview.users.find((u) => u.username === 'bob').id;
+    const card = ok(await house.call('admin/users/' + bobId), 'detail').cards.find((c) => !c.pooled);
+    assert.ok(card, 'bob holds nothing off the table');
+
+    const edited = ok(await house.call('admin/cards/' + card.id, {
+      method: 'POST',
+      body: {
+        front: 'What did the house rewrite this card to ask?',
+        back: 'Exactly this, and the mint number stayed where it was while the wording changed underneath it.',
+        hint: 'The house has the pen.',
+        category: 'Panel',
+        tags: ['rewritten', 'house'],
+      },
+    }), 're-cut');
+    assert.equal(edited.card.front, 'What did the house rewrite this card to ask?');
+    assert.equal(edited.card.hint, 'The house has the pen.');
+    assert.equal(edited.card.category, 'Panel');
+    assert.deepEqual(edited.card.tags, ['rewritten', 'house']);
+    assert.equal(edited.card.mint, card.mint, 'a re-cut must not restrike the mint number');
+    assert.equal(edited.card.rarity, card.rarity, 'a re-cut must never re-roll the rarity');
+
+    // And the owner sees it, because it is still their card.
+    const bobNow = ok(await bob.call('me'), 'me');
+    assert.equal(bobNow.cards.find((c) => c.id === card.id).front, 'What did the house rewrite this card to ask?');
+  });
+
+  await check('a re-cut that empties a card is refused', async () => {
+    const overview = ok(await house.call('admin/overview'), 'overview');
+    const bobId = overview.users.find((u) => u.username === 'bob').id;
+    const card = ok(await house.call('admin/users/' + bobId), 'detail').cards.find((c) => !c.pooled);
+    assert.equal((await house.call('admin/cards/' + card.id, { method: 'POST', body: { front: '' } })).status, 400);
+  });
+
+  await check('setting a rarity by hand carries the worth with it', async () => {
+    const overview = ok(await house.call('admin/overview'), 'overview');
+    const bobId = overview.users.find((u) => u.username === 'bob').id;
+    const card = ok(await house.call('admin/users/' + bobId), 'detail').cards.find((c) => !c.pooled && c.rarity === 'common');
+    if (!card) return; // bob happens to hold nothing common; nothing to prove here
+
+    const lifted = ok(await house.call('admin/cards/' + card.id, { method: 'POST', body: { rarity: 'legendary' } }), 'rarity');
+    assert.equal(lifted.card.rarity, 'legendary');
+    assert.ok(lifted.card.value > card.value, 'a legendary must not still be priced as a common');
+
+    // A price named by hand has the last word over the rarity above it.
+    const both = ok(await house.call('admin/cards/' + card.id, { method: 'POST', body: { rarity: 'common', value: 777 } }), 'both');
+    assert.equal(both.card.value, 777);
+    assert.equal((await house.call('admin/cards/' + card.id, { method: 'POST', body: { rarity: 'priceless' } })).status, 400);
+  });
+
+  await check('only the house may name a card', async () => {
+    // The title and the flavour line are what mark a card as the house's own
+    // work, so the members' own re-cut must not be able to write them.
+    const mine = ok(await alice.call('me'), 'me').cards.find((c) => !c.pooled);
+    assert.ok(mine, 'alice has nothing off the table to re-cut');
+    const tried = ok(await alice.call('cards/' + mine.id, {
+      method: 'POST',
+      body: { front: mine.front, back: mine.back, title: 'The Alice Bequest', flavour: 'Struck by nobody at all.' },
+    }), 'member edit');
+    assert.equal(tried.card.title, '', 'a member named their own card');
+    assert.equal(tried.card.flavour, '', 'a member wrote their own flavour line');
+
+    const named = ok(await house.call('admin/cards/' + mine.id, {
+      method: 'POST',
+      body: { title: 'The Alice Bequest', flavour: 'Struck by the house, and named by it too.' },
+    }), 'house edit');
+    assert.equal(named.card.title, 'The Alice Bequest');
+    assert.equal(named.card.flavour, 'Struck by the house, and named by it too.');
+  });
+
+  await check('a save that changes nothing leaves the card alone', async () => {
+    const overview = ok(await house.call('admin/overview'), 'overview');
+    const bobId = overview.users.find((u) => u.username === 'bob').id;
+    const card = ok(await house.call('admin/users/' + bobId), 'detail').cards.find((c) => !c.pooled);
+
+    // A price set by hand, and then the card saved back exactly as it stands.
+    ok(await house.call('admin/cards/' + card.id, { method: 'POST', body: { value: 555 } }), 'price');
+    const again = ok(await house.call('admin/cards/' + card.id, {
+      method: 'POST',
+      body: { front: card.front, back: card.back, hint: card.hint, category: card.category, tags: card.tags },
+    }), 'save unchanged');
+    assert.equal(again.card.value, 555, 'a save that changed nothing undid the price the house set');
+    assert.equal(again.card.edited, card.edited, 'a save that changed nothing stamped the card as re-cut');
+  });
+
+  await check('a card whose worth changes comes off the table', async () => {
+    const mine = ok(await alice.call('me'), 'me').cards.find((c) => !c.pooled);
+    assert.ok(mine, 'alice has nothing off the table to offer');
+
+    // Priced out of everybody's reach first, so that offering it cannot settle
+    // on the spot: the point here is a card that sits on the table long enough
+    // for the house to re-price it, not a card that trades.
+    ok(await house.call('admin/cards/' + mine.id, { method: 'POST', body: { value: 31337 } }), 'price out of reach');
+    ok(await alice.call('trade/offer', { method: 'POST', body: { id: mine.id } }), 'offer');
+    const onTable = ok(await alice.call('me'), 'me').cards.find((c) => c.id === mine.id);
+    assert.ok(onTable && onTable.pooled, 'the card is not on the table');
+
+    const res = ok(await house.call('admin/cards/' + mine.id, { method: 'POST', body: { value: 999 } }), 'reprice');
+    assert.equal(res.unpooled, true, 'the panel did not say it had taken the card off the table');
+    assert.equal(res.card.pooled, false);
+    const after = ok(await alice.call('me'), 'me').cards.find((c) => c.id === mine.id);
+    assert.ok(after && !after.pooled, 'the card is still on the table');
+  });
+
   await check('a member cannot re-price their own cards', async () => {
     const mine = ok(await alice.call('me'), 'me').cards[0];
     assert.equal((await alice.call('admin/cards/' + mine.id, { method: 'POST', body: { value: 99999 } })).status, 404);
