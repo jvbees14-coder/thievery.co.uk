@@ -124,6 +124,20 @@
         </div>
       </div>
 
+      <!-- The same rounds again, split by what kind of game they were. A
+           three-hand table and a six-hand one are not the same game — the
+           deck does not grow, so the bigger table is dealt power-ups to make
+           up for how little there is left to deduce from — and one win rate
+           across both of them measures nothing in particular. -->
+      <h3 class="menu-modes-head">By the kind of game</h3>
+      <table class="menu-modes">
+        <thead>
+          <tr><th scope="col">Mode</th><th scope="col">Played</th><th scope="col">Won</th><th scope="col">Rate</th></tr>
+        </thead>
+        <tbody id="stats-modes"></tbody>
+      </table>
+      <p class="hint" id="stats-modes-note" hidden></p>
+
       <p class="hint">
         A round counts once, however many seats one account is sitting at, and
         only rounds played to the end are counted. Rounds played signed out are

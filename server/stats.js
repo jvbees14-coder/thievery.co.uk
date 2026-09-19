@@ -24,6 +24,14 @@
 // ---------------------------------------------------------------------------
 
 import { data, touch, available } from './store.js';
+import { SEAT_COUNTS, usesPowerUps } from './deal.js';
+
+// A round is one of these, kept apart from the total because they are not the
+// same game. Three and four hands are the deduction game as written; five and
+// six spread the same 26 cards so thin that they are dealt power-ups to make
+// up for it, and partnerships change who you are even allowed to guess at. A
+// single win rate across all of that measures nothing in particular.
+const pair = () => ({ rounds: 0, wins: 0 });
 
 /** A record nobody has written to yet. Every field is created here so that
  *  nothing reading one has to check whether it exists. */
@@ -38,7 +46,23 @@ export function blank() {
     tables: 0,      // distinct rooms sat down at
     first: 0,       // when the first round was recorded
     last: 0,        // and the most recent
+    // --- the same rounds again, split by what kind of game they were
+    seats: Object.fromEntries(SEAT_COUNTS.map((n) => [n, pair()])), // by table size
+    teams: pair(),  // four hands played as partnerships
+    shared: pair(), // rounds where somebody else was playing your hand too
   };
+}
+
+// A record written before a field existed is still somebody's record, so it
+// is filled in rather than replaced. Anything missing arrives at nought,
+// which is true: those rounds were played, they were simply not counted this
+// way at the time. `attributed` in forUser() is what admits the difference.
+function fill(mine) {
+  for (const [key, value] of Object.entries(blank())) {
+    if (mine[key] === undefined) mine[key] = value;
+  }
+  for (const n of SEAT_COUNTS) mine.seats[n] ??= pair();
+  return mine;
 }
 
 // The record for an account, made if it is not there yet. Callers mutate it
@@ -46,7 +70,7 @@ export function blank() {
 // writes to the document does.
 function recordFor(userId) {
   const all = data().stats;
-  return (all[userId] ??= blank());
+  return fill((all[userId] ??= blank()));
 }
 
 /**
@@ -67,17 +91,35 @@ export function sitDown(userId) {
  *
  * `won` is whether one of their seats took it — both players win a shared
  * hand, which is the room's rule and not something to argue with here.
- * `versus` is whether anybody else at the table was a person.
+ * `versus` is whether anybody else at the table was a person. The rest says
+ * what kind of game it was: how many hands it was dealt into, whether those
+ * four hands were two partnerships, and whether somebody else was playing
+ * this account's hand alongside them.
  */
-export function record(userId, { won = false, versus = false } = {}) {
+export function record(userId, { won = false, versus = false, seats = 0, teams = false, shared = false } = {}) {
   if (!userId || !available()) return;
   const mine = recordFor(userId);
   const now = Date.now();
+
+  const bump = (row) => {
+    row.rounds += 1;
+    if (won) row.wins += 1;
+  };
+
   mine.rounds += 1;
-  if (versus) mine.versus += 1;
+  if (won) mine.wins += 1;
+  if (versus) {
+    mine.versus += 1;
+    if (won) mine.versusWins += 1;
+  }
+  // An unknown size is not counted as a size. It cannot happen from the room
+  // server, but a row that quietly invented a seventh table shape would be
+  // worse than one that is honestly short.
+  if (mine.seats[seats]) bump(mine.seats[seats]);
+  if (teams) bump(mine.teams);
+  if (shared) bump(mine.shared);
+
   if (won) {
-    mine.wins += 1;
-    if (versus) mine.versusWins += 1;
     mine.streak += 1;
     if (mine.streak > mine.best) mine.best = mine.streak;
   } else {
@@ -94,9 +136,29 @@ export function record(userId, { won = false, versus = false } = {}) {
  * words, and has nothing to special-case.
  */
 export function forUser(userId) {
-  const mine = (available() && data().stats[userId]) || blank();
+  const mine = fill((available() && data().stats[userId]) || blank());
+  // Power-ups are not a mode anybody chooses — they come with five and six
+  // hands and cannot be switched off — so they are added up here rather than
+  // stored a second time.
+  const powered = pair();
+  const plain = pair();
+  let attributed = 0;
+  for (const n of SEAT_COUNTS) {
+    const row = mine.seats[n];
+    const into = usesPowerUps(n) ? powered : plain;
+    into.rounds += row.rounds;
+    into.wins += row.wins;
+    attributed += row.rounds;
+  }
   return {
     ...mine,
+    powered,
+    plain,
+    // How many of the rounds in the total this page can say anything about.
+    // Rounds played before the house started counting by table size are in
+    // `rounds` and in none of the rows, and the page says so rather than
+    // printing a breakdown that does not add up.
+    attributed,
     // Worked out here rather than in the page, so the two figures cannot
     // disagree about what counts as a rate with no rounds behind it.
     rate: mine.rounds ? mine.wins / mine.rounds : 0,

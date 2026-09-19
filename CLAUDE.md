@@ -276,6 +276,22 @@ Three rules in `recordRound()` that are easy to lose:
 can know: `room.seated` is the set of accounts that have sat down there, so a
 refresh mid-round is not a second table.
 
+The same rounds are filed again by what kind of game they were — `seats` (one
+row per table size), `teams` and `shared` — because three hands and six hands
+are not the same game and one win rate across both measures nothing. Power-ups
+are not stored: they come with five and six hands and cannot be switched off,
+so `forUser()` adds them up from the sizes. The round's shape is read off `g`
+(`numSeats`, `teams`) rather than off the room, whose settings may already have
+been changed for the next round by the time the last one is written down.
+
+**Adding a field here means migrating every record that predates it.** `fill()`
+merges `blank()` into a row without touching what is already in it, and both
+`recordFor()` and `forUser()` run it. Never replace a row wholesale. The rows
+can then be short of the total, which is why `forUser()` also returns
+`attributed`: the page prints what it cannot account for rather than a
+breakdown that does not add up. `test/site.test.js` plants a pre-modes record
+and checks the totals survive.
+
 ## The board
 
 `polls.js`, holding both the rules and the routes — there is not enough of it

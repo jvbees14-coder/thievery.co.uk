@@ -324,6 +324,17 @@ What is counted, and what is deliberately not:
   played against is not kept — only that a round happened and how it went for
   you.
 
+The same rounds are counted again by what kind of game they were, because
+three hands and six hands are not really the same game and a single win rate
+across both says very little. The stats page breaks them down by table size,
+by whether the table was dealt power-ups (which five and six hands always are
+and three and four never), by partnerships, and by whether somebody else was
+playing your hand alongside you.
+
+Rounds you played before the house started counting that way are still in the
+total and in none of the rows, and the page says how many rather than showing
+a breakdown that does not add up.
+
 Test mode — the **Test67** room, where one person plays every seat — is not
 counted at all, for the obvious reason.
 

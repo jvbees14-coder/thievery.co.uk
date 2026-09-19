@@ -187,18 +187,33 @@ async function lockAll(clients) {
 
 // Every guess right, so the first player to take a turn flips the whole table
 // and the round ends quickly and without any randomness in who wins.
+//
+// Partnerships add a step and take some targets away: a turn opens with the
+// partner offering a card, which is skipped here because the point is to end
+// the round rather than to play it well, and a seat may only be guessed at
+// from the other team.
 async function playItOut(clients) {
   const ref = clients[0];
-  for (let turn = 0; turn < 200; turn++) {
-    await ref.waitFor((s) => s.game.phase !== 'play' || s.game.step === 'guess', 'a guess step');
+  for (let turn = 0; turn < 300; turn++) {
+    await ref.waitFor((s) => s.game.phase !== 'play' || ['show', 'guess'].includes(s.game.step), 'a step');
     const g = ref.state.game;
     if (g.phase !== 'play') break;
     const active = bySeat(clients, g.turn);
+
+    if (g.step === 'show') {
+      const partnerSeat = (g.turn + 2) % g.numSeats;
+      const partner = bySeat(clients, partnerSeat);
+      await partner.waitFor((s) => s.game.step === 'show' && s.game.turn === g.turn, 'the show step');
+      partner.send({ type: 'show:skip' });
+      await ref.waitFor((s) => s.game.step !== 'show' || s.game.turn !== g.turn, 'the show to pass');
+      continue;
+    }
+
     await active.waitFor((s) => s.game.step === 'guess' && s.game.turn === g.turn && s.game.log.length >= g.log.length, 'fresh state');
     const ag = active.state.game;
     const targets = [];
     ag.seats.forEach((s, si) => {
-      if (si === g.turn) return;
+      if (si === g.turn || s.team === ag.seats[g.turn].team) return;
       faceDown(ag, si).forEach((idx) => targets.push({ seat: si, idx }));
     });
     assert.ok(targets.length, 'the active player should always have a card to guess');
@@ -329,6 +344,17 @@ async function run() {
     ok(await who.call('register', { method: 'POST', body: { username: name, password: 'a-long-enough-password' } }), `register ${name}`);
   }
 
+  async function openAccount(name) {
+    const who = visitor();
+    ok(await who.call('register', { method: 'POST', body: { username: name, password: 'a-long-enough-password' } }), `register ${name}`);
+    return who;
+  }
+
+  // Everybody who ends up sitting down at a table. The ledger should hold a
+  // row for each of them and for nobody else — not for the account that only
+  // ever registered, and not for the stranger who plays without one.
+  const played = [alice, bob, carol];
+
   // --- a round, counted ----------------------------------------------------
 
   const players = [
@@ -378,6 +404,59 @@ async function run() {
     assert.equal(play.tables, 1, 'still one table');
   });
 
+  await check('the rounds are filed under the kind of game they were', async () => {
+    const { play } = ok(await alice.call('me'), 'me');
+    assert.equal(play.rounds, 2);
+    assert.equal(play.seats['3'].rounds, 2, 'both rounds were three-handed');
+    assert.equal(play.seats['4'].rounds, 0);
+    assert.equal(play.plain.rounds, 2, 'three hands are dealt no power-ups');
+    assert.equal(play.powered.rounds, 0);
+    assert.equal(play.teams.rounds, 0, 'three hands cannot be partnerships');
+    assert.equal(play.shared.rounds, 0, 'three people at three hands share nothing');
+    assert.equal(play.attributed, play.rounds, 'every round should be accounted for');
+  });
+
+  await check('partnerships and a shared hand are counted as such', async () => {
+    for (const c of players) c.close();
+    // Five people at four hands: the fifth shares the first hand, which is
+    // the only way `shared` can ever be true.
+    const folk = [alice, bob, carol, await openAccount('dan'), await openAccount('erin')];
+    played.push(folk[3], folk[4]);
+    const table = folk.map((who, i) => new Client(`p${i}`, who.cookie));
+    for (const c of table) await c.connect();
+
+    table[0].send({ type: 'create', name: 'Alice' });
+    await table[0].waitFor((s) => !!s.room, 'a room');
+    const code = table[0].state.room.code;
+    for (let i = 1; i < table.length; i++) table[i].send({ type: 'join', code, name: `P${i}` });
+    for (const c of table) await c.waitFor((s) => s.room.players.length === 5, 'everybody seated');
+
+    table[0].send({ type: 'lobby:seats', seats: 4 });
+    await table[0].waitFor((s) => s.room.seats === 4, 'four hands');
+    table[0].send({ type: 'lobby:teams', teams: true });
+    for (const c of table) await c.waitFor((s) => s.room.teams === true, 'partnerships');
+
+    table[0].send({ type: 'lobby:start' });
+    await lockAll(table);
+    const game = await playItOut(table);
+    assert.equal(game.teams, true, 'the round should have been played as partnerships');
+    for (const c of table) c.close();
+
+    const { play } = ok(await alice.call('me'), 'me');
+    assert.equal(play.rounds, 3);
+    assert.equal(play.seats['4'].rounds, 1, 'the four-hand round should be filed under four');
+    assert.equal(play.seats['3'].rounds, 2, 'and the three-hand ones left alone');
+    assert.equal(play.teams.rounds, 1, 'it was a partnership round');
+    assert.equal(play.powered.rounds, 0, 'four hands are dealt no power-ups');
+    assert.equal(play.attributed, 3);
+
+    // Two people sat at the first hand, and Alice was one of them.
+    assert.equal(play.shared.rounds, 1, 'her hand was shared for exactly one round');
+    const solo = ok(await carol.call('me'), 'me').play;
+    assert.equal(solo.shared.rounds, 0, 'a hand of her own is not a shared one');
+    assert.equal(solo.seats['4'].rounds, 1);
+  });
+
   await check('a stranger sits down and is written nowhere', async () => {
     const anon = new Client('anon');
     await anon.connect();
@@ -393,9 +472,17 @@ async function run() {
     anon.close();
 
     const me = ok(await alice.call('me'), 'me');
-    const shelf = await shelfWhen((d) => d.stats?.[me.user.id]?.rounds === 2, 'recorded both rounds');
-    const names = Object.keys(shelf.stats);
-    assert.equal(names.length, 3, `only the three signed-in accounts should have a record, found ${names.length}`);
+    // Whatever the rounds above added up to, rather than a number written
+    // here that a new check further up would quietly falsify.
+    const shelf = await shelfWhen((d) => d.stats?.[me.user.id]?.rounds === me.play.rounds, 'catch up with the rounds played');
+
+    const expected = [];
+    for (const who of played) expected.push(ok(await who.call('me'), 'me').user.id);
+    assert.deepEqual(
+      Object.keys(shelf.stats).sort(),
+      [...new Set(expected)].sort(),
+      'the ledger should hold a row for everybody who sat down and for nobody else'
+    );
   });
 
   await check('the record survives a restart', async () => {
@@ -406,6 +493,39 @@ async function run() {
     await startServer();
     const after = ok(await alice.call('me'), 'me').play;
     assert.deepEqual(after, before, 'the lifetime record changed over a restart');
+  });
+
+  // The modes were added after the record existed, so there are rows out
+  // there written before any of them. Losing somebody's totals to a field
+  // that was not there yet would be exactly the kind of quiet damage the
+  // never-overwrite rule exists to prevent.
+  await check('a record from before the modes is filled in, not replaced', async () => {
+    const me = ok(await alice.call('me'), 'me');
+    child.kill();
+    await new Promise((r) => child.once('exit', r));
+
+    const file = path.join(DATA_DIR, 'flashcards.json');
+    const shelf = JSON.parse(fs.readFileSync(file, 'utf8'));
+    // Put her row back into the shape it had before there were modes.
+    const old = { ...shelf.stats[me.user.id] };
+    delete old.seats;
+    delete old.teams;
+    delete old.shared;
+    shelf.stats[me.user.id] = old;
+    fs.writeFileSync(file, JSON.stringify(shelf), 'utf8');
+
+    await startServer();
+    const { play } = ok(await alice.call('me'), 'me');
+    assert.equal(play.rounds, me.play.rounds, 'the total was lost');
+    assert.equal(play.wins, me.play.wins, 'the wins were lost');
+    assert.equal(play.best, me.play.best);
+    assert.equal(play.tables, me.play.tables);
+    // The rows come back at nought, which is true: those rounds were played,
+    // they were simply not counted this way at the time.
+    assert.equal(play.seats['3'].rounds, 0);
+    assert.equal(play.teams.rounds, 0);
+    assert.equal(play.attributed, 0, 'none of them can be filed under a size');
+    assert.equal(play.rounds - play.attributed, me.play.rounds, 'and the page is told how many');
   });
 
   console.log(`\n${checks} checks passed.`);

@@ -185,3 +185,50 @@
   .menu-nav { display: none; }
   .menu-tile { padding: 20px 18px 16px; }
 }
+
+/* --- the same rounds, by what kind of game they were ---------------------- */
+
+.menu-modes-head {
+  margin: 26px 0 10px;
+  font-family: var(--caps);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ivory);
+}
+
+.menu-modes {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+.menu-modes th, .menu-modes td { padding: 9px 8px; border-bottom: 1px solid var(--brass-ghost); }
+.menu-modes thead th {
+  font-family: var(--caps);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  text-align: right;
+}
+.menu-modes thead th:first-child { text-align: left; }
+.menu-modes tbody th {
+  font-weight: 400;
+  text-align: left;
+  color: var(--text);
+}
+/* The what-it-is line under each name, so the column can stay one word wide
+   and still say which sizes a row covers. */
+.menu-modes tbody th span { display: block; font-size: 12px; color: var(--text-faint); }
+.menu-modes td { text-align: right; font-family: var(--mono); font-size: 13px; color: var(--text-dim); }
+.menu-modes td:last-child { color: var(--brass); }
+/* Never played is drawn rather than dropped: a table whose rows come and go
+   cannot be read twice. */
+.menu-modes .is-empty th, .menu-modes .is-empty td { opacity: 0.45; }
+
+@media (max-width: 460px) {
+  .menu-modes { font-size: 14px; }
+  .menu-modes th, .menu-modes td { padding: 8px 4px; }
+}

@@ -582,12 +582,29 @@ function recordRound(room, g) {
   // Whether anybody else at the table was a person. Counted by account where
   // there is one, so a second tab of your own is not an opponent.
   const versus = new Set(folk.map((p) => p.userId || `anon:${p.id}`)).size > 1;
-  const won = new Map(); // account -> did one of their seats take it
+
+  // How many people are playing each hand, so a shared hand can be counted as
+  // one. Two of somebody's own tabs at one seat is not company, but it is not
+  // worth the arithmetic to tell that from the real thing either: what makes
+  // a hand shared is that it is being played by more than one person, and the
+  // seating rules never put an account at a seat twice.
+  const atSeat = new Map();
+  for (const p of folk) atSeat.set(p.seat, (atSeat.get(p.seat) || 0) + 1);
+
+  // What kind of game it was. Read off the round rather than the room,
+  // because the room's settings can already have been changed for the next
+  // one by the time this is written down.
+  const kind = { versus, seats: g.numSeats, teams: !!g.teams };
+
+  const each = new Map(); // account -> what this round was for them
   for (const p of folk) {
     if (!p.userId) continue;
-    won.set(p.userId, (won.get(p.userId) || false) || g.result.winners.includes(p.seat));
+    const mine = each.get(p.userId) || { won: false, shared: false };
+    mine.won = mine.won || g.result.winners.includes(p.seat);
+    mine.shared = mine.shared || (atSeat.get(p.seat) || 0) > 1;
+    each.set(p.userId, mine);
   }
-  for (const [userId, win] of won) Stats.record(userId, { won: win, versus });
+  for (const [userId, mine] of each) Stats.record(userId, { ...kind, ...mine });
 }
 
 // --- join / rejoin ---------------------------------------------------------

@@ -1060,6 +1060,14 @@ async function main() {
     // read off the hand rather than picked in advance: the draw is random, and
     // naming a power-up this seat happens to be holding asks the server to
     // refuse something it should quite properly allow.
+    //
+    // And it has to be read off a hand that is up to date. Whose turn it is
+    // was taken from six[0]'s snapshot; a turn begins with a draw, so if the
+    // active player's own socket has not caught up yet, their kit here is the
+    // one from before it — and the power-up picked as "not carried" can be
+    // the very one they have just drawn, which the server then quite rightly
+    // allows. Waiting for their snapshot to reach the same turn closes it.
+    await active.waitFor((s) => s.game.turn === six[0].state.game.turn, 'the active hand to catch up');
     const notCarried = six[0].catalog
       .map((c) => c.id)
       .find((id) => id !== 'alarm_trip' && !active.state.game.powerUps.kit.includes(id));

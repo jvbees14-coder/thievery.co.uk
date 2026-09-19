@@ -120,6 +120,8 @@
       figure(collection.worth.toLocaleString('en-GB'), 'Collection worth', plural(collection.count, 'card', 'cards')),
     ].join('');
 
+    renderModes(play);
+
     const bots = play.rounds - play.versus;
     const botWins = play.wins - play.versusWins;
     $('#stats-people').textContent = play.versus
@@ -133,6 +135,47 @@
     $('#account-lede').textContent = `Opened ${new Date(user.created).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}.`;
     $('#ac-name').value = user.displayName;
     $('#ac-user').placeholder = user.username;
+  }
+
+  // The same rounds, split by what kind of game they were.
+  //
+  // A row with nothing behind it is drawn dim rather than hidden: knowing you
+  // have never sat at a six-hand table is worth as much as the rate would be,
+  // and a table whose rows come and go is one nobody can read twice.
+  const MODES = [
+    { key: 'seats.3', name: 'Three hands', note: 'the deduction game as written' },
+    { key: 'seats.4', name: 'Four hands', note: 'the usual table' },
+    { key: 'seats.5', name: 'Five hands', note: 'dealt power-ups' },
+    { key: 'seats.6', name: 'Six hands', note: 'dealt power-ups' },
+    { key: 'plain', name: 'Without power-ups', note: 'three and four hands' },
+    { key: 'powered', name: 'With power-ups', note: 'five and six hands' },
+    { key: 'teams', name: 'Partnerships', note: 'four hands, two teams' },
+    { key: 'shared', name: 'Sharing a hand', note: 'somebody else played it too' },
+  ];
+
+  const rowFor = (play, key) => (key.startsWith('seats.') ? play.seats[key.slice(6)] : play[key]) || { rounds: 0, wins: 0 };
+
+  function renderModes(play) {
+    $('#stats-modes').innerHTML = MODES.map(({ key, name, note }) => {
+      const row = rowFor(play, key);
+      return `<tr${row.rounds ? '' : ' class="is-empty"'}>
+        <th scope="row">${esc(name)}<span>${esc(note)}</span></th>
+        <td>${row.rounds.toLocaleString('en-GB')}</td>
+        <td>${row.wins.toLocaleString('en-GB')}</td>
+        <td>${percent(row.rounds ? row.wins / row.rounds : 0, row.rounds)}</td>
+      </tr>`;
+    }).join('');
+
+    // The rows are counted by table size, and rounds played before the house
+    // started doing that are in the total and in none of them. Saying so is
+    // better than letting somebody add the column up and find it short.
+    const older = play.rounds - play.attributed;
+    const note = $('#stats-modes-note');
+    note.hidden = older <= 0;
+    if (older > 0) {
+      note.textContent =
+        `${plural(older, 'round', 'rounds')} played before the house began counting by table are in the total above, and in none of these rows.`;
+    }
   }
 
   // --- which panel is open ---------------------------------------------------
