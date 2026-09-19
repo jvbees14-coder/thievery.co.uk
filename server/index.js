@@ -25,6 +25,7 @@ import * as Game from './game.js';
 import * as Bot from './bot.js';
 import * as Flashcards from './flashcards.js';
 import * as Site from './site.js';
+import * as Polls from './polls.js';
 import * as Stats from './stats.js';
 import { currentUser } from './plumbing.js';
 import { shuffle, DEAL_SPLITS, SEAT_COUNTS, MIN_SEATS, MAX_SEATS, MAX_PER_SEAT, usesPowerUps } from './deal.js';
@@ -86,6 +87,10 @@ function serve(req, res) {
   // they answer for themselves. Asked first, because /flashcards must not
   // fall through to the static block below.
   if (Flashcards.handle(req, res, url)) return;
+
+  // The polls room answers for itself on the same terms, and for the same
+  // reason: /polls must not fall through to the static block either.
+  if (Polls.handle(req, res, url)) return;
 
   // Then the front hall, which owns "/" and the card table at /logic. It has
   // to come before the static block for the same reason: that block serves

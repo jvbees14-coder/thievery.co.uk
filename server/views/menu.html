@@ -25,6 +25,7 @@
     <nav class="menu-nav">
       <a class="menu-nav-link" href="/logic">Logic</a>
       <a class="menu-nav-link" id="nav-flashcards" href="/flashcards">Flashcards</a>
+      <a class="menu-nav-link" id="nav-polls" href="/polls">Polls</a>
     </nav>
     <div class="fc-who">
       <button id="who" class="fc-who-btn" type="button" aria-haspopup="true" aria-expanded="false"></button>
@@ -43,10 +44,10 @@
       door; the ledger is the rest of it.
     </p>
 
-    <!-- The four doors off the hall. Two of them lead somewhere else and two
-         of them open a panel further down this page: a tile is a tile either
-         way, so the grid does not care which is which, and a fifth feature is
-         one more block of markup. -->
+    <!-- The doors off the hall. Three lead somewhere else and two open a
+         panel further down this page: a tile is a tile either way, so the
+         grid does not care which is which, and the next feature is one more
+         block of markup. -->
     <div class="menu-grid">
       <a class="menu-tile" href="/logic">
         <span class="menu-tile-mark" aria-hidden="true">&#9670;</span>
@@ -68,6 +69,18 @@
           it, or lay it down and trade it blind for cards of equal worth.
         </p>
         <p class="menu-tile-figure" id="tile-cards-figure">&nbsp;</p>
+      </a>
+
+      <a class="menu-tile" id="tile-polls" href="/polls">
+        <span class="menu-tile-mark" aria-hidden="true">&#9678;</span>
+        <h2>Polls</h2>
+        <p class="menu-tile-say">The board</p>
+        <p class="menu-tile-blurb">
+          Ask the room a question and let everybody answer it. Answer
+          somebody else&rsquo;s first, though &mdash; that is the price of
+          asking one of your own.
+        </p>
+        <p class="menu-tile-figure" id="tile-polls-figure">&nbsp;</p>
       </a>
 
       <a class="menu-tile" href="#stats">

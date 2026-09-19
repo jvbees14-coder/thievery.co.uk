@@ -368,6 +368,13 @@ async function run() {
       const api = await fetch(`http://localhost:${port}/api/flashcards/me`);
       assert.equal(api.status, 503);
 
+      // The board keeps its questions in the same document, so it shuts on
+      // the same terms and for the same reason.
+      const polls = await fetch(`http://localhost:${port}/polls`);
+      assert.equal(polls.status, 503);
+      assert.match(await polls.text(), /closed for now/i);
+      assert.equal((await fetch(`http://localhost:${port}/api/polls`)).status, 503);
+
       const register = await fetch(`http://localhost:${port}/api/flashcards/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Origin: `http://localhost:${port}` },
@@ -387,6 +394,7 @@ async function run() {
       assert.match(out(), /Already set: none of the four/);
       assert.equal((await fetch(`http://localhost:${port}/logic`)).status, 200, 'the game should still run');
       assert.equal((await fetch(`http://localhost:${port}/flashcards`)).status, 503);
+      assert.equal((await fetch(`http://localhost:${port}/polls`)).status, 503);
       assert.equal((await fetch(`http://localhost:${port}/`)).status, 503, 'the hall needs the ledger');
     } finally {
       child.kill();

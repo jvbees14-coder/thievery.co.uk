@@ -17,6 +17,8 @@ name. Behind it are the things that only make sense kept against somebody:
   wins over people counted separately from wins over the house.
 - **[Flashcards](#flashcards)** — write a card, have it appraised and minted,
   print it, trade it.
+- **[The board](#polls)** — put a question to the room, and answer everybody
+  else's.
 - **Your account** — what the table calls you, and the keys to it.
 
 Signing in changes exactly one thing at the card table: the rounds are added
@@ -325,12 +327,46 @@ What is counted, and what is deliberately not:
 Test mode — the **Test67** room, where one person plays every seat — is not
 counted at all, for the obvious reason.
 
+## Polls
+
+<https://thievery.co.uk/polls> is the board. A poll is a question and two to
+six answers; anybody signed in may answer one. Asking one costs something:
+
+> **You have to have answered somebody else's question before you may ask one
+> of your own.**
+
+That is the whole design of the room, and it is there because a board where
+asking is free fills up with questions nobody answers — asking is the fun part
+and answering is the work. Making the work the entry fee means every question
+up there was posted by somebody who had already done it, and a new member's
+first act is to answer rather than to add. Answering your own question does not
+count, for the obvious reason.
+
+The house is the exception, and has to be: with an empty board there is nothing
+to answer, so without it nobody could ever ask the first question.
+
+Two things about how a poll behaves:
+
+- **The split is hidden until you have answered.** You can see how *many*
+  people have answered — that gives nothing away, and it is what makes a
+  question look worth answering — but not which way they went. Seeing the room
+  before you choose is how a poll stops measuring anything.
+- **An answer is final, and secret.** You cannot change it: a poll whose
+  numbers can go down as well as up is one where the last person to change
+  their mind decides it. And who answered what is never sent anywhere — not to
+  the person who asked, not to the admin. What leaves the server is a tally
+  and your own answer.
+
+You can take your own question down, which takes every answer to it with it.
+The house can take down anybody's. Twenty questions apiece is the ceiling, so
+one member cannot be the whole board.
+
 ## Flashcards
 
-<https://thievery.co.uk/flashcards> is a second room on the site, and the only
-part of it behind a login. You write flashcards; the house appraises them,
-stamps them with a rarity and a mint number, and from then on they are things
-you own. You can print them on real card, and you can trade them away.
+<https://thievery.co.uk/flashcards> is the other room behind the login. You
+write flashcards; the house appraises them, stamps them with a rarity and a
+mint number, and from then on they are things you own. You can print them on
+real card, and you can trade them away.
 
 It shares its login with the front hall — one account opens both — but
 nothing else with the card table: the game forgets a room within the hour,
@@ -470,11 +506,11 @@ using signed in.
 
 ### Where the flashcards are kept
 
-Everything — accounts, cards, the trading pool, the ledger, and the lifetime
-records — is one JSON document, held in memory and written back a moment after
-it changes. Where it
-is written back to depends on the environment, and the two cases are the same
-shape: read one blob of text, write one blob of text.
+Everything — accounts, cards, the trading pool, the ledger, the polls and the
+lifetime records — is one JSON document, held in memory and written back a
+moment after it changes. Where it is written back to depends on the
+environment, and the two cases are the same shape: read one blob of text,
+write one blob of text.
 
 **In production: Cloudflare R2.** Render's free tier hands the process a fresh,
 empty filesystem on every deploy and every wake from a spin-down, so a file on
@@ -546,8 +582,8 @@ than a write to a local disk.
 
 ## Running your own copy
 
-The whole game is a small Node.js server with no database — the flashcards
-room keeps one JSON document, and nothing else on the site keeps anything. If
+The whole site is a small Node.js server with no database — everything behind
+the login is one JSON document, and the card table keeps nothing at all. If
 you would rather host it yourself, install Node 20 or newer and run:
 
 ```bash

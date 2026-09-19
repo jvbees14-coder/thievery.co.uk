@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Polls — Thievery.co.uk</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c14'/%3E%3Cpath d='M16 4l10 12-10 12L6 16z' fill='none' stroke='%23d4af5a' stroke-width='2'/%3E%3Cpath d='M16 10l5 6-5 6-5-6z' fill='%23d4af5a'/%3E%3C/svg%3E" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="apple-touch-icon" href="/icons/icon-180.png" />
+  <meta name="theme-color" content="#0a0c14" />
+  <link rel="preload" href="/fonts/limelight-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/eb-garamond-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/fonts.css" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/flashcards.css" />
+  <link rel="stylesheet" href="/menu.css" />
+  <link rel="stylesheet" href="/polls.css" />
+</head>
+<body class="fc-app">
+  <div id="toast" class="toast" hidden></div>
+
+  <header class="fc-bar">
+    <a class="fc-mark wordmark" href="/polls">The<em>Board</em></a>
+    <nav class="menu-nav">
+      <a class="menu-nav-link" href="/">The house</a>
+      <a class="menu-nav-link" href="/logic">Logic</a>
+      <a class="menu-nav-link" href="/flashcards">Flashcards</a>
+    </nav>
+    <div class="fc-who">
+      <button id="who" class="fc-who-btn" type="button" aria-haspopup="true" aria-expanded="false"></button>
+      <div id="who-menu" class="fc-menu" hidden>
+        <a href="/">Back to the house</a>
+        <button data-act="signout" type="button">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="poll-main">
+
+    <!-- ----------------------------------------------------- asking one -->
+    <!--
+      Two states, and only ever one of them on the page. Somebody who has not
+      answered anything is not shown a form that is going to refuse them: they
+      are told the rule, in the same place the form would have been, and the
+      board underneath is the answer to it.
+    -->
+    <section class="panel poll-ask">
+      <h2 class="poll-ask-head">Ask the room</h2>
+
+      <div id="gate" class="poll-gate" hidden>
+        <p class="poll-gate-say">
+          <b>Answer one first.</b> The board is kept honest by making the work
+          the entry fee: answer somebody else&rsquo;s question and the form
+          appears here. Answering your own would not count, which is why you
+          have not got one yet.
+        </p>
+        <p class="hint" id="gate-note"></p>
+      </div>
+
+      <form id="ask" class="poll-form" hidden autocomplete="off">
+        <div class="field">
+          <label for="question">Your question</label>
+          <input id="question" name="question" maxlength="140" placeholder="e.g. Six hands or four?" required />
+          <p class="hint"><span id="q-left">140</span> left. One line &mdash; the answers do the rest.</p>
+        </div>
+
+        <div class="field">
+          <label>The answers</label>
+          <div id="options" class="poll-options"></div>
+          <button id="add-option" class="btn ghost" type="button">Another answer</button>
+          <p class="hint">Two at least, six at most. Blank ones are dropped.</p>
+        </div>
+
+        <button class="btn primary" type="submit">Put it on the board</button>
+        <p class="hint">
+          Once it is up, the wording stands and so does every answer laid
+          against it. You can take the whole question down, and that is all.
+        </p>
+      </form>
+
+      <p id="ask-error" class="door-error" hidden></p>
+    </section>
+
+    <!-- ------------------------------------------------------- the board -->
+    <section class="poll-board-head">
+      <h2>The board</h2>
+      <p id="board-say" class="hint"></p>
+    </section>
+
+    <div id="board" class="poll-board"></div>
+  </main>
+
+  <script src="/polls.js"></script>
+</body>
+</html>

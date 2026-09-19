@@ -7,11 +7,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm start              # serve on PORT (default 3000)
 npm run dev            # same, with --watch
-npm test               # all six suites, in order; any failure stops the run
+npm test               # all seven suites, in order; any failure stops the run
 npm run test:source    # the source as bytes: no literal control characters
 npm run test:game      # the card game: real server, real clients, whole rounds played out
 npm run test:powerups  # the five/six-hand power-up rules, played against game.js directly
 npm run test:site      # the front hall, the addresses, and the lifetime record
+npm run test:polls     # the board, and the rule about who may ask a question
 npm run test:flashcards # the flashcards room over HTTP
 npm run test:r2        # the storage layer, against a stub S3 client
 npm run r2:check       # are the four R2_* variables real? needs them in the environment
@@ -51,8 +52,10 @@ One server, a hall and two rooms off it:
 | `/` | `server/site.js` — the menu, or the door | required |
 | `/logic`, `/logic/ABCD` | `server/site.js` — the card game | never |
 | `/flashcards` | `server/flashcards.js` | required |
+| `/polls` | `server/polls.js` | required |
 | `/api/site/…` | the door, and the menu's figures | mostly |
 | `/api/flashcards/…` | the collection, the post, the panel | yes |
+| `/api/polls/…` | the board | yes |
 | anything else | the static block in `server/index.js`, out of `public/` | no |
 
 **The card game** (`server/game.js`, `bot.js`, `deal.js`, `powerups.js`,
@@ -69,7 +72,8 @@ changes exactly one thing at the table: the rounds are added up afterwards
 
 **The flashcards room** (`server/flashcards.js`, `cards.js`, `trading.js`;
 `public/flashcards*.{js,css}`) is the opposite: real logins, and a document
-that has to outlive the process.
+that has to outlive the process. **The board** (`server/polls.js`;
+`public/polls.{js,css}`) is the same shape and much smaller — see "The board".
 
 **What they share** is the membership: `accounts.js` and `store.js` underneath,
 `plumbing.js` (bodies, cookies, who is asking) and `door.js` (register, login,
@@ -82,9 +86,10 @@ is, is written on the card as `data-api` and `data-next`.
 They meet in three places in `server/index.js`:
 
 - `Flashcards.handle(req, res, url)` is called **first** in the request
-  handler and returns `true` if it took the request.
-- `Site.handle(req, res, url)` is called **second**, and owns `/` and
-  `/logic`. Both must stay ahead of the static-file block, which serves
+  handler and returns `true` if it took the request, then `Polls.handle` on
+  the same terms.
+- `Site.handle(req, res, url)` is called after them, and owns `/` and
+  `/logic`. All three must stay ahead of the static-file block, which serves
   anything in `public/` by name and knows nothing about room codes.
 - `await Flashcards.start()` runs before `server.listen()`, and is what opens
   the store that the hall then depends on.
@@ -257,6 +262,43 @@ Three rules in `recordRound()` that are easy to lose:
 `tables` counts distinct rooms, which the room server is the only thing that
 can know: `room.seated` is the set of accounts that have sat down there, so a
 refresh mid-round is not a second table.
+
+## The board
+
+`polls.js`, holding both the rules and the routes — there is not enough of it
+to be worth the split the flashcards half has. One row per poll under `polls`
+in the document.
+
+The rule it exists for: **you have to have answered somebody else's question
+before you may ask one of your own.** `mayAsk()` is the only thing that
+decides, and `createPoll()` is the only caller that matters. Three things
+about it are load-bearing:
+
+- **Your own answers to your own questions do not count.** `answeredCount()`
+  filters on `askedBy !== userId`, which is what stops the rule being a
+  formality somebody satisfies in ten seconds.
+- **The admin is exempt.** Without that, an empty board is a room nobody can
+  ever unlock: with nothing to answer, nobody can earn the right to ask. The
+  house puts the first question up, exactly as it mints the mythics.
+- **The page only shows the rule; the server enforces it.** `/polls` hides the
+  form when `mayAsk` is false, but posting anyway gets a 403 with the reason.
+
+Two smaller invariants, both easy to lose in a refactor of `publicPoll()`:
+
+- **A ballot is secret.** `poll.votes` maps account id to option id and exists
+  only so a second vote can be refused. It must never leave the module — not
+  to the asker, not to the panel, not to the admin. What goes out is a tally,
+  your own answer, and the asker's display name. `test/polls.test.js` searches
+  a snapshot for every account id the suite has opened.
+- **The split is held back until you have answered.** `votes` on an option is
+  `null`, not `0`, for somebody who has not — a page cannot draw a bar at zero
+  and pass it off as a result. `total` is always sent, because how many have
+  answered gives nothing away and is what makes a question look worth
+  answering.
+
+An answer is final, and deleting an account takes its questions *and* its
+answers to everybody else's with it (`Polls.forgetUser`, called from the
+panel) — a tally should count the people who are still here.
 
 ## Environment
 

@@ -17,6 +17,14 @@
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
+  <!-- The board is behind a login too, and a crawler is served its door:
+       a page saying what the room is and what the one rule about asking is. -->
+  <url>
+    <loc>https://thievery.co.uk/polls</loc>
+    <lastmod>2026-09-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
   <!-- The flashcards room is behind a login, and what a crawler is served at
        this address is the door: a real page describing what is behind it.
        Everything past the door answers with noindex. -->

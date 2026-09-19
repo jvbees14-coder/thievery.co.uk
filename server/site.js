@@ -34,6 +34,7 @@ import * as Door from './door.js';
 import * as Stats from './stats.js';
 import * as Store from './store.js';
 import * as Flashcards from './flashcards.js';
+import * as Polls from './polls.js';
 import { send, fail, originOk, currentUser, requireUser } from './plumbing.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -101,8 +102,18 @@ function snapshot(user) {
       worth: cards.reduce((n, c) => n + c.value, 0),
       limit: Cards.CARDS_PER_USER,
     },
+    // Enough of the board for a tile to say something true about it, and to
+    // say whether the door is open at all: the one rule in the polls room is
+    // that you answer before you ask, and a menu that does not mention it
+    // sends people to a form they are about to be refused by.
+    polls: {
+      answered: Polls.answeredCount(user.id),
+      asked: Polls.pollsOf(user.id).length,
+      open: Polls.all().length,
+      mayAsk: Polls.mayAsk(user),
+    },
     // A tile that leads somewhere shut should say so before it is pressed.
-    rooms: { flashcards: Flashcards.isOpen() },
+    rooms: { flashcards: Flashcards.isOpen(), polls: Polls.isOpen() },
   };
 }
 

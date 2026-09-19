@@ -26,6 +26,7 @@ import * as Cards from './cards.js';
 import * as Trading from './trading.js';
 import * as Door from './door.js';
 import * as Stats from './stats.js';
+import * as Polls from './polls.js';
 import { data, touch } from './store.js';
 import * as Store from './store.js';
 import * as R2 from './r2.js';
@@ -288,6 +289,9 @@ function adminDeleteUser(req, res, id) {
   // And so does the record of how they played. An account that is gone must
   // not leave a row behind keyed to an id nothing will ever look up again.
   delete data().stats[user.id];
+  // Their questions go too, and their answers to everybody else's: a tally
+  // should count the people who are still here.
+  Polls.forgetUser(user.id);
   touch();
   adminOverview(req, res);
 }

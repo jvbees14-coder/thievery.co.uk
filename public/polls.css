@@ -1,0 +1,125 @@
+/* Thievery.co.uk — the board.
+ *
+ * The bar, the panel and the fields come from the flashcards room's
+ * stylesheet and the hall's; everything here is only what a question and its
+ * answers need. The one thing worth reading twice is the result row: the bar
+ * is a layer behind the text rather than a block beside it, so a long answer
+ * never has to compete with the figure for the same inch of line. */
+
+.poll-main {
+  padding: clamp(18px, 3vw, 34px) clamp(14px, 3vw, 32px) 80px;
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+/* --- asking one ----------------------------------------------------------- */
+
+.poll-ask { margin-bottom: 28px; }
+.poll-ask-head {
+  margin: 0 0 14px;
+  font-family: var(--caps);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ivory);
+}
+
+.poll-form { display: flex; flex-direction: column; gap: 16px; }
+.poll-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.poll-option-row { display: flex; gap: 8px; align-items: center; }
+.poll-option-in { flex: 1; }
+
+/* The rule, standing where the form would be. It is deliberately the same
+   size and the same box, so arriving without the right to ask does not feel
+   like something is missing — it reads as the room explaining itself. */
+.poll-gate-say { margin: 0 0 8px; color: var(--text-dim); }
+.poll-gate-say b { color: var(--brass); }
+
+/* --- the board ------------------------------------------------------------ */
+
+.poll-board-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.poll-board-head h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--ivory);
+}
+.poll-board-head .hint { margin: 0; }
+
+.poll-board { display: flex; flex-direction: column; gap: 14px; }
+.poll-empty { color: var(--text-faint); text-align: center; padding: 30px 10px; }
+
+.poll-card {
+  padding: 18px 18px 16px;
+  border: 1px solid var(--brass-faint);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--ink-3), var(--ink-2));
+}
+.poll-card.is-answered { border-color: var(--brass-ghost); }
+
+.poll-card-head h3 {
+  margin: 0 0 4px;
+  font-family: var(--body);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--ivory);
+}
+.poll-card-by { margin: 0 0 14px; font-size: 13px; color: var(--text-faint); }
+.poll-card-by b { color: var(--brass-dim); font-weight: 400; }
+
+.poll-card-body { display: flex; flex-direction: column; gap: 8px; }
+
+/* Before you answer: a row of things to press. */
+.poll-choice {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--brass-faint);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.poll-choice:hover:not(:disabled) { border-color: var(--brass-dim); background: var(--brass-ghost); color: var(--ivory); }
+.poll-choice:disabled { opacity: 0.5; cursor: default; }
+
+/* After: the same row, with the count behind it. */
+.poll-result {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 1px solid var(--brass-ghost);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+}
+.poll-result-bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--brass-ghost);
+  transition: width 0.5s var(--bounce);
+}
+.poll-result.is-yours { border-color: var(--brass-dim); }
+.poll-result.is-yours .poll-result-bar { background: rgba(212, 175, 90, 0.16); }
+.poll-result-text { position: relative; flex: 1; color: var(--text); }
+.poll-result-text i { font-style: normal; font-size: 12px; color: var(--brass); letter-spacing: 0.04em; }
+.poll-result-figure {
+  position: relative;
+  font-family: var(--caps);
+  font-size: 15px;
+  color: var(--ivory);
+  white-space: nowrap;
+}
+.poll-result-figure small { margin-left: 6px; font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+
+.poll-card-foot { margin-top: 14px; text-align: right; }
+
+@media (max-width: 560px) {
+  .poll-card { padding: 16px 14px 14px; }
+  .poll-card-head h3 { font-size: 17px; }
+}

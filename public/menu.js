@@ -74,7 +74,7 @@
   // --- drawing ---------------------------------------------------------------
 
   function render() {
-    const { user, play, collection, rooms } = state;
+    const { user, play, collection, polls, rooms } = state;
 
     $('#hello').textContent = user.displayName;
     $('#who').textContent = user.displayName;
@@ -90,12 +90,21 @@
       ? `${percent(play.rate, play.rounds)} of them won · best run of ${play.best}`
       : 'Sit down at a table and it starts counting';
     $('#tile-account-figure').textContent = `Signed in as ${user.username}`;
+    // The board's tile says which side of its one rule you are on, because
+    // being told that on the menu is better than being told it by a form.
+    $('#tile-polls-figure').textContent = !polls.open
+      ? 'Nothing on the board yet'
+      : polls.mayAsk
+        ? `${plural(polls.open, 'question', 'questions')} · you may ask one`
+        : `${plural(polls.open, 'question', 'questions')} · answer one to earn an ask`;
 
     // A door that is shut says so rather than waiting to be pressed.
-    const tile = $('#tile-flashcards');
-    tile.classList.toggle('is-shut', !rooms.flashcards);
+    $('#tile-flashcards').classList.toggle('is-shut', !rooms.flashcards);
     $('#nav-flashcards').classList.toggle('is-shut', !rooms.flashcards);
     if (!rooms.flashcards) $('#tile-cards-figure').textContent = 'The room is closed for a moment';
+    $('#tile-polls').classList.toggle('is-shut', !rooms.polls);
+    $('#nav-polls').classList.toggle('is-shut', !rooms.polls);
+    if (!rooms.polls) $('#tile-polls-figure').textContent = 'The board is closed for a moment';
 
     // --- the record
     $('#stats-lede').textContent = play.rounds
