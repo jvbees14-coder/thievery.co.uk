@@ -227,17 +227,6 @@ check('loose lips is counted fresh, not remembered', () => {
   assert.match(Game.viewFor(g, asker).log.slice(-1)[0].text, /1 7 still face down/);
 });
 
-check('a tip-off reaches the one player it was meant for', () => {
-  const g = table(6);
-  g.kit[0] = ['tip_off'];
-  const real = g.seats[0].cards[0].rank;
-  Game.playPowerUp(g, 0, 'tip_off', { idx: 0, player: 3 });
-  assert.equal(Game.viewFor(g, 3).seats[0].cards[0].rank, real, 'the recipient was shown it');
-  for (const other of [1, 2, 4, 5]) {
-    assert.equal(Game.viewFor(g, other).seats[0].cards[0].rank, null, `seat ${other} saw a private tip-off`);
-  }
-});
-
 // --- buying another go ------------------------------------------------------
 
 check('a second storey forgives exactly one wrong guess', () => {

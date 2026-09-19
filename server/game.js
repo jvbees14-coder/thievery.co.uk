@@ -310,8 +310,8 @@ function otherHand(g, seat, hand) {
 }
 
 // Let one seat see one card, by the same route a partner's show uses. It is
-// kept per-viewer and written nowhere shared, so a tip-off does not quietly
-// become common knowledge for the rest of the round.
+// kept per-viewer and written nowhere shared, so what one player is shown
+// does not quietly become common knowledge for the rest of the round.
 function reveal(g, viewer, ts, idx) {
   const key = `${ts}:${idx}`;
   if (!g.known[viewer].includes(key)) g.known[viewer].push(key);
@@ -360,20 +360,6 @@ export function playPowerUp(g, seat, id, opts = {}) {
       log(g, `${g.names[seat]} listened for loose lips about ${rankWord(rank)}s.`, {
         privSeat: seat,
         privText: `${left || 'No'} ${rankWord(rank)}${left === 1 ? '' : 's'} still face down across the whole table. You were not told where.`,
-      });
-      break;
-    }
-    case 'tip_off': {
-      const idx = Number(opts.idx);
-      const to = otherHand(g, seat, Number(opts.player));
-      const c = g.seats[seat].cards[idx];
-      if (!c) throw new Error('No such card');
-      if (c.faceUp) throw new Error('That card is already face up');
-      spend(g, seat, id);
-      reveal(g, to, seat, idx);
-      log(g, `${g.names[seat]} tipped ${g.names[to]} off about one of their own cards.`, {
-        privSeat: to,
-        privText: `${g.names[seat]} showed you their ${ordinal(idx + 1)} card: ${aRank(c.rank)}.`,
       });
       break;
     }

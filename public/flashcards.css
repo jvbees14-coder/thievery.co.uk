@@ -142,9 +142,29 @@ textarea:focus, select:focus, input:focus {
 
 .fc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 16px; }
 
+/* The card, and the row of operations under it.
+ *
+ * The two faces are taken out of the flow so they can sit on top of each
+ * other for the turn, which means something else has to say how tall the card
+ * is. That used to be `.fc-flip { height: 100% }` — a percentage of a parent
+ * whose own height was still being worked out, so it resolved to the flip
+ * alone and the operations row hung 35px outside the card's box.
+ *
+ * On a wide screen that went unnoticed: the grid is several columns, the row
+ * is as tall as its tallest card, and the overhang landed in space. In one
+ * column it landed on the next card, which is drawn afterwards and therefore
+ * on top — so Offer, Re-cut and Burn were half-hidden and, worse, not
+ * clickable at all: the tap went through to the card beneath and turned it
+ * over instead. Only the last card in the list ever worked, because nothing
+ * came after it.
+ *
+ * So the card is a column now: the flip takes the room it needs and the
+ * operations sit under it, in the flow, where the card's own height counts
+ * them. */
 .fc-card {
   --r-ink: var(--text-dim);
   position: relative; perspective: 1400px; min-height: 212px;
+  display: flex; flex-direction: column;
 }
 .fc-card[data-rarity="uncommon"]  { --r-ink: var(--jade); }
 .fc-card[data-rarity="rare"]      { --r-ink: var(--team-a); }
@@ -153,7 +173,7 @@ textarea:focus, select:focus, input:focus {
 .fc-card[data-rarity="mythic"]    { --r-ink: var(--team-b); }
 
 .fc-flip {
-  position: relative; width: 100%; height: 100%; min-height: 212px;
+  position: relative; width: 100%; flex: 1 0 auto; min-height: 212px;
   transition: transform 0.55s var(--bounce); transform-style: preserve-3d;
 }
 .fc-card.is-turned .fc-flip { transform: rotateY(180deg); }

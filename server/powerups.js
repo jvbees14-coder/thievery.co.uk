@@ -9,7 +9,8 @@
 // boxed in by whatever is showing either side of it, and a short row has
 // fewer neighbours to do the boxing — less to reason about, exactly when
 // there are more people wanting to reason. The commons here exist to hand
-// that depth back: they buy information rather than cards.
+// that depth back: they buy information rather than cards, and both of them
+// buy it for the player alone.
 //
 // The second is the turn cycle. A correct guess already earns another, and at
 // six hands one good run can go through half the table before anybody else
@@ -49,7 +50,6 @@ export const HAND_LIMIT = 3;
  *
  *   none    nothing to choose
  *   card    a face-down card belonging to somebody else
- *   ownCard one of the caster's own face-down cards
  *   rank    a rank, Ace to King
  *   hand    another hand at the table
  *   player  another player, named by their hand
@@ -70,13 +70,6 @@ export const POWERUPS = [
     name: 'Loose lips',
     blurb: 'Name a rank and hear how many of it are still face down across the whole table. A count, never a place.',
     targets: ['rank'],
-  },
-  {
-    id: 'tip_off',
-    tier: 'common',
-    name: 'Tip-off',
-    blurb: 'Show one of your own face-down cards to one other player, privately. Whatever you get for it is between you.',
-    targets: ['ownCard', 'player'],
   },
   {
     id: 'second_story',

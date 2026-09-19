@@ -971,7 +971,7 @@ async function main() {
     const sixCode = six[0].state.room.code;
 
     assert.ok(six[0].catalog, 'the power-up catalog is sent when a socket opens');
-    assert.equal(six[0].catalog.length, 9, 'nine power-ups in the catalog');
+    assert.equal(six[0].catalog.length, 8, 'eight power-ups in the catalog');
     for (const c of six[0].catalog) {
       assert.ok(c.id && c.name && c.blurb && c.tierLabel, `catalog entry ${c.id} is complete`);
       assert.ok(Array.isArray(c.targets), 'and says what it needs nominated');
@@ -1071,7 +1071,7 @@ async function main() {
     const notCarried = six[0].catalog
       .map((c) => c.id)
       .find((id) => id !== 'alarm_trip' && !active.state.game.powerUps.kit.includes(id));
-    assert.ok(notCarried, 'a hand of three cannot be holding all nine');
+    assert.ok(notCarried, 'a hand of three cannot be holding all eight');
     assert.match(
       await active.expectError({ type: 'powerup', id: notCarried, opts: { target: { seat: (active.you.seat + 1) % 6, idx: 0 } } }, 'not carried'),
       /not carrying|No such power-up|turn/,

@@ -1156,10 +1156,6 @@
       if (si !== me && !watched) opts.selectable = true;
       return opts;
     }
-    if (want === 'ownCard') {
-      if (si === me) opts.selectable = true;
-      return opts;
-    }
     if (ui.pu) return opts;
     if (g.step === 'show' && g.partnerSeat === g.turn && si === me) opts.selectable = true;
     if (g.step === 'guess' && myTurn && g.seats[si].team !== g.seats[me].team) {
@@ -1400,7 +1396,6 @@
     const { id, picked } = ui.pu;
     const opts = {};
     if (picked.card) opts.target = picked.card;
-    if (picked.ownCard !== undefined) opts.idx = picked.ownCard;
     if (picked.rank !== undefined) opts.rank = picked.rank;
     if (picked.hand !== undefined) opts.hand = picked.hand;
     if (picked.player !== undefined) opts.player = picked.player;
@@ -1484,15 +1479,12 @@
     if (want === 'card') {
       return `${head}<p class="sub">Click any face-down card that is not your own.</p>${cancel}`;
     }
-    if (want === 'ownCard') {
-      return `${head}<p class="sub">Click one of your own face-down cards to show it.</p>${cancel}`;
-    }
     if (want === 'rank') {
       return `${head}<p class="sub">Name the rank to listen for.</p>${rankButtons()}${cancel}`;
     }
     if (want === 'player') {
       const already = ui.pu.picked.hand === undefined ? [] : [ui.pu.picked.hand];
-      return `${head}<p class="sub">${ui.pu.id === 'tip_off' ? 'Who should see it?' : 'Whose next guess are you sending?'}</p>${handButtons('player', { exclude: already })}${cancel}`;
+      return `${head}<p class="sub">Whose next guess are you sending?</p>${handButtons('player', { exclude: already })}${cancel}`;
     }
     if (want === 'hand') {
       const already = ui.pu.picked.player === undefined ? [] : [ui.pu.picked.player];
@@ -1647,10 +1639,6 @@
     if (want === 'card') {
       if (seat === me) return toast('Pick a card that is not your own.');
       return puPick('card', { seat, idx });
-    }
-    if (want === 'ownCard') {
-      if (seat !== me) return toast('Pick one of your own cards.');
-      return puPick('ownCard', idx);
     }
     if (ui.pu) return;
     if (g.step === 'show' && g.partnerSeat === g.turn && seat === me) {
