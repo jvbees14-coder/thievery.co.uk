@@ -7,10 +7,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm start              # serve on PORT (default 3000)
 npm run dev            # same, with --watch
-npm test               # all five suites, in order; any failure stops the run
+npm test               # all six suites, in order; any failure stops the run
 npm run test:source    # the source as bytes: no literal control characters
 npm run test:game      # the card game: real server, real clients, whole rounds played out
 npm run test:powerups  # the five/six-hand power-up rules, played against game.js directly
+npm run test:site      # the front hall, the addresses, and the lifetime record
 npm run test:flashcards # the flashcards room over HTTP
 npm run test:r2        # the storage layer, against a stub S3 client
 npm run r2:check       # are the four R2_* variables real? needs them in the environment
@@ -30,36 +31,69 @@ The last two commands write files that are committed. Neither runs on deploy;
 they exist so the icons and the fonts can be regenerated rather than being
 binaries nobody can account for.
 
-The tests need no credentials and no network. `test/smoke.test.js` sets
-`THIEVERY_BOT_PACE=0.012` so bots do not pause for real seconds, and both
-server-backed suites ask for `PORT=0` so concurrent runs cannot collide.
+The tests need no credentials and no network. `test/smoke.test.js` and
+`test/site.test.js` set `THIEVERY_BOT_PACE=0.012` so bots do not pause for real
+seconds, and every server-backed suite asks for `PORT=0` so concurrent runs
+cannot collide.
 
-## The two halves
+One thing to know before writing a test that reads the stored document:
+`store.js` holds a change for 250ms before writing it, and these suites run in
+a second or two. `test/site.test.js` has `shelfWhen()` for waiting on the file
+rather than assuming it. Do not reach for `SIGTERM` to force a flush — on
+Windows `child.kill('SIGTERM')` is a hard kill and nothing is flushed at all.
 
-The repo is one server hosting two things that share almost nothing but a look
-and a port:
+## The shape of the site
+
+One server, a hall and two rooms off it:
+
+| Address | What answers | Login |
+|---|---|---|
+| `/` | `server/site.js` — the menu, or the door | required |
+| `/logic`, `/logic/ABCD` | `server/site.js` — the card game | never |
+| `/flashcards` | `server/flashcards.js` | required |
+| `/api/site/…` | the door, and the menu's figures | mostly |
+| `/api/flashcards/…` | the collection, the post, the panel | yes |
+| anything else | the static block in `server/index.js`, out of `public/` | no |
 
 **The card game** (`server/game.js`, `bot.js`, `deal.js`, `powerups.js`,
-`index.js`; `public/index.html`, `app.js`) is deliberately stateless. Rooms live in a
-`Map` in `server/index.js`, survive a refresh, and are forgotten an hour after
-the last person disconnects. Nothing is written to disk, there are no accounts,
+`index.js`; `public/logic.html`, `app.js`) is deliberately stateless. Rooms live
+in a `Map` in `server/index.js`, survive a refresh, and are forgotten an hour
+after the last person disconnects. Nothing about a room is written to disk,
 and a room code stops working within the hour.
 
-**The flashcards room** (`server/flashcards.js`, `accounts.js`, `cards.js`,
-`trading.js`, `store.js`, `r2.js`; `public/flashcards*.{js,css}`;
-`server/views/`) is the opposite: real logins, and a document that has to
-outlive the process.
+It is also, deliberately, **not behind the login**. A room link is a thing
+people paste to friends; putting a door in front of it would break every one
+ever sent and would buy nothing, because the game keeps nothing. Signing in
+changes exactly one thing at the table: the rounds are added up afterwards
+(see "The lifetime record").
 
-They meet in exactly two places in `server/index.js`:
+**The flashcards room** (`server/flashcards.js`, `cards.js`, `trading.js`;
+`public/flashcards*.{js,css}`) is the opposite: real logins, and a document
+that has to outlive the process.
+
+**What they share** is the membership: `accounts.js` and `store.js` underneath,
+`plumbing.js` (bodies, cookies, who is asking) and `door.js` (register, login,
+logout, account settings) on top. There are two doors onto one membership —
+the hall's and the flashcards room's own page — and they differ only in what
+they hand back afterwards, which each passes to `door.js` as a `reply`
+function. `public/door.js` is the one script behind both forms; which door it
+is, is written on the card as `data-api` and `data-next`.
+
+They meet in three places in `server/index.js`:
 
 - `Flashcards.handle(req, res, url)` is called **first** in the request
-  handler and returns `true` if it took the request. This must stay ahead of
-  the static-file block, whose catch-all serves the game page for any
-  extensionless path — otherwise `/flashcards` falls through to the game.
-- `await Flashcards.start()` runs before `server.listen()`.
+  handler and returns `true` if it took the request.
+- `Site.handle(req, res, url)` is called **second**, and owns `/` and
+  `/logic`. Both must stay ahead of the static-file block, which serves
+  anything in `public/` by name and knows nothing about room codes.
+- `await Flashcards.start()` runs before `server.listen()`, and is what opens
+  the store that the hall then depends on.
 
 A failure in the flashcards half must never take the game down. `start()`
 catches its own errors and latches an outage; see "The never-overwrite rule".
+The hall is not so lucky and is not meant to be: it asks for a name, and only
+the ledger can say whose a name is, so `Site.handle` serves a 503 at `/` while
+`Store.available()` is false — pointing at `/logic`, which is untouched.
 
 ## The game: hands are not players
 
@@ -117,9 +151,14 @@ allowed to know, and every snapshot pushed over the WebSocket goes through it.
 should never have been sent — if you change what is sent, that suite is the
 thing that will tell you.
 
-## The flashcards room
+## The stored document
 
-`store.js` holds one JSON document in memory; everything else calls `data()`
+Everything that outlives the process is in one JSON document: accounts,
+sessions, cards, the trading post, and the lifetime record. It is the
+flashcards room's file historically and still carries its name, but the hall
+and the card table read and write it too.
+
+`store.js` holds that document in memory; everything else calls `data()`
 to read or mutate it and `touch()` to say it changed. Writes are debounced and
 coalesced, so a burst of trades is one upload.
 
@@ -158,6 +197,8 @@ saved over a full one.**
 
 Never make a storage failure start the app with an empty document.
 
+## The flashcards room
+
 ### Appraisal
 
 `cards.js` scores a card's craft out of 100, and craft buys *odds* only. The
@@ -173,9 +214,11 @@ is worth relative to new ones.
 
 ### Access control
 
-- The app's HTML lives in `server/views/`, **not** `public/`, because anything
-  in `public/` is served to anyone who asks for it by name. A logged-out
-  visitor gets the door page at the same URL.
+- The HTML of anything behind a login lives in `server/views/`, **not**
+  `public/`, because anything in `public/` is served to anyone who asks for it
+  by name. That is both the flashcards app and the hall's menu; a logged-out
+  visitor gets the door page at the same URL. The game page is the exception
+  and stays in `public/logic.html`, because it is not behind anything.
 - The admin is whoever matches `THIEVERY_ADMIN_USERNAME`, named by the
   environment so the name cannot be claimed by whoever registers first.
   `/api/flashcards/admin/*` answers **404** to everyone else, not 403.
@@ -183,6 +226,37 @@ is worth relative to new ones.
   later. Sessions: random token, only its SHA-256 stored.
 - Failed logins are counted tightly per account (5) and loosely per address
   (25), because one guesser behind an office IP must not lock everyone out.
+
+## The lifetime record
+
+`stats.js`, one row per account under `stats` in the document. It is the only
+thing on the game's side of the site that outlives a room, and it is worth
+strictly less than the round in progress — so `index.js` wraps every call to
+it in `keepCounting()`, and `stats.js` itself does nothing at all while
+`Store.available()` is false. A bucket that has gone away must never reach the
+table.
+
+How a name gets to a table at all: a WebSocket handshake is an ordinary HTTP
+request carrying the session cookie, so `wss.on('connection', (ws, req))` reads
+it once and hangs the account id on the socket. `attach()` copies it onto the
+player, afresh on every attach, because a seat belongs to whoever is holding it
+now. No cookie is not an error — it is `null`, and that player is recorded
+nowhere.
+
+Three rules in `recordRound()` that are easy to lose:
+
+- **A test room is not counted.** One person playing every seat would win every
+  round against themselves.
+- **An account is counted once per round**, however many seats it holds. The
+  row is keyed by account, so two tabs at one table is one round played and at
+  most one round won.
+- **Rounds against people are counted apart from rounds against the house**
+  (`versus` / `versusWins`). Both are real games and both are in the total, but
+  a win over three Novices is not the same claim as a win over three people.
+
+`tables` counts distinct rooms, which the room server is the only thing that
+can know: `room.seated` is the set of accounts that have sat down there, so a
+refresh mid-round is not a second table.
 
 ## Environment
 

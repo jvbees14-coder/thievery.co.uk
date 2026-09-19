@@ -344,11 +344,21 @@ async function run() {
       assert.match(out(), /THE ROOM IS CLOSED/, `expected the room to close, got:\n${out()}`);
 
       // The game, which keeps nothing and needs none of this, is untouched.
-      const home = await fetch(`http://localhost:${port}/`);
-      assert.equal(home.status, 200, 'the card game went down with the flashcards');
-      assert.ok((await home.text()).includes('Create game'));
+      const table = await fetch(`http://localhost:${port}/logic`);
+      assert.equal(table.status, 200, 'the card game went down with the flashcards');
+      assert.ok((await table.text()).includes('Create game'));
       assert.equal((await fetch(`http://localhost:${port}/health`)).status, 200);
-      assert.equal((await fetch(`http://localhost:${port}/ABCD`)).status, 200, 'room codes should still work');
+      assert.equal((await fetch(`http://localhost:${port}/logic/ABCD`)).status, 200, 'room codes should still work');
+
+      // The front hall does go down, because it asks for a name and the
+      // ledger is what says whether a name is anybody's. It says so, and it
+      // points at the table on the way past.
+      const hall = await fetch(`http://localhost:${port}/`);
+      assert.equal(hall.status, 503, 'the hall cannot check a session it cannot read');
+      const hallText = await hall.text();
+      assert.match(hallText, /closed for now/i);
+      assert.match(hallText, /\/logic/, 'the closed hall should still point at the table');
+      assert.equal((await fetch(`http://localhost:${port}/api/site/me`)).status, 503);
 
       // The room says so plainly, and its API refuses rather than pretending.
       const page = await fetch(`http://localhost:${port}/flashcards`);
@@ -375,8 +385,9 @@ async function run() {
       assert.match(out(), /NO DURABLE STORAGE/, `expected the warning, got:\n${out()}`);
       assert.match(out(), /Missing: R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME/);
       assert.match(out(), /Already set: none of the four/);
-      assert.equal((await fetch(`http://localhost:${port}/`)).status, 200, 'the game should still run');
+      assert.equal((await fetch(`http://localhost:${port}/logic`)).status, 200, 'the game should still run');
       assert.equal((await fetch(`http://localhost:${port}/flashcards`)).status, 503);
+      assert.equal((await fetch(`http://localhost:${port}/`)).status, 503, 'the hall needs the ledger');
     } finally {
       child.kill();
     }

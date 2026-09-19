@@ -6,7 +6,22 @@ time, with no downloads and no accounts. One person creates a room, shares the
 4-letter code, and the game begins once everybody is in. If there are only one
 or two of you, the empty hands can be dealt to the house instead.
 
-Play at <https://thievery.co.uk>.
+The card game is **Logic**, and it is at <https://thievery.co.uk/logic>. It
+needs no account and never has: type a name, share a code, play.
+
+<https://thievery.co.uk> itself is the front hall, and that one does ask for a
+name. Behind it are the things that only make sense kept against somebody:
+
+- **Your lifetime record** — every round you have played at the table and
+  every one you have won, with your best run, the tables you have sat at, and
+  wins over people counted separately from wins over the house.
+- **[Flashcards](#flashcards)** — write a card, have it appraised and minted,
+  print it, trade it.
+- **Your account** — what the table calls you, and the keys to it.
+
+Signing in changes exactly one thing at the card table: the rounds are added
+up afterwards. It changes nothing about how the game is played, and a round
+played signed out is recorded nowhere at all.
 
 ## The idea
 
@@ -45,12 +60,13 @@ still plays a full round. See [Playing the house](#playing-the-house).
 
 ## Starting a game
 
-1. Open the site and press **Create game**. You become the host and get a room
-   code. The name box arrives pre-filled with an alias — press the roller
+1. Open <https://thievery.co.uk/logic> and press **Create game**. You become
+   the host and get a room code. The name box arrives pre-filled with an alias — press the roller
    beside it for another, or type your own over the top.
 2. Share the code, or use **Copy invite link** to send a link that fills the
    code in automatically.
-3. Friends open the site, type the code and their name, and press **Join**.
+3. Friends open the same page, type the code and their name, and press
+   **Join**.
    The first few get a hand each; anyone after that pairs up with a player who
    is already seated.
 4. Once there is at least one player per hand, the host presses **Start game**.
@@ -278,6 +294,37 @@ anybody sees it, and nothing any player is sent says who is responsible.
 They stop the moment the last marked player leaves the room. Refreshing does
 not call them off; rejoining without the mark does.
 
+## Your lifetime record
+
+The card table keeps nothing. A room is memory, a code stops working within the
+hour, and that is on purpose: nothing about who played what is written down
+anywhere.
+
+The one exception is for people who asked for one. Open an account at
+<https://thievery.co.uk>, stay signed in while you play, and the house adds the
+round up afterwards — the browser's session cookie travels with the connection
+to the table, so there is nothing to switch on and nothing extra to type. Sign
+out and the table is exactly as anonymous as it ever was.
+
+What is counted, and what is deliberately not:
+
+- **Rounds played and rounds won**, with the win rate and the longest run of
+  wins you have ever had.
+- **Tables sat at** — distinct rooms, so refreshing in the middle of a round
+  does not count as a second one.
+- **Wins over people and wins over the house, separately.** A table of bots is
+  a real game and is in the total, but a win over three Novices is not the same
+  claim as a win over three people, and a single figure that cannot tell them
+  apart is not worth quoting.
+- **Once per round, per account.** Sitting at two seats of the same table from
+  two tabs is one round played and, at most, one round won.
+- **Nothing about the cards.** What you held, what you guessed and who you
+  played against is not kept — only that a round happened and how it went for
+  you.
+
+Test mode — the **Test67** room, where one person plays every seat — is not
+counted at all, for the obvious reason.
+
 ## Flashcards
 
 <https://thievery.co.uk/flashcards> is a second room on the site, and the only
@@ -285,9 +332,10 @@ part of it behind a login. You write flashcards; the house appraises them,
 stamps them with a rarity and a mint number, and from then on they are things
 you own. You can print them on real card, and you can trade them away.
 
-It shares the site's look and nothing else: the game keeps no accounts and
-forgets a table within the hour, whereas this keeps accounts and collections
-on disk. See [Where the flashcards are kept](#where-the-flashcards-are-kept).
+It shares its login with the front hall — one account opens both — but
+nothing else with the card table: the game forgets a room within the hour,
+whereas this keeps accounts and collections on disk. See
+[Where the flashcards are kept](#where-the-flashcards-are-kept).
 
 ### Making a card
 
@@ -422,8 +470,9 @@ using signed in.
 
 ### Where the flashcards are kept
 
-Everything — accounts, cards, the trading pool, the ledger — is one JSON
-document, held in memory and written back a moment after it changes. Where it
+Everything — accounts, cards, the trading pool, the ledger, and the lifetime
+records — is one JSON document, held in memory and written back a moment after
+it changes. Where it
 is written back to depends on the environment, and the two cases are the same
 shape: read one blob of text, write one blob of text.
 
@@ -506,8 +555,9 @@ npm install
 npm start
 ```
 
-Then open <http://localhost:3000>. Anyone on the same Wi-Fi can join with your
-computer's local address. The `render.yaml`, `fly.toml` and `Dockerfile` in
+Then open <http://localhost:3000/logic> for the card table, or
+<http://localhost:3000> for the front hall. Anyone on the same Wi-Fi can join a
+room with your computer's local address. The `render.yaml`, `fly.toml` and `Dockerfile` in
 this folder deploy it to Render, Fly.io, or any Docker host.
 
 ### Test mode

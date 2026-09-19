@@ -24,6 +24,9 @@ import { WebSocketServer } from 'ws';
 import * as Game from './game.js';
 import * as Bot from './bot.js';
 import * as Flashcards from './flashcards.js';
+import * as Site from './site.js';
+import * as Stats from './stats.js';
+import { currentUser } from './plumbing.js';
 import { shuffle, DEAL_SPLITS, SEAT_COUNTS, MIN_SEATS, MAX_SEATS, MAX_PER_SEAT, usesPowerUps } from './deal.js';
 import * as PowerUps from './powerups.js';
 
@@ -81,15 +84,20 @@ function serve(req, res) {
 
   // The flashcards live behind a login and keep their own state on disk, so
   // they answer for themselves. Asked first, because /flashcards must not
-  // fall through to the room page below.
+  // fall through to the static block below.
   if (Flashcards.handle(req, res, url)) return;
+
+  // Then the front hall, which owns "/" and the card table at /logic. It has
+  // to come before the static block for the same reason: that block serves
+  // anything in public/ by name and knows nothing about room codes, so the
+  // address /logic/ABCD would be a 404 rather than a table.
+  if (Site.handle(req, res, url)) return;
 
   let file = safePath(url.pathname);
   if (file === null) {
     res.writeHead(400, { 'Content-Type': 'text/plain' });
     return res.end('Bad request');
   }
-  if (file === '/' || file === '') file = '/index.html';
   if (file === '/health') {
     // The game is what this address is really answering for, so a shut
     // flashcards room is reported rather than failed on: the tables are up,
@@ -105,18 +113,15 @@ function serve(req, res) {
   }
   fs.stat(abs, (statErr, stat) => {
     if (statErr || !stat.isFile()) {
-      // A bare room link like /ABCD is a page, not a file: serve the game.
-      // Every room is the same page and a code stops working within the hour,
-      // so search engines are told to keep those links out of the index.
-      if (!path.extname(file)) {
-        return fs.readFile(path.join(PUBLIC_DIR, 'index.html'), (e2, html) => {
-          if (e2) {
-            res.writeHead(404);
-            return res.end('Not found');
-          }
-          res.writeHead(200, { 'Content-Type': MIME['.html'], 'X-Robots-Tag': 'noindex, follow', ...SAFE_HEADERS });
-          res.end(html);
-        });
+      // A bare room link like /ABCD is where the game used to live, and every
+      // one of those links is in somebody's messages. They are sent on to
+      // /logic/ABCD permanently rather than dropped; the page itself still
+      // reads a code out of that shape of address, so a redirect that is
+      // cached or skipped costs nothing either.
+      const bare = file.slice(1);
+      if (Site.ROOM_CODE_RE.test(bare)) {
+        res.writeHead(301, { Location: `/logic/${bare.toUpperCase()}`, 'Cache-Control': 'no-store' });
+        return res.end();
       }
       res.writeHead(404);
       return res.end('Not found');
@@ -193,6 +198,7 @@ function createRoom() {
     players: [], // in order of play; the first few sit alone, the rest pair up
     game: null,
     tally: {}, // wins so far this session
+    seated: new Set(), // accounts that have sat down here, so a table is counted once
     round: 0,
     lastStart: -1,
     emptySince: Date.now(),
@@ -540,6 +546,43 @@ function applyTally(room) {
     room.tally[p.id] ??= { name: p.name, wins: 0 };
     if (g.result.winners.includes(p.seat)) room.tally[p.id].wins++;
   }
+  keepCounting(() => recordRound(room, g));
+}
+
+// The lifetime record is the only thing on this side of the site that outlives
+// the room, and it is worth strictly less than the round in progress. A bucket
+// that has gone away, a document that will not take a write — none of it may
+// reach the table, so the whole of it is wrapped once, here.
+function keepCounting(work) {
+  try {
+    work();
+  } catch (err) {
+    console.error('stats: not counted —', err.message);
+  }
+}
+
+// What a finished round adds to each account at the table.
+//
+// Two things it deliberately does not do. It does not count a test room, where
+// one person is playing every seat and would win every round against
+// themselves. And it does not count an account twice for one round, however
+// many seats that account happens to be holding: the row is keyed by account,
+// so two tabs signed into the same name at one table is one round played and,
+// at most, one round won.
+function recordRound(room, g) {
+  if (room.test) return;
+  // A seat of -1 is somebody who arrived mid-round and is waiting for the
+  // next one. They did not play this one.
+  const folk = room.players.filter((p) => !p.bot && p.seat >= 0);
+  // Whether anybody else at the table was a person. Counted by account where
+  // there is one, so a second tab of your own is not an opponent.
+  const versus = new Set(folk.map((p) => p.userId || `anon:${p.id}`)).size > 1;
+  const won = new Map(); // account -> did one of their seats take it
+  for (const p of folk) {
+    if (!p.userId) continue;
+    won.set(p.userId, (won.get(p.userId) || false) || g.result.winners.includes(p.seat));
+  }
+  for (const [userId, win] of won) Stats.record(userId, { won: win, versus });
 }
 
 // --- join / rejoin ---------------------------------------------------------
@@ -556,6 +599,16 @@ function attach(room, player, ws) {
   player.ws = ws;
   player.connected = true;
   ws.ctx = { room, player };
+  // Who is holding this seat, if anybody said. The table itself neither needs
+  // nor asks for a name — this is only so the rounds can be added up
+  // afterwards for somebody who has an account to add them to. It is read
+  // afresh on every attach because a seat belongs to whoever is holding it
+  // now, not to whoever opened it.
+  player.userId = ws.account || null;
+  if (player.userId && !room.test && !room.seated.has(player.userId)) {
+    room.seated.add(player.userId);
+    keepCounting(() => Stats.sitDown(player.userId));
+  }
   // None of this changes, so it is sent once when a socket arrives rather than
   // riding along with every snapshot after it. The deal is in here as well as
   // the power-ups: how the 26 cards fall at each size is the server's to say,
@@ -906,7 +959,16 @@ function handleAction(ws, msg) {
 // is a hundred megabytes, and a socket is open to anybody who asks.
 const wss = new WebSocketServer({ server, maxPayload: 16 * 1024 });
 
-wss.on('connection', (ws) => {
+wss.on('connection', (ws, req) => {
+  // A WebSocket handshake is an ordinary HTTP request with the session cookie
+  // on it, so this is the one chance to find out whether the person sitting
+  // down has an account. Nobody is turned away for not having one: the answer
+  // is simply null, and their rounds are recorded nowhere.
+  try {
+    ws.account = currentUser(req)?.id ?? null;
+  } catch {
+    ws.account = null;
+  }
   ws.isAlive = true;
   ws.on('pong', () => (ws.isAlive = true));
   ws.on('message', (data) => {

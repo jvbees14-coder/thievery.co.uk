@@ -1,14 +1,21 @@
-/* Thievery.co.uk — the door to the flashcards room.
+/* Thievery.co.uk — the door.
  *
- * Two forms and a tab. Neither of them knows anything: the server decides
- * whether a username is free, whether a password will do and whether the pair
- * is right, and this only relays what it says. Getting in reloads the page,
- * because what comes back from /flashcards is a different document once the
- * cookie is set. */
+ * Two forms and a tab, used by both doors onto the site: the front hall at
+ * "/" and the flashcards room's own page. Neither of them knows anything: the
+ * server decides whether a username is free, whether a password will do and
+ * whether the pair is right, and this only relays what it says.
+ *
+ * Which door it is, is written on the card itself — data-api is where the
+ * forms post and data-next is where a successful sign-in lands. Getting in
+ * reloads the page rather than rendering anything, because what comes back
+ * from that address is a different document once the cookie is set. */
 (() => {
   'use strict';
 
   const $ = (s) => document.querySelector(s);
+  const card = $('.door-card');
+  const API = card.dataset.api || '/api/site';
+  const NEXT = card.dataset.next || '/';
   const error = $('#door-error');
 
   // The same aliases the table deals out, so an account opened here is named
@@ -55,7 +62,7 @@
     button.disabled = true;
     say('');
     try {
-      const res = await fetch('/api/flashcards/' + where, {
+      const res = await fetch(`${API}/${where}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -67,9 +74,9 @@
         say(payload.error || 'That did not work.');
         return;
       }
-      // The cookie is set; asking for the page again gets the room rather than
-      // the door.
-      location.href = '/flashcards';
+      // The cookie is set; asking for the page again gets what is behind the
+      // door rather than the door.
+      location.href = NEXT;
     } catch {
       say('The house is not answering. Try again in a moment.');
     } finally {

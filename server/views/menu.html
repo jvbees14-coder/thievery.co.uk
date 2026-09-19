@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>The house — Thievery.co.uk</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c14'/%3E%3Cpath d='M16 4l10 12-10 12L6 16z' fill='none' stroke='%23d4af5a' stroke-width='2'/%3E%3Cpath d='M16 10l5 6-5 6-5-6z' fill='%23d4af5a'/%3E%3C/svg%3E" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="apple-touch-icon" href="/icons/icon-180.png" />
+  <meta name="theme-color" content="#0a0c14" />
+  <link rel="preload" href="/fonts/limelight-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/eb-garamond-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/fonts.css" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/flashcards.css" />
+  <link rel="stylesheet" href="/menu.css" />
+</head>
+<body class="menu-page">
+  <div id="toast" class="toast" hidden></div>
+
+  <header class="fc-bar">
+    <a class="fc-mark wordmark" href="/">Thievery<em>.co.uk</em></a>
+    <nav class="menu-nav">
+      <a class="menu-nav-link" href="/logic">Logic</a>
+      <a class="menu-nav-link" id="nav-flashcards" href="/flashcards">Flashcards</a>
+    </nav>
+    <div class="fc-who">
+      <button id="who" class="fc-who-btn" type="button" aria-haspopup="true" aria-expanded="false"></button>
+      <div id="who-menu" class="fc-menu" hidden>
+        <a href="#account">Account settings</a>
+        <button data-act="signout" type="button">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="menu-main">
+    <p class="eyebrow">The house</p>
+    <h1 class="menu-hello">Evening, <span id="hello">&hellip;</span></h1>
+    <p class="menu-lede">
+      Everything here is kept against your name. The table is through the first
+      door; the ledger is the rest of it.
+    </p>
+
+    <!-- The four doors off the hall. Two of them lead somewhere else and two
+         of them open a panel further down this page: a tile is a tile either
+         way, so the grid does not care which is which, and a fifth feature is
+         one more block of markup. -->
+    <div class="menu-grid">
+      <a class="menu-tile" href="/logic">
+        <span class="menu-tile-mark" aria-hidden="true">&#9670;</span>
+        <h2>Logic</h2>
+        <p class="menu-tile-say">The card table</p>
+        <p class="menu-tile-blurb">
+          The deduction game, 1 to 12 players, three to six hands. Share a room
+          code and steal their secrets before they steal yours.
+        </p>
+        <p class="menu-tile-figure" id="tile-logic-figure">&nbsp;</p>
+      </a>
+
+      <a class="menu-tile" id="tile-flashcards" href="/flashcards">
+        <span class="menu-tile-mark" aria-hidden="true">&#9671;</span>
+        <h2>Flashcards</h2>
+        <p class="menu-tile-say">The members&rsquo; room</p>
+        <p class="menu-tile-blurb">
+          Write a card. The house appraises it, stamps it and mints it. Print
+          it, or lay it down and trade it blind for cards of equal worth.
+        </p>
+        <p class="menu-tile-figure" id="tile-cards-figure">&nbsp;</p>
+      </a>
+
+      <a class="menu-tile" href="#stats">
+        <span class="menu-tile-mark" aria-hidden="true">&#9672;</span>
+        <h2>Stats</h2>
+        <p class="menu-tile-say">Lifetime record</p>
+        <p class="menu-tile-blurb">
+          Every round you have played at the table and every one you have won,
+          counted since the day you opened the account.
+        </p>
+        <p class="menu-tile-figure" id="tile-stats-figure">&nbsp;</p>
+      </a>
+
+      <a class="menu-tile" href="#account">
+        <span class="menu-tile-mark" aria-hidden="true">&#9673;</span>
+        <h2>Account</h2>
+        <p class="menu-tile-say">Name, and the keys to it</p>
+        <p class="menu-tile-blurb">
+          Change what the table calls you, change your username, change your
+          password &mdash; which signs every other device out.
+        </p>
+        <p class="menu-tile-figure" id="tile-account-figure">&nbsp;</p>
+      </a>
+    </div>
+
+    <!-- --------------------------------------------------------- stats -->
+    <section id="stats" class="menu-panel panel" hidden>
+      <h2 class="menu-panel-head">Lifetime record</h2>
+      <p class="menu-panel-lede" id="stats-lede">&nbsp;</p>
+
+      <div class="menu-figures" id="stats-figures"></div>
+
+      <div class="menu-split">
+        <div>
+          <h3>Against people</h3>
+          <p class="menu-note" id="stats-people">&nbsp;</p>
+        </div>
+        <div>
+          <h3>Against the house</h3>
+          <p class="menu-note" id="stats-bots">&nbsp;</p>
+        </div>
+      </div>
+
+      <p class="hint">
+        A round counts once, however many seats one account is sitting at, and
+        only rounds played to the end are counted. Rounds played signed out are
+        not recorded anywhere at all.
+      </p>
+      <p class="menu-panel-foot"><a href="#">&larr; back to the hall</a></p>
+    </section>
+
+    <!-- ------------------------------------------------------- account -->
+    <section id="account" class="menu-panel panel" hidden>
+      <h2 class="menu-panel-head">Account</h2>
+      <p class="menu-panel-lede" id="account-lede">&nbsp;</p>
+
+      <form id="account-name" class="menu-form" autocomplete="on">
+        <div class="field">
+          <label for="ac-name">Display name</label>
+          <input id="ac-name" name="displayName" maxlength="24" autocomplete="nickname" required />
+          <p class="hint">What the table and the trading post call you.</p>
+        </div>
+        <button class="btn primary" type="submit">Save the name</button>
+      </form>
+
+      <form id="account-keys" class="menu-form" autocomplete="on">
+        <div class="field">
+          <label for="ac-user">Username</label>
+          <input id="ac-user" name="username" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" />
+          <p class="hint">What you sign in with. Leave it alone to keep it.</p>
+        </div>
+        <div class="field">
+          <label for="ac-new">New password <span class="opt">optional</span></label>
+          <input id="ac-new" name="password" type="password" maxlength="200" autocomplete="new-password" />
+          <p class="hint">At least 10 characters. Changing it signs every other device out.</p>
+        </div>
+        <div class="field">
+          <label for="ac-now">Current password</label>
+          <input id="ac-now" name="currentPassword" type="password" maxlength="200" autocomplete="current-password" required />
+          <p class="hint">Needed for either of the two above.</p>
+        </div>
+        <button class="btn primary" type="submit">Save</button>
+      </form>
+
+      <p id="account-error" class="door-error" hidden></p>
+      <p class="menu-panel-foot"><a href="#">&larr; back to the hall</a></p>
+    </section>
+  </main>
+
+  <script src="/menu.js"></script>
+</body>
+</html>

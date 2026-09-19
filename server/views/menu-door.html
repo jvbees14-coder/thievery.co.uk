@@ -4,17 +4,22 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark" />
-  <title>Flashcards — Thievery.co.uk</title>
-  <meta name="description" content="Make flashcards, have them appraised, print them on card and trade them blind for cards of equal worth. A members' room at Thievery.co.uk." />
-  <link rel="canonical" href="https://thievery.co.uk/flashcards" />
+  <title>Thievery.co.uk — Free Online Card Game, Flashcards &amp; Lifetime Stats</title>
+  <meta name="description" content="Thievery.co.uk: play Logic, the free online deduction card game for 1 to 12 players, and open an account to keep a lifetime record of every round won, write flashcards, have them appraised and trade them." />
+  <link rel="canonical" href="https://thievery.co.uk/" />
 
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Thievery.co.uk" />
-  <meta property="og:title" content="Flashcards — Thievery.co.uk" />
-  <meta property="og:description" content="Write a card, have it appraised, print it, and trade it blind for cards of equal worth. Members only." />
-  <meta property="og:url" content="https://thievery.co.uk/flashcards" />
+  <meta property="og:title" content="Thievery.co.uk — the card table and the members' room" />
+  <meta property="og:description" content="Play Logic for nothing with a room code. Open an account and the house keeps count: every round, every win, every card you have written." />
+  <meta property="og:url" content="https://thievery.co.uk/" />
   <meta property="og:image" content="https://thievery.co.uk/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Thievery.co.uk — the card table and the members' room" />
+  <meta name="twitter:description" content="Play Logic for nothing with a room code. Open an account and the house keeps count." />
+  <meta name="twitter:image" content="https://thievery.co.uk/og-image.png" />
 
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c14'/%3E%3Cpath d='M16 4l10 12-10 12L6 16z' fill='none' stroke='%23d4af5a' stroke-width='2'/%3E%3Cpath d='M16 10l5 6-5 6-5-6z' fill='%23d4af5a'/%3E%3C/svg%3E" />
   <link rel="manifest" href="/site.webmanifest" />
@@ -25,18 +30,20 @@
   <link rel="stylesheet" href="/fonts.css" />
   <link rel="stylesheet" href="/style.css" />
   <link rel="stylesheet" href="/flashcards.css" />
+  <link rel="stylesheet" href="/menu.css" />
 </head>
 <body>
   <div id="toast" class="toast" hidden></div>
 
   <section class="screen home">
-    <div class="home-card door-card" data-api="/api/flashcards" data-next="/flashcards">
-      <p class="eyebrow">Behind the green door</p>
-      <h1 class="logo wordmark">Flashcards<em>Thievery.co.uk</em></h1>
+    <div class="home-card door-card" data-api="/api/site" data-next="/">
+      <p class="eyebrow">Est. for cheats, sleuths &amp; card sharps</p>
+      <h1 class="logo wordmark">Thievery<em>.co.uk</em></h1>
       <p class="tagline">
-        Write a card. The house appraises it, stamps it and mints it. Print it on
-        real card, or lay it on the table and trade it blind for whatever comes
-        back &mdash; different cards, same worth.
+        A name at the door buys you a ledger: every round you play at the table
+        counted, every card you write appraised and kept. Sign in, or open an
+        account &mdash; it costs nothing and the house asks for nothing but a
+        name.
       </p>
 
       <div class="door-tabs" role="tablist">
@@ -76,12 +83,25 @@
         </div>
         <button class="btn primary" type="submit">Open an account</button>
         <p class="hint">
-          Three cards are dealt to a new account, so you arrive with something to trade.
+          Three flashcards are dealt to a new account, so you arrive with
+          something to trade.
         </p>
       </form>
 
       <p id="door-error" class="door-error" hidden></p>
-      <p class="door-foot"><a href="/">&larr; back to the front hall</a></p>
+
+      <!-- The table itself never needed a name and still does not. Saying so
+           on the door matters: somebody handed a room code should not be
+           made to open an account to answer it. -->
+      <div class="door-open">
+        <h2>Or just play</h2>
+        <p>
+          <b>Logic</b>, the deduction card game, is open to anybody with a room
+          code &mdash; no account, nothing kept. Signing in only means the
+          rounds are added up afterwards.
+        </p>
+        <p><a class="btn" href="/logic">To the card table &rarr;</a></p>
+      </div>
     </div>
   </section>
 
