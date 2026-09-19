@@ -573,12 +573,12 @@ async function run() {
     assert.ok(res.status === 413 || res.status === 400, `expected a refusal, got ${res.status}`);
   });
 
-  await check('the game is untouched at /logic', async () => {
-    const table = await fetch(`http://localhost:${PORT}/logic`);
+  await check('the game is untouched at /cards', async () => {
+    const table = await fetch(`http://localhost:${PORT}/cards`);
     const html = await table.text();
     assert.equal(table.status, 200);
     assert.ok(html.includes('Create game'), 'the room page should be untouched');
-    const room = await fetch(`http://localhost:${PORT}/logic/ABCD`);
+    const room = await fetch(`http://localhost:${PORT}/cards/ABCD`);
     assert.equal(room.status, 200, 'a room code should still serve the game');
     // And it must not have grown a door: the table asks for no account.
     assert.ok((await room.text()).includes('Create game'), 'a room link should not be behind a login');

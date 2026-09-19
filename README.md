@@ -6,7 +6,7 @@ time, with no downloads and no accounts. One person creates a room, shares the
 4-letter code, and the game begins once everybody is in. If there are only one
 or two of you, the empty hands can be dealt to the house instead.
 
-The card game is **Logic**, and it is at <https://thievery.co.uk/logic>. It
+The card game is **Cards**, and it is at <https://thievery.co.uk/cards>. It
 needs no account and never has: type a name, share a code, play.
 
 <https://thievery.co.uk> itself is the front hall, and that one does ask for a
@@ -62,7 +62,7 @@ still plays a full round. See [Playing the house](#playing-the-house).
 
 ## Starting a game
 
-1. Open <https://thievery.co.uk/logic> and press **Create game**. You become
+1. Open <https://thievery.co.uk/cards> and press **Create game**. You become
    the host and get a room code. The name box arrives pre-filled with an alias — press the roller
    beside it for another, or type your own over the top.
 2. Share the code, or use **Copy invite link** to send a link that fills the
@@ -591,7 +591,7 @@ npm install
 npm start
 ```
 
-Then open <http://localhost:3000/logic> for the card table, or
+Then open <http://localhost:3000/cards> for the card table, or
 <http://localhost:3000> for the front hall. Anyone on the same Wi-Fi can join a
 room with your computer's local address. The `render.yaml`, `fly.toml` and `Dockerfile` in
 this folder deploy it to Render, Fly.io, or any Docker host.

@@ -138,7 +138,7 @@
         const hadState = !!state;
         state = msg;
         saveSession({ code: msg.room.code, name: msg.you.name, token: msg.you.token });
-        if (!hadState) history.replaceState(null, '', `/logic/${msg.room.code}`);
+        if (!hadState) history.replaceState(null, '', `/cards/${msg.room.code}`);
         announceEvents(msg);
         render();
         break;
@@ -544,7 +544,7 @@
   const CAN_SHARE = !!navigator.share && matchMedia('(hover: none)').matches;
 
   function shareRoom() {
-    const url = `${location.origin}/logic/${state.room.code}`;
+    const url = `${location.origin}/cards/${state.room.code}`;
     if (!CAN_SHARE) return copyText(url);
     navigator
       .share({ title: 'Thievery.co.uk', text: `Come and play — the room code is ${state.room.code}`, url })
@@ -590,7 +590,7 @@
     ui.openMenu = null;
     ui.leaveArmed = false;
     dismissBanner();
-    history.replaceState(null, '', '/logic');
+    history.replaceState(null, '', '/cards');
     render();
   }
 
@@ -851,7 +851,7 @@
           <div class="panel big-code">
             <div class="muted" style="margin-bottom:8px">Share this code</div>
             <span class="code">${esc(r.code)}</span>
-            <p>Friends can join at <b>${esc(location.host)}/logic</b> with this code, or use the invite link.</p>
+            <p>Friends can join at <b>${esc(location.host)}/cards</b> with this code, or use the invite link.</p>
           </div>
           <div class="panel">
             <h2>Players <span class="muted">(${r.players.length}/${r.maxPlayers})</span><span class="panel-sub">hand order is the order of play</span></h2>
@@ -1835,12 +1835,15 @@
     rerollBtn.classList.add('spun');
     nameInput.focus();
   });
-  // A room reaches the page three ways: /logic/ABCD, which is what a share
+  // A room reaches the page three ways: /cards/ABCD, which is what a share
   // link looks like now; ?code=ABCD, which is what one looked like before the
   // game moved off the root; and a bare /ABCD, which the server redirects
-  // here but which costs nothing to keep reading.
+  // here but which costs nothing to keep reading. /logic is in the list for
+  // the same reason — it is redirected, so the page never actually loads
+  // there, but a pattern that quietly stops matching is worse than one line.
   const urlCode =
-    new URLSearchParams(location.search).get('code') || location.pathname.replace(/^\/(?:logic\/?)?/, '');
+    new URLSearchParams(location.search).get('code') ||
+    location.pathname.replace(/^\/(?:(?:cards|logic)\/?)?/, '');
   if (urlCode && /^[A-Za-z0-9]{4}$/.test(urlCode)) codeInput.value = urlCode.toUpperCase();
 
   function getName() {

@@ -3,7 +3,7 @@
 //
 // The site used to be a card table with a second room bolted to the side of
 // it, reachable only by knowing the address. It is now a hall with doors off
-// it: the table is one of them, at /logic, and the flashcards are another.
+// it: the table is one of them, at /cards, and the flashcards are another.
 //
 // Two things about the arrangement are deliberate and easy to undo by
 // accident:
@@ -11,17 +11,18 @@
 //   * The hall asks for a name. Everything it lists — what you have won, what
 //     you have written, what your account says — belongs to somebody, so a
 //     stranger is shown the door instead and never the menu.
-//   * The table does not. /logic is open to anybody with a room code, exactly
+//   * The table does not. /cards is open to anybody with a room code, exactly
 //     as it always was: no account, no cookie, nothing kept. Signing in only
 //     means the rounds you play are added up afterwards. Putting a login in
 //     front of the table would break every link anybody has ever passed
 //     round, and the game was never the thing that needed one.
 //
-// So this module answers for three shapes of address, and the store being out
+// So this module answers for four shapes of address, and the store being out
 // of reach closes only the first:
 //
 //   /            the menu, or the door, or a note saying the hall is shut
-//   /logic…      the card game, whatever the store is doing
+//   /cards…      the card game, whatever the store is doing
+//   /logic…      where the game lived for a day; sent on to /cards
 //   /api/site/…  the door and the menu's figures
 // ---------------------------------------------------------------------------
 
@@ -64,7 +65,7 @@ export const ROOM_CODE_RE = /^[A-Za-z0-9]{4}$/;
 // in memory: a room code in the address bar has to reach today's markup, and
 // this is exactly what the catch-all it replaces used to do.
 function serveGame(req, res, isRoom) {
-  fs.readFile(path.join(PUBLIC_DIR, 'logic.html'), (err, html) => {
+  fs.readFile(path.join(PUBLIC_DIR, 'cards.html'), (err, html) => {
     if (err) {
       res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
       return res.end('Not found');
@@ -75,7 +76,7 @@ function serveGame(req, res, isRoom) {
       'Referrer-Policy': 'same-origin',
       'X-Content-Type-Options': 'nosniff',
       'Content-Security-Policy': "frame-ancestors 'none'",
-      // /logic is the page worth indexing. A room code is not: every room is
+      // /cards is the page worth indexing. A room code is not: every room is
       // the same markup and the code stops working within the hour.
       ...(isRoom ? { 'X-Robots-Tag': 'noindex, follow' } : {}),
     });
@@ -155,17 +156,27 @@ function serveClosed(req, res) {
  * request, so the room server knows to stop looking for a file to serve.
  *
  * Called before the static block, which serves anything in public/ by name —
- * so /logic must be decided here, or the game page would be reachable at two
+ * so /cards must be decided here, or the game page would be reachable at two
  * addresses and only one of them would know about room codes.
  */
 export function handle(req, res, url) {
   const pathname = url.pathname;
   const isApi = pathname === '/api/site' || pathname.startsWith('/api/site/');
   const isHall = pathname === '/' || pathname === '';
-  const isGame = pathname === '/logic' || pathname.startsWith('/logic/');
-  if (!isApi && !isHall && !isGame) return false;
+  const isGame = pathname === '/cards' || pathname.startsWith('/cards/');
+  // The game answered at /logic for a day before it was named properly, and
+  // room links were shared in that day. Whatever shape they were, the tail is
+  // the same on both sides, so the whole of it is handed straight over and
+  // the block below decides whether it was a room code.
+  const wasGame = pathname === '/logic' || pathname.startsWith('/logic/');
+  if (!isApi && !isHall && !isGame && !wasGame) return false;
 
   const method = req.method;
+
+  if (wasGame) {
+    redirect(res, `/cards${pathname.slice('/logic'.length)}`, 301);
+    return true;
+  }
 
   // --- the table, first, because none of it depends on the ledger
   if (isGame) {
@@ -173,7 +184,7 @@ export function handle(req, res, url) {
       send(res, 405, { error: 'Method not allowed.' });
       return true;
     }
-    const rest = pathname.slice('/logic'.length).replace(/^\/+/, '');
+    const rest = pathname.slice('/cards'.length).replace(/^\/+/, '');
     if (!rest) {
       serveGame(req, res, false);
       return true;
@@ -182,7 +193,7 @@ export function handle(req, res, url) {
     // under here is somebody guessing, and is sent back to the table rather
     // than served a page that will ignore the address it arrived at.
     if (rest.includes('/') || !ROOM_CODE_RE.test(rest)) {
-      redirect(res, '/logic');
+      redirect(res, '/cards');
       return true;
     }
     serveGame(req, res, true);
@@ -205,7 +216,7 @@ export function handle(req, res, url) {
     // dropped, because somebody is holding that link and expects a table.
     const code = url.searchParams.get('code');
     if (code && ROOM_CODE_RE.test(code)) {
-      redirect(res, `/logic/${code.toUpperCase()}`, 301);
+      redirect(res, `/cards/${code.toUpperCase()}`, 301);
       return true;
     }
     servePage(req, res);

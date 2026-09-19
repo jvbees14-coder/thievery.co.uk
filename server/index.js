@@ -92,10 +92,10 @@ function serve(req, res) {
   // reason: /polls must not fall through to the static block either.
   if (Polls.handle(req, res, url)) return;
 
-  // Then the front hall, which owns "/" and the card table at /logic. It has
+  // Then the front hall, which owns "/" and the card table at /cards. It has
   // to come before the static block for the same reason: that block serves
   // anything in public/ by name and knows nothing about room codes, so the
-  // address /logic/ABCD would be a 404 rather than a table.
+  // address /cards/ABCD would be a 404 rather than a table.
   if (Site.handle(req, res, url)) return;
 
   let file = safePath(url.pathname);
@@ -120,12 +120,12 @@ function serve(req, res) {
     if (statErr || !stat.isFile()) {
       // A bare room link like /ABCD is where the game used to live, and every
       // one of those links is in somebody's messages. They are sent on to
-      // /logic/ABCD permanently rather than dropped; the page itself still
+      // /cards/ABCD permanently rather than dropped; the page itself still
       // reads a code out of that shape of address, so a redirect that is
       // cached or skipped costs nothing either.
       const bare = file.slice(1);
       if (Site.ROOM_CODE_RE.test(bare)) {
-        res.writeHead(301, { Location: `/logic/${bare.toUpperCase()}`, 'Cache-Control': 'no-store' });
+        res.writeHead(301, { Location: `/cards/${bare.toUpperCase()}`, 'Cache-Control': 'no-store' });
         return res.end();
       }
       res.writeHead(404);

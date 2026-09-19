@@ -50,7 +50,7 @@ One server, a hall and two rooms off it:
 | Address | What answers | Login |
 |---|---|---|
 | `/` | `server/site.js` — the menu, or the door | required |
-| `/logic`, `/logic/ABCD` | `server/site.js` — the card game | never |
+| `/cards`, `/cards/ABCD` | `server/site.js` — the card game | never |
 | `/flashcards` | `server/flashcards.js` | required |
 | `/polls` | `server/polls.js` | required |
 | `/api/site/…` | the door, and the menu's figures | mostly |
@@ -59,7 +59,7 @@ One server, a hall and two rooms off it:
 | anything else | the static block in `server/index.js`, out of `public/` | no |
 
 **The card game** (`server/game.js`, `bot.js`, `deal.js`, `powerups.js`,
-`index.js`; `public/logic.html`, `app.js`) is deliberately stateless. Rooms live
+`index.js`; `public/cards.html`, `app.js`) is deliberately stateless. Rooms live
 in a `Map` in `server/index.js`, survive a refresh, and are forgotten an hour
 after the last person disconnects. Nothing about a room is written to disk,
 and a room code stops working within the hour.
@@ -75,6 +75,19 @@ changes exactly one thing at the table: the rounds are added up afterwards
 that has to outlive the process. **The board** (`server/polls.js`;
 `public/polls.{js,css}`) is the same shape and much smaller — see "The board".
 
+**Two names that are not the same thing.** The card game is called *Cards* and
+is served at `/cards` out of `public/cards.html`. `server/cards.js` is nothing
+to do with it — it is the flashcards' appraisal, and `site.js` imports it as
+`Cards` while also serving `/cards`. Check which one a line means before
+changing it.
+
+**Three generations of room link** all have to keep working, because each was
+live and shared: `/ABCD` (the game was the root), `/?code=ABCD` (the invite
+link then), and `/logic/ABCD` (the day it was called Logic). The first is
+handled by the static block's catch-all in `index.js`, the other two by
+`Site.handle`, and all three land on `/cards/ABCD` with a 301.
+`test/site.test.js` checks every one of them.
+
 **What they share** is the membership: `accounts.js` and `store.js` underneath,
 `plumbing.js` (bodies, cookies, who is asking) and `door.js` (register, login,
 logout, account settings) on top. There are two doors onto one membership —
@@ -89,7 +102,7 @@ They meet in three places in `server/index.js`:
   handler and returns `true` if it took the request, then `Polls.handle` on
   the same terms.
 - `Site.handle(req, res, url)` is called after them, and owns `/` and
-  `/logic`. All three must stay ahead of the static-file block, which serves
+  `/cards`. All three must stay ahead of the static-file block, which serves
   anything in `public/` by name and knows nothing about room codes.
 - `await Flashcards.start()` runs before `server.listen()`, and is what opens
   the store that the hall then depends on.
@@ -98,7 +111,7 @@ A failure in the flashcards half must never take the game down. `start()`
 catches its own errors and latches an outage; see "The never-overwrite rule".
 The hall is not so lucky and is not meant to be: it asks for a name, and only
 the ledger can say whose a name is, so `Site.handle` serves a 503 at `/` while
-`Store.available()` is false — pointing at `/logic`, which is untouched.
+`Store.available()` is false — pointing at `/cards`, which is untouched.
 
 ## The game: hands are not players
 
@@ -223,7 +236,7 @@ is worth relative to new ones.
   `public/`, because anything in `public/` is served to anyone who asks for it
   by name. That is both the flashcards app and the hall's menu; a logged-out
   visitor gets the door page at the same URL. The game page is the exception
-  and stays in `public/logic.html`, because it is not behind anything.
+  and stays in `public/cards.html`, because it is not behind anything.
 - The admin is whoever matches `THIEVERY_ADMIN_USERNAME`, named by the
   environment so the name cannot be claimed by whoever registers first.
   `/api/flashcards/admin/*` answers **404** to everyone else, not 403.

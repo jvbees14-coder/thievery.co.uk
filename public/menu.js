@@ -80,10 +80,10 @@
     $('#who').textContent = user.displayName;
 
     // --- the tiles
-    $('#tile-logic-figure').textContent = play.rounds
+    $('#tile-table-figure').textContent = play.rounds
       ? `${plural(play.rounds, 'round', 'rounds')} played · ${plural(play.wins, 'win', 'wins')}`
       : 'No rounds on the ledger yet';
-    $('#tile-cards-figure').textContent = collection.count
+    $('#tile-flashcards-figure').textContent = collection.count
       ? `${plural(collection.count, 'card', 'cards')} · worth ${collection.worth.toLocaleString('en-GB')}`
       : 'Three cards are waiting to be looked at';
     $('#tile-stats-figure').textContent = play.rounds
@@ -101,7 +101,7 @@
     // A door that is shut says so rather than waiting to be pressed.
     $('#tile-flashcards').classList.toggle('is-shut', !rooms.flashcards);
     $('#nav-flashcards').classList.toggle('is-shut', !rooms.flashcards);
-    if (!rooms.flashcards) $('#tile-cards-figure').textContent = 'The room is closed for a moment';
+    if (!rooms.flashcards) $('#tile-flashcards-figure').textContent = 'The room is closed for a moment';
     $('#tile-polls').classList.toggle('is-shut', !rooms.polls);
     $('#nav-polls').classList.toggle('is-shut', !rooms.polls);
     if (!rooms.polls) $('#tile-polls-figure').textContent = 'The board is closed for a moment';

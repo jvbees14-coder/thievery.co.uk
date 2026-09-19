@@ -1,7 +1,7 @@
 {
   "name": "Thievery.co.uk",
   "short_name": "Thievery",
-  "description": "Logic, a free online deduction card game for 1 to 12 players, and a members' room for flashcards and a lifetime record of every round won.",
+  "description": "Cards, a free online deduction card game for 1 to 12 players, and a members' room for flashcards and a lifetime record of every round won.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

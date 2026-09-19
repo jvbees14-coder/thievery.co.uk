@@ -1,7 +1,7 @@
 // The front hall, and the ledger behind it.
 //
 // This starts the real server against a throwaway data directory and checks
-// the two things the move to /logic turned on:
+// the two things the move to /cards turned on:
 //
 //   * Where everything now lives. The hall asks for a name, the card table
 //     does not, and every link that pointed at the old addresses still lands
@@ -236,31 +236,41 @@ async function run() {
     assert.equal((await stranger.page('/menu.html')).status, 404);
   });
 
-  await check('the card table is open to anybody at /logic', async () => {
-    const res = await stranger.page('/logic');
+  await check('the card table is open to anybody at /cards', async () => {
+    const res = await stranger.page('/cards');
     assert.equal(res.status, 200);
     assert.ok(res.html.includes('Create game'), 'expected the game page');
   });
 
-  await check('a room link under /logic serves the table', async () => {
-    const res = await stranger.page('/logic/ABCD');
+  await check('a room link under /cards serves the table', async () => {
+    const res = await stranger.page('/cards/ABCD');
     assert.equal(res.status, 200);
     assert.ok(res.html.includes('Create game'));
   });
 
-  await check('anything else under /logic goes back to the table', async () => {
-    const res = await stranger.page('/logic/nonsense');
+  await check('anything else under /cards goes back to the table', async () => {
+    const res = await stranger.page('/cards/nonsense');
     assert.equal(res.status, 302);
-    assert.match(res.location, /\/logic$/);
+    assert.match(res.location, /\/cards$/);
   });
 
-  await check('the old room links still land at a table', async () => {
+  // Three generations of room link, all of which are in somebody's messages.
+  await check('every older room link still lands at a table', async () => {
     const bare = await stranger.page('/ABCD');
-    assert.equal(bare.status, 301);
-    assert.match(bare.location, /\/logic\/ABCD$/);
+    assert.equal(bare.status, 301, 'a link from before the game left the root');
+    assert.match(bare.location, /\/cards\/ABCD$/);
+
     const query = await stranger.page('/?code=abcd');
     assert.equal(query.status, 301, 'a pre-move invite link should be sent on');
-    assert.match(query.location, /\/logic\/ABCD$/);
+    assert.match(query.location, /\/cards\/ABCD$/);
+
+    const named = await stranger.page('/logic/ABCD');
+    assert.equal(named.status, 301, 'a link from the day it was called Logic');
+    assert.match(named.location, /\/cards\/ABCD$/);
+
+    const bareNamed = await stranger.page('/logic');
+    assert.equal(bareNamed.status, 301);
+    assert.match(bareNamed.location, /\/cards$/);
   });
 
   await check('the flashcards room is where it was', async () => {
