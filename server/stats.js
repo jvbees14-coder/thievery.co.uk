@@ -50,8 +50,29 @@ export function blank() {
     seats: Object.fromEntries(SEAT_COUNTS.map((n) => [n, pair()])), // by table size
     teams: pair(),  // four hands played as partnerships
     shared: pair(), // rounds where somebody else was playing your hand too
+    // --- the battle room, which is a different game entirely
+    battle: battleBlank(),
   };
 }
+
+// The revision room's figures. Kept in their own object rather than spread
+// across the record above, because nothing here is comparable with anything
+// there: a round at the card table is a round of deduction against people,
+// and a card in the battle room is one answer typed against one back. Putting
+// them in one column would produce a total that means nothing.
+//
+// `points` and `cards` are both kept so that an average can be worked out
+// honestly. Storing the average instead would make a twenty-card match and a
+// five-card match weigh the same, which is how an average of averages lies.
+const battleBlank = () => ({
+  matches: 0, // matches played through to the end
+  duels: 0,   // of those, the ones against at least one other person
+  wins: 0,    // of those, the ones won
+  solo: 0,    // revision runs, which nobody can win or lose
+  cards: 0,   // cards answered, across everything
+  points: 0,  // marks earned across those cards, out of 100 each
+  best: 0,    // the best single card mark there has ever been
+});
 
 // A record written before a field existed is still somebody's record, so it
 // is filled in rather than replaced. Anything missing arrives at nought,
@@ -62,6 +83,10 @@ function fill(mine) {
     if (mine[key] === undefined) mine[key] = value;
   }
   for (const n of SEAT_COUNTS) mine.seats[n] ??= pair();
+  // The same thought one level down. A record written while the battle room
+  // had fewer figures than it has now is still somebody's record, and the
+  // fields it never knew about arrive at nought rather than undefined.
+  mine.battle = { ...battleBlank(), ...(mine.battle || {}) };
   return mine;
 }
 
@@ -131,6 +156,45 @@ export function record(userId, { won = false, versus = false, seats = 0, teams =
 }
 
 /**
+ * A match in the battle room has ended with this account in it.
+ *
+ * The rules are the card table's, for the same reasons. A solo run is not a
+ * duel and is not counted as one — one person answering their own flashcards
+ * would otherwise be an unbroken winning streak — and an account is counted
+ * once per match however many tabs it has open, which the room server sees to
+ * before it calls this.
+ *
+ * `points` is the sum of the card marks, each out of 100, and `cards` is how
+ * many of them there were. Both are needed: the useful figure is the average
+ * mark, and it has to be worked out over every card ever answered rather than
+ * over the matches they fell in.
+ */
+export function recordBattle(userId, { solo = false, won = false, cards = 0, points = 0, best = 0 } = {}) {
+  if (!userId || !available()) return;
+  const mine = recordFor(userId);
+  const b = mine.battle;
+
+  b.matches += 1;
+  if (solo) {
+    b.solo += 1;
+  } else {
+    b.duels += 1;
+    if (won) b.wins += 1;
+  }
+  b.cards += cards;
+  b.points += points;
+  if (best > b.best) b.best = best;
+
+  // A match is a thing the account did, so it moves the same two dates the
+  // card table moves. The round counters are deliberately left alone: a
+  // battle is not a round, and adding it to `rounds` would quietly change
+  // every win rate on the site.
+  if (!mine.first) mine.first = Date.now();
+  mine.last = Date.now();
+  touch();
+}
+
+/**
  * What the menu is told. A fresh account has never played anything, which is
  * a blank record rather than an absence: the page prints zeros and says so in
  * words, and has nothing to special-case.
@@ -163,6 +227,14 @@ export function forUser(userId) {
     // disagree about what counts as a rate with no rounds behind it.
     rate: mine.rounds ? mine.wins / mine.rounds : 0,
     versusRate: mine.versus ? mine.versusWins / mine.versus : 0,
+    battle: {
+      ...mine.battle,
+      // The average mark per card, which is the figure the revision room is
+      // actually for. Nought cards answered is nought rather than a division
+      // nobody can print.
+      average: mine.battle.cards ? mine.battle.points / mine.battle.cards : 0,
+      duelRate: mine.battle.duels ? mine.battle.wins / mine.battle.duels : 0,
+    },
   };
 }
 

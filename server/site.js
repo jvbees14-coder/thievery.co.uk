@@ -35,7 +35,7 @@ import * as Door from './door.js';
 import * as Stats from './stats.js';
 import * as Store from './store.js';
 import * as Flashcards from './flashcards.js';
-import * as Polls from './polls.js';
+import * as Battle from './battle.js';
 import { send, fail, originOk, currentUser, requireUser } from './plumbing.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -103,18 +103,20 @@ function snapshot(user) {
       worth: cards.reduce((n, c) => n + c.value, 0),
       limit: Cards.CARDS_PER_USER,
     },
-    // Enough of the board for a tile to say something true about it, and to
-    // say whether the door is open at all: the one rule in the polls room is
-    // that you answer before you ask, and a menu that does not mention it
-    // sends people to a form they are about to be refused by.
-    polls: {
-      answered: Polls.answeredCount(user.id),
-      asked: Polls.pollsOf(user.id).length,
-      open: Polls.all().length,
-      mayAsk: Polls.mayAsk(user),
+    // Enough of the battle room for a tile to say something true about it.
+    // `owned` is the collection, not the record: it is what decides whether a
+    // battle on your own cards is open to you at all, so the menu can say
+    // which of the two kinds you are ready for rather than sending you to a
+    // lobby to find out. It is deliberately not called `cards` — the record
+    // already has a `cards`, meaning how many you have answered, and one
+    // field standing for both figures is a tile that lies about one of them.
+    battle: {
+      ...Stats.forUser(user.id).battle,
+      owned: cards.length,
+      rooms: Battle.openRooms(),
     },
     // A tile that leads somewhere shut should say so before it is pressed.
-    rooms: { flashcards: Flashcards.isOpen(), polls: Polls.isOpen() },
+    rooms: { flashcards: Flashcards.isOpen(), battle: Battle.isOpen() },
   };
 }
 

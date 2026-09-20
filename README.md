@@ -17,8 +17,8 @@ name. Behind it are the things that only make sense kept against somebody:
   wins over people counted separately from wins over the house.
 - **[Flashcards](#flashcards)** — write a card, have it appraised and minted,
   print it, trade it.
-- **[The board](#polls)** — put a question to the room, and answer everybody
-  else's.
+- **[Battle](#battle)** — a card, front first: type what is on the back and
+  the house marks how close you got. Duel somebody, or revise alone.
 - **Your account** — what the table calls you, and the keys to it.
 
 Signing in changes exactly one thing at the card table: the rounds are added
@@ -337,39 +337,84 @@ a breakdown that does not add up.
 Test mode — the **Test67** room, where one person plays every seat — is not
 counted at all, for the obvious reason.
 
-## Polls
+## Battle
 
-<https://thievery.co.uk/polls> is the board. A poll is a question and two to
-six answers; anybody signed in may answer one. Asking one costs something:
+<https://thievery.co.uk/battle> is the revision room. A card is shown front
+first, you type what you think is on the back, and the house marks how close
+you got. That is all it is. What changes is who is doing it and what they are
+being asked.
 
-> **You have to have answered somebody else's question before you may ask one
-> of your own.**
+**Who is playing.** A **duel** is everybody in the room answering the same
+card at the same time, marked side by side; the most marks takes the match.
+**Solo** is the same run with nobody to lose to — which is the revision the
+room is really for, and the reason the clock can be turned off.
 
-That is the whole design of the room, and it is there because a board where
-asking is free fills up with questions nobody answers — asking is the fun part
-and answering is the work. Making the work the entry fee means every question
-up there was posted by somebody who had already done it, and a new member's
-first act is to answer rather than to add. Answering your own question does not
-count, for the obvious reason.
+**What you are asked.** Either a **house deck** — a fixed set the house keeps,
+the same for everybody — or **your own flashcards**, the ones you have written
+or traded for.
 
-The house is the exception, and has to be: with an empty board there is nothing
-to answer, so without it nobody could ever ask the first question.
+House decks come in two sorts, and the lobby says which is which before you
+start:
 
-Two things about how a poll behaves:
+- Two short **written** decks, where you type the answer and it is marked out
+  of 100 like any flashcard.
+- Fifty-seven **subject papers** — about 14,000 four-option questions, from
+  anatomy and astronomy to jurisprudence and world religions. You pick one of
+  four, and there is no "close" about it: right or wrong. The options are
+  shuffled every time, so the answer is never in the same place twice.
 
-- **The split is hidden until you have answered.** You can see how *many*
-  people have answered — that gives nothing away, and it is what makes a
-  question look worth answering — but not which way they went. Seeing the room
-  before you choose is how a poll stops measuring anything.
-- **An answer is final, and secret.** You cannot change it: a poll whose
-  numbers can go down as well as up is one where the last person to change
-  their mind decides it. And who answered what is never sent anywhere — not to
-  the person who asked, not to the admin. What leaves the server is a tally
-  and your own answer.
+The papers are the [MMLU set](https://github.com/hendrycks/test) of Hendrycks
+et al., used under the MIT licence.
 
-You can take your own question down, which takes every answer to it with it.
-The house can take down anybody's. Twenty questions apiece is the ceiling, so
-one member cannot be the whole board.
+A room is four characters. Open one and share the code, or start it alone.
+Nothing about a room is written down and it is forgotten an hour after the
+last person leaves, exactly like a table at the card game.
+
+### How a typed answer is marked
+
+This is for the cards you type at — your own flashcards and the two written
+decks. A four-option question is simply right or wrong.
+
+Out of 100, on how close what you typed is to the back of the card. It is
+trying to mark the *meaning*, and it gives ground in every direction that
+costs nothing:
+
+- **Your own words are fine.** Word order does not decide it, so "ATP is made
+  by the mitochondria" and "Mitochondria make ATP" are the same answer.
+  Following the card's own phrasing earns a little back but can never cost
+  you anything.
+- **A typo is not a wrong answer.** "mitochondira" is marked as somebody who
+  knows it, with a small deduction.
+- **Capitals, punctuation and accents are not being marked.** "resume" and
+  "résumé" are one word.
+- **A figure is either right or it is wrong.** 1066 and 1067 are one
+  character apart and not the same answer at all, and a card whose point is
+  the date will say so. "Three" and "3" are the same figure, though.
+- **Saying the opposite is not half-remembering.** An answer that negates the
+  card cannot pass, however much of the wording it gets right.
+- **Padding does not pay.** Answering with every word you can think of scores
+  badly on purpose: the mark weighs what you left out and what you invented
+  together, so a wall of text sinks on the second of those.
+
+After every card you are shown the back, everybody's answer, and what the
+house was looking for — which of the card's words it found in yours, which it
+missed, and which of yours were not on the card. At the end of a solo run you
+get every card back with its answer, which is the half of the room that is
+actually revision.
+
+### Whose cards, in a duel
+
+A duel on somebody's own collection would otherwise be a duel against the
+person who wrote the answers. So a battle on members' flashcards deals **an
+equal share from every collection in the room** and shuffles them together. A
+card from each in turn, round by round, so a big collection cannot crowd out
+a small one — and shuffled at the end, so you cannot tell whose card is
+coming next. Whatever knowing your own cards is worth, everybody gets the
+same amount of it.
+
+Marks decide a match. The clock only ever breaks a tie: the room grades how
+close your answer was to the card, and a duel won by the faster typist would
+be grading something else.
 
 ## Flashcards
 
@@ -516,8 +561,8 @@ using signed in.
 
 ### Where the flashcards are kept
 
-Everything — accounts, cards, the trading pool, the ledger, the polls and the
-lifetime records — is one JSON document, held in memory and written back a
+Everything — accounts, cards, the trading pool, the ledger and the lifetime
+records — is one JSON document, held in memory and written back a
 moment after it changes. Where it is written back to depends on the
 environment, and the two cases are the same shape: read one blob of text,
 write one blob of text.

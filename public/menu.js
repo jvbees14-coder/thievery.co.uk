@@ -74,7 +74,7 @@
   // --- drawing ---------------------------------------------------------------
 
   function render() {
-    const { user, play, collection, polls, rooms } = state;
+    const { user, play, collection, battle, rooms } = state;
 
     $('#hello').textContent = user.displayName;
     $('#who').textContent = user.displayName;
@@ -90,21 +90,25 @@
       ? `${percent(play.rate, play.rounds)} of them won · best run of ${play.best}`
       : 'Sit down at a table and it starts counting';
     $('#tile-account-figure').textContent = `Signed in as ${user.username}`;
-    // The board's tile says which side of its one rule you are on, because
-    // being told that on the menu is better than being told it by a form.
-    $('#tile-polls-figure').textContent = !polls.open
-      ? 'Nothing on the board yet'
-      : polls.mayAsk
-        ? `${plural(polls.open, 'question', 'questions')} · you may ask one`
-        : `${plural(polls.open, 'question', 'questions')} · answer one to earn an ask`;
+    // The battle tile says what you have done there rather than what is
+    // waiting: a room is four characters somebody has to give you, so there
+    // is no board of open matches to count. Somebody who has never played is
+    // told which kinds of battle they are already ready for, because a
+    // collection of three cards is enough for both and that is not obvious.
+    $('#tile-battle-figure').textContent = battle.matches
+      ? `${plural(battle.cards, 'card', 'cards')} answered · ${Math.round(battle.average)} out of 100 on average` +
+        (battle.duels ? ` · ${percent(battle.duelRate, battle.duels)} of duels won` : '')
+      : battle.owned
+        ? `${plural(battle.owned, 'card', 'cards')} to revise on, or take a house deck`
+        : 'House decks are ready — or write a card and revise on your own';
 
     // A door that is shut says so rather than waiting to be pressed.
     $('#tile-flashcards').classList.toggle('is-shut', !rooms.flashcards);
     $('#nav-flashcards').classList.toggle('is-shut', !rooms.flashcards);
     if (!rooms.flashcards) $('#tile-flashcards-figure').textContent = 'The room is closed for a moment';
-    $('#tile-polls').classList.toggle('is-shut', !rooms.polls);
-    $('#nav-polls').classList.toggle('is-shut', !rooms.polls);
-    if (!rooms.polls) $('#tile-polls-figure').textContent = 'The board is closed for a moment';
+    $('#tile-battle').classList.toggle('is-shut', !rooms.battle);
+    $('#nav-battle').classList.toggle('is-shut', !rooms.battle);
+    if (!rooms.battle) $('#tile-battle-figure').textContent = 'The room is closed for a moment';
 
     // --- the record
     $('#stats-lede').textContent = play.rounds

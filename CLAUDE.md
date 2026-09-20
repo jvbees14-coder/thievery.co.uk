@@ -12,7 +12,7 @@ npm run test:source    # the source as bytes: no literal control characters
 npm run test:game      # the card game: real server, real clients, whole rounds played out
 npm run test:powerups  # the five/six-hand power-up rules, played against game.js directly
 npm run test:site      # the front hall, the addresses, and the lifetime record
-npm run test:polls     # the board, and the rule about who may ask a question
+npm run test:battle    # the marker, a match played out, and the one rule about the back
 npm run test:flashcards # the flashcards room over HTTP
 npm run test:r2        # the storage layer, against a stub S3 client
 npm run r2:check       # are the four R2_* variables real? needs them in the environment
@@ -45,17 +45,17 @@ Windows `child.kill('SIGTERM')` is a hard kill and nothing is flushed at all.
 
 ## The shape of the site
 
-One server, a hall and two rooms off it:
+One server, a hall and three rooms off it:
 
 | Address | What answers | Login |
 |---|---|---|
 | `/` | `server/site.js` — the menu, or the door | required |
 | `/cards`, `/cards/ABCD` | `server/site.js` — the card game | never |
 | `/flashcards` | `server/flashcards.js` | required |
-| `/polls` | `server/polls.js` | required |
+| `/battle`, `/battle/ABCD` | `server/battle.js` | required |
 | `/api/site/…` | the door, and the menu's figures | mostly |
 | `/api/flashcards/…` | the collection, the post, the panel | yes |
-| `/api/polls/…` | the board | yes |
+| *(the battle room has no API — all of it is socket)* | | |
 | anything else | the static block in `server/index.js`, out of `public/` | no |
 
 **The card game** (`server/game.js`, `bot.js`, `deal.js`, `powerups.js`,
@@ -72,8 +72,13 @@ changes exactly one thing at the table: the rounds are added up afterwards
 
 **The flashcards room** (`server/flashcards.js`, `cards.js`, `trading.js`;
 `public/flashcards*.{js,css}`) is the opposite: real logins, and a document
-that has to outlive the process. **The board** (`server/polls.js`;
-`public/polls.{js,css}`) is the same shape and much smaller — see "The board".
+that has to outlive the process.
+
+**The battle room** (`server/battle.js`, `grade.js`, `decks.js`;
+`public/battle.{js,css}`) is a third shape again, and the one that catches
+people out: it is behind the login like the flashcards, but its rooms are
+memory like the card game's, and it has no HTTP API at all. See "The battle
+room".
 
 **Two names that are not the same thing.** The card game is called *Cards* and
 is served at `/cards` out of `public/cards.html`. `server/cards.js` is nothing
@@ -99,8 +104,8 @@ is, is written on the card as `data-api` and `data-next`.
 They meet in three places in `server/index.js`:
 
 - `Flashcards.handle(req, res, url)` is called **first** in the request
-  handler and returns `true` if it took the request, then `Polls.handle` on
-  the same terms.
+  handler and returns `true` if it took the request, then `Battle.handle` on
+  the same terms — though the battle room only ever serves its page that way.
 - `Site.handle(req, res, url)` is called after them, and owns `/` and
   `/cards`. All three must stay ahead of the static-file block, which serves
   anything in `public/` by name and knows nothing about room codes.
@@ -292,42 +297,150 @@ can then be short of the total, which is why `forUser()` also returns
 breakdown that does not add up. `test/site.test.js` plants a pre-modes record
 and checks the totals survive.
 
-## The board
+## The battle room
 
-`polls.js`, holding both the rules and the routes — there is not enough of it
-to be worth the split the flashcards half has. One row per poll under `polls`
-in the document.
+`battle.js` holds the rooms and the rules, `grade.js` is the marker, and
+`decks.js` is the house decks. A card is shown front first, somebody types
+what they think is on the back, and the marker scores it. That is the whole
+room — what changes is who is doing it (a **duel** between everybody present,
+or **solo** revision) and where the cards come from (**your own collection**,
+or a **house deck**).
 
-The rule it exists for: **you have to have answered somebody else's question
-before you may ask one of your own.** `mayAsk()` is the only thing that
-decides, and `createPoll()` is the only caller that matters. Three things
-about it are load-bearing:
+**Its rooms are the card game's, not the flashcards'.** A battle room is a
+four-character code in a `Map` in `battle.js`, nothing about one is written
+down, and a restart takes every room with it. So a battle can never be the
+thing that endangers the stored document. What it *does* need that document
+for is the login and the collections, which is why `isOpen()` is `available()`
+and the whole room shuts when the store does.
 
-- **Your own answers to your own questions do not count.** `answeredCount()`
-  filters on `askedBy !== userId`, which is what stops the rule being a
-  formality somebody satisfies in ten seconds.
-- **The admin is exempt.** Without that, an empty board is a room nobody can
-  ever unlock: with nothing to answer, nobody can earn the right to ask. The
-  house puts the first question up, exactly as it mints the mythics.
-- **The page only shows the rule; the server enforces it.** `/polls` hides the
-  form when `mayAsk` is false, but posting anyway gets a 403 with the reason.
+**It has no HTTP API.** `Battle.handle` serves the page, the door and the
+closed notice, and that is all it does. Everything else is a live thing
+happening to several people at once and goes over the socket — the card
+game's socket, shared rather than a second server. Every message either way is
+prefixed `battle:`, the context hangs off `ws.battle` rather than `ws.ctx`,
+and `Battle.socket()` is asked first in the message handler and returns true
+if it took it. A battle cannot reach the table's state and a table cannot
+reach a battle's.
 
-Two smaller invariants, both easy to lose in a refactor of `publicPoll()`:
+### The one rule
 
-- **A ballot is secret.** `poll.votes` maps account id to option id and exists
-  only so a second vote can be refused. It must never leave the module — not
-  to the asker, not to the panel, not to the admin. What goes out is a tally,
-  your own answer, and the asker's display name. `test/polls.test.js` searches
-  a snapshot for every account id the suite has opened.
-- **The split is held back until you have answered.** `votes` on an option is
-  `null`, not `0`, for somebody who has not — a page cannot draw a bar at zero
-  and pass it off as a result. `total` is always sent, because how many have
-  answered gives nothing away and is what makes a question look worth
-  answering.
+**The back of a card is never sent to anybody while the card is still being
+answered.** `viewFor` is the only thing that decides, exactly as
+`Game.viewFor` is at the card table: while `phase` is `'asking'`, `card.back`
+is null, `card.answerId` is null, `marks` is null, and `answered` carries who
+has laid an answer down and never what they said. A four-option card has its
+answer on screen by construction — it is one of the four — so what protects it
+is the *id*: nothing in an open card's message says which option carries it,
+and an option object holds its id and its text and nothing else. A browser holding the answer is a browser that can
+be asked for it, and the room is worthless the moment that is true.
 
-An answer is final, and deleting an account takes its questions *and* its
-answers to everybody else's with it (`Polls.forgetUser`, called from the
-panel) — a tally should count the people who are still here.
+`test/battle.test.js` keeps every message every client receives and searches
+the lot for the back of a card that was still open when it was sent — both
+the declared field and the text itself, anywhere in the message under any
+key. One thing is scrubbed before that search and only one: `yours`, a
+player's own answer read back to them, because somebody who typed the right
+answer put it there themselves. Break the rule and the suite names the card.
+
+### The marker
+
+`grade.js` is pure — two strings in, a mark out, nothing read and nothing
+written — which is why most of what "fair" means here is testable as
+arithmetic. Its own header explains every dial; the shape is a weighted
+F-measure over fuzzily matched word stems, leaning on recall, lifted a little
+by following the card's phrasing, and capped hard by two kinds of
+contradiction. What matters from outside:
+
+- **Word order does not decide it**, and phrasing can only ever *lift* a
+  mark, never lower one. A right answer in your own words is a right answer.
+- **Padding does not pay.** The precision half of the F-measure is the only
+  thing standing between this room and a player who answers every card with
+  the dictionary, so think hard before weakening it.
+- **A typo is forgiven; a figure is not.** Numbers match exactly or not at
+  all, and an answer stating a *different* figure from the card is capped —
+  "Hastings was in 1067" is not a near miss. Written-out numbers are read as
+  digits, so "three" and "3" agree.
+- **Negation is checked separately**, and an answer that inverts the card is
+  capped below a pass. Note that `not` is a **negator**, not a stop word: it
+  carries full weight, and tidying it into `STOP` would be a real bug.
+- **Stop words are weighed light, not dropped.** Dropping them is the obvious
+  refactor and it is wrong — but so is weighing them heavily, which lets a
+  card whose answer is one word be passed by getting that word wrong.
+
+Changing any dial in that file changes every mark on the site, including the
+ones already added up in `stats`.
+
+### Two kinds of card
+
+A deck says which kind it deals, and every card in it is that kind:
+
+- **`text`** — a front and a back. You type; `grade.js` marks how close you
+  got, out of 100. A member's own flashcards are always this.
+- **`choice`** — a front and four options, one right. You pick. It is 100 or
+  nought, and it is deliberately **not** run through the marker: "close" is
+  something an answer can be and a choice cannot.
+
+The second kind exists because of what is in `server/decks/`. Flattening those
+into `text` cards was the obvious move and it is the wrong one — half of those
+questions are "which of the following…", and a question that cannot be read
+without its options is not a flashcard, it is a broken one.
+
+Both kinds come out of `markOf` in the same shape, so the totals, standings,
+reveal and record all read one sort of mark. A choice's working (`found`,
+`missed`, `extra`) is empty, because there is none to show.
+
+### The decks
+
+`decks.js` is fixed sets in the source — not in the document, so a house deck
+cannot be traded, lost with an account, or put out of reach by a bucket. There
+are two sources:
+
+- **Hand-written**, in `WRITTEN` at the top of the file. Two small `text`
+  decks; the battle suite plays against them.
+- **`server/decks/*.csv`**, 57 subject papers of four-option questions — the
+  MMLU set of Hendrycks et al., MIT licensed — read at boot as published, so a
+  deck can be checked against its source with `diff`. About 150ms and 14,000
+  cards. They live under `server/` and not beside the tests **because the
+  Dockerfile copies `server/` and `public/` and nothing else**; a deck the
+  image does not carry is a deck nobody can play.
+
+An id is load-bearing and must never be reused or renamed, because a room being
+set up holds that string. CSV decks are `mmlu-` plus the hyphenated subject.
+`Decks.check()` runs at boot and stops the process on a malformed deck rather
+than letting it turn up mid-match as a card no answer can score against.
+
+Three things about the dealing worth knowing:
+
+- **A choice card's options are shuffled when the match is dealt**, in
+  `asChoiceCard`, not in the deck. A set where the answer is often "C" teaches
+  people to pick C — and two players on the same card must see the same screen,
+  so the shuffle is per match, never per viewer.
+- **Each option carries its own id**, so what somebody picked cannot be knocked
+  sideways by the list being reordered under them. An id that is not on the
+  card is *refused*, not marked wrong: it means the page and the room disagree
+  about what is on screen, and scoring that as nought would hide a real fault.
+- **`pick()`, not `shuffled()`, draws a preset hand.** The papers run to 1,534
+  questions and a match wants ten; a partial Fisher-Yates costs ten steps
+  rather than sorting the deck, and the cards are cut to length before they are
+  built rather than after.
+
+### Fairness in a duel on members' own cards
+
+The obvious way to build this is the wrong one: a duel on the challenger's
+collection is a duel the challenger wrote the answers to. So `dealFrom` takes
+**an equal share from every player's collection** — a card from each in turn,
+round by round, so that forty cards do not crowd out three — and shuffles the
+lot at the end, so whose card is whose cannot be read off the order they
+arrive in. Everybody carries the same edge, and the lobby says so on the page
+rather than only here.
+
+### Two smaller things
+
+- **A card is not left open by somebody who has gone.** `allAnswered` counts
+  only the players still connected, and a disconnect asks the question again
+  — or a duel stalls forever on somebody who shut their laptop.
+- **Marks decide a match; the clock only breaks a tie.** The room grades an
+  answer on how close it is to the card, and a duel won by the faster typist
+  would be grading something else.
 
 ## Environment
 

@@ -1,0 +1,840 @@
+// The battle room: the marker, the rooms, and the one thing that must never
+// leak.
+//
+// Three suites in one file, because they are three views of the same claim.
+//
+//   * **The marker**, driven directly. `grade.js` takes two strings and
+//     returns a number, so it can be checked the way arithmetic is checked —
+//     no server, no socket, no randomness. Most of what "fair" means on this
+//     site is asserted here: a reworded answer scores like a right one, a
+//     padded one does not, a typo is forgiven, a figure is not, and an answer
+//     that negates the card is capped below a pass.
+//   * **A match**, played out over a real socket against a real server, solo
+//     and as a duel, on a house deck and on the players' own collections.
+//   * **The one rule.** Every message every client receives is kept, and the
+//     whole lot is searched at the end for the back of a card that was still
+//     open when it was sent. A browser that has been handed the answer is a
+//     browser that can be asked for it, and no amount of care in the page
+//     could make up for the server sending it early.
+//
+//   npm run test:battle
+
+import { spawn } from 'node:child_process';
+import path from 'node:path';
+import fs from 'node:fs';
+import os from 'node:os';
+import assert from 'node:assert/strict';
+import { fileURLToPath } from 'node:url';
+import WebSocket from 'ws';
+import * as Grade from '../server/grade.js';
+import * as Decks from '../server/decks.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'thievery-battle-'));
+
+let PORT = 0;
+let child = null;
+
+function startServer() {
+  return new Promise((resolve, reject) => {
+    child = spawn(process.execPath, [path.join(__dirname, '..', 'server', 'index.js')], {
+      env: { ...process.env, PORT: '0', THIEVERY_DATA_DIR: DATA_DIR },
+      stdio: ['ignore', 'pipe', 'inherit'],
+    });
+    child.stdout.on('data', (d) => {
+      const at = String(d).match(/running at http:\/\/localhost:(\d+)/);
+      if (at) {
+        PORT = Number(at[1]);
+        resolve();
+      }
+    });
+    child.on('exit', (code) => reject(new Error(`server exited early (${code})`)));
+  });
+}
+
+let checks = 0;
+function check(what, fn) {
+  return Promise.resolve(fn()).then(() => {
+    checks += 1;
+    console.log('  ok  ' + what);
+  });
+}
+
+// --- a browser, more or less -----------------------------------------------
+
+function visitor() {
+  const jar = new Map();
+  const cookieHeader = () => [...jar].map(([k, v]) => `${k}=${v}`).join('; ');
+  const call = async (base, route, { method = 'GET', body = null } = {}) => {
+    const headers = { Origin: `http://localhost:${PORT}` };
+    if (body) headers['Content-Type'] = 'application/json';
+    if (jar.size) headers.Cookie = cookieHeader();
+    const res = await fetch(`http://localhost:${PORT}${base}${route ? '/' + route : ''}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    for (const raw of res.headers.getSetCookie?.() || []) {
+      const [pair] = raw.split(';');
+      const at = pair.indexOf('=');
+      const name = pair.slice(0, at).trim();
+      const value = pair.slice(at + 1).trim();
+      if (value) jar.set(name, value);
+      else jar.delete(name);
+    }
+    return { status: res.status, body: await res.json().catch(() => ({})) };
+  };
+  return {
+    cookie: cookieHeader,
+    site: (route, opts) => call('/api/site', route, opts),
+    fc: (route, opts) => call('/api/flashcards', route, opts),
+    async page(where) {
+      const headers = jar.size ? { Cookie: cookieHeader() } : {};
+      const res = await fetch(`http://localhost:${PORT}${where}`, { headers, redirect: 'manual' });
+      return { status: res.status, location: res.headers.get('location'), html: await res.text() };
+    },
+  };
+}
+
+const ok = (res, what) => {
+  assert.equal(res.status, 200, `${what}: expected 200, got ${res.status} — ${res.body.error || ''}`);
+  return res.body;
+};
+
+async function member(name) {
+  const who = visitor();
+  const body = ok(
+    await who.site('register', {
+      method: 'POST',
+      body: { username: name, password: 'a-long-enough-password', displayName: name },
+    }),
+    `register ${name}`
+  );
+  who.id = body.user.id;
+  who.name = name;
+  return who;
+}
+
+// --- the audit ---------------------------------------------------------------
+//
+// Every message every client has ever received, with the state of the match
+// at the time. Searched at the end of the run rather than as it goes, so that
+// a leak is reported once with everything about it rather than as whichever
+// assertion happened to be nearest.
+
+const audit = [];
+let leaks = 0;
+let choiceMessages = 0;
+
+// The backs of every card the house decks hold. If any of these turns up in a
+// message sent while the card carrying it was still open, the room is broken.
+const allBacks = new Set();
+for (const d of Decks.catalog()) for (const c of Decks.deck(d.id).cards) allBacks.add(c.back);
+
+function watch(label, raw, msg) {
+  audit.push({ label, raw, msg });
+  if (msg.type !== 'battle:state') return;
+  const m = msg.state.match;
+  if (!m || m.phase !== 'asking') return;
+
+  // The declared contract, for both kinds of card: an open card says neither
+  // what its back is nor which of its options is right.
+  if (m.card.back !== null) {
+    leaks += 1;
+    console.error(`  LEAK  ${label}: card.back was sent while the card was open: ${JSON.stringify(m.card.back)}`);
+  }
+  if (m.card.answerId != null) {
+    leaks += 1;
+    console.error(`  LEAK  ${label}: card.answerId was sent while the card was open: ${JSON.stringify(m.card.answerId)}`);
+  }
+  // A four-option card has its answer on screen by construction — it is one
+  // of the four — so the text search below would be meaningless against it.
+  // What protects a choice is the id, which is checked just above, and the
+  // fact that nothing in the message says which option carries it.
+  if (m.card.kind === 'choice') {
+    choiceMessages += 1;
+    return;
+  }
+  // And the stronger claim: the text of the back is nowhere in the message at
+  // all, under any key, however it got there.
+  //
+  // One thing is taken out of the message before it is searched, and only
+  // one: `yours`, which is this player's own answer read back to them. A
+  // player who has typed the right answer has put the back of the card into
+  // their own message, and echoing it to them is not the room telling them
+  // anything they did not already know. Everything else stays in — the other
+  // players' marks especially, which is where a real leak would show.
+  const scrubbed = JSON.parse(raw);
+  if (scrubbed.state?.match?.yours) delete scrubbed.state.match.yours;
+  const text = JSON.stringify(scrubbed);
+  for (const back of allBacks) {
+    if (text.includes(back)) {
+      leaks += 1;
+      console.error(`  LEAK  ${label}: a card back appeared in an open-card message: ${JSON.stringify(back)}`);
+    }
+  }
+}
+
+// --- a battler ----------------------------------------------------------------
+
+class Battler {
+  constructor(who) {
+    this.who = who;
+    this.label = who.name;
+    this.state = null;
+    this.catalog = null;
+    this.errors = [];
+    this.waiters = [];
+  }
+
+  connect() {
+    return new Promise((resolve, reject) => {
+      this.ws = new WebSocket(`ws://localhost:${PORT}`, { headers: { Cookie: this.who.cookie() } });
+      this.ws.on('open', resolve);
+      this.ws.on('error', reject);
+      this.ws.on('message', (data) => {
+        const raw = data.toString();
+        const msg = JSON.parse(raw);
+        watch(this.label, raw, msg);
+        if (msg.type === 'battle:state') this.state = msg.state;
+        else if (msg.type === 'battle:catalog') this.catalog = msg;
+        else if (msg.type === 'battle:error') this.errors.push(msg.message);
+        this.waiters = this.waiters.filter((w) => !w(msg));
+      });
+    });
+  }
+
+  send(obj) {
+    this.ws.send(JSON.stringify(obj));
+  }
+
+  // Resolve once a state matching `pred` has arrived. The current one counts,
+  // but the check still goes through setImmediate: awaiting an already-settled
+  // promise only drains microtasks, so a loop whose every wait is satisfied by
+  // what it already holds never lets the event loop deliver anything.
+  waitFor(pred, what = 'state', ms = 5000) {
+    if (this.state && pred(this.state)) return new Promise((r) => setImmediate(() => r(this.state)));
+    return new Promise((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error(`${this.label}: timed out waiting for ${what}`)), ms);
+      this.waiters.push((msg) => {
+        if (msg.type === 'battle:state' && pred(msg.state)) {
+          clearTimeout(t);
+          resolve(msg.state);
+          return true;
+        }
+        return false;
+      });
+    });
+  }
+
+  // Send something the server should refuse, and hand back the refusal.
+  expectError(obj, what, ms = 3000) {
+    return new Promise((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error(`${this.label}: expected a refusal for ${what}`)), ms);
+      this.waiters.push((msg) => {
+        if (msg.type === 'battle:error') {
+          clearTimeout(t);
+          resolve(msg.message);
+          return true;
+        }
+        return false;
+      });
+      this.send(obj);
+    });
+  }
+
+  close() {
+    this.ws.close();
+  }
+}
+
+const atCard = (n) => (s) => s.match && s.match.at === n && s.match.phase === 'asking';
+const revealed = (n) => (s) => s.match && s.match.at === n && s.match.phase === 'reveal';
+const ended = (s) => s.match && s.match.phase === 'ended';
+
+// ---------------------------------------------------------------------------
+
+async function run() {
+  // =========================================================================
+  // The marker
+  // =========================================================================
+
+  const mark = (given, wanted) => Grade.points(Grade.grade(given, wanted).score);
+
+  await check('an answer word for word is full marks', () => {
+    const back = 'Mitochondria produce ATP through respiration';
+    assert.equal(mark(back, back), 100);
+    assert.equal(mark('  MITOCHONDRIA   produce, ATP through respiration! ', back), 100);
+  });
+
+  await check('the same answer in your own words is still a right answer', () => {
+    const back = 'Mitochondria produce ATP through respiration';
+    const score = mark('ATP is produced by the mitochondria during respiration', back);
+    assert.ok(score >= 85, `a correct rewording scored ${score}, which is not a pass`);
+  });
+
+  await check('word order does not decide it', () => {
+    const back = 'Mitochondria produce ATP through respiration';
+    assert.equal(mark('respiration through ATP produce mitochondria', back), 100);
+  });
+
+  await check('a typo is not a wrong answer', () => {
+    const back = 'Mitochondria produce ATP through respiration';
+    const score = mark('mitochondira prodce ATP through respirtion', back);
+    assert.ok(score >= 80, `three typos scored ${score}`);
+    assert.ok(score < 100, 'a misspelling should still cost something');
+  });
+
+  await check('a wrong answer scores nothing much', () => {
+    const back = 'Mitochondria produce ATP through respiration';
+    assert.ok(mark('The cell wall of a plant is made of cellulose', back) < 20);
+    assert.equal(mark('', back), 0);
+  });
+
+  await check('padding does not pay', () => {
+    const back = 'The powerhouse of the cell';
+    // Every word of the answer is in here somewhere, which is exactly the
+    // trick a recall-only marker would fall for.
+    const dump =
+      'powerhouse cell nucleus golgi ribosome membrane plant animal energy sugar oxygen water enzyme protein lipid';
+    const score = mark(dump, back);
+    assert.ok(score < 65, `answering with the dictionary scored ${score}`);
+    assert.ok(score < mark('the powerhouse of the cell', back), 'padding must not beat the answer');
+  });
+
+  await check('a one-word stab at a long answer is not a pass', () => {
+    const back = 'Mitochondria produce ATP through respiration';
+    assert.ok(mark('mitochondria', back) < 50);
+  });
+
+  await check('getting the one word that mattered wrong is not "close"', () => {
+    const back = 'The powerhouse of the cell';
+    const score = mark('the battery of the cell', back);
+    assert.ok(score < 65, `the wrong content word still scored ${score}`);
+  });
+
+  await check('a figure is right or it is wrong, never nearly right', () => {
+    assert.equal(mark('1066', '1066'), 100);
+    assert.equal(mark('1067', '1066'), 0);
+    // Word-perfect apart from the one thing the card was asking for.
+    const near = mark('The Battle of Hastings was in 1067', 'The Battle of Hastings was in 1066');
+    assert.ok(near <= 50, `the wrong date still scored ${near}`);
+  });
+
+  await check('a figure written out is the same figure', () => {
+    assert.equal(mark('a triangle has three sides', 'A triangle has 3 sides'), 100);
+    assert.ok(mark('a triangle has four sides', 'A triangle has 3 sides') <= 50);
+  });
+
+  await check('an answer that negates the card cannot pass', () => {
+    const back = 'Sodium is not soluble in water';
+    assert.equal(mark(back, back), 100);
+    const flipped = mark('Sodium is soluble in water', back);
+    assert.ok(flipped <= 40, `the opposite of the answer scored ${flipped}`);
+    assert.equal(Grade.grade('Sodium is soluble in water', back).flipped, true);
+  });
+
+  await check('accents and capitals are not what is being marked', () => {
+    assert.equal(mark('resume', 'résumé'), 100);
+    assert.equal(mark('The CAPITAL is Paris', 'the capital is paris'), 100);
+  });
+
+  await check('the marker shows its working', () => {
+    const v = Grade.grade('mitochondria and cellulose', 'Mitochondria produce ATP through respiration');
+    assert.ok(v.found.includes('mitochondria'), 'what was found should be listed');
+    assert.ok(v.missed.includes('atp'), 'what was missed should be listed');
+    assert.ok(v.extra.includes('cellulose'), 'what was invented should be listed');
+    // The mortar is not worth reporting either way.
+    assert.ok(!v.missed.includes('through'), 'small words should not be reported as missed');
+  });
+
+  await check('the marker is not bothered by a pasted novel', () => {
+    const back = 'The powerhouse of the cell';
+    const started = Date.now();
+    for (let i = 0; i < 200; i++) mark('lorem ipsum dolor sit amet '.repeat(400), back);
+    const each = (Date.now() - started) / 200;
+    assert.ok(each < 12, `marking an over-long answer took ${each.toFixed(1)}ms each`);
+  });
+
+  await check('every house deck is well formed', () => {
+    const { decks, cards } = Decks.check();
+    assert.ok(decks >= 2, 'expected at least the two hand-written decks');
+    for (const d of Decks.catalog()) {
+      assert.ok(d.count >= 2, `${d.id} is too short`);
+      assert.ok(d.kind === 'text' || d.kind === 'choice', `${d.id} has no kind`);
+    }
+    console.log(`      (${decks} decks, ${cards.toLocaleString('en-GB')} cards)`);
+  });
+
+  await check('the subject papers loaded, and loaded as four-option decks', () => {
+    const papers = Decks.catalog().filter((d) => !d.house);
+    assert.ok(papers.length >= 50, `only ${papers.length} subject papers loaded`);
+    assert.ok(papers.every((d) => d.kind === 'choice'), 'a subject paper is a four-option deck');
+    // Spot-check one all the way down to a card.
+    const bio = Decks.deck('mmlu-high-school-biology');
+    assert.ok(bio, 'high school biology did not load');
+    assert.ok(bio.cards.length > 100);
+    for (const c of bio.cards) {
+      assert.equal(c.options.length, 4);
+      assert.ok(Number.isInteger(c.answer) && c.answer >= 0 && c.answer <= 3);
+    }
+  });
+
+  await check('the CSV reader handles quotes, doubled quotes and newlines', () => {
+    const rows = Decks.parseCsv('plain,"quoted, with comma","says ""hi""","two\nlines",d,A\n');
+    assert.equal(rows.length, 1);
+    assert.deepEqual(rows[0], ['plain', 'quoted, with comma', 'says "hi"', 'two\nlines', 'd', 'A']);
+  });
+
+  // =========================================================================
+  // The room
+  // =========================================================================
+
+  await startServer();
+  console.log(`\nbattle: server on ${PORT}, data in ${DATA_DIR}\n`);
+
+  const stranger = visitor();
+
+  await check('a stranger at /battle is shown the door, not the room', async () => {
+    const res = await stranger.page('/battle');
+    assert.equal(res.status, 200);
+    assert.ok(res.html.includes('Open an account'), 'expected the sign-in page');
+    assert.ok(!res.html.includes('id="screen-lobby"'), 'the room leaked to a logged-out visitor');
+  });
+
+  await check('the room markup is not sitting in public/', async () => {
+    assert.equal((await stranger.page('/battle.html')).status, 404);
+  });
+
+  await check('a room link lands on the page rather than a redirect', async () => {
+    const res = await stranger.page('/battle/ABCD');
+    assert.equal(res.status, 200, 'a shared room link must open the page');
+  });
+
+  await check('anything that is not a room code comes back to /battle', async () => {
+    const res = await stranger.page('/battle/not-a-code');
+    assert.equal(res.status, 302);
+    assert.match(res.location, /\/battle$/);
+  });
+
+  await check('a socket with no account behind it is turned away', async () => {
+    const nobody = new WebSocket(`ws://localhost:${PORT}`);
+    await new Promise((r) => nobody.on('open', r));
+    const refusal = await new Promise((resolve) => {
+      nobody.on('message', (d) => {
+        const msg = JSON.parse(d.toString());
+        if (msg.type === 'battle:error') resolve(msg.message);
+      });
+      nobody.send(JSON.stringify({ type: 'battle:create' }));
+    });
+    assert.match(refusal, /sign in/i);
+    nobody.close();
+  });
+
+  const ada = await member('ada');
+  const bram = await member('bram');
+
+  const a = new Battler(ada);
+  const b = new Battler(bram);
+  await a.connect();
+  await b.connect();
+
+  await check('the catalog arrives with the house decks on it', async () => {
+    a.send({ type: 'battle:hello' });
+    await new Promise((r) => setTimeout(r, 200));
+    assert.ok(a.catalog, 'no catalog was sent');
+    assert.ok(a.catalog.decks.length >= 1);
+    assert.ok(a.catalog.lengths.includes(5));
+    assert.ok(a.catalog.clocks.includes(0), 'untimed must be one of the settings');
+    // The catalog is a list of decks, not the cards in them.
+    assert.equal(JSON.stringify(a.catalog).includes('Canberra'), false, 'the catalog carried card backs');
+  });
+
+  // --- a solo run ----------------------------------------------------------
+
+  await check('a room opens and its host is whoever opened it', async () => {
+    a.send({ type: 'battle:create' });
+    const s = await a.waitFor((x) => !!x.code, 'a room');
+    assert.match(s.code, /^[A-Z0-9]{4}$/);
+    assert.equal(s.you.host, true);
+    assert.equal(s.players.length, 1);
+  });
+
+  const soloCode = a.state.code;
+
+  await check('a solo run on a house deck plays through to a result', async () => {
+    a.send({ type: 'battle:settings', mode: 'solo', source: 'preset', presetId: 'capitals', length: 5, clock: 0 });
+    await a.waitFor((s) => s.mode === 'solo' && s.length === 5, 'the settings');
+
+    a.send({ type: 'battle:start' });
+    await a.waitFor(atCard(0), 'the first card');
+    assert.equal(a.state.match.total, 5);
+    assert.equal(a.state.match.card.back, null, 'the back was sent with an open card');
+    assert.ok(a.state.match.card.front.length > 0);
+
+    // Played properly: the answer is looked up from the deck rather than
+    // guessed, so the marks mean something.
+    const deck = Decks.deck('capitals');
+    for (let i = 0; i < 5; i++) {
+      await a.waitFor(atCard(i), `card ${i + 1}`);
+      const front = a.state.match.card.front;
+      const card = deck.cards.find((c) => c.front === front);
+      assert.ok(card, `card ${i + 1} was not from the deck it said it was`);
+      a.send({ type: 'battle:answer', text: card.back });
+      await a.waitFor(revealed(i), `the reveal of card ${i + 1}`);
+      assert.equal(a.state.match.card.back, card.back, 'the back should be shown once the card is closed');
+      assert.equal(a.state.match.marks[0].points, 100, 'a word-perfect answer should be full marks');
+      a.send({ type: 'battle:next' });
+    }
+
+    const end = await a.waitFor(ended, 'the result');
+    assert.equal(end.match.standings.length, 1);
+    assert.equal(end.match.standings[0].total, 500, 'five perfect answers is 500');
+    assert.equal(end.match.standings[0].cards, 5);
+    assert.equal(end.match.review.length, 5, 'every card should come back for review');
+    assert.ok(end.match.review.every((c) => c.back), 'the review should carry the backs');
+  });
+
+  await check('a solo run is filed as revision and never as a duel won', async () => {
+    const menu = ok(await ada.site('me'), 'the menu');
+    const bt = menu.battle;
+    assert.equal(bt.matches, 1);
+    assert.equal(bt.solo, 1);
+    assert.equal(bt.duels, 0, 'a solo run must not be counted as a duel');
+    assert.equal(bt.wins, 0, 'nobody wins a solo run');
+    assert.equal(bt.cards, 5);
+    assert.equal(bt.points, 500);
+    assert.equal(bt.average, 100);
+  });
+
+  await check('an unanswered card is marked at nought rather than left open', async () => {
+    a.send({ type: 'battle:again' });
+    await a.waitFor((s) => !s.match, 'the lobby');
+    a.send({ type: 'battle:settings', mode: 'solo', source: 'preset', presetId: 'bones', length: 5, clock: 20 });
+    await a.waitFor((s) => s.clock === 20, 'the clock');
+    a.send({ type: 'battle:start' });
+    await a.waitFor(atCard(0), 'the first card');
+    assert.ok(a.state.match.deadline > Date.now(), 'a timed card should carry a deadline');
+
+    a.send({ type: 'battle:answer', text: 'something that is certainly not it' });
+    const rev = await a.waitFor(revealed(0), 'the reveal');
+    assert.equal(rev.match.marks.length, 1);
+    assert.ok(rev.match.marks[0].points < 40, 'a wrong answer should not score');
+  });
+
+  await check('a match in progress refuses what belongs to the lobby', async () => {
+    assert.match(await a.expectError({ type: 'battle:answer', text: 'late' }, 'answering a closed card'), /closed/i);
+    assert.match(await a.expectError({ type: 'battle:start' }, 'starting twice'), /already started/i);
+    // The guard on the match comes before the guard on the value, which is
+    // the right way round: a setting cannot be wrong if it cannot be set.
+    assert.match(await a.expectError({ type: 'battle:settings', length: 5 }, 'settings mid-match'), /already started/i);
+    assert.match(await a.expectError({ type: 'battle:nonsense' }, 'an invented action'), /unknown/i);
+  });
+
+  await check('the lobby refuses a setting that is not one of the settings', async () => {
+    // A match that is still running cannot be wound back to a lobby, so this
+    // opens a fresh room rather than abandoning one — which is what somebody
+    // walking away from a half-played match actually does.
+    a.send({ type: 'battle:create' });
+    await a.waitFor((s) => !s.match, 'a fresh room');
+    a.send({ type: 'battle:settings', length: 5, presetId: 'bones' });
+    await a.waitFor((s) => s.length === 5 && s.presetId === 'bones', 'the settings');
+    assert.match(await a.expectError({ type: 'battle:settings', length: 999 }, 'a silly length'), /length/i);
+    assert.match(await a.expectError({ type: 'battle:settings', clock: 7 }, 'a clock nobody offered'), /clock/i);
+    assert.match(await a.expectError({ type: 'battle:settings', presetId: 'nope' }, 'a deck that is not there'), /no such deck/i);
+    assert.match(await a.expectError({ type: 'battle:settings', mode: 'brawl' }, 'a mode that does not exist'), /duel or solo/i);
+    assert.match(await a.expectError({ type: 'battle:join', code: 'ZZZZ' }, 'a room that is not there'), /not found/i);
+    assert.match(await a.expectError({ type: 'battle:join', code: '!!' }, 'a code that is not a code'), /four letters/i);
+    assert.match(await a.expectError({ type: 'battle:next' }, 'turning a card nobody dealt'), /no match/i);
+    // The settings survived every one of those refusals.
+    assert.equal(a.state.length, 5);
+    assert.equal(a.state.presetId, 'bones');
+  });
+
+  // --- a duel --------------------------------------------------------------
+
+  await check('a second member joins by code and the host keeps the settings', async () => {
+    const code = a.state.code;
+
+    b.send({ type: 'battle:join', code });
+    await b.waitFor((s) => s.code === code, 'the room');
+    await a.waitFor((s) => s.players.length === 2, 'the second player');
+
+    assert.equal(b.state.you.host, false);
+    assert.equal(a.state.you.host, true);
+    assert.match(await b.expectError({ type: 'battle:settings', length: 20 }, 'a guest setting the match up'), /host/i);
+  });
+
+  await check('a duel marks both players on the same card and settles on marks', async () => {
+    a.send({ type: 'battle:settings', mode: 'duel', source: 'preset', presetId: 'capitals', length: 5, clock: 0 });
+    await a.waitFor((s) => s.mode === 'duel' && s.length === 5, 'the settings');
+    a.send({ type: 'battle:start' });
+    await a.waitFor(atCard(0), 'the first card');
+    await b.waitFor(atCard(0), 'the first card, for the guest');
+
+    // Both are shown the same card, and neither is shown the back of it.
+    assert.equal(a.state.match.card.front, b.state.match.card.front, 'the two are not on the same card');
+    assert.equal(a.state.match.card.back, null);
+    assert.equal(b.state.match.card.back, null);
+
+    const deck = Decks.deck('capitals');
+    for (let i = 0; i < 5; i++) {
+      await a.waitFor(atCard(i), `card ${i + 1}`);
+      const card = deck.cards.find((c) => c.front === a.state.match.card.front);
+
+      // Ada answers it properly; Bram does not.
+      a.send({ type: 'battle:answer', text: card.back });
+      // Ada's answer alone must not turn the card over.
+      await new Promise((r) => setTimeout(r, 80));
+      assert.equal(a.state.match.phase, 'asking', 'one answer should not close a duel card');
+      assert.equal(a.state.match.card.back, null, 'the back must stay back until both are in');
+      // And her answer must not be readable by the person still answering.
+      assert.equal(b.state.match.marks, null, "the other player's answer leaked before the reveal");
+
+      b.send({ type: 'battle:answer', text: 'I have no idea' });
+      await a.waitFor(revealed(i), `the reveal of card ${i + 1}`);
+      assert.equal(a.state.match.marks.length, 2, 'both answers should be on the reveal');
+      const hers = a.state.match.marks.find((m) => m.name === 'ada');
+      const his = a.state.match.marks.find((m) => m.name === 'bram');
+      assert.equal(hers.points, 100);
+      assert.ok(his.points < 40);
+      assert.equal(hers.text, card.back, 'the reveal should show what each of them said');
+      a.send({ type: 'battle:next' });
+    }
+
+    const end = await a.waitFor(ended, 'the result');
+    const rows = end.match.standings;
+    assert.equal(rows.length, 2);
+    assert.equal(rows[0].name, 'ada', 'the better answers should come first');
+    assert.equal(rows[0].won, true);
+    assert.equal(rows[1].won, false);
+    assert.equal(rows[0].total, 500);
+  });
+
+  await check('a duel is filed apart from revision, and only the winner wins', async () => {
+    const hers = ok(await ada.site('me'), "ada's menu").battle;
+    const his = ok(await bram.site('me'), "bram's menu").battle;
+    assert.equal(hers.duels, 1);
+    assert.equal(hers.wins, 1);
+    assert.equal(his.duels, 1);
+    assert.equal(his.wins, 0, 'losing a duel is not winning one');
+    assert.equal(his.solo, 0);
+    assert.equal(hers.solo, 1, "ada's earlier revision should still be counted as revision");
+  });
+
+  // --- a four-option deck ----------------------------------------------------
+
+  await check('a four-option card is picked from, and marked right or wrong', async () => {
+    a.send({ type: 'battle:again' });
+    await a.waitFor((s) => !s.match, 'the lobby');
+    a.send({ type: 'battle:settings', mode: 'solo', source: 'preset', presetId: 'mmlu-anatomy', length: 5, clock: 0 });
+    await a.waitFor((s) => s.presetId === 'mmlu-anatomy', 'the settings');
+    a.send({ type: 'battle:start' });
+    await a.waitFor(atCard(0), 'the first card');
+
+    const deck = Decks.deck('mmlu-anatomy');
+    let right = 0;
+
+    for (let i = 0; i < 5; i++) {
+      await a.waitFor(atCard(i), `card ${i + 1}`);
+      const card = a.state.match.card;
+
+      assert.equal(card.kind, 'choice');
+      assert.equal(card.options.length, 4, 'a four-option card should have four options');
+      assert.equal(card.back, null, 'the answer was sent with an open card');
+      assert.equal(card.answerId, null, 'which option is right was sent with an open card');
+      // Nothing about an option says whether it is the one.
+      for (const o of card.options) {
+        assert.deepEqual(Object.keys(o).sort(), ['id', 'text'], 'an option carried more than its id and its text');
+      }
+
+      // Look the card up in the deck and pick the right one deliberately, so
+      // the mark means something rather than being a one-in-four coin.
+      const source = deck.cards.find((c) => c.front === card.front);
+      assert.ok(source, 'the card was not from the deck it said it was');
+      const wanted = source.options[source.answer];
+      const option = card.options.find((o) => o.text === wanted);
+      assert.ok(option, 'the right answer was not among the options offered');
+
+      // Every option must be one of the four the deck holds — the shuffle
+      // reorders them and must not invent or drop any.
+      assert.deepEqual(
+        card.options.map((o) => o.text).slice().sort(),
+        source.options.slice().sort(),
+        'the options on screen are not the options in the deck'
+      );
+
+      a.send({ type: 'battle:answer', option: option.id });
+      await a.waitFor(revealed(i), `the reveal of card ${i + 1}`);
+      assert.equal(a.state.match.card.answerId, option.id, 'the reveal should name the right option');
+      assert.equal(a.state.match.card.back, wanted);
+      assert.equal(a.state.match.marks[0].points, 100, 'the right option should be full marks');
+      assert.equal(a.state.match.marks[0].bandLabel, 'Right');
+      right += 1;
+      a.send({ type: 'battle:next' });
+    }
+
+    const end = await a.waitFor(ended, 'the result');
+    assert.equal(right, 5);
+    assert.equal(end.match.standings[0].total, 500);
+  });
+
+  await check('a wrong option is nought, with nothing in between', async () => {
+    a.send({ type: 'battle:again' });
+    await a.waitFor((s) => !s.match, 'the lobby');
+    a.send({ type: 'battle:settings', mode: 'solo', source: 'preset', presetId: 'mmlu-anatomy', length: 5, clock: 0 });
+    await a.waitFor((s) => s.presetId === 'mmlu-anatomy', 'the settings');
+    a.send({ type: 'battle:start' });
+    await a.waitFor(atCard(0), 'the first card');
+
+    const deck = Decks.deck('mmlu-anatomy');
+    const card = a.state.match.card;
+    const source = deck.cards.find((c) => c.front === card.front);
+    const wrong = card.options.find((o) => o.text !== source.options[source.answer]);
+
+    a.send({ type: 'battle:answer', option: wrong.id });
+    const rev = await a.waitFor(revealed(0), 'the reveal');
+    assert.equal(rev.match.marks[0].points, 0, 'a wrong option is nought, not a near miss');
+    assert.equal(rev.match.marks[0].bandLabel, 'Wrong');
+    assert.notEqual(rev.match.card.answerId, wrong.id);
+  });
+
+  await check('an option that is not on the card is refused, not marked wrong', async () => {
+    a.send({ type: 'battle:next' });
+    await a.waitFor(atCard(1), 'the second card');
+    const refusal = await a.expectError({ type: 'battle:answer', option: 'not-an-option' }, 'an invented option');
+    assert.match(refusal, /not one of the options/i);
+    // And the card is still open, because nothing was laid down.
+    assert.equal(a.state.match.phase, 'asking');
+  });
+
+  // --- the fairness rule ---------------------------------------------------
+
+  await check("a duel on members' cards deals an equal share from each collection", async () => {
+    // Each of them writes four cards nobody could mistake for the other's.
+    for (let i = 1; i <= 4; i++) {
+      ok(
+        await ada.fc('cards', {
+          method: 'POST',
+          body: { front: `Ada asks number ${i}`, back: `Ada answers number ${i} plainly`, category: 'test' },
+        }),
+        'ada writes a card'
+      );
+      ok(
+        await bram.fc('cards', {
+          method: 'POST',
+          body: { front: `Bram asks number ${i}`, back: `Bram answers number ${i} plainly`, category: 'test' },
+        }),
+        'bram writes a card'
+      );
+    }
+
+    // The four-option checks above left a match half-played, and a match
+    // that is still running cannot be wound back to a lobby — so this opens a
+    // fresh room, which is what walking away from one actually does.
+    a.send({ type: 'battle:create' });
+    await a.waitFor((s) => !s.match, 'a fresh room');
+    const code = a.state.code;
+    b.send({ type: 'battle:join', code });
+    await a.waitFor((s) => s.players.length === 2, 'both of them');
+    a.send({ type: 'battle:settings', mode: 'duel', source: 'mine', length: 5, clock: 0 });
+    await a.waitFor((s) => s.source === 'mine', 'the settings');
+    a.send({ type: 'battle:start' });
+    await a.waitFor(atCard(0), 'the first card');
+
+    // Walk the whole match and count whose cards turned up.
+    const owners = [];
+    for (let i = 0; i < 5; i++) {
+      await a.waitFor(atCard(i), `card ${i + 1}`);
+      owners.push(a.state.match.card.ownerName);
+      a.send({ type: 'battle:answer', text: 'something' });
+      b.send({ type: 'battle:answer', text: 'something' });
+      await a.waitFor(revealed(i), `the reveal of card ${i + 1}`);
+      a.send({ type: 'battle:next' });
+    }
+    await a.waitFor(ended, 'the result');
+
+    const mine = owners.filter((o) => o === 'ada').length;
+    const theirs = owners.filter((o) => o === 'bram').length;
+    assert.equal(mine + theirs, 5, 'every card should say whose collection it came from');
+    // Five cards cannot split evenly, so the most either side can fairly hold
+    // is three. Anything wider than that is a duel on one person's cards.
+    assert.ok(
+      Math.abs(mine - theirs) <= 1,
+      `the deal was ${mine} of ada's against ${theirs} of bram's, which is not an equal share`
+    );
+  });
+
+  await check("a duel on cards nobody has written names who is short", async () => {
+    const cleo = await member('cleo');
+    // A fresh account arrives with the three welcome cards, so it is emptied
+    // to make the point.
+    const theirs = ok(await cleo.fc('me'), "cleo's collection");
+    for (const card of theirs.cards) ok(await cleo.fc(`cards/${card.id}`, { method: 'DELETE' }), 'clear');
+
+    const c = new Battler(cleo);
+    await c.connect();
+    c.send({ type: 'battle:create' });
+    await c.waitFor((s) => !!s.code, 'a room');
+    c.send({ type: 'battle:settings', mode: 'solo', source: 'mine' });
+    await c.waitFor((s) => s.source === 'mine', 'the settings');
+    const refusal = await c.expectError({ type: 'battle:start' }, 'a battle on an empty collection');
+    assert.match(refusal, /no flashcards|write some/i);
+    c.close();
+  });
+
+  // --- leaving --------------------------------------------------------------
+
+  await check('a card is not left open by somebody who has gone', async () => {
+    a.send({ type: 'battle:again' });
+    await a.waitFor((s) => !s.match, 'the lobby');
+    const code = a.state.code;
+    b.send({ type: 'battle:join', code });
+    await a.waitFor((s) => s.players.length === 2, 'both of them');
+
+    a.send({ type: 'battle:settings', mode: 'duel', source: 'preset', presetId: 'bones', length: 5, clock: 0 });
+    await a.waitFor((s) => s.length === 5, 'the settings');
+    a.send({ type: 'battle:start' });
+    await a.waitFor(atCard(0), 'the first card');
+    await b.waitFor(atCard(0), 'the first card, for the guest');
+
+    // Bram shuts his laptop without answering. Ada answers, and the card must
+    // turn over rather than waiting on somebody who is not coming back.
+    b.close();
+    await new Promise((r) => setTimeout(r, 150));
+    a.send({ type: 'battle:answer', text: 'the collarbone' });
+    const rev = await a.waitFor(revealed(0), 'the reveal after a walk-out');
+    assert.ok(rev.match.card.back, 'the card should have turned over');
+  });
+
+  // =========================================================================
+
+  console.log('');
+  await check('no message ever carried the back of a card that was still open', () => {
+    assert.equal(leaks, 0, `${leaks} leak(s) — see above`);
+    // A suite that checked nothing would also report no leaks.
+    assert.ok(audit.length > 60, `only ${audit.length} messages were audited, which is too few to trust`);
+    const asking = audit.filter((e) => e.msg.type === 'battle:state' && e.msg.state.match?.phase === 'asking');
+    assert.ok(asking.length > 15, `only ${asking.length} open-card messages were seen`);
+    // Both kinds have to have gone past the audit, or half of it proved
+    // nothing at all.
+    assert.ok(choiceMessages > 5, `only ${choiceMessages} open four-option cards were seen`);
+    console.log(
+      `      (${audit.length} messages audited, ${asking.length} with a card open, ${choiceMessages} of those four-option)`
+    );
+  });
+
+  a.close();
+}
+
+run()
+  .then(() => {
+    console.log(`\n${checks} checks passed.`);
+    child?.kill();
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error('\nFAILED:', err.message);
+    child?.kill();
+    process.exit(1);
+  });

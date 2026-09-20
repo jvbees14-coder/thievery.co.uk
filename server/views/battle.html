@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Battle — Thievery.co.uk</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c14'/%3E%3Cpath d='M9 6l7 10-7 10M23 6l-7 10 7 10' fill='none' stroke='%23d4af5a' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="apple-touch-icon" href="/icons/icon-180.png" />
+  <meta name="theme-color" content="#0a0c14" />
+  <link rel="preload" href="/fonts/limelight-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/eb-garamond-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/fonts.css" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/flashcards.css" />
+  <link rel="stylesheet" href="/menu.css" />
+  <link rel="stylesheet" href="/battle.css" />
+</head>
+<body class="fc-app">
+  <div id="toast" class="toast" hidden></div>
+
+  <header class="fc-bar">
+    <a class="fc-mark wordmark" href="/battle">The<em>Battle</em></a>
+    <nav class="menu-nav">
+      <a class="menu-nav-link" href="/">The house</a>
+      <a class="menu-nav-link" href="/cards">Cards</a>
+      <a class="menu-nav-link" href="/flashcards">Flashcards</a>
+    </nav>
+    <div class="fc-who">
+      <button id="who" class="fc-who-btn" type="button" aria-haspopup="true" aria-expanded="false"></button>
+      <div id="who-menu" class="fc-menu" hidden>
+        <a href="/">Back to the house</a>
+        <button data-act="signout" type="button">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="btl-main">
+
+    <!-- ============================================== the front door ==== -->
+    <!--
+      Four screens, and only ever one of them on the page. The server's
+      snapshot says which: no room at all is the front door, a room with no
+      match is the lobby, a match is the card, and a finished match is the
+      scoreboard.
+    -->
+    <section id="screen-door" class="btl-screen" hidden>
+      <div class="panel btl-door">
+        <p class="eyebrow">The revision room</p>
+        <h1 class="btl-door-head">Answer the card</h1>
+        <p class="btl-door-say">
+          A card is shown front first. Type what you think is on the back and
+          the house marks how close you got &mdash; on your own flashcards or
+          on a deck of ours, against somebody else or against nobody at all.
+        </p>
+
+        <div class="btl-door-acts">
+          <button id="open-room" class="btn primary" type="button">Open a room</button>
+          <form id="join" class="btl-join" autocomplete="off">
+            <label class="sr-only" for="code">Room code</label>
+            <input id="code" name="code" maxlength="4" placeholder="CODE" spellcheck="false"
+                   autocapitalize="characters" inputmode="latin" />
+            <button class="btn ghost" type="submit">Join</button>
+          </form>
+        </div>
+        <p class="hint">
+          A room is four characters and lives in memory only. Share the code
+          and it is a duel; open one and start it alone and it is revision.
+          Either way the room is forgotten an hour after the last person
+          leaves.
+        </p>
+      </div>
+    </section>
+
+    <!-- =================================================== the lobby ==== -->
+    <section id="screen-lobby" class="btl-screen" hidden>
+      <div class="btl-lobby-grid">
+
+        <div class="panel btl-setup">
+          <h2 class="btl-head">The match</h2>
+
+          <div class="field">
+            <label>Who is playing</label>
+            <div class="btl-choice" id="pick-mode" role="group" aria-label="Who is playing">
+              <button class="btl-opt" type="button" data-set="mode" data-value="duel">
+                <b>Duel</b><span>Everybody in the room, marked side by side</span>
+              </button>
+              <button class="btl-opt" type="button" data-set="mode" data-value="solo">
+                <b>Solo</b><span>Just you, just revision</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>What you are asked</label>
+            <div class="btl-choice" id="pick-source" role="group" aria-label="What you are asked">
+              <button class="btl-opt" type="button" data-set="source" data-value="preset">
+                <b>A house deck</b><span>A fixed set, the same for everybody</span>
+              </button>
+              <button class="btl-opt" type="button" data-set="source" data-value="mine">
+                <b>Your flashcards</b><span>The cards in the room&rsquo;s collections</span>
+              </button>
+            </div>
+            <!--
+              The fairness note. It is on the page rather than only in the
+              source because it is the answer to the first thing anybody asks
+              when they are told they are about to be quizzed on somebody
+              else's cards.
+            -->
+            <p class="hint" id="mine-note" hidden>
+              A duel on flashcards deals an <b>equal share from every
+              collection in the room</b> and shuffles them together, so
+              whatever knowing your own cards is worth, both sides get the
+              same amount of it.
+            </p>
+          </div>
+
+          <div class="field" id="deck-field">
+            <label for="deck">Which deck</label>
+            <select id="deck" data-set="presetId"></select>
+            <p class="hint" id="deck-blurb"></p>
+          </div>
+
+          <div class="btl-dials">
+            <div class="field">
+              <label for="length">Cards</label>
+              <select id="length" data-set="length"></select>
+            </div>
+            <div class="field">
+              <label for="clock">Clock</label>
+              <select id="clock" data-set="clock"></select>
+              <p class="hint">Per card. Untimed is the one revision wants.</p>
+            </div>
+          </div>
+
+          <button id="start" class="btn primary btl-start" type="button">Deal the cards</button>
+          <p class="hint" id="host-note" hidden>Only the host sets the match up.</p>
+        </div>
+
+        <div class="panel btl-room">
+          <h2 class="btl-head">The room</h2>
+          <p class="btl-code-say">Share this code</p>
+          <p class="btl-code" id="room-code">&mdash;</p>
+          <button class="btn ghost btl-copy" type="button" data-act="copy">Copy the link</button>
+          <ul class="btl-players" id="players"></ul>
+          <button class="btn ghost" type="button" data-act="leave">Leave the room</button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================================================== the card ==== -->
+    <section id="screen-card" class="btl-screen" hidden>
+      <div class="btl-progress">
+        <span id="card-count"></span>
+        <span class="btl-clock" id="clock-say"></span>
+      </div>
+      <div class="btl-clock-rail"><div class="btl-clock-run" id="clock-run"></div></div>
+
+      <article class="panel btl-card">
+        <p class="btl-card-owner" id="card-owner"></p>
+        <h2 class="btl-front" id="card-front"></h2>
+        <p class="btl-hint" id="card-hint" hidden></p>
+
+        <!-- Asking. The answer to this card is not in the page: the server
+             has not sent it, and will not until every answer is in. For a
+             text card that means no back; for a four-option card the options
+             are all here, of course, but which of them is right is not. -->
+
+        <!-- A four-option card. The options stay on screen through the
+             reveal, marked up rather than swapped out. -->
+        <div id="choices" class="btl-choices" hidden></div>
+
+        <form id="answer-form" class="btl-answer" autocomplete="off">
+          <label class="sr-only" for="answer">Your answer</label>
+          <textarea id="answer" rows="3" placeholder="What is on the back?" spellcheck="false"></textarea>
+          <button class="btn primary" type="submit">Lay it down</button>
+          <p class="hint">Your own words are fine. The house marks the meaning, not the wording.</p>
+        </form>
+
+        <div id="waiting" class="btl-waiting" hidden>
+          <p class="btl-waiting-say">Answer in. Waiting for <span id="waiting-on"></span>&hellip;</p>
+        </div>
+      </article>
+
+      <!-- Revealed. Only now does the back exist on this page. -->
+      <div id="reveal" class="btl-reveal" hidden>
+        <div class="panel btl-back">
+          <p class="eyebrow" id="back-label">The back of the card</p>
+          <p class="btl-back-text" id="card-back"></p>
+        </div>
+        <div id="marks" class="btl-marks"></div>
+        <button id="next" class="btn primary" type="button">Next card</button>
+        <p class="hint" id="next-note" hidden>Waiting for the host to turn the next one over.</p>
+      </div>
+
+      <ol class="btl-running" id="running"></ol>
+    </section>
+
+    <!-- =============================================== the scoreboard === -->
+    <section id="screen-end" class="btl-screen" hidden>
+      <div class="panel btl-end">
+        <p class="eyebrow" id="end-eyebrow">The match</p>
+        <h2 class="btl-end-head" id="end-head"></h2>
+        <ol class="btl-standings" id="standings"></ol>
+        <p class="hint" id="end-note"></p>
+        <div class="btl-end-acts">
+          <button id="again" class="btn primary" type="button">Back to the lobby</button>
+          <a class="btn ghost" href="/flashcards">The collection</a>
+        </div>
+      </div>
+      <div id="review" class="btl-review"></div>
+    </section>
+
+  </main>
+
+  <script src="/battle.js"></script>
+</body>
+</html>

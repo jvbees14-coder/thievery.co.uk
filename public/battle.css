@@ -1,0 +1,347 @@
+/* Thievery.co.uk — the battle room.
+ *
+ * The bar, the panel, the fields and the buttons come from the flashcards
+ * room's stylesheet and the hall's; everything here is only what a card being
+ * answered needs.
+ *
+ * Two things are worth reading twice. The clock is a rail that empties rather
+ * than a number counting down, because a number is something you have to keep
+ * looking at and a rail is something you can see out of the corner of an eye
+ * while you type. And a mark is coloured by its band rather than by whether
+ * it beat the other player: the room grades an answer against the card, not
+ * against the person next to you, and the colours should say the same thing. */
+
+.btl-main {
+  padding: clamp(18px, 3vw, 34px) clamp(14px, 3vw, 32px) 80px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.btl-head {
+  margin: 0 0 16px;
+  font-family: var(--caps);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ivory);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- the front door ------------------------------------------------------- */
+
+.btl-door { text-align: center; padding: clamp(24px, 5vw, 48px); }
+.btl-door-head { margin: 6px 0 14px; font-family: var(--display); font-size: clamp(28px, 5vw, 40px); }
+.btl-door-say { margin: 0 auto 26px; max-width: 46ch; color: var(--text-dim); }
+
+.btl-door-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.btl-join { display: flex; gap: 8px; }
+.btl-join input {
+  width: 7.5ch;
+  text-align: center;
+  font-family: var(--caps);
+  font-size: 18px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+/* --- the lobby ------------------------------------------------------------ */
+
+.btl-lobby-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+/* A choice of two, laid out as two cards rather than a select: the difference
+   between a duel and revision is worth a sentence each, and a dropdown has
+   nowhere to put one. */
+.btl-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btl-opt {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  text-align: left;
+  border: 1px solid var(--brass-faint);
+  border-radius: 10px;
+  background: var(--ink-2);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.btl-opt b { font-size: 15px; color: var(--ivory); }
+.btl-opt span { font-size: 12.5px; line-height: 1.35; }
+.btl-opt:hover:not(:disabled) { border-color: var(--brass-dim); }
+.btl-opt.is-on {
+  border-color: var(--brass);
+  background: var(--brass-ghost);
+  color: var(--ivory);
+}
+.btl-opt:disabled { cursor: default; opacity: 0.75; }
+
+.btl-dials { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.btl-start { width: 100%; margin-top: 4px; }
+
+.btl-room { text-align: center; }
+.btl-code-say {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.btl-code {
+  margin: 4px 0 12px;
+  font-family: var(--caps);
+  font-size: clamp(34px, 7vw, 48px);
+  letter-spacing: 0.18em;
+  color: var(--brass);
+}
+.btl-copy { width: 100%; margin-bottom: 16px; }
+
+.btl-players { list-style: none; margin: 0 0 16px; padding: 0; text-align: left; }
+.btl-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 2px;
+  border-bottom: 1px solid var(--brass-faint);
+}
+.btl-player:last-child { border-bottom: 0; }
+.btl-player.is-away { opacity: 0.5; }
+.btl-player-name { flex: 1; }
+.btl-tag {
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--brass-dim);
+  color: var(--brass);
+}
+.btl-tag.is-away { border-color: var(--brass-faint); color: var(--text-dim); }
+
+/* --- a card being answered ------------------------------------------------ */
+
+.btl-progress {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+.btl-clock { font-family: var(--caps); color: var(--brass); }
+
+/* The rail. It empties left to right and turns as it runs out, which is the
+   whole of the warning — there is no number that needs watching. */
+.btl-clock-rail {
+  height: 3px;
+  border-radius: 999px;
+  background: var(--brass-faint);
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+.btl-clock-run {
+  height: 100%;
+  width: 0;
+  background: var(--brass);
+  transition: width 0.2s linear, background 0.4s;
+}
+
+.btl-card { padding: clamp(20px, 4vw, 34px); }
+.btl-card-owner {
+  margin: 0 0 8px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.btl-front {
+  margin: 0 0 14px;
+  font-family: var(--display);
+  font-size: clamp(21px, 3.6vw, 30px);
+  line-height: 1.3;
+}
+.btl-hint {
+  margin: 0 0 18px;
+  padding: 10px 14px;
+  border-left: 2px solid var(--brass-dim);
+  background: var(--ink-2);
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.btl-answer { display: flex; flex-direction: column; gap: 10px; }
+.btl-answer textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 84px;
+  font-size: 16px; /* anything smaller and a phone zooms in on focus */
+  line-height: 1.45;
+}
+
+.btl-waiting { padding: 14px 0 2px; }
+.btl-waiting-say { margin: 0; color: var(--text-dim); }
+
+/* --- the reveal ----------------------------------------------------------- */
+
+.btl-reveal { margin-top: 18px; display: flex; flex-direction: column; gap: 14px; }
+.btl-back { padding: 18px 22px; border-color: var(--brass-dim); }
+.btl-back-text { margin: 6px 0 0; font-size: 17px; line-height: 1.5; color: var(--ivory); }
+
+.btl-marks { display: flex; flex-direction: column; gap: 10px; }
+
+/* Coloured by the band the mark fell in — how close the answer was to the
+   card — and never by who won. A player who scores 90 and loses still scored
+   90, and the page should not take that away from them. */
+.btl-mark {
+  padding: 13px 16px;
+  border: 1px solid var(--brass-faint);
+  border-left-width: 3px;
+  border-radius: 8px;
+  background: var(--ink-2);
+}
+.btl-mark.is-got { border-left-color: var(--jade); }
+.btl-mark.is-close { border-left-color: var(--brass); }
+.btl-mark.is-some { border-left-color: var(--brass-dim); }
+.btl-mark.is-missed { border-left-color: var(--bad); }
+.btl-mark.is-yours { background: var(--brass-ghost); }
+
+.btl-mark-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.btl-mark-who { font-weight: 600; color: var(--ivory); }
+.btl-mark-who i { font-style: normal; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brass); }
+.btl-mark-score { font-family: var(--caps); font-size: 22px; color: var(--ivory); }
+.btl-mark-score small { font-size: 11px; color: var(--text-dim); }
+.btl-mark-said { margin: 6px 0 4px; line-height: 1.45; }
+.btl-mark-said i { color: var(--text-dim); }
+.btl-mark-band { margin: 0; font-size: 12.5px; color: var(--text-dim); }
+.btl-mark-band b { color: var(--ivory); font-weight: 600; }
+
+/* --- the running total ---------------------------------------------------- */
+
+.btl-running {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--brass-faint);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+}
+.btl-running li { display: flex; gap: 8px; align-items: baseline; font-size: 13.5px; color: var(--text-dim); }
+.btl-running b { font-family: var(--caps); font-size: 16px; color: var(--ivory); }
+
+/* --- the scoreboard ------------------------------------------------------- */
+
+.btl-end { text-align: center; padding: clamp(22px, 4vw, 38px); }
+.btl-end-head { margin: 6px 0 20px; font-family: var(--display); font-size: clamp(24px, 4.6vw, 34px); }
+
+.btl-standings { list-style: none; margin: 0 0 18px; padding: 0; text-align: left; }
+.btl-standing {
+  display: grid;
+  grid-template-columns: 28px 1fr auto auto;
+  gap: 12px;
+  align-items: baseline;
+  padding: 11px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+.btl-standing.is-won { border-color: var(--brass-dim); background: var(--brass-ghost); }
+.btl-standing.is-yours .btl-standing-name { color: var(--ivory); font-weight: 600; }
+.btl-standing-rank { font-family: var(--caps); color: var(--text-dim); }
+.btl-standing-avg { font-size: 12.5px; color: var(--text-dim); }
+.btl-standing-total { font-family: var(--caps); font-size: 20px; color: var(--ivory); }
+
+.btl-end-acts { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+.btl-review { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+.btl-review-card { padding: 14px 18px; }
+.btl-review-front { margin: 0 0 8px; font-family: var(--display); font-size: 17px; }
+.btl-review-back, .btl-review-said { margin: 0 0 4px; font-size: 13.5px; color: var(--text-dim); line-height: 1.45; }
+.btl-review-back b, .btl-review-said b { color: var(--ivory); }
+
+/* --- narrow ---------------------------------------------------------------- */
+
+@media (max-width: 720px) {
+  .btl-lobby-grid { grid-template-columns: 1fr; }
+  .btl-choice { grid-template-columns: 1fr; }
+  .btl-dials { grid-template-columns: 1fr; }
+  .btl-door-acts { flex-direction: column; align-items: stretch; }
+  .btl-join { justify-content: center; }
+  .btl-standing { grid-template-columns: 22px 1fr auto; }
+  .btl-standing-avg { grid-column: 2 / -1; }
+}
+
+/* --- a four-option card ---------------------------------------------------
+ *
+ * The options are the question here, so they get the room the answer box gets
+ * on a text card. Through the reveal they stay exactly where they were and
+ * are marked up instead of being replaced: the answer then lands in the place
+ * the reader was already looking, and there is nothing to re-read. */
+
+.btl-choices { display: flex; flex-direction: column; gap: 9px; }
+
+.btl-choice-opt {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 16px;
+  text-align: left;
+  font: inherit;
+  line-height: 1.4;
+  border: 1px solid var(--brass-faint);
+  border-left-width: 3px;
+  border-left-color: var(--brass-faint);
+  border-radius: 8px;
+  background: var(--ink-2);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.btl-choice-opt:hover:not(:disabled):not(.is-shut) {
+  border-color: var(--brass-dim);
+  border-left-color: var(--brass);
+}
+.btl-choice-opt:disabled { cursor: default; }
+
+/* Shut: the card is over and these are a result rather than a choice. */
+.btl-choice-opt.is-shut { cursor: default; opacity: 0.62; }
+.btl-choice-opt.is-right { border-left-color: var(--jade); opacity: 1; }
+.btl-choice-opt.is-picked { background: var(--brass-ghost); opacity: 1; }
+/* Picked and not right is the one that wants saying plainly. */
+.btl-choice-opt.is-picked.is-shut:not(.is-right) { border-left-color: var(--bad); }
+
+.btl-choice-text { flex: 1; }
+.btl-choice-tag {
+  flex: none;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.btl-choice-opt.is-right .btl-choice-tag { color: var(--jade-bright); }

@@ -17,10 +17,10 @@
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
-  <!-- The board is behind a login too, and a crawler is served its door:
-       a page saying what the room is and what the one rule about asking is. -->
+  <!-- The battle room is behind a login too, and a crawler is served its
+       door: a page saying what the room is and how an answer is marked. -->
   <url>
-    <loc>https://thievery.co.uk/polls</loc>
+    <loc>https://thievery.co.uk/battle</loc>
     <lastmod>2026-09-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>

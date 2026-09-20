@@ -25,7 +25,7 @@ import * as Game from './game.js';
 import * as Bot from './bot.js';
 import * as Flashcards from './flashcards.js';
 import * as Site from './site.js';
-import * as Polls from './polls.js';
+import * as Battle from './battle.js';
 import * as Stats from './stats.js';
 import { currentUser } from './plumbing.js';
 import { shuffle, DEAL_SPLITS, SEAT_COUNTS, MIN_SEATS, MAX_SEATS, MAX_PER_SEAT, usesPowerUps } from './deal.js';
@@ -88,9 +88,11 @@ function serve(req, res) {
   // fall through to the static block below.
   if (Flashcards.handle(req, res, url)) return;
 
-  // The polls room answers for itself on the same terms, and for the same
-  // reason: /polls must not fall through to the static block either.
-  if (Polls.handle(req, res, url)) return;
+  // The battle room answers for itself on the same terms, and for the same
+  // reason: /battle must not fall through to the static block either. It has
+  // no API of its own — everything a battle does happens to several people at
+  // once and goes over the socket — so this is the page and nothing else.
+  if (Battle.handle(req, res, url)) return;
 
   // Then the front hall, which owns "/" and the card table at /cards. It has
   // to come before the static block for the same reason: that block serves
@@ -1001,6 +1003,12 @@ wss.on('connection', (ws, req) => {
       return;
     }
     if (!msg || typeof msg.type !== 'string') return;
+    // The battle room shares this socket and nothing else. Its messages are
+    // all prefixed, it keeps its own rooms and its own context on the
+    // connection, and it answers its own errors — so a battle cannot reach
+    // the card table's state and a table cannot reach a battle's. It is
+    // asked first because the prefix makes the question free.
+    if (Battle.socket(ws, msg)) return;
     try {
       if (msg.type === 'create' || msg.type === 'join') handleJoin(ws, msg);
       else if (msg.type === 'ping') send(ws, { type: 'pong' });
@@ -1009,7 +1017,10 @@ wss.on('connection', (ws, req) => {
       send(ws, { type: 'error', message: err.message || 'Something went wrong' });
     }
   });
-  ws.on('close', () => handleDisconnect(ws));
+  ws.on('close', () => {
+    handleDisconnect(ws);
+    Battle.closed(ws);
+  });
   ws.on('error', () => {});
 });
 
@@ -1023,14 +1034,23 @@ setInterval(() => {
   }
 }, 30_000);
 
-// Forget rooms nobody has come back to.
+// Forget rooms nobody has come back to. The battle room keeps its own on the
+// same terms and is swept on the same tick rather than setting a timer of its
+// own — one clock for the whole process is easier to reason about, and it
+// means importing that module in a test does not start anything ticking.
 setInterval(() => {
   const now = Date.now();
   for (const [code, room] of rooms) {
     const anyone = people(room).some((p) => p.connected);
     if (!anyone && now - room.emptySince > ROOM_TTL_MS) rooms.delete(code);
   }
+  Battle.sweep(now);
 }, 60_000);
+
+// The house decks are checked before anything is served, so a deck with a
+// card missing its back stops the boot rather than turning up mid-match as a
+// card no answer can score against.
+Battle.start();
 
 // The admin account, if the environment has a password to give it, before the
 // door is opened to anybody.
