@@ -345,3 +345,47 @@
   color: var(--text-dim);
 }
 .btl-choice-opt.is-right .btl-choice-tag { color: var(--jade-bright); }
+
+/* --- today's ten ------------------------------------------------------------
+   The daily deck sits under the door rather than inside it: the door is for
+   rooms, and this is the one thing here that needs no room and nobody else. */
+
+.btl-today { margin-top: 18px; text-align: center; padding: clamp(20px, 4vw, 34px); }
+.btl-today-deck { margin: 4px 0 8px; font-family: var(--display); font-size: clamp(22px, 4vw, 30px); font-weight: 400; color: var(--ivory); }
+.btl-today-say { margin: 0 auto 18px; max-width: 46ch; color: var(--text-dim); }
+
+/* One board, drawn the same on the door and on the result. */
+.btl-board { list-style: none; margin: 18px auto 12px; padding: 0; max-width: 420px; text-align: left; }
+.btl-board:empty { display: none; }
+.btl-board-row {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 10px;
+  align-items: baseline;
+  padding: 7px 4px;
+  border-bottom: 1px solid var(--brass-faint);
+  font-size: 14.5px;
+}
+.btl-board-row:last-child { border-bottom: 0; }
+.btl-board-place { font-family: var(--caps); font-size: 12px; color: var(--text-dim); }
+.btl-board-name i { font-style: normal; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brass); }
+.btl-board-row b { font-family: var(--caps); color: var(--ivory); }
+.btl-board-row.is-yours { background: var(--brass-ghost); }
+
+.btl-end-daily { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--brass-faint); }
+.btl-end-link { margin: 14px 0 0; font-size: 13.5px; }
+
+/* --- watching, and out ------------------------------------------------------ */
+
+.btl-banner {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--brass-faint);
+  border-radius: var(--radius);
+  background: var(--brass-ghost);
+  color: var(--text-dim);
+  font-size: 14px;
+  text-align: center;
+}
+.btl-running li.is-out { opacity: 0.5; text-decoration: line-through; }
+.btl-mark-who i.is-out { color: var(--bad); }

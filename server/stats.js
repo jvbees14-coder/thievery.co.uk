@@ -72,6 +72,10 @@ const battleBlank = () => ({
   cards: 0,   // cards answered, across everything
   points: 0,  // marks earned across those cards, out of 100 each
   best: 0,    // the best single card mark there has ever been
+  // The same cards again, by the deck they were dealt from: a house deck's
+  // id, or 'mine' for members' own collections. Kept as cards and points for
+  // the same reason as above, so each deck's average is an honest one.
+  decks: {},  // id -> { matches, cards, points }
 });
 
 // A record written before a field existed is still somebody's record, so it
@@ -169,7 +173,7 @@ export function record(userId, { won = false, versus = false, seats = 0, teams =
  * mark, and it has to be worked out over every card ever answered rather than
  * over the matches they fell in.
  */
-export function recordBattle(userId, { solo = false, won = false, cards = 0, points = 0, best = 0 } = {}) {
+export function recordBattle(userId, { solo = false, won = false, cards = 0, points = 0, best = 0, deck = null } = {}) {
   if (!userId || !available()) return;
   const mine = recordFor(userId);
   const b = mine.battle;
@@ -184,6 +188,12 @@ export function recordBattle(userId, { solo = false, won = false, cards = 0, poi
   b.cards += cards;
   b.points += points;
   if (best > b.best) b.best = best;
+  if (deck) {
+    const row = (b.decks[deck] ??= { matches: 0, cards: 0, points: 0 });
+    row.matches += 1;
+    row.cards += cards;
+    row.points += points;
+  }
 
   // A match is a thing the account did, so it moves the same two dates the
   // card table moves. The round counters are deliberately left alone: a

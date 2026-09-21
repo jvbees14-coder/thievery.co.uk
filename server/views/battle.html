@@ -69,8 +69,19 @@
           A room is four characters and lives in memory only. Share the code
           and it is a duel; open one and start it alone and it is revision.
           Either way the room is forgotten an hour after the last person
-          leaves.
+          leaves. A code for a match already under way lets you watch it.
         </p>
+      </div>
+
+      <!-- Today's ten. The same cards for everybody, worked out from the date,
+           so there is nothing to set up and nobody to invite. -->
+      <div class="panel btl-today" id="today" hidden>
+        <p class="eyebrow">Today&rsquo;s ten</p>
+        <h2 class="btl-today-deck" id="today-deck"></h2>
+        <p class="btl-today-say" id="today-say"></p>
+        <button class="btn primary" type="button" data-act="daily" id="today-play">Play today&rsquo;s ten</button>
+        <ol class="btl-board" id="today-board"></ol>
+        <p class="hint">Only your first go of the day goes on the board. The day turns over at midnight GMT.</p>
       </div>
     </section>
 
@@ -91,6 +102,19 @@
                 <b>Solo</b><span>Just you, just revision</span>
               </button>
             </div>
+          </div>
+
+          <div class="field">
+            <label>How it is settled</label>
+            <div class="btl-choice" id="pick-rule" role="group" aria-label="How it is settled">
+              <button class="btl-opt" type="button" data-set="rule" data-value="marks">
+                <b>On marks</b><span>Every card is played, and the most marks takes it</span>
+              </button>
+              <button class="btl-opt" type="button" data-set="rule" data-value="sudden">
+                <b>Sudden death</b><span>Miss one and you are out &mdash; last one standing</span>
+              </button>
+            </div>
+            <p class="hint" id="rule-note" hidden></p>
           </div>
 
           <div class="field">
@@ -131,7 +155,7 @@
             <div class="field">
               <label for="clock">Clock</label>
               <select id="clock" data-set="clock"></select>
-              <p class="hint">Per card. Untimed is the one revision wants.</p>
+              <p class="hint" id="clock-note">Per card. Untimed is the one revision wants.</p>
             </div>
           </div>
 
@@ -153,6 +177,9 @@
 
     <!-- ==================================================== the card ==== -->
     <section id="screen-card" class="btl-screen" hidden>
+      <!-- Said when this page is not the one answering: somebody who came in
+           to watch, or who sudden death has already put out. -->
+      <p class="btl-banner" id="card-banner" hidden></p>
       <div class="btl-progress">
         <span id="card-count"></span>
         <span class="btl-clock" id="clock-say"></span>
@@ -206,9 +233,19 @@
         <h2 class="btl-end-head" id="end-head"></h2>
         <ol class="btl-standings" id="standings"></ol>
         <p class="hint" id="end-note"></p>
-        <div class="btl-end-acts">
-          <button id="again" class="btn primary" type="button">Back to the lobby</button>
-          <a class="btn ghost" href="/flashcards">The collection</a>
+        <div class="btl-end-acts" id="end-host">
+          <button id="rematch" class="btn primary" type="button">Rematch</button>
+          <button id="retry" class="btn" type="button" hidden></button>
+          <button id="again" class="btn ghost" type="button">Back to the lobby</button>
+        </div>
+        <p class="hint" id="end-guest" hidden>The host decides what happens next: a rematch, the misses, or the lobby.</p>
+        <p class="btl-end-link"><a class="linkish" href="/flashcards">The collection</a></p>
+
+        <!-- The day's board, when this was the daily deck. -->
+        <div class="btl-end-daily" id="end-daily" hidden>
+          <h3 class="btl-head">Today&rsquo;s board</h3>
+          <ol class="btl-board" id="end-board"></ol>
+          <p class="hint" id="end-daily-note"></p>
         </div>
       </div>
       <div id="review" class="btl-review"></div>

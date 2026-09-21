@@ -28,6 +28,7 @@ import { fileURLToPath } from 'node:url';
 import WebSocket from 'ws';
 import * as Grade from '../server/grade.js';
 import * as Decks from '../server/decks.js';
+import * as Daily from '../server/daily.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'thievery-battle-'));
@@ -535,6 +536,12 @@ async function run() {
     assert.equal(bt.cards, 5);
     assert.equal(bt.points, 500);
     assert.equal(bt.average, 100);
+    // And filed again under the deck it was dealt from, by name for the page.
+    const capitals = bt.decks.find((d) => d.id === 'capitals');
+    assert.ok(capitals, 'the match was not filed under its deck');
+    assert.equal(capitals.cards, 5);
+    assert.equal(capitals.average, 100);
+    assert.equal(bt.bestDeck.id, 'capitals', 'five perfect cards on one deck is that deck being your best');
   });
 
   await check('an unanswered card is marked at nought rather than left open', async () => {
@@ -837,6 +844,236 @@ async function run() {
     assert.ok(rev.match.card.back, 'the card should have turned over');
   });
 
+  // --- what happens after a match -------------------------------------------
+
+  // A card answered right off the deck, or wrong on purpose. Both kinds.
+  function answerOf(state, deckId, right) {
+    const card = state.match.card;
+    const source = Decks.deck(deckId).cards.find((c) => c.front === card.front);
+    assert.ok(source, 'the card was not from the deck it said it was');
+    if (card.kind === 'choice') {
+      const wanted = source.options[source.answer];
+      const option = card.options.find((o) => (right ? o.text === wanted : o.text !== wanted));
+      return { type: 'battle:answer', option: option.id };
+    }
+    return { type: 'battle:answer', text: right ? source.back : 'certainly not the answer to this' };
+  }
+
+  async function playThrough(who, deckId, rightOn = () => true) {
+    const total = who.state.match.total;
+    for (let i = 0; i < total; i++) {
+      await who.waitFor(atCard(i), `card ${i + 1}`);
+      who.send(answerOf(who.state, deckId, rightOn(i)));
+      await who.waitFor(revealed(i), `the reveal of card ${i + 1}`);
+      who.send({ type: 'battle:next' });
+    }
+    return who.waitFor(ended, 'the result');
+  }
+
+  const ada2 = new Battler(ada);
+  await ada2.connect();
+  a.close();
+
+  await check('the quick-fire clocks are settings', async () => {
+    ada2.send({ type: 'battle:create' });
+    await ada2.waitFor((s) => !!s.code && !s.match, 'a room');
+    ada2.send({ type: 'battle:settings', clock: 10 });
+    await ada2.waitFor((s) => s.clock === 10, 'a ten-second clock');
+    ada2.send({ type: 'battle:settings', clock: 0 });
+    await ada2.waitFor((s) => s.clock === 0, 'untimed again');
+  });
+
+  await check('the misses can be gone over, and only the misses', async () => {
+    ada2.send({ type: 'battle:settings', mode: 'solo', source: 'preset', presetId: 'capitals', length: 5, rule: 'marks' });
+    await ada2.waitFor((s) => s.length === 5 && s.presetId === 'capitals', 'the settings');
+    ada2.send({ type: 'battle:start' });
+    await ada2.waitFor(atCard(0), 'the first card');
+    // Cards two and four are got wrong.
+    const end = await playThrough(ada2, 'capitals', (i) => i !== 1 && i !== 3);
+    assert.equal(end.match.missed, 2, 'two cards were missed');
+    const missedFronts = [end.match.review[1].front, end.match.review[3].front].sort();
+
+    ada2.send({ type: 'battle:retry' });
+    const again = await ada2.waitFor((s) => s.match && s.match.phase === 'asking' && s.match.retry, 'the misses dealt');
+    assert.equal(again.match.total, 2, 'only the misses should be dealt');
+    const seen = [];
+    await ada2.waitFor(atCard(0), 'the first miss');
+    for (let i = 0; i < 2; i++) {
+      await ada2.waitFor(atCard(i), `miss ${i + 1}`);
+      seen.push(ada2.state.match.card.front);
+      ada2.send(answerOf(ada2.state, 'capitals', true));
+      await ada2.waitFor(revealed(i), 'the reveal');
+      ada2.send({ type: 'battle:next' });
+    }
+    const done = await ada2.waitFor(ended, 'the result');
+    assert.deepEqual(seen.sort(), missedFronts, 'the cards dealt were not the ones that were missed');
+    assert.equal(done.match.missed, 0);
+    assert.match(await ada2.expectError({ type: 'battle:retry' }, 'going over nothing'), /nothing was missed/i);
+  });
+
+  await check('a rematch deals again on the same settings, straight away', async () => {
+    ada2.send({ type: 'battle:rematch' });
+    const s = await ada2.waitFor((x) => x.match && x.match.phase === 'asking' && !x.match.retry, 'the rematch');
+    assert.equal(s.match.total, 5, 'the rematch should be dealt at the room\u2019s length, not the retry\u2019s');
+    assert.equal(s.presetId, 'capitals');
+    assert.match(await ada2.expectError({ type: 'battle:rematch' }, 'a rematch mid-match'), /not over/i);
+  });
+
+  await check('sudden death alone ends at the first miss', async () => {
+    // The rematch from the check above is played out first.
+    await playThrough(ada2, 'capitals');
+    ada2.send({ type: 'battle:again' });
+    await ada2.waitFor((s) => !s.match, 'the lobby');
+    ada2.send({ type: 'battle:settings', mode: 'solo', rule: 'sudden', presetId: 'capitals', length: 10 });
+    await ada2.waitFor((s) => s.rule === 'sudden' && s.length === 10, 'sudden death');
+    ada2.send({ type: 'battle:start' });
+    await ada2.waitFor(atCard(0), 'the first card');
+
+    // Right, right, wrong: the run is three cards long and two of them got.
+    for (let i = 0; i < 3; i++) {
+      await ada2.waitFor(atCard(i), `card ${i + 1}`);
+      ada2.send(answerOf(ada2.state, 'capitals', i < 2));
+      await ada2.waitFor(revealed(i), 'the reveal');
+      ada2.send({ type: 'battle:next' });
+    }
+    const end = await ada2.waitFor(ended, 'the end of the run');
+    const me = end.match.standings[0];
+    assert.equal(me.out, 3, 'out on the third card');
+    assert.equal(me.run, 2, 'two in a row');
+    assert.equal(end.match.review.length, 3, 'the review holds the cards that were reached, and no others');
+  });
+
+  await check('sudden death in a duel is won by whoever is left standing', async () => {
+    const bram2 = new Battler(bram);
+    await bram2.connect();
+    ada2.send({ type: 'battle:again' });
+    await ada2.waitFor((s) => !s.match, 'the lobby');
+    bram2.send({ type: 'battle:join', code: ada2.state.code });
+    await ada2.waitFor((s) => s.players.length === 2, 'bram');
+    ada2.send({ type: 'battle:settings', mode: 'duel', rule: 'sudden', presetId: 'capitals', length: 10 });
+    await ada2.waitFor((s) => s.mode === 'duel' && s.rule === 'sudden', 'a sudden-death duel');
+    ada2.send({ type: 'battle:start' });
+
+    // Card one: both right. Card two: bram misses, and that is the match —
+    // even though bram answered faster, lasting is what counts.
+    for (let i = 0; i < 2; i++) {
+      await ada2.waitFor(atCard(i), `card ${i + 1}`);
+      await bram2.waitFor(atCard(i), `card ${i + 1}, for bram`);
+      bram2.send(answerOf(bram2.state, 'capitals', i === 0));
+      ada2.send(answerOf(ada2.state, 'capitals', true));
+      await ada2.waitFor(revealed(i), 'the reveal');
+      ada2.send({ type: 'battle:next' });
+    }
+    const end = await ada2.waitFor(ended, 'the end');
+    const [first, second] = end.match.standings;
+    assert.equal(first.name, 'ada');
+    assert.equal(first.won, true);
+    assert.equal(first.out, null, 'the winner was never out');
+    assert.equal(second.out, 2);
+    assert.equal(second.won, false);
+    bram2.close();
+  });
+
+  await check('somebody with the code mid-match watches, and is sat down after', async () => {
+    const bram3 = new Battler(bram);
+    await bram3.connect();
+    const cleo = await member('cleo2');
+    const watcher = new Battler(cleo);
+    await watcher.connect();
+
+    ada2.send({ type: 'battle:again' });
+    await ada2.waitFor((s) => !s.match, 'the lobby');
+    bram3.send({ type: 'battle:join', code: ada2.state.code });
+    await ada2.waitFor((s) => s.players.filter((p) => p.connected).length === 2, 'bram back');
+    ada2.send({ type: 'battle:settings', mode: 'duel', rule: 'marks', presetId: 'capitals', length: 5 });
+    await ada2.waitFor((s) => s.rule === 'marks' && s.length === 5, 'the settings');
+    ada2.send({ type: 'battle:start' });
+    await ada2.waitFor(atCard(0), 'the first card');
+
+    watcher.send({ type: 'battle:join', code: ada2.state.code });
+    const s = await watcher.waitFor((x) => x.match && x.you.watching, 'watching');
+    assert.equal(s.match.playing, false, 'a watcher is not asked the card');
+    assert.equal(s.match.card.back, null, 'a watcher is not shown the back of an open card either');
+    assert.match(await watcher.expectError({ type: 'battle:answer', text: 'me too' }, 'a watcher answering'), /watching/i);
+
+    // The watcher sees the reveal like anybody.
+    ada2.send(answerOf(ada2.state, 'capitals', true));
+    bram3.send(answerOf(bram3.state, 'capitals', false));
+    const rev = await watcher.waitFor(revealed(0), 'the reveal, watched');
+    assert.equal(rev.match.marks.length, 2, 'the watcher sees both marks, and is not one of them');
+
+    // Played out, and back to the lobby: the watcher has a seat now.
+    ada2.send({ type: 'battle:next' });
+    for (let i = 1; i < 5; i++) {
+      await ada2.waitFor(atCard(i), `card ${i + 1}`);
+      ada2.send(answerOf(ada2.state, 'capitals', true));
+      bram3.send(answerOf(bram3.state, 'capitals', true));
+      await ada2.waitFor(revealed(i), 'the reveal');
+      ada2.send({ type: 'battle:next' });
+    }
+    const end = await ada2.waitFor(ended, 'the end');
+    assert.equal(end.match.standings.length, 2, 'a watcher is not in the standings');
+    ada2.send({ type: 'battle:again' });
+    const lobby = await watcher.waitFor((x) => !x.match, 'the lobby');
+    assert.equal(lobby.you.watching, false, 'the watcher should have been given a seat');
+    assert.equal(lobby.players.filter((p) => !p.watching).length, 3);
+    watcher.close();
+    bram3.close();
+  });
+
+  // --- the daily deck ----------------------------------------------------------
+
+  const today = Daily.deckFor();
+
+  await check('today\u2019s ten is the same ten for everybody', async () => {
+    assert.ok(today, 'there is no daily deck');
+    const bram4 = new Battler(bram);
+    await bram4.connect();
+
+    ada2.send({ type: 'battle:daily' });
+    bram4.send({ type: 'battle:daily' });
+    const hers = await ada2.waitFor((s) => s.daily && s.match && s.match.phase === 'asking', 'the daily, for ada');
+    const his = await bram4.waitFor((s) => s.daily && s.match && s.match.phase === 'asking', 'the daily, for bram');
+    assert.notEqual(hers.code, his.code, 'a daily run is a room of its own');
+    assert.equal(hers.mode, 'solo');
+    assert.equal(hers.match.total, Daily.LENGTH);
+    assert.equal(hers.match.card.front, his.match.card.front, 'the two were dealt different cards');
+    if (hers.match.card.options) {
+      assert.deepEqual(
+        hers.match.card.options.map((o) => o.text),
+        his.match.card.options.map((o) => o.text),
+        'the options came out in a different order for each of them'
+      );
+    }
+
+    // Ada gets it all right; Bram gets it all wrong.
+    const [herEnd] = await Promise.all([
+      playThrough(ada2, today.id, () => true),
+      playThrough(bram4, today.id, () => false),
+    ]);
+    assert.equal(herEnd.match.standings[0].total, Daily.LENGTH * 100);
+    bram4.close();
+  });
+
+  await check('the board keeps the first go of the day, best first', async () => {
+    const menu = ok(await ada.site('me'), 'the menu');
+    const d = menu.battle.daily;
+    assert.equal(d.deck.id, today.id);
+    assert.equal(d.yours.points, Daily.LENGTH * 100);
+    assert.equal(d.yours.place, 1);
+    assert.equal(d.entrants, 2);
+    assert.ok(!JSON.stringify(d).includes(ada.id), 'the board handed out an account id');
+
+    // A second go, got all wrong, changes nothing on the board.
+    ada2.send({ type: 'battle:rematch' });
+    await ada2.waitFor((s) => s.daily && s.match && s.match.phase === 'asking' && s.match.at === 0, 'a second go');
+    const end = await playThrough(ada2, today.id, () => false);
+    assert.equal(end.daily.board[0].points, Daily.LENGTH * 100, 'a second go replaced the first');
+    const after = ok(await ada.site('me'), 'the menu').battle.daily;
+    assert.equal(after.yours.points, Daily.LENGTH * 100);
+    assert.equal(after.entrants, 2);
+  });
+
   // =========================================================================
 
   console.log('');
@@ -854,7 +1091,7 @@ async function run() {
     );
   });
 
-  a.close();
+  ada2.close();
 }
 
 run()

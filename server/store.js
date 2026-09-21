@@ -69,6 +69,7 @@ function empty() {
     trades: [],    // the ledger, newest last, trimmed to TRADE_LOG_MAX
     mints: 0,      // how many cards have ever been struck, for serial numbers
     stats: {},     // id -> how that account has fared at the card table
+    daily: {},     // YYYY-MM-DD -> id -> the first run of that day's deck
   };
 }
 

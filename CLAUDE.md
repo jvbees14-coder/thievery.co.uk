@@ -53,7 +53,7 @@ One server, a hall and three rooms off it:
 | `/cards`, `/cards/ABCD` | `server/site.js` — the card game | never |
 | `/flashcards` | `server/flashcards.js` | required |
 | `/battle`, `/battle/ABCD` | `server/battle.js` | required |
-| `/api/site/…` | the door, and the menu's figures | mostly |
+| `/api/site/…` | the door, the menu's figures, the members panel | mostly |
 | `/api/flashcards/…` | the collection, the post, the panel | yes |
 | *(the battle room has no API — all of it is socket)* | | |
 | anything else | the static block in `server/index.js`, out of `public/` | no |
@@ -177,7 +177,8 @@ thing that will tell you.
 ## The stored document
 
 Everything that outlives the process is in one JSON document: accounts,
-sessions, cards, the trading post, and the lifetime record. It is the
+sessions, cards, the trading post, the lifetime record, and the battle room's
+daily board. It is the
 flashcards room's file historically and still carries its name, but the hall
 and the card table read and write it too.
 
@@ -245,6 +246,18 @@ is worth relative to new ones.
 - The admin is whoever matches `THIEVERY_ADMIN_USERNAME`, named by the
   environment so the name cannot be claimed by whoever registers first.
   `/api/flashcards/admin/*` answers **404** to everyone else, not 403.
+- The admin reaches accounts from two places: the flashcards room's panel
+  (accounts and their cards) and the hall's **Members** panel at `#members`
+  (accounts only). The hall's routes, `/api/site/admin/users…`, call the
+  flashcards module's own `adminOverview`/`adminUser`/`adminPatchUser`/
+  `adminDeleteUser`, so the rules about who may be renamed or suspended are
+  written once. Keep it that way rather than growing a second copy.
+- Anything a modal refuses is said in a toast, and the toast has to sit above
+  the modal (`.toast { z-index: 90 }` in `flashcards.css`). It once sat
+  underneath, and every refused Save looked like a button that did nothing.
+  The admin's account forms are also marked so password managers leave them
+  alone — a browser filling in the admin's own login is a rename to a taken
+  name and a password nobody chose.
 - Passwords: scrypt, self-describing hash format so the cost can be raised
   later. Sessions: random token, only its SHA-256 stored.
 - Failed logins are counted tightly per account (5) and loosely per address
@@ -432,6 +445,48 @@ round by round, so that forty cards do not crowd out three — and shuffles the
 lot at the end, so whose card is whose cannot be read off the order they
 arrive in. Everybody carries the same edge, and the lobby says so on the page
 rather than only here.
+
+### After a match, and the ways to settle one
+
+- **Rematch** (`battle:rematch`) deals again on the same settings at once;
+  **go over the misses** (`battle:retry`) deals only the cards somebody
+  marked below `PASS` — the start of the marker's "Close" band, 65 — as fresh
+  copies with their options reshuffled. Both are the host's, like
+  `battle:again`.
+- **Sudden death** (`room.rule === 'sudden'`) puts a player out on the card
+  where they fall below `PASS`. It is decided in `closeCard`, on final marks,
+  never when an answer arrives. `p.outAt` is the card they went out on, and
+  `inAt(room, p, at)` — not `isPlaying` — is what asks whether a card is in
+  front of somebody. Standings put how long you lasted ahead of the marks.
+- **The clock** was always there (`CLOCKS`); ten and fifteen seconds are the
+  quick-fire settings, meant for four-option decks.
+
+### Watchers
+
+A code for a match already running lets you in to **watch** (`p.watcher`)
+rather than being refused. A watcher is in `room.players`, gets the same
+`viewFor` as anybody and so the same protection from the one rule, is never
+in `m.playing` and never in the standings, and is dropped the moment they
+leave. `toLobby` sits them down if there is a seat. `seated(room)` is the
+people who would be dealt in; count seats with it, not with `players`.
+
+### The daily deck
+
+`daily.js`: ten house cards, the same for everybody on a UTC day. Which deck
+and which ten are worked out from the date by a seeded generator — nothing is
+stored in advance, so a restart or a second process agrees without asking —
+and that generator also shuffles the options, so everybody sees the same
+screen. `battle:daily` opens a room of its own, solo, untimed, on marks, and
+starts it.
+
+The board is the only thing written: `daily[YYYY-MM-DD][userId]` in the
+stored document, **first go of the day only**, pruned to a fortnight on every
+write. A retry is revision and is never filed there. The hall's battle tile and
+the door both show it via `Daily.forUser`, which strips account ids.
+
+The record also files battle matches **by deck** (`stats.battle.decks`, keyed
+by deck id or `'mine'`), and `site.js` turns that into names, averages and a
+best deck (five cards minimum) for the Stats panel.
 
 ### Two smaller things
 

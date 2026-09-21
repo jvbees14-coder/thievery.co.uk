@@ -169,8 +169,13 @@ async function handleWithdraw(req, res) {
 }
 
 // --- the panel -------------------------------------------------------------
+//
+// The four that deal with accounts are exported, because an account is not a
+// flashcards thing: the front hall's members panel answers through these same
+// handlers, so there is one set of rules about who may be renamed or
+// suspended rather than two that drift apart.
 
-function adminOverview(req, res) {
+export function adminOverview(req, res) {
   requireAdmin(req);
   const db = data();
   const cards = Object.values(db.cards);
@@ -210,7 +215,7 @@ function adminOverview(req, res) {
   });
 }
 
-function adminUser(req, res, id) {
+export function adminUser(req, res, id) {
   requireAdmin(req);
   const user = Accounts.byId(id);
   if (!user) throw Object.assign(new Error('No such account.'), { status: 404 });
@@ -235,7 +240,7 @@ function adminUser(req, res, id) {
   });
 }
 
-async function adminPatchUser(req, res, id) {
+export async function adminPatchUser(req, res, id) {
   const admin = requireAdmin(req);
   const user = Accounts.byId(id);
   if (!user) throw Object.assign(new Error('No such account.'), { status: 404 });
@@ -274,7 +279,7 @@ async function adminPatchUser(req, res, id) {
   adminUser(req, res, id);
 }
 
-function adminDeleteUser(req, res, id) {
+export function adminDeleteUser(req, res, id) {
   requireAdmin(req);
   const user = Accounts.byId(id);
   if (!user) throw Object.assign(new Error('No such account.'), { status: 404 });

@@ -32,6 +32,11 @@
   let clockTimer = 0;
   let sent = false; // an answer is in flight, so the box stays shut
   let whoami = ''; // the display name, which the door needs before any room does
+  let today = null; // the daily deck, as the door shows it
+  // Set when another tab has taken this room over. The address bar carries
+  // the room code, so a tab that quietly reconnected would walk straight back
+  // in, take the room back, and the two would trade it between them forever.
+  let superseded = false;
 
   // --- talking to the house --------------------------------------------------
 
@@ -63,7 +68,9 @@
 
       if (msg.type === 'battle:you') {
         whoami = msg.name;
+        today = msg.daily || null;
         $('#who').textContent = whoami;
+        drawToday();
         return;
       }
       if (msg.type === 'battle:catalog') {
@@ -75,6 +82,7 @@
         const was = state && state.match ? state.match.at : -1;
         const wasPhase = state && state.match ? state.match.phase : null;
         state = msg.state;
+        if (location.pathname !== '/battle/' + state.code) history.replaceState(null, '', '/battle/' + state.code);
         // A new card, or a card that has just turned over, means the box is
         // free again and whatever was typed in it is spent.
         const now = state.match ? state.match.at : -1;
@@ -83,7 +91,8 @@
         return;
       }
       if (msg.type === 'battle:superseded') {
-        toast('You opened this room in another tab.');
+        superseded = true;
+        toast('You opened this room in another tab. Reload this one to take it back.');
         ws.close();
         return;
       }
@@ -91,6 +100,7 @@
     });
 
     ws.addEventListener('close', () => {
+      if (superseded) return;
       toast('Connection lost. Trying again…');
       setTimeout(connect, 1500);
     });
@@ -114,6 +124,19 @@
   }
 
   const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  const ordinal = (n) => {
+    const s = ['th', 'st', 'nd', 'rd'];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  };
+
+  // One row of a board, the door's and the result screen's alike.
+  const boardRow = (r) =>
+    `<li class="btl-board-row${r.you ? ' is-yours' : ''}">
+      <span class="btl-board-place">${ordinal(r.place)}</span>
+      <span class="btl-board-name">${esc(r.name)}${r.you ? ' <i>you</i>' : ''}</span>
+      <b>${r.points}</b>
+    </li>`;
 
   // --- the lobby's pickers ---------------------------------------------------
 
@@ -141,8 +164,25 @@
       group('Subject papers', catalog.decks.filter((d) => !d.house && !d.topic));
     $('#length').innerHTML = catalog.lengths.map((n) => `<option value="${n}">${n} cards</option>`).join('');
     $('#clock').innerHTML = catalog.clocks
-      .map((n) => `<option value="${n}">${n === 0 ? 'Untimed' : n + ' seconds'}</option>`)
+      .map((n) => `<option value="${n}">${n === 0 ? 'Untimed' : n + ' seconds'}${n && n <= 15 ? ' — quick-fire' : ''}</option>`)
       .join('');
+  }
+
+  // --- today's ten -----------------------------------------------------------
+
+  function drawToday() {
+    const d = today;
+    $('#today').hidden = !d || !d.deck;
+    if (!d || !d.deck) return;
+    $('#today-deck').textContent = d.deck.name;
+    const most = d.length * 100;
+    $('#today-say').textContent = d.yours
+      ? `You scored ${d.yours.points} out of ${most} — ${ordinal(d.yours.place)} of ${d.entrants}.`
+      : d.entrants
+        ? `${plural(d.entrants, 'person has', 'people have')} played it today. Ten cards, untimed, just you.`
+        : 'Nobody has played it yet today. Ten cards, untimed, just you.';
+    $('#today-play').textContent = d.yours ? 'Play it again, for practice' : 'Play today’s ten';
+    $('#today-board').innerHTML = d.top.map(boardRow).join('');
   }
 
   // --- which screen ----------------------------------------------------------
@@ -180,6 +220,7 @@
         (p) => `<li class="btl-player${p.connected ? '' : ' is-away'}">
           <span class="btl-player-name">${esc(p.name)}</span>
           ${p.host ? '<span class="btl-tag">host</span>' : ''}
+          ${p.watching ? '<span class="btl-tag is-away">watching</span>' : ''}
           ${p.connected ? '' : '<span class="btl-tag is-away">away</span>'}
         </li>`
       )
@@ -207,9 +248,22 @@
           : ' Type the answer; the house marks how close you got.')
       : '';
 
+    // The two things a setting can quietly get wrong, said where it is set.
+    $('#rule-note').hidden = s.rule !== 'sudden';
+    $('#rule-note').textContent =
+      s.mode === 'solo'
+        ? `Alone, it is a run: how many in a row you can get before one falls under ${s.pass}.`
+        : `Under ${s.pass} on a card and you are out. Marks only break a tie between people who lasted as long.`;
+    const quick = s.clock && s.clock <= 15;
+    const typed = s.source === 'mine' || (deck && deck.kind !== 'choice');
+    $('#clock-note').textContent =
+      quick && typed
+        ? 'Quick-fire suits a four-option deck. On a card you type into, it is mostly a typing test.'
+        : 'Per card. Untimed is the one revision wants.';
+
     $('#start').hidden = !host;
     $('#host-note').hidden = host;
-    const alone = s.players.length < 2;
+    const alone = s.players.filter((p) => !p.watching).length < 2;
     $('#start').textContent =
       s.mode === 'solo' ? 'Start revising' : alone ? 'Waiting for somebody to join' : 'Deal the cards';
     $('#start').disabled = s.mode === 'duel' && alone;
@@ -222,7 +276,20 @@
     const m = s.match;
     const open = m.phase === 'asking';
 
-    $('#card-count').textContent = `Card ${m.at + 1} of ${m.total}`;
+    $('#card-count').textContent =
+      (s.daily ? 'Today’s ten · ' : '') + (s.rule === 'sudden' ? 'Sudden death · ' : '') + `Card ${m.at + 1} of ${m.total}`;
+
+    // Whoever is not answering is told why, so an empty space where the box
+    // should be never reads as the page having broken.
+    const banner = s.you.watching
+      ? 'You are watching. You will be dealt in to the next match if there is a seat.'
+      : m.inMatch && m.outAt
+        ? `You went out on card ${m.outAt}. Watching the rest.`
+        : !m.inMatch
+          ? 'Watching this one.'
+          : '';
+    $('#card-banner').textContent = banner;
+    $('#card-banner').hidden = !banner;
     $('#card-front').textContent = m.card.front;
     $('#card-owner').textContent = m.card.ownerName ? `From ${m.card.ownerName}'s collection` : '';
     $('#card-owner').hidden = !m.card.ownerName;
@@ -279,7 +346,7 @@
         ? ''
         : [...totals]
             .sort((a, b) => b.total - a.total)
-            .map((t) => `<li><span>${esc(t.name)}</span><b>${t.total}</b></li>`)
+            .map((t) => `<li${t.out ? ' class="is-out"' : ''}><span>${esc(t.name)}</span><b>${t.total}</b></li>`)
             .join('');
 
     runClock();
@@ -312,7 +379,7 @@
     if (mk.flipped) working.push('<b>this says the opposite of the card</b>');
     return `<article class="btl-mark is-${esc(mk.band || 'missed')}${yours ? ' is-yours' : ''}">
       <header class="btl-mark-head">
-        <span class="btl-mark-who">${esc(mk.name)}${yours ? ' <i>you</i>' : ''}</span>
+        <span class="btl-mark-who">${esc(mk.name)}${yours ? ' <i>you</i>' : ''}${mk.out ? ' <i class="is-out">out</i>' : ''}</span>
         <span class="btl-mark-score">${mk.points == null ? 0 : mk.points}<small>/100</small></span>
       </header>
       <p class="btl-mark-said">${said}</p>
@@ -362,11 +429,18 @@
     const you = rows.find((r) => r.id === s.you.id);
     const solo = rows.length < 2;
     const won = you && you.won;
+    const sudden = s.rule === 'sudden';
 
-    $('#end-eyebrow').textContent = solo ? 'Revision' : 'The duel';
+    $('#end-eyebrow').textContent = s.daily
+      ? `Today’s ten · ${s.daily.deck}`
+      : (sudden ? 'Sudden death · ' : '') + (s.match.retry ? 'The misses, again' : solo ? 'Revision' : 'The duel');
     $('#end-head').textContent = solo
       ? you
-        ? `${Math.round(you.total / Math.max(1, you.cards))} out of 100, on average`
+        ? sudden
+          ? you.out
+            ? `${plural(you.run, 'card', 'cards')} in a row`
+            : `All ${you.cards}, and never out`
+          : `${Math.round(you.total / Math.max(1, you.cards))} out of 100, on average`
         : 'Match over'
       : won
         ? rows.filter((r) => r.won).length > 1
@@ -379,7 +453,9 @@
         (r, i) => `<li class="btl-standing${r.won ? ' is-won' : ''}${r.id === s.you.id ? ' is-yours' : ''}">
           <span class="btl-standing-rank">${i + 1}</span>
           <span class="btl-standing-name">${esc(r.name)}</span>
-          <span class="btl-standing-avg">${Math.round(r.total / Math.max(1, r.cards))} avg</span>
+          <span class="btl-standing-avg">${
+            sudden ? (r.out ? `out on card ${r.out}` : 'still standing') + ' · ' : ''
+          }${Math.round(r.total / Math.max(1, r.cards))} avg</span>
           <b class="btl-standing-total">${r.total}</b>
         </li>`
       )
@@ -387,7 +463,32 @@
 
     $('#end-note').textContent = solo
       ? 'Every card you answered is below, with what the house was looking for.'
-      : 'Marks decide it; the clock only breaks a tie.';
+      : sudden
+        ? 'Lasting longest decides it; marks break a tie, and the clock breaks one of those.'
+        : 'Marks decide it; the clock only breaks a tie.';
+
+    // What happens next is the host's to say.
+    const host = s.you.host;
+    $('#end-host').hidden = !host;
+    $('#end-guest').hidden = host;
+    $('#retry').hidden = !s.match.missed;
+    $('#retry').textContent = s.match.missed
+      ? `Go over the ${plural(s.match.missed, 'miss', 'misses')}`
+      : '';
+    $('#rematch').textContent = s.daily ? 'Play today’s ten again' : 'Rematch';
+
+    // The day's board, and whether this run went on it.
+    $('#end-daily').hidden = !s.daily;
+    if (s.daily) {
+      $('#end-board').innerHTML = s.daily.board.map(boardRow).join('') ||
+        '<li class="btl-board-row"><span></span><span>Nobody yet.</span><b></b></li>';
+      const on = s.daily.board.find((r) => r.you);
+      $('#end-daily-note').textContent = s.match.retry
+        ? 'Going over the misses is revision, and does not go on the board.'
+        : on
+          ? `Your first go of the day stands at ${ordinal(on.place)}. Later goes are practice.`
+          : 'Only your first go of the day goes on the board.';
+    }
 
     $('#review').innerHTML = (s.match.review || [])
       .map(
@@ -441,7 +542,13 @@
       say({ type: 'battle:leave' });
       state = null;
       history.replaceState(null, '', '/battle');
+      // Asked again, so the door's board includes whatever was just played.
+      say({ type: 'battle:hello' });
       render();
+      return;
+    }
+    if (act === 'daily') {
+      say({ type: 'battle:daily' });
       return;
     }
     if (act === 'copy') {
@@ -467,6 +574,8 @@
   $('#start').addEventListener('click', () => say({ type: 'battle:start' }));
   $('#next').addEventListener('click', () => say({ type: 'battle:next' }));
   $('#again').addEventListener('click', () => say({ type: 'battle:again' }));
+  $('#rematch').addEventListener('click', () => say({ type: 'battle:rematch' }));
+  $('#retry').addEventListener('click', () => say({ type: 'battle:retry' }));
 
   for (const id of ['#deck', '#length', '#clock']) {
     $(id).addEventListener('change', (ev) => {

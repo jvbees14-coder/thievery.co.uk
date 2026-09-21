@@ -423,6 +423,12 @@ textarea:focus, select:focus, input:focus {
 .fc-modal-box h3 { font-family: var(--caps); font-weight: 600; font-size: 18px; color: var(--ivory); margin: 0 0 16px; }
 .fc-danger-zone { margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(229, 100, 107, 0.25); }
 
+/* The toast goes over everything, the modal and the question included. The
+   table's stylesheet sets it at 50, which is under both, so anything a form in
+   a modal refused was said behind the modal where nobody could read it — and
+   a Save that fails in silence looks exactly like a Save that does nothing. */
+.toast { z-index: 90; }
+
 /* The room asking whether you meant it. Sits above the modal, because that is
    usually where it is asked from, and the question is set larger than the
    detail underneath it: whatever is about to happen is not coming back. */

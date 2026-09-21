@@ -33,7 +33,14 @@ let child = null;
 function startServer() {
   return new Promise((resolve, reject) => {
     child = spawn(process.execPath, [path.join(__dirname, '..', 'server', 'index.js')], {
-      env: { ...process.env, PORT: '0', THIEVERY_DATA_DIR: DATA_DIR, THIEVERY_BOT_PACE: '0.012' },
+      env: {
+        ...process.env,
+        PORT: '0',
+        THIEVERY_DATA_DIR: DATA_DIR,
+        THIEVERY_BOT_PACE: '0.012',
+        THIEVERY_ADMIN_USERNAME: 'house',
+        THIEVERY_ADMIN_PASSWORD: 'the-house-always-wins',
+      },
       stdio: ['ignore', 'pipe', 'inherit'],
     });
     child.stdout.on('data', (d) => {
@@ -343,6 +350,54 @@ async function run() {
   for (const [who, name] of [[bob, 'bob'], [carol, 'carol']]) {
     ok(await who.call('register', { method: 'POST', body: { username: name, password: 'a-long-enough-password' } }), `register ${name}`);
   }
+
+  // --- the members panel ---------------------------------------------------
+
+  const house = visitor();
+  ok(await house.call('login', { method: 'POST', body: { username: 'house', password: 'the-house-always-wins' } }), 'admin login');
+
+  await check('the members panel does not exist for a member', async () => {
+    assert.equal((await bob.call('admin/users')).status, 404);
+    const target = ok(await house.call('admin/users'), 'overview').users.find((u) => u.username === 'carol');
+    assert.equal((await bob.call('admin/users/' + target.id, { method: 'POST', body: { displayName: 'Taken' } })).status, 404);
+  });
+
+  await check('the admin can see every account from the hall', async () => {
+    const { users } = ok(await house.call('admin/users'), 'overview');
+    for (const name of ['alice', 'bob', 'carol', 'house']) assert.ok(users.some((u) => u.username === name), name + ' is missing');
+    assert.ok(ok(await house.call('me'), 'me').user.admin, 'the menu is not told who the admin is');
+  });
+
+  await check("the admin saves a change to another member's account", async () => {
+    const { users } = ok(await house.call('admin/users'), 'overview');
+    const target = users.find((u) => u.username === 'transient');
+    const body = ok(await house.call('admin/users/' + target.id, {
+      method: 'POST',
+      body: { displayName: 'Passing through', username: 'transit', note: 'renamed from the hall', password: 'a-fresh-long-password' },
+    }), 'patch');
+    assert.equal(body.account.displayName, 'Passing through');
+    assert.equal(body.account.username, 'transit');
+    assert.equal(body.account.note, 'renamed from the hall');
+    // And it took: the new name and the new password open the account.
+    const back = visitor();
+    ok(await back.call('login', { method: 'POST', body: { username: 'transit', password: 'a-fresh-long-password' } }), 'login as renamed');
+  });
+
+  await check('a save the house refuses says why', async () => {
+    const target = ok(await house.call('admin/users'), 'overview').users.find((u) => u.username === 'transit');
+    const res = await house.call('admin/users/' + target.id, { method: 'POST', body: { username: 'alice' } });
+    assert.equal(res.status, 400);
+    assert.match(res.body.error, /taken/);
+  });
+
+  await check('a suspended account cannot sign in, and a closed one is gone', async () => {
+    const target = ok(await house.call('admin/users'), 'overview').users.find((u) => u.username === 'transit');
+    ok(await house.call('admin/users/' + target.id, { method: 'POST', body: { disabled: true } }), 'suspend');
+    const res = await visitor().call('login', { method: 'POST', body: { username: 'transit', password: 'a-fresh-long-password' } });
+    assert.notEqual(res.status, 200, 'a suspended account signed in');
+    const left = ok(await house.call('admin/users/' + target.id, { method: 'DELETE' }), 'delete').users;
+    assert.ok(!left.some((u) => u.id === target.id), 'the account is still listed');
+  });
 
   async function openAccount(name) {
     const who = visitor();

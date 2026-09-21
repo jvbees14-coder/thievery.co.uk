@@ -93,6 +93,20 @@
   color: var(--text-faint);
 }
 
+/* Today's ten, on the battle tile: a line of its own above the figure, in
+   brass, because it is the one thing on the hall that changes every day. */
+.menu-tile-daily {
+  margin: auto 0 0;
+  padding-top: 12px;
+  font-size: 13.5px;
+  color: var(--brass);
+}
+.menu-tile-daily + .menu-tile-figure { margin-top: 8px; }
+
+/* The battle room's line about your best deck sits between its figures and
+   its table, closer to the figures it is summing up. */
+#battle-best { margin: -10px 0 14px; }
+
 /* A room that cannot be reached is still drawn, dimmed, and says why in its
    own figure line. Hiding it would leave a hole nobody could account for. */
 .menu-tile.is-shut { opacity: 0.55; }
@@ -159,6 +173,28 @@
   border-top: 1px solid var(--brass-ghost);
 }
 .menu-form:first-of-type { border-top: 0; }
+
+/* --- the members panel --------------------------------------------------- */
+
+/* The admin's own tile is edged in the same rose the panel marks the admin's
+   account with, so it reads as the house's door rather than one more room. */
+.menu-tile-house { border-color: rgba(233, 162, 184, 0.3); }
+.menu-tile-house .menu-tile-mark { color: rgba(233, 162, 184, 0.75); }
+
+.menu-members { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+/* The flashcards panel draws a row as a button; here it is a link, because
+   an account has an address. */
+.menu-members a.fc-acct { text-decoration: none; box-sizing: border-box; }
+.menu-member-back { margin: 0 0 14px; font-size: 13px; }
+.menu-member-back a { color: var(--text-faint); text-decoration: none; }
+.menu-member-back a:hover { color: var(--brass); }
+.menu-member .menu-form .fc-h4 { margin: 0; }
+.menu-member-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-bottom: 4px; }
+.menu-member-head h3 { margin: 0; font-family: var(--display); font-size: 22px; font-weight: 400; color: var(--ivory); }
+.menu-member-facts { margin: 0 0 6px; font-size: 14px; color: var(--text-dim); }
+.menu-member .fc-actions { flex-wrap: wrap; }
+.menu-member .btn.danger { border-color: rgba(229, 100, 107, 0.55); color: #f6c9cc; }
+.menu-member .btn.danger:hover { background: rgba(142, 31, 46, 0.22); border-color: var(--bad); }
 
 /* --- the door's word about the open table -------------------------------- */
 

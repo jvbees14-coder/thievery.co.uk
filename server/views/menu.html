@@ -26,11 +26,13 @@
       <a class="menu-nav-link" href="/cards">Cards</a>
       <a class="menu-nav-link" id="nav-flashcards" href="/flashcards">Flashcards</a>
       <a class="menu-nav-link" id="nav-battle" href="/battle">Battle</a>
+      <a class="menu-nav-link" id="nav-members" href="#members" hidden>Members</a>
     </nav>
     <div class="fc-who">
       <button id="who" class="fc-who-btn" type="button" aria-haspopup="true" aria-expanded="false"></button>
       <div id="who-menu" class="fc-menu" hidden>
         <a href="#account">Account settings</a>
+        <a href="#members" id="who-members" hidden>Members</a>
         <button data-act="signout" type="button">Sign out</button>
       </div>
     </div>
@@ -80,6 +82,7 @@
           how close you got. Duel somebody on your collections, or sit down
           alone and simply revise.
         </p>
+        <p class="menu-tile-daily" id="tile-battle-daily" hidden></p>
         <p class="menu-tile-figure" id="tile-battle-figure">&nbsp;</p>
       </a>
 
@@ -103,6 +106,20 @@
           password &mdash; which signs every other device out.
         </p>
         <p class="menu-tile-figure" id="tile-account-figure">&nbsp;</p>
+      </a>
+
+      <!-- The admin's door, and only the admin's. It is drawn for nobody
+           else, and the addresses behind it answer 404 to anybody else
+           whether it is drawn or not. -->
+      <a class="menu-tile menu-tile-house" id="tile-members" href="#members" hidden>
+        <span class="menu-tile-mark" aria-hidden="true">&#9733;</span>
+        <h2>Members</h2>
+        <p class="menu-tile-say">The house&rsquo;s book</p>
+        <p class="menu-tile-blurb">
+          Every account on the site. Rename one, reset a password, suspend it,
+          sign it out everywhere, or close it for good.
+        </p>
+        <p class="menu-tile-figure" id="tile-members-figure">&nbsp;</p>
       </a>
     </div>
 
@@ -137,6 +154,20 @@
         <tbody id="stats-modes"></tbody>
       </table>
       <p class="hint" id="stats-modes-note" hidden></p>
+
+      <!-- The battle room, which is not the same game and is not added into
+           anything above. Marks are out of 100 a card, so the figure worth
+           having is the average — per deck, because a mark on the capitals
+           and a mark on professional law say very different things. -->
+      <h3 class="menu-modes-head">The battle room</h3>
+      <div class="menu-figures" id="battle-figures"></div>
+      <p class="menu-note" id="battle-best">&nbsp;</p>
+      <table class="menu-modes" id="battle-table">
+        <thead>
+          <tr><th scope="col">Deck</th><th scope="col">Played</th><th scope="col">Cards</th><th scope="col">Average</th></tr>
+        </thead>
+        <tbody id="battle-decks"></tbody>
+      </table>
 
       <p class="hint">
         A round counts once, however many seats one account is sitting at, and
@@ -180,6 +211,27 @@
       </form>
 
       <p id="account-error" class="door-error" hidden></p>
+      <p class="menu-panel-foot"><a href="#">&larr; back to the hall</a></p>
+    </section>
+
+    <!-- ------------------------------------------------------- members -->
+    <!-- The list is #members and one account is #members/<id>, so the back
+         button leaves an account the way it came in. What is in somebody's
+         collection is the flashcards panel's business and is left there. -->
+    <section id="members" class="menu-panel panel" hidden>
+      <h2 class="menu-panel-head">Members</h2>
+      <p class="menu-panel-lede" id="members-lede">&nbsp;</p>
+
+      <div id="members-all">
+        <div class="field">
+          <label for="members-search">Find an account</label>
+          <input id="members-search" type="search" autocomplete="off" spellcheck="false" placeholder="name or username" />
+        </div>
+        <div id="members-list" class="menu-members"></div>
+      </div>
+
+      <div id="member" hidden></div>
+
       <p class="menu-panel-foot"><a href="#">&larr; back to the hall</a></p>
     </section>
   </main>

@@ -639,12 +639,12 @@
         </div>
         <div class="field">
           <label for="ad-user">Username</label>
-          <input id="ad-user" maxlength="20" value="${esc(a.username)}" autocapitalize="none" spellcheck="false"${a.admin ? ' disabled' : ''} />
+          <input id="ad-user" maxlength="20" value="${esc(a.username)}" autocomplete="off" data-lpignore="true" data-1p-ignore autocapitalize="none" spellcheck="false"${a.admin ? ' disabled' : ''} />
           ${a.admin ? '<p class="hint">The admin account is named by THIEVERY_ADMIN_USERNAME, not from here.</p>' : ''}
         </div>
         <div class="field">
           <label for="ad-pass">Set a new password <span class="opt">optional</span></label>
-          <input id="ad-pass" type="password" maxlength="200" autocomplete="new-password" />
+          <input id="ad-pass" type="password" maxlength="200" autocomplete="new-password" data-lpignore="true" data-1p-ignore />
           <p class="hint">Setting one signs the account out everywhere.</p>
         </div>
         <div class="field">
@@ -690,6 +690,12 @@
       await api('admin/users/' + encodeURIComponent(a.id), { method: 'POST', body });
       closeModal();
       await loadPanel();
+      // The admin's own name is in the bar, and a rename that the bar goes on
+      // ignoring reads as a rename that did not take.
+      if (a.id === state.user.id) {
+        state = await api('me');
+        drawAll();
+      }
       toast('Account updated.', 'info');
     }));
 

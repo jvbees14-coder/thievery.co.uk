@@ -23,7 +23,7 @@
 //   /            the menu, or the door, or a note saying the hall is shut
 //   /cards…      the card game, whatever the store is doing
 //   /logic…      where the game lived for a day; sent on to /cards
-//   /api/site/…  the door and the menu's figures
+//   /api/site/…  the door, the menu's figures, and the members panel
 // ---------------------------------------------------------------------------
 
 import fs from 'node:fs';
@@ -36,6 +36,8 @@ import * as Stats from './stats.js';
 import * as Store from './store.js';
 import * as Flashcards from './flashcards.js';
 import * as Battle from './battle.js';
+import * as Daily from './daily.js';
+import * as Decks from './decks.js';
 import { send, fail, originOk, currentUser, requireUser } from './plumbing.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -91,11 +93,34 @@ const redirect = (res, to, status = 302) => {
 
 // --- what the menu is told -------------------------------------------------
 
+// The battle record keeps its per-deck rows by id, because an id is what does
+// not change. The page wants names, and wants them best first, so they are
+// put together here — along with the one figure the rows are for, which deck
+// somebody is best at. A deck needs a few cards behind it before it can be
+// anybody's best: one lucky answer is not a subject.
+const BEST_DECK_MIN_CARDS = 5;
+
+function battleDecks(rows = {}) {
+  const names = new Map(Decks.catalog().map((d) => [d.id, d.name]));
+  const list = Object.entries(rows)
+    .map(([id, r]) => ({
+      id,
+      name: id === 'mine' ? 'Your own flashcards' : names.get(id) || 'A deck no longer in the house',
+      matches: r.matches,
+      cards: r.cards,
+      average: r.cards ? r.points / r.cards : 0,
+    }))
+    .sort((a, b) => b.cards - a.cards);
+  const ranked = list.filter((d) => d.cards >= BEST_DECK_MIN_CARDS).sort((a, b) => b.average - a.average);
+  return { decks: list, bestDeck: ranked[0] || null, bestDeckMin: BEST_DECK_MIN_CARDS };
+}
+
 function snapshot(user) {
   const cards = Cards.cardsOf(user.id);
+  const play = Stats.forUser(user.id);
   return {
     user: Accounts.publicUser(user),
-    play: Stats.forUser(user.id),
+    play,
     // Enough of the collection for a tile to say something true about it.
     // The cards themselves are the flashcards room's business.
     collection: {
@@ -111,9 +136,12 @@ function snapshot(user) {
     // already has a `cards`, meaning how many you have answered, and one
     // field standing for both figures is a tile that lies about one of them.
     battle: {
-      ...Stats.forUser(user.id).battle,
+      ...play.battle,
+      ...battleDecks(play.battle.decks),
       owned: cards.length,
       rooms: Battle.openRooms(),
+      // Today's ten, and how this account stands on them.
+      daily: Daily.forUser(user.id),
     },
     // A tile that leads somewhere shut should say so before it is pressed.
     rooms: { flashcards: Flashcards.isOpen(), battle: Battle.isOpen() },
@@ -240,9 +268,9 @@ export function handle(req, res, url) {
   // throws. This runs before the promise below catches anything, so an
   // unguarded decode here is an exception with nothing underneath it to land
   // on — which takes the whole process, card game and all.
-  let head;
+  let head, a, b;
   try {
-    [head] = pathname
+    [head, a, b] = pathname
       .replace(/^\/api\/site\/?/, '')
       .split('/')
       .map((s) => decodeURIComponent(s || ''));
@@ -258,6 +286,17 @@ export function handle(req, res, url) {
       if (head === 'logout' && method === 'POST') return Door.logout(req, res);
       if (head === 'account' && method === 'POST') return Door.account(req, res, snapshot);
       if (head === 'me' && method === 'GET') return send(res, 200, snapshot(requireUser(req)));
+
+      // The members panel. Accounts belong to the whole site rather than to
+      // the flashcards room, so the admin can reach them from the hall; the
+      // handlers are the flashcards panel's own, and answer 404 to anybody
+      // who is not the admin, exactly as they do there.
+      if (head === 'admin' && a === 'users') {
+        if (!b && method === 'GET') return Flashcards.adminOverview(req, res);
+        if (b && method === 'GET') return Flashcards.adminUser(req, res, b);
+        if (b && method === 'POST') return Flashcards.adminPatchUser(req, res, b);
+        if (b && method === 'DELETE') return Flashcards.adminDeleteUser(req, res, b);
+      }
       send(res, 404, { error: 'No such thing.' });
     })()
   );
