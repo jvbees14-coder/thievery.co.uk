@@ -847,9 +847,18 @@ async function run() {
   // --- what happens after a match -------------------------------------------
 
   // A card answered right off the deck, or wrong on purpose. Both kinds.
+  //
+  // The card is found by its front *and*, for a four-option card, by its
+  // options. The papers are not above asking the same question twice — "Which
+  // one of the following statements is true:" is a whole question in some of
+  // them — and a topic deck gathers several papers, so the front alone can
+  // find the wrong card and look for an answer that is not on the screen.
+  const sameOptions = (a, b) => JSON.stringify(a.slice().sort()) === JSON.stringify(b.slice().sort());
   function answerOf(state, deckId, right) {
     const card = state.match.card;
-    const source = Decks.deck(deckId).cards.find((c) => c.front === card.front);
+    const source = Decks.deck(deckId).cards.find(
+      (c) => c.front === card.front && (!card.options || sameOptions(c.options, card.options.map((o) => o.text)))
+    );
     assert.ok(source, 'the card was not from the deck it said it was');
     if (card.kind === 'choice') {
       const wanted = source.options[source.answer];
