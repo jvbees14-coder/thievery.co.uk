@@ -119,10 +119,14 @@
 
   function fillPickers() {
     if (!catalog) return;
-    // Two groups, because there are sixty of these and they are not the
-    // same sort of thing: a dozen cards somebody here wrote, or a subject
-    // paper of four-option questions. A flat list of sixty would bury the
-    // first two under the second.
+    // Three groups, because there are eighty of these and they are not the
+    // same sort of thing: a dozen cards somebody here wrote, a subject paper
+    // of four-option questions, or a topic gathered from across the others.
+    // A flat list of eighty would bury the first two under the rest.
+    //
+    // The topics come first, because "Biology" is what somebody sitting down
+    // to revise actually wants, and which paper a question came in is a
+    // detail they should not have to know.
     const group = (label, decks) =>
       decks.length
         ? `<optgroup label="${esc(label)}">` +
@@ -132,8 +136,9 @@
           '</optgroup>'
         : '';
     $('#deck').innerHTML =
+      group('By topic', catalog.decks.filter((d) => d.topic)) +
       group('Written by the house', catalog.decks.filter((d) => d.house)) +
-      group('Subject papers', catalog.decks.filter((d) => !d.house));
+      group('Subject papers', catalog.decks.filter((d) => !d.house && !d.topic));
     $('#length').innerHTML = catalog.lengths.map((n) => `<option value="${n}">${n} cards</option>`).join('');
     $('#clock').innerHTML = catalog.clocks
       .map((n) => `<option value="${n}">${n === 0 ? 'Untimed' : n + ' seconds'}</option>`)

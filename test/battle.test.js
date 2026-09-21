@@ -367,7 +367,10 @@ async function run() {
   });
 
   await check('the subject papers loaded, and loaded as four-option decks', () => {
-    const papers = Decks.catalog().filter((d) => !d.house);
+    // The MMLU papers by name, rather than everything that is not hand-
+    // written: a converted deck is also not hand-written, and is under no
+    // obligation to be four-option or to be multiple choice at all.
+    const papers = Decks.catalog().filter((d) => d.id.startsWith('mmlu-'));
     assert.ok(papers.length >= 50, `only ${papers.length} subject papers loaded`);
     assert.ok(papers.every((d) => d.kind === 'choice'), 'a subject paper is a four-option deck');
     // Spot-check one all the way down to a card.
@@ -378,6 +381,33 @@ async function run() {
       assert.equal(c.options.length, 4);
       assert.ok(Number.isInteger(c.answer) && c.answer >= 0 && c.answer <= 3);
     }
+  });
+
+  await check('a topic deck is gathered from the papers, and deals one kind of card', () => {
+    const topics = Decks.catalog().filter((d) => d.topic);
+    assert.ok(topics.length >= 5, `only ${topics.length} topic decks were assembled`);
+
+    for (const t of topics) {
+      const deck = Decks.deck(t.id);
+      // The one that would break `dealFrom`, which picks a single builder for
+      // the whole deck off its kind: a text card in here would be dealt as a
+      // choice and fall over on its missing options.
+      assert.equal(deck.kind, 'choice', `${t.id} is not a choice deck`);
+      for (const c of deck.cards) {
+        assert.ok(Array.isArray(c.options), `${t.id} holds a card with no options`);
+      }
+    }
+
+    // Biology is assembled from the anatomy paper among others, so a card of
+    // that paper's must be findable in it — the same object, not a copy.
+    const bio = Decks.deck('topic-biology');
+    assert.ok(bio, 'there is no biology topic deck');
+    const anatomy = Decks.deck('mmlu-anatomy');
+    assert.ok(bio.cards.includes(anatomy.cards[0]), 'the biology topic deck does not hold the anatomy paper');
+
+    // And nothing is in it twice, which a card belonging to two sources would
+    // otherwise cause.
+    assert.equal(new Set(bio.cards).size, bio.cards.length, 'a card is in the biology deck twice');
   });
 
   await check('the CSV reader handles quotes, doubled quotes and newlines', () => {

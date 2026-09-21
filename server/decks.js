@@ -13,8 +13,10 @@
 //     and `grade.js` marks how close you got, out of 100. This is what a
 //     member's own flashcards always are, and what the two hand-written decks
 //     below are.
-//   * **`choice`** — a front and four options, one of them right. You pick
-//     one. There is no "close" about it: a choice is 100 or nought.
+//   * **`choice`** — a front and a handful of options, one of them right. You
+//     pick one. There is no "close" about it: a choice is 100 or nought.
+//     Usually four, because that is what the papers deal, but see
+//     `MAX_OPTIONS` below: nothing in the room counts on it.
 //
 // The second kind exists because of what is in `decks/`: the MMLU sets, which
 // are multiple-choice by construction. Flattening them into `text` cards was
@@ -42,9 +44,18 @@
 //
 // --- adding a deck ---------------------------------------------------------
 //
-// Either drop another CSV into `decks/` in the MMLU shape
-// (`question,A,B,C,D,letter`, no header), or add an object to `WRITTEN`
-// below. The shape is the whole contract:
+// There are three ways in, and they exist for three different reasons:
+//
+//   * a CSV in `decks/` in the MMLU shape (`question,A,B,C,D,letter`, no
+//     header, named `*_test.csv`) — the published papers, kept exactly as
+//     they were published so each can be checked against its source;
+//   * a `*.deck.json` in `decks/` — anything converted from somewhere else,
+//     written by `scripts/decks-import.js`. It carries its own id, name and
+//     blurb, because a converted deck has no filename convention worth
+//     trusting and nothing should have to guess what it is called;
+//   * an object in `WRITTEN` below — the decks written here, in the source.
+//
+// The shape is the whole contract, and the JSON file is exactly it:
 //
 //   id       a short slug, never reused and never changed — a room that is
 //            being set up holds this string, so renaming one mid-match would
@@ -53,7 +64,12 @@
 //   blurb    one line, said in the lobby under the name
 //   kind     'text' or 'choice'
 //   cards    text:   [{ front, back, hint }]
-//            choice: [{ front, options: [four strings], answer: index }]
+//            choice: [{ front, options: [two to eight strings], answer: index }]
+//
+// Four options is what the MMLU papers deal and what most people picture, but
+// nothing in the room requires it: `asChoiceCard` shuffles however many there
+// are and the page lists them down the card. A true/false deck is a choice
+// deck with two.
 //
 // The only rule about a `text` back is the one `grade.js` cares about: it
 // should be the answer and not a sentence about the answer. "Mitochondria
@@ -132,7 +148,11 @@ const WRITTEN = [
 // is the whole of what the format needs: quoted fields, doubled quotes inside
 // them, and newlines inside quotes — which these files do use, since several
 // subjects ask about a passage.
-export function parseCsv(text) {
+//
+// The separator is an argument only so that `scripts/decks-import.js` can
+// read a tab-separated export with this same reader rather than keeping a
+// second one of its own. The papers here are commas and always will be.
+export function parseCsv(text, sep = ',') {
   const rows = [];
   let row = [];
   let field = '';
@@ -146,7 +166,7 @@ export function parseCsv(text) {
         i += 1;
       } else quoted = false;
     } else if (c === '"') quoted = true;
-    else if (c === ',') {
+    else if (c === sep) {
       row.push(field);
       field = '';
     } else if (c === '\n') {
@@ -165,6 +185,16 @@ export function parseCsv(text) {
 }
 
 const LETTERS = { A: 0, B: 1, C: 2, D: 3 };
+
+// How many options a choice card may carry. Two is a true/false card, which
+// is a real kind of question. The ceiling is not a technical limit — the page
+// lists them down the card and would take twenty — but a card nobody can hold
+// in their head while they read it is not being answered, it is being
+// searched. Eight is where it sits because that is what the published
+// eight-option sets deal, and refusing those outright would be a rule about
+// tidiness rather than about the game.
+export const MIN_OPTIONS = 2;
+export const MAX_OPTIONS = 8;
 
 // "high_school_european_history" -> "High school European history". The two
 // special cases are the ones that read wrong in sentence case.
@@ -216,9 +246,145 @@ function loadCsvDecks() {
     .filter((d) => d.cards.length >= 2);
 }
 
+// --- the converted decks ---------------------------------------------------
+//
+// A deck that came from somewhere else arrives here already in the shape the
+// room deals, because `scripts/decks-import.js` did the guessing once, at a
+// desk, where a bad guess can be looked at. Nothing is inferred at boot.
+//
+// A file that will not parse stops the process, which is the opposite of how
+// the CSVs are read and deliberately so: a missing CSV directory means a
+// checkout without the papers, but a `.deck.json` that is broken is a deck
+// somebody meant to put in the room. Dropping it quietly would leave a lobby
+// that is simply missing something, with nothing anywhere saying why.
+
+function loadJsonDecks() {
+  let files;
+  try {
+    files = fs.readdirSync(CSV_DIR).filter((f) => f.endsWith('.deck.json'));
+  } catch {
+    return [];
+  }
+  return files.sort().map((file) => {
+    const where = path.join(CSV_DIR, file);
+    let deck;
+    try {
+      deck = JSON.parse(fs.readFileSync(where, 'utf8'));
+    } catch (err) {
+      throw new Error(`Deck file ${file} will not parse: ${err.message}`);
+    }
+    if (!deck || typeof deck !== 'object' || Array.isArray(deck)) {
+      throw new Error(`Deck file ${file} is not a deck object`);
+    }
+    // `house` says which of the lobby's two lists it goes in, so it is a
+    // judgement about the deck and not something to infer from the format.
+    return { ...deck, house: deck.house === true };
+  });
+}
+
+// --- the topics -------------------------------------------------------------
+//
+// A subject paper already knows what it is about — it is the file it arrived
+// in — so grouping the fifty-seven of them into topics is bookkeeping, not
+// guesswork, and this map is the whole of it. "High school biology" and
+// "college biology" are one topic to somebody choosing what to revise.
+//
+// A converted deck has no such luck, and carries a `topic` on each card put
+// there by `scripts/decks-topics.js` at a desk. A card it was not confident
+// about carries none, deliberately: an unsorted card is a card somebody can
+// still find in its own deck, and a wrongly sorted one is a small lie told
+// every time the topic is picked.
+
+const SUBJECT_TOPICS = {
+  Biology: ['anatomy', 'college-biology', 'high-school-biology', 'medical-genetics', 'virology', 'human-aging', 'nutrition'],
+  Medicine: ['clinical-knowledge', 'college-medicine', 'professional-medicine', 'human-sexuality'],
+  Chemistry: ['college-chemistry', 'high-school-chemistry'],
+  Physics: ['college-physics', 'high-school-physics', 'conceptual-physics'],
+  'Space and earth': ['astronomy', 'high-school-geography', 'global-facts'],
+  Mathematics: ['abstract-algebra', 'college-mathematics', 'elementary-mathematics', 'high-school-mathematics', 'high-school-statistics'],
+  Computing: ['college-computer-science', 'high-school-computer-science', 'computer-security', 'machine-learning', 'electrical-engineering'],
+  Economics: ['econometrics', 'high-school-macroeconomics', 'high-school-microeconomics'],
+  Business: ['business-ethics', 'management', 'marketing', 'professional-accounting', 'public-relations'],
+  Law: ['international-law', 'jurisprudence', 'professional-law'],
+  History: ['high-school-european-history', 'high-school-us-history', 'high-school-world-history', 'prehistory'],
+  Politics: ['high-school-government-and-politics', 'us-foreign-policy', 'security-studies'],
+  Philosophy: ['philosophy', 'formal-logic', 'logical-fallacies', 'moral-disputes', 'moral-scenarios', 'world-religions'],
+  Psychology: ['high-school-psychology', 'professional-psychology', 'sociology'],
+  Miscellany: ['miscellaneous'],
+};
+
+/** The topic a whole deck belongs to, where its name settles the question. */
+export const TOPIC_OF_DECK = new Map();
+for (const [topic, subjects] of Object.entries(SUBJECT_TOPICS)) {
+  for (const s of subjects) TOPIC_OF_DECK.set('mmlu-' + s, topic);
+}
+
+export const TOPICS = Object.keys(SUBJECT_TOPICS);
+
+// A topic needs this many cards before it is worth being its own deck. Below
+// it the lobby gains a line and nobody gains a match.
+const TOPIC_MIN = 40;
+
+const slug = (topic) => 'topic-' + topic.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+/**
+ * The decks assembled by topic, drawn from every other deck on the shelf.
+ *
+ * The cards are the same objects, not copies: a topic deck is another way in
+ * to a card, not a second card. Nothing writes to a card after load, so the
+ * sharing is safe and the memory is not spent twice.
+ *
+ * Only `choice` cards are gathered, and the reason is `dealFrom`: it picks
+ * one builder for the whole deck off `deck.kind`, so a deck holding both
+ * kinds would deal a text card as a choice and fall over on its missing
+ * options. A mixed topic deck is a bug waiting on the day somebody writes a
+ * `text` deck about biology.
+ */
+function topicDecks(decks) {
+  const piles = new Map();
+  const seen = new Map();
+  for (const d of decks) {
+    if (d.kind !== 'choice') continue;
+    const whole = TOPIC_OF_DECK.get(d.id) || null;
+    for (const c of d.cards) {
+      const topic = whole || c.topic || null;
+      if (!topic) continue;
+      if (!piles.has(topic)) {
+        piles.set(topic, []);
+        seen.set(topic, new Set());
+      }
+      // The same question can be in two papers — a hundred-odd of them are in
+      // both the clinical and the professional medicine sets — and a topic
+      // gathers both. Asking it twice in one match looks like a fault, so the
+      // second copy is dropped here.
+      //
+      // The whole card is the key, not its front: "Which of the following
+      // statements is correct?" is the opening of a hundred unrelated
+      // questions, and telling them apart is exactly what the options are for.
+      const key = c.front + String.fromCharCode(31) + c.options.join(String.fromCharCode(31));
+      if (seen.get(topic).has(key)) continue;
+      seen.get(topic).add(key);
+      piles.get(topic).push(c);
+    }
+  }
+  return [...piles]
+    .filter(([, cards]) => cards.length >= TOPIC_MIN)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([topic, cards]) => ({
+      id: slug(topic),
+      name: topic,
+      blurb: `${cards.length.toLocaleString('en-GB')} questions on ${topic.toLowerCase()}, from every deck that has any.`,
+      kind: 'choice',
+      house: false,
+      topic: true,
+      cards,
+    }));
+}
+
 // --- the shelf --------------------------------------------------------------
 
-const DECKS = [...WRITTEN.map((d) => ({ ...d, house: true })), ...loadCsvDecks()];
+const SOURCES = [...WRITTEN.map((d) => ({ ...d, house: true })), ...loadCsvDecks(), ...loadJsonDecks()];
+const DECKS = [...SOURCES, ...topicDecks(SOURCES)];
 const byId = new Map(DECKS.map((d) => [d.id, d]));
 
 /**
@@ -233,6 +399,7 @@ export const catalog = () =>
     blurb: d.blurb,
     kind: d.kind,
     house: d.house,
+    topic: d.topic === true,
     count: d.cards.length,
   }));
 
@@ -263,9 +430,13 @@ export function check() {
       if (d.kind === 'text') {
         if (!c.back || !String(c.back).trim()) throw new Error(`${where}: no back`);
       } else {
-        if (!Array.isArray(c.options) || c.options.length !== 4) throw new Error(`${where}: needs four options`);
+        if (!Array.isArray(c.options) || c.options.length < MIN_OPTIONS || c.options.length > MAX_OPTIONS) {
+          throw new Error(`${where}: needs between ${MIN_OPTIONS} and ${MAX_OPTIONS} options, and has ${Array.isArray(c.options) ? c.options.length : 'none'}`);
+        }
         if (c.options.some((o) => !String(o).trim())) throw new Error(`${where}: has a blank option`);
-        if (!Number.isInteger(c.answer) || c.answer < 0 || c.answer > 3) throw new Error(`${where}: no answer`);
+        if (!Number.isInteger(c.answer) || c.answer < 0 || c.answer >= c.options.length) {
+          throw new Error(`${where}: no answer`);
+        }
       }
     }
   }
