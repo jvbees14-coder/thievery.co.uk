@@ -367,6 +367,15 @@ main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; position: rel
 .topbar .brand { display: flex; align-items: baseline; gap: 14px; }
 .topbar .brand .wordmark { font-size: 26px; }
 .topbar .brand small { color: var(--text-dim); font-family: var(--caps); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; }
+/* The door through to the rest of the site, kept quiet: it is a way out of a
+   game in progress, so it should not compete with anything on the table. */
+.top-link {
+  color: var(--text-dim); text-decoration: none; font-family: var(--caps);
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 4px 8px; border-radius: 3px; border: 1px solid transparent;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.top-link:hover { color: var(--brass); border-color: var(--brass-dim); background: var(--brass-ghost); }
 .testbar {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   margin: -8px 0 18px; padding: 8px 10px;
@@ -843,14 +852,23 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 .ranks button:hover { border-color: var(--brass); background: var(--brass); color: #1c1506; transform: translateY(-2px); }
 .ranks button:focus-visible { outline: none; border-color: var(--brass); box-shadow: 0 0 0 3px var(--brass-faint); }
 .ranks button:active { transform: translateY(1px) scale(0.95); }
-/* A rank the whole table has already been told this card is not. Struck
-   through rather than hidden, because which ones have gone is itself worth
-   reading. */
-.ranks button.out {
+/* Your own marks, carried on the same row whether you are naming the card or
+   writing in the notebook. Struck for a rank you have ruled out, ringed for
+   one you fancy — and both still press, because a note is a note. The table
+   refuses nothing: being wrong is allowed, and being wrong on purpose is a
+   move. */
+.ranks button.no {
   color: var(--text-faint); border-color: rgba(255, 255, 255, 0.07); background: transparent;
-  cursor: not-allowed; text-decoration: line-through; text-decoration-color: var(--bad);
+  text-decoration: line-through; text-decoration-color: var(--bad); text-decoration-thickness: 2px;
 }
-.ranks button.out:hover { transform: none; background: transparent; color: var(--text-faint); border-color: rgba(255, 255, 255, 0.07); }
+.ranks button.no:hover { color: var(--ivory); text-decoration-color: var(--bad); }
+.ranks button.maybe { border-color: var(--jade); color: var(--jade-bright); box-shadow: inset 0 0 0 1px rgba(95, 154, 132, 0.45); }
+.ranks button.maybe:hover { background: var(--jade); color: #06130f; }
+/* Writing rather than naming: the row is the notebook, so a press leaves a
+   mark instead of a guess and the brass hover would be a lie. */
+.ranks.marking button:hover { background: var(--brass-ghost); color: var(--ivory); border-color: var(--brass-dim); transform: none; }
+.ranks.marking button.maybe:hover { background: rgba(95, 154, 132, 0.18); color: var(--jade-bright); border-color: var(--jade); }
+.note-said { color: var(--brass); }
 
 /* And the same knowledge sitting on the card itself: how many ranks are out
    of it already, with the list in the tooltip. */
@@ -860,6 +878,23 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
   font-family: var(--mono); font-size: 9px; line-height: 1.4; text-align: center;
   color: var(--bad); background: var(--ink); border: 1px solid rgba(229, 100, 107, 0.45);
 }
+
+/* --- the notebook ----------------------------------------------------------
+   What you have written on a card, on the opposite corner from what the table
+   knows: a count of the ranks you have crossed off, or the one you have
+   pencilled in, which is the note worth reading at a glance. */
+.card .noted {
+  position: absolute; top: -8px; right: -6px; z-index: 2;
+  min-width: 15px; padding: 1px 3px 0; border-radius: 999px;
+  font-family: var(--mono); font-size: 9px; line-height: 1.4; text-align: center;
+  color: var(--brass); background: var(--ink); border: 1px solid var(--brass-dim);
+}
+.card .noted.maybe { color: var(--jade-bright); border-color: rgba(95, 154, 132, 0.6); }
+/* A card you may write on says so quietly — it is not a card you can play at,
+   and the two must not look alike. */
+.card.notable { cursor: pointer; }
+.card.notable:hover { border-color: var(--brass-dim); }
+.card.noting { box-shadow: 0 0 0 2px var(--brass-dim), var(--shadow); }
 .actions-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .actions-row .btn { flex: 1; }
 /* A row of hands to point a power-up at. There can be five of them, so they
@@ -994,6 +1029,22 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
   .game .table { --card-w: 40px; --card-h: 56px; --card-rank: 15px; }
   .card.down.mine .rank, .card.down.shown .rank { font-size: 13px; }
   .card .idx { bottom: -16px; }
+
+  /* A rank is tapped with a thumb here, and in the notebook it is tapped
+     several times over, so the row is given the height to be hit reliably.
+     Seven columns still fits 13 ranks on two rows at 320px. */
+  .ranks { gap: 6px; }
+  .ranks button { padding: 14px 0 12px; font-size: 16px; }
+  /* Two buttons to a row rather than three squeezed onto one: the notebook
+     offers a guess, a rub out and a done, and a button whose label wraps to
+     three lines is a button nobody is sure of. */
+  .action .actions-row .btn { flex: 1 1 42%; }
+  /* The two marks on a card — what the table has ruled out and what you have
+     written — sit in opposite corners, and on a 40px card they need to be
+     smaller to stay there without meeting in the middle. */
+  .card .ruled, .card .noted { font-size: 8.5px; min-width: 13px; top: -7px; }
+  .card .ruled { left: -5px; }
+  .card .noted { right: -5px; }
   .testbar { font-size: 11px; gap: 6px; }
   .banner-sub { letter-spacing: 0.1em; }
 

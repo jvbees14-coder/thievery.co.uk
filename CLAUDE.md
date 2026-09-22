@@ -80,11 +80,22 @@ people out: it is behind the login like the flashcards, but its rooms are
 memory like the card game's, and it has no HTTP API at all. See "The battle
 room".
 
-**Two names that are not the same thing.** The card game is called *Cards* and
-is served at `/cards` out of `public/cards.html`. `server/cards.js` is nothing
-to do with it — it is the flashcards' appraisal, and `site.js` imports it as
-`Cards` while also serving `/cards`. Check which one a line means before
-changing it.
+**Two names that are not the same thing.** The card game is called *Thievery*
+— the site's own name, because it is the thing the site was built for — and is
+served at `/cards` out of `public/cards.html`. The address stays `/cards`
+whatever the game is called: every room link ever pasted to a friend goes
+through it. `server/cards.js` is nothing to do with either — it is the
+flashcards' appraisal, and `site.js` imports it as `Cards` while also serving
+`/cards`. Check which one a line means before changing it.
+
+**The table does no deduction for you.** It shows what is public — the colours,
+the positions, and a count on each card of the guesses that have already missed
+there — and stops. It used to work out what a card could not be and refuse
+those ranks, which played the hardest part of the game on the player's behalf.
+What is there instead is the notebook in `app.js`: your own marks, 'no' and
+'maybe', per card, kept in `sessionStorage` under the room and the round and
+never sent to the server. Nothing about a note reaches anybody else, and a
+wrong note costs only what being wrong costs.
 
 **Three generations of room link** all have to keep working, because each was
 live and shared: `/ABCD` (the game was the root), `/?code=ABCD` (the invite

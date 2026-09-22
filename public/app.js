@@ -63,7 +63,7 @@
   let retry = 0;
   let renderedRound = null;
   let renderedSeat = null;
-  const ui = { target: null, arrange: null, swapPick: null, openMenu: null, leaveArmed: false, pu: null };
+  const ui = { target: null, note: null, arrange: null, swapPick: null, openMenu: null, leaveArmed: false, pu: null };
   let catalog = null; // the power-up catalog, sent once when the socket opens
   let leaveArmTimer = 0;
 
@@ -606,13 +606,17 @@
       return;
     }
     home.hidden = true;
-    // Per-seat UI state (pending guess, card arrangement) must not survive a
-    // new round or, in test mode, switching to a different seat.
+    // The notebook belongs to this room and this round, and is picked up again
+    // after a refresh; a new deal opens a fresh page.
+    loadNotes();
+    // Per-seat UI state (pending guess, open note, card arrangement) must not
+    // survive a new round or, in test mode, switching to a different seat.
     if (state.room.round !== renderedRound || state.you.seat !== renderedSeat) {
       if (state.room.round !== renderedRound && state.game && state.game.phase === 'arrange') dealStart = performance.now();
       renderedRound = state.room.round;
       renderedSeat = state.you.seat;
       ui.target = null;
+      ui.note = null;
       ui.arrange = null;
       ui.openMenu = null;
     }
@@ -687,6 +691,10 @@
             <span class="wordmark">Thievery<em>.co.uk</em></span>
           </button>
           <small>Round ${state.room.round || '–'}</small>
+          <!-- The way out of the game altogether, rather than out of the room:
+               the wordmark leaves the table and lands you back on its own front
+               screen, and this goes through to the house. -->
+          <a class="top-link" href="/">The house</a>
         </div>
         <div class="codebox">
           <span class="muted">Room</span>
@@ -1088,16 +1096,16 @@
 
   // --- what a card cannot be -----------------------------------------------
   //
-  // Every miss is said out loud at the table and written into the log, and
-  // there is exactly one card of each rank in each colour. Between them that
-  // rules certain ranks out of certain cards for everybody, and the house has
-  // always played on it — `readTable` in bot.js gathers up precisely this.
-  // A person had to scroll the log for it, which in practice meant guessing a
-  // rank the whole table already knew was wrong.
+  // Every miss is said out loud at the table and written into the log, so a
+  // card carries a count of the guesses that have already died on it. That is
+  // a reminder of something public, not a deduction.
   //
-  // The fence is deliberately *not* in here. Working out what the cards either
-  // side of a hidden one allow is the game itself; doing that for people would
-  // leave them nothing to play.
+  // The table does no more than that. It used to work out what a card could
+  // not be — the misses, plus the one-of-each-rank-in-each-colour rule — and
+  // refuse the ranks it had ruled out, which meant the game was playing the
+  // hardest part of itself and a player could not be wrong even on purpose.
+  // Reading the table is the game. What is here instead is a notebook: your
+  // own marks, on your own screen, right or wrong.
 
   // Which ranks have already missed at this exact card, as their labels.
   function missesAt(seat, idx) {
@@ -1106,31 +1114,61 @@
       .map(([, , rank]) => RANKS[rank - 1]);
   }
 
-  // And the whole of it, as rank numbers, for the card being guessed at.
-  function ruledOut(target) {
-    const g = state.game;
-    const out = new Set();
-    const card = g.seats[target.seat] && g.seats[target.seat].cards[target.idx];
-    if (!card) return out;
-    // Somebody has shown us this one, or we cased it. Then we know, and every
-    // other rank is out.
-    if (card.rank) {
-      for (let r = 1; r <= 13; r++) if (r !== card.rank) out.add(r);
-      return out;
+  // --- the notebook ----------------------------------------------------------
+  //
+  // A mark on a card: 'no' for a rank you have ruled out and 'maybe' for one
+  // you fancy. It is yours alone — nothing here is ever sent to the server, so
+  // nobody else can read your reasoning and a wrong note costs you only what
+  // being wrong costs you.
+  //
+  // It is kept per room and per round, because a card is only the card it is
+  // until the next deal, and in sessionStorage so that a refresh mid-round —
+  // which puts you straight back in your seat — does not wipe out the half of
+  // the game you were holding in your head.
+
+  let notes = {};
+  let notesKey = '';
+
+  function notesFor(seat, idx) {
+    return notes[`${seat}:${idx}`] || { no: [], maybe: [] };
+  }
+
+  function loadNotes() {
+    const key = `thievery:notes:${state.room.code}:${state.room.round || 0}`;
+    if (key === notesKey) return;
+    notesKey = key;
+    const saved = loadJSON(key);
+    notes = saved && typeof saved === 'object' ? saved : {};
+  }
+
+  function saveNotes() {
+    try {
+      sessionStorage.setItem(notesKey, JSON.stringify(notes));
+    } catch {
+      // A browser that will not remember is a browser that forgets on refresh.
+      // The notes still work for as long as the page is up.
     }
-    for (const [seat, idx, rank] of g.misses || []) {
-      if (seat === target.seat && idx === target.idx) out.add(rank);
-    }
-    // One card of each rank in each colour: a card of this colour whose rank
-    // we can already see is a rank this card cannot be. Our own hand counts,
-    // and so does anything a partner has shown us.
-    g.seats.forEach((s, si) => {
-      s.cards.forEach((c, ci) => {
-        if (si === target.seat && ci === target.idx) return;
-        if (c.rank && c.color === card.color) out.add(c.rank);
-      });
-    });
-    return out;
+  }
+
+  // One tap rules a rank out, a second calls it likely, a third takes the mark
+  // off again — the whole notebook on one row of buttons.
+  function markRank(seat, idx, rank) {
+    const key = `${seat}:${idx}`;
+    const note = notes[key] || { no: [], maybe: [] };
+    const wasNo = note.no.includes(rank);
+    const wasMaybe = note.maybe.includes(rank);
+    note.no = note.no.filter((r) => r !== rank);
+    note.maybe = note.maybe.filter((r) => r !== rank);
+    if (!wasNo && !wasMaybe) note.no.push(rank);
+    else if (wasNo) note.maybe.push(rank);
+    if (note.no.length || note.maybe.length) notes[key] = note;
+    else delete notes[key];
+    saveNotes();
+  }
+
+  function clearNote(seat, idx) {
+    delete notes[`${seat}:${idx}`];
+    saveNotes();
   }
 
   function cardOpts(si, ci, c) {
@@ -1142,6 +1180,12 @@
     if (!opts.mine && !c.faceUp && g.phase !== 'arrange') {
       const no = missesAt(si, ci);
       if (no.length) opts.ruled = no;
+      // Your own marks, and whether this is the card the notebook is open at.
+      const note = notesFor(si, ci);
+      if (note.no.length || note.maybe.length) opts.note = note;
+      if (ui.note && ui.note.seat === si && ui.note.idx === ci) opts.noting = true;
+      // Any of them can be written on, whosever turn it is.
+      if (g.phase === 'play' && !ui.pu) opts.notable = true;
     }
     if (g.phase !== 'play' || c.faceUp) return opts;
     const myTurn = g.turn === me;
@@ -1183,28 +1227,44 @@
     if (opts.selectable) cls.push('selectable');
     if (opts.selected) cls.push('selected');
     if (opts.target) cls.push('target');
+    if (opts.notable) cls.push('notable');
+    if (opts.noting) cls.push('noting');
     const rank = c.rank ? RANKS[c.rank - 1] : '';
     const ruled = opts.ruled && opts.ruled.length
       ? `<span class="ruled" title="Ruled out already: ${esc(opts.ruled.join(', '))}">${opts.ruled.length}</span>`
       : '';
+    // Your own mark on the card: what you fancy it is if you have said so,
+    // and otherwise how many ranks you have crossed off it.
+    const note = opts.note;
+    const maybes = note ? note.maybe.map((r) => RANKS[r - 1]) : [];
+    const nos = note ? note.no.map((r) => RANKS[r - 1]) : [];
+    const noteSay = [
+      maybes.length ? `You think: ${maybes.join(' or ')}` : '',
+      nos.length ? `You ruled out: ${nos.join(', ')}` : '',
+    ].filter(Boolean).join('. ');
+    const noted = note
+      ? `<span class="noted ${maybes.length ? 'maybe' : ''}" title="${esc(noteSay)}">${
+          maybes.length ? esc(maybes.slice(0, 2).join('/')) : nos.length
+        }</span>`
+      : '';
     const title = c.shown
       ? 'Shown to you by your partner'
-      : opts.ruled && opts.ruled.length
-        ? `Not ${opts.ruled.join(', not ')}`
-        : '';
+      : [opts.ruled && opts.ruled.length ? `Not ${opts.ruled.join(', not ')}` : '', noteSay]
+          .filter(Boolean)
+          .join(' — ');
     // A card you can act on has to be reachable from a keyboard as well as
     // from a pointer, so it is announced as a button and can be tabbed to.
     // The label is what a card actually is to somebody who cannot see it: a
     // colour, a place in the row, and whatever the table has ruled out.
-    const reachable = opts.selectable || opts.draggable;
+    const reachable = opts.selectable || opts.draggable || opts.notable;
     const label = c.faceUp
       ? `${rank} of ${c.color}, face up`
       : `${opts.mine || c.shown ? `${rank}, ` : ''}${c.color || 'unknown'} card, position ${ci + 1}${
           opts.ruled && opts.ruled.length ? `, ruled out: ${opts.ruled.join(', ')}` : ''
-        }`;
+        }${noteSay ? `, your note: ${noteSay}` : ''}`;
     return `<div class="${cls.join(' ')}" data-action="card" data-seat="${si}" data-idx="${ci}" ${opts.draggable ? `data-id="${c.id}"` : ''}
       ${reachable ? 'role="button" tabindex="0"' : ''} aria-label="${esc(label)}" title="${esc(title)}">
-      <span class="rank">${rank}</span><i class="gloss"></i>${ruled}${opts.index ? `<span class="idx">${ci + 1}</span>` : ''}
+      <span class="rank">${rank}</span><i class="gloss"></i>${ruled}${noted}${opts.index ? `<span class="idx">${ci + 1}</span>` : ''}
     </div>`;
   }
 
@@ -1494,17 +1554,51 @@
     return `${head}${cancel}`;
   }
 
-  // The row of ranks. Given a card, the ones the table has already ruled out
-  // are shown struck through and refused; a power-up asking for a rank gets
-  // the plain row, because "how many Jacks are left" is a fair question
+  // The row of ranks, in two jobs. Naming a card it carries your own marks —
+  // struck for a rank you have ruled out, ringed for one you fancy — but every
+  // button still works: a note is a note, not a rule, and a guess the table
+  // knows is wrong is yours to make. Marking up a card it is the notebook
+  // itself, and a tap writes rather than guesses. A power-up asking for a rank
+  // gets the plain row, because "how many Jacks are left" is a fair question
   // whatever has already missed where.
-  function rankButtons(target = null) {
-    const out = target ? ruledOut(target) : new Set();
-    return `<div class="ranks">${RANKS.map((r, i) => {
+  function rankButtons(target = null, marking = false) {
+    const note = target ? notesFor(target.seat, target.idx) : { no: [], maybe: [] };
+    return `<div class="ranks ${marking ? 'marking' : ''}">${RANKS.map((r, i) => {
       const rank = i + 1;
-      if (!out.has(rank)) return `<button data-action="rank" data-rank="${rank}">${r}</button>`;
-      return `<button class="out" disabled title="Already ruled out">${r}</button>`;
+      const cls = note.no.includes(rank) ? 'no' : note.maybe.includes(rank) ? 'maybe' : '';
+      const say = cls === 'no' ? `${r} — you ruled it out` : cls === 'maybe' ? `${r} — you think it likely` : r;
+      return `<button class="${cls}" data-action="${marking ? 'mark' : 'rank'}" data-rank="${rank}"
+        aria-label="${esc(say)}">${r}</button>`;
     }).join('')}</div>`;
+  }
+
+  // The notebook, open at one card. It is reachable whosever turn it is —
+  // most of the reading happens while somebody else is thinking — so it says
+  // plainly whether a guess is available from here as well.
+  function notePanel() {
+    const g = state.game;
+    const { seat, idx } = ui.note;
+    const card = g.seats[seat] && g.seats[seat].cards[idx];
+    if (!card || card.faceUp) { ui.note = null; return ''; }
+    const note = notesFor(seat, idx);
+    const myTurn = g.turn === state.you.seat && g.step === 'guess';
+    const mine = seat === state.you.seat;
+    const gone = missesAt(seat, idx);
+    const said = [
+      note.no.length ? `Not ${note.no.map((r) => RANKS[r - 1]).join(', not ')}` : '',
+      note.maybe.length ? `Likely ${note.maybe.map((r) => RANKS[r - 1]).join(' or ')}` : '',
+    ].filter(Boolean);
+    return `
+      <p class="prompt">Your note on ${esc(possessive(g.names[seat]))} ${ordinal(idx + 1)} card</p>
+      <p class="sub">Tap once to rule a rank out, again to call it likely, again to rub it out. Nobody else sees this.</p>
+      ${rankButtons({ seat, idx }, true)}
+      ${said.length ? `<p class="sub note-said">${esc(said.join(' · '))}</p>` : ''}
+      ${gone.length ? `<p class="sub">The table has already heard it is not ${esc(gone.join(', not '))}.</p>` : ''}
+      <div class="actions-row">
+        ${myTurn && !mine ? '<button class="btn primary" data-action="note-guess">Guess this card</button>' : ''}
+        ${note.no.length || note.maybe.length ? '<button class="btn ghost" data-action="note-clear">Rub out</button>' : ''}
+        <button class="btn ghost" data-action="note-close">Done</button>
+      </div>`;
   }
 
   function actionPanel() {
@@ -1561,6 +1655,8 @@
     // phase === 'play'
     // A power-up half-played owns the panel until it is finished or put back.
     if (ui.pu) return puPrompt();
+    // Otherwise an open note does, whosever turn it is.
+    if (ui.note) return notePanel();
 
     // Nobody is at the hand the table is waiting on. Left alone this is where
     // an evening ends: everybody sits looking at a row that will not move
@@ -1605,7 +1701,10 @@
             <p class="prompt">${nOwn(ui.target.seat)} ${ordinal(ui.target.idx + 1)} card is a…</p>
             ${rankButtons(ui.target)}
             ${gone.length ? `<p class="sub">The table has already heard it is not ${esc(gone.join(', not '))}.</p>` : ''}
-            <div class="actions-row"><button class="btn ghost" data-action="cancel-target">Pick a different card</button></div>`;
+            <div class="actions-row">
+              <button class="btn ghost" data-action="cancel-target">Pick a different card</button>
+              <button class="btn ghost" data-action="note-open" data-seat="${ui.target.seat}" data-idx="${ui.target.idx}">Make a note</button>
+            </div>`;
         } else {
           const pu = g.powerUps;
           const sent = pu && pu.forced !== null && pu.forced !== undefined
@@ -1643,15 +1742,27 @@
     if (ui.pu) return;
     if (g.step === 'show' && g.partnerSeat === g.turn && seat === me) {
       send({ type: 'show', idx });
-    } else if (g.step === 'guess' && g.turn === me && g.seats[seat].team !== g.seats[me].team) {
+      return;
+    }
+    if (g.step === 'guess' && g.turn === me && g.seats[seat].team !== g.seats[me].team) {
       const pu = g.powerUps;
       if (pu && pu.shielded[seat]) return toast(`${g.names[seat]} is under a stakeout.`);
       if (pu && pu.forced !== null && pu.forced !== undefined && pu.forced !== seat) {
         return toast(`This guess has to go at ${g.names[pu.forced]}.`);
       }
+      ui.note = null;
       ui.target = { seat, idx };
       render();
+      return;
     }
+    // Not a card you can play at, or not your turn to play at it: open the
+    // notebook instead. Most of the reading of a table is done while somebody
+    // else is thinking, and a card that did nothing at all when tapped was a
+    // card with nothing to say for three turns out of four.
+    if (seat === me) return;
+    ui.target = null;
+    ui.note = { seat, idx };
+    render();
   }
 
   function act(action, d) {
@@ -1736,6 +1847,27 @@
       }
       case 'cancel-target':
         ui.target = null;
+        return render();
+
+      // The notebook. Marking a rank redraws the panel and the card, and
+      // nothing goes anywhere near the socket.
+      case 'mark': {
+        if (!ui.note) return;
+        markRank(ui.note.seat, ui.note.idx, Number(d.rank));
+        return render();
+      }
+      case 'note-open':
+        ui.target = null;
+        ui.note = { seat: Number(d.seat), idx: Number(d.idx) };
+        return render();
+      case 'note-clear':
+        if (ui.note) clearNote(ui.note.seat, ui.note.idx);
+        return render();
+      case 'note-guess':
+        if (ui.note) { ui.target = ui.note; ui.note = null; }
+        return render();
+      case 'note-close':
+        ui.note = null;
         return render();
       case 'pass-turn':
         return send({ type: 'turn:pass' });
