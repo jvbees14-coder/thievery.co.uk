@@ -108,6 +108,81 @@ textarea:focus, select:focus, input:focus {
 }
 .fc-menu button:hover, .fc-menu a:hover { background: var(--brass-ghost); color: var(--ivory); }
 
+/* --- the design switch -----------------------------------------------------
+ *
+ * The site is drawn in one of two designs and this is how you change it: a
+ * chip in the corner of the bar showing the one you are not in, which turns
+ * over when you press it. It sits in the bar rather than only in the account
+ * menu because a choice nobody finds is a choice nobody has — and because the
+ * door has no account menu to put it in, where it hangs in the corner of the
+ * page instead.
+ *
+ * The two faces are portraits of the two designs, so their colours are
+ * written out rather than taken from the tokens: whichever design is on, the
+ * Vault's face has to stay ink and brass and the plain one white and blue, or
+ * the chip stops saying anything at all.
+ *
+ * theme.js writes the name of the other design onto data-word, which is both
+ * the hover label below and the button's aria-label. */
+
+.theme-switch {
+  position: relative; flex: none; appearance: none; cursor: pointer;
+  background: none; border: 1px solid var(--brass-dim); border-radius: 3px;
+  padding: 4px; line-height: 0; perspective: 600px;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.theme-switch:hover { border-color: var(--brass); background: var(--brass-ghost); }
+.theme-switch:focus-visible { outline: none; border-color: var(--brass); box-shadow: 0 0 0 3px var(--brass-faint); }
+/* On the door and the closed notice there is no bar, so the chip hangs in the
+   corner of the page itself. */
+.theme-switch.is-corner { position: fixed; top: clamp(10px, 2vw, 18px); right: clamp(10px, 2vw, 18px); z-index: 40; }
+
+.theme-chip {
+  display: block; position: relative; width: 22px; height: 22px;
+  transform-style: preserve-3d;
+  transition: transform 0.65s var(--bounce);
+}
+:root[data-theme="plain"] .theme-chip { transform: rotateY(180deg); }
+.theme-face {
+  position: absolute; inset: 0; border-radius: 2px;
+  display: grid; place-items: center; overflow: hidden;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+}
+.theme-face::before { content: ""; width: 8px; height: 8px; }
+.theme-face-plain { background: #ffffff; box-shadow: inset 0 0 0 1px #cfd6e0; }
+.theme-face-plain::before { border-radius: 50%; background: #2563eb; }
+.theme-face-vault {
+  transform: rotateY(180deg);
+  background: #0a0c14; box-shadow: inset 0 0 0 1px rgba(212, 175, 90, 0.5);
+  background-image: repeating-conic-gradient(from 0deg at 50% 50%, rgba(212, 175, 90, 0.18) 0deg 4deg, transparent 4deg 15deg);
+}
+.theme-face-vault::before { background: #d4af5a; transform: rotate(45deg); }
+
+/* Until this browser has chosen, the chip catches the corner of an eye every
+   few seconds. The first press settles it for good. */
+.theme-switch.is-new .theme-chip { animation: theme-nudge 6s ease-in-out 1.8s infinite; }
+@keyframes theme-nudge {
+  0%, 72%, 100% { transform: rotateY(0deg); }
+  79% { transform: rotateY(-32deg); }
+  86% { transform: rotateY(20deg); }
+  93% { transform: rotateY(-7deg); }
+}
+
+.theme-switch::after {
+  content: attr(data-word);
+  position: absolute; top: calc(100% + 7px); right: 0; z-index: 1;
+  padding: 5px 9px 4px; border-radius: 3px; white-space: nowrap; pointer-events: none;
+  background: var(--ink-3); border: 1px solid var(--brass-faint); color: var(--text-dim);
+  font-family: var(--caps); font-size: 9.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  opacity: 0; transform: translateY(-4px);
+  transition: opacity 0.18s, transform 0.18s;
+}
+.theme-switch:hover::after, .theme-switch:focus-visible::after { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-chip, .theme-switch.is-new .theme-chip { animation: none; transition: none; }
+}
+
 .fc-main { padding: clamp(18px, 3vw, 34px) clamp(14px, 3vw, 32px) 80px; max-width: 1240px; margin: 0 auto; }
 .fc-pane { animation: fcin 0.3s ease both; }
 @keyframes fcin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -474,6 +549,9 @@ textarea:focus, select:focus, input:focus {
   .fc-mark { font-size: 18px; }
   .fc-tabs { order: 3; width: 100%; }
   .fc-who { margin-left: auto; }
+  /* The chip and the account button travel together to the right-hand end. */
+  .theme-switch { margin-left: auto; }
+  .theme-switch + .fc-who { margin-left: 8px; }
   .fc-row { grid-template-columns: 1fr; }
   .fc-grid { grid-template-columns: 1fr; }
 }

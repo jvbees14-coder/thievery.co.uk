@@ -12,22 +12,43 @@
  * in localStorage rather than in the stored document — and a browser that
  * refuses localStorage still gets to switch, it just forgets on the next load.
  *
- * Anything carrying data-theme-toggle is a switch. Its words are rewritten to
- * name the design it will change *to*, which is the one worth reading. */
+ * Anything carrying data-theme-toggle is a switch, and every one of them is
+ * named after the design it will change *to*, which is the one worth reading.
+ * There are two kinds. One carries data-word: a chip in the corner of the bar
+ * that turns over, whose name is written on the attribute for the hover label
+ * and on aria-label for anybody who cannot see it. The other is an ordinary
+ * entry in the account menu, whose name is its own text.
+ *
+ * Until a browser has chosen for the first time, the chip carries is-new and
+ * nudges every few seconds. A switch nobody notices is a switch nobody has;
+ * one that goes on waving after it has been used is a different fault, so the
+ * first flip takes the class off for good. */
 
 (function () {
   var KEY = 'thievery-theme';
   var root = document.documentElement;
   var current = 'vault';
+  var chosen = false;
 
-  try { if (localStorage.getItem(KEY) === 'plain') current = 'plain'; } catch (e) { /* private mode */ }
+  try {
+    var saved = localStorage.getItem(KEY);
+    if (saved === 'plain' || saved === 'vault') { current = saved; chosen = true; }
+  } catch (e) { /* private mode */ }
 
   function label() {
-    var plain = current === 'plain';
+    var word = current === 'plain' ? 'Vault design' : 'Plain design';
     var switches = document.querySelectorAll('[data-theme-toggle]');
     for (var i = 0; i < switches.length; i++) {
-      switches[i].textContent = plain ? 'Vault design' : 'Plain design';
-      switches[i].setAttribute('aria-pressed', String(plain));
+      var sw = switches[i];
+      if (sw.hasAttribute('data-word')) {
+        sw.setAttribute('data-word', word);
+        sw.setAttribute('aria-label', word);
+        if (chosen) sw.classList.remove('is-new');
+        else sw.classList.add('is-new');
+      } else {
+        sw.textContent = word;
+      }
+      sw.setAttribute('aria-pressed', String(current === 'plain'));
     }
   }
 
@@ -50,6 +71,7 @@
   document.addEventListener('click', function (ev) {
     var flip = ev.target.closest && ev.target.closest('[data-theme-toggle]');
     if (!flip) return;
+    chosen = true;
     apply(current === 'plain' ? 'vault' : 'plain');
     try { localStorage.setItem(KEY, current); } catch (e) { /* forgotten on reload */ }
   });
@@ -57,6 +79,8 @@
   // A second tab open on the site follows the first rather than disagreeing
   // with it until somebody reloads.
   window.addEventListener('storage', function (ev) {
-    if (ev.key === KEY) apply(ev.newValue);
+    if (ev.key !== KEY) return;
+    chosen = ev.newValue === 'plain' || ev.newValue === 'vault';
+    apply(ev.newValue);
   });
 })();
