@@ -1,0 +1,220 @@
+/* Thievery.co.uk — Switchhead.
+ *
+ * The bar, the panels, the lobby grid and the finishing order are the battle
+ * room's, and come from its stylesheet; this is only what a table of playing
+ * cards needs.
+ *
+ * The cards themselves are ivory in both designs, because a playing card is
+ * a playing card whatever the room around it looks like. Everything else is
+ * written in the tokens, so the plain design reaches it without a line of
+ * its own.
+ *
+ * One thing deliberately absent: any transition on a card. A hand that
+ * slides or fades when it changes is a hand announcing that it was swapped,
+ * and the game is that it does not. */
+
+.sh-main { max-width: 1000px; }
+
+/* --- a card --------------------------------------------------------------- */
+
+.sh-card {
+  --w: 54px;
+  --h: 76px;
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: var(--w);
+  height: var(--h);
+  flex: 0 0 auto;
+  padding: 5px 6px;
+  border: 1px solid #c9c1ad;
+  border-radius: 7px;
+  background: #fbf7ee;
+  color: #1c1c22;
+  font-family: var(--body);
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  user-select: none;
+}
+.sh-card.is-red { color: #b3202f; }
+.sh-rank { font-size: 19px; font-weight: 700; text-align: left; }
+.sh-suit { font-size: 24px; text-align: right; }
+
+.sh-card.is-small { --w: 34px; --h: 48px; padding: 3px 4px; border-radius: 5px; }
+.sh-card.is-small .sh-rank { font-size: 13px; }
+.sh-card.is-small .sh-suit { font-size: 15px; }
+
+.sh-card.is-back {
+  background:
+    repeating-linear-gradient(45deg, var(--brass-faint) 0 4px, transparent 4px 9px),
+    var(--burgundy-deep);
+  border-color: var(--brass-dim);
+}
+.sh-card.is-burnt {
+  background: var(--ink-2);
+  border: 1px dashed var(--brass-dim);
+  box-shadow: none;
+}
+
+button.sh-card { cursor: pointer; font: inherit; }
+button.sh-card:hover { border-color: var(--brass); }
+button.sh-card:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.sh-card.is-on {
+  border-color: var(--brass);
+  box-shadow: 0 0 0 2px var(--brass), 0 6px 14px rgba(0, 0, 0, 0.35);
+  transform: translateY(-8px);
+}
+.sh-card.is-dim { opacity: 0.45; }
+.sh-card.is-back.is-live { border-color: var(--brass); box-shadow: 0 0 0 2px var(--brass-dim); }
+
+.sh-none { font-size: 13px; color: var(--text-faint); font-style: italic; align-self: center; }
+
+/* --- the goal ------------------------------------------------------------- */
+
+.sh-goal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  margin-bottom: 14px;
+  padding: 14px 18px;
+  border: 1px solid var(--brass-dim);
+  border-left-width: 6px;
+  border-radius: 10px;
+  background: var(--ink-2);
+}
+.sh-goal-word { font-family: var(--display); font-size: clamp(20px, 3.4vw, 28px); color: var(--ivory); }
+.sh-goal-say { color: var(--text-dim); }
+.sh-goal.is-win { border-left-color: var(--jade); }
+.sh-goal.is-lose { border-left-color: var(--bad); background: var(--burgundy-deep); }
+.sh-goal.is-new { animation: sh-goal-turn 1.4s ease-out; }
+@keyframes sh-goal-turn {
+  0%, 30% { box-shadow: 0 0 0 4px var(--brass); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* --- the others ------------------------------------------------------------ */
+
+.sh-others {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.sh-other { padding: 12px 14px; }
+.sh-other.is-turn { border-color: var(--brass); }
+.sh-other.is-out { opacity: 0.55; }
+.sh-other-name { margin: 0 0 4px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; color: var(--ivory); }
+.sh-other-counts { margin: 0 0 8px; font-size: 13px; color: var(--text-dim); }
+
+/* --- the middle of the table ---------------------------------------------- */
+
+.sh-centre {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 18px;
+  padding: 18px;
+}
+.sh-stack { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.sh-stack-say { font-size: 12px; color: var(--text-dim); text-align: center; }
+.sh-pile-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.sh-pile { display: flex; min-height: 76px; align-items: center; justify-content: center; }
+/* Fanned, each overlapping the last, so the run on top can be read. */
+.sh-fan { margin-left: -30px; }
+.sh-fan:first-child { margin-left: 0; }
+.sh-pile-empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 76px;
+  border: 1px dashed var(--brass-dim);
+  border-radius: 7px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.sh-need { margin: 10px 0 14px; text-align: center; color: var(--text-dim); }
+
+/* --- your own ------------------------------------------------------------- */
+
+.sh-mine { padding: 16px 18px; }
+.sh-mine.is-turn { border-color: var(--brass); }
+.sh-row-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.sh-row-head .btl-head { margin-bottom: 8px; }
+.sh-turn { font-size: 14px; color: var(--brass); }
+.sh-row-label { margin: 10px 0 6px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); }
+.sh-row { display: flex; flex-wrap: wrap; gap: 8px; min-height: 30px; padding-top: 8px; }
+.sh-row.is-small { gap: 5px; padding-top: 0; min-height: 0; }
+.sh-acts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+
+/* --- the log --------------------------------------------------------------- */
+
+.sh-log { list-style: none; margin: 16px 0 0; padding: 0; font-size: 14px; color: var(--text-dim); }
+.sh-log-row { padding: 4px 0; border-bottom: 1px solid var(--brass-faint); }
+.sh-log-row:first-child { color: var(--ivory); }
+.sh-log-row.is-goal { color: var(--brass); font-weight: 600; }
+.sh-log-row.is-burn { color: var(--jade-bright); }
+.sh-log-row.is-end { color: var(--brass); }
+
+/* --- the lobby's special cards --------------------------------------------- */
+
+.sh-specials-say { margin-top: -6px; }
+.sh-specials { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 16px; }
+.sh-special {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  text-align: left;
+  border: 1px solid var(--brass-faint);
+  border-radius: 10px;
+  background: var(--ink-2);
+  color: var(--text-dim);
+  font: inherit;
+}
+button.sh-special { cursor: pointer; }
+button.sh-special:hover:not(:disabled) { border-color: var(--brass-dim); }
+button.sh-special:disabled { cursor: default; }
+.sh-special.is-on { border-color: var(--brass); background: var(--brass-ghost); }
+.sh-special.is-fixed { border-style: dashed; }
+.sh-special-face {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 52px;
+  border: 1px solid #c9c1ad;
+  border-radius: 5px;
+  background: #fbf7ee;
+  color: #1c1c22;
+  font-family: var(--body);
+  font-size: 17px;
+  font-weight: 700;
+}
+.sh-special:not(.is-on) .sh-special-face { opacity: 0.4; }
+.sh-special-words { display: flex; flex-direction: column; gap: 3px; }
+.sh-special-words b { color: var(--ivory); font-size: 15px; }
+.sh-special-words span { font-size: 13px; line-height: 1.4; }
+.sh-special-words i { font-size: 11.5px; font-style: normal; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brass); }
+.sh-special:not(.is-on) .sh-special-words i { color: var(--text-faint); }
+.sh-lock { position: absolute; top: 8px; right: 10px; font-size: 13px; opacity: 0.7; }
+
+/* --- the rules at the door -------------------------------------------------- */
+
+.sh-rules { margin-top: 18px; padding: clamp(18px, 3vw, 28px); }
+.sh-rule-list { margin: 0; padding-left: 20px; color: var(--text-dim); }
+.sh-rule-list li { margin-bottom: 8px; }
+.sh-rule-list b { color: var(--ivory); }
+
+@media (max-width: 640px) {
+  .sh-card { --w: 44px; --h: 62px; }
+  .sh-rank { font-size: 16px; }
+  .sh-suit { font-size: 19px; }
+  .sh-fan { margin-left: -26px; }
+  .sh-centre { gap: 10px; padding: 14px 10px; }
+}

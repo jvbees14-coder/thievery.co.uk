@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Switchhead — Thievery.co.uk</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c14'/%3E%3Crect x='7' y='6' width='12' height='17' rx='2' fill='none' stroke='%23d4af5a' stroke-width='2'/%3E%3Crect x='13' y='10' width='12' height='17' rx='2' fill='%230a0c14' stroke='%23d4af5a' stroke-width='2'/%3E%3C/svg%3E" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="apple-touch-icon" href="/icons/icon-180.png" />
+  <meta name="theme-color" content="#0a0c14" />
+  <link rel="preload" href="/fonts/limelight-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/eb-garamond-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/fonts.css" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/flashcards.css" />
+  <link rel="stylesheet" href="/menu.css" />
+  <link rel="stylesheet" href="/battle.css" />
+  <link rel="stylesheet" href="/switchhead.css" />
+  <link rel="stylesheet" href="/plain.css" />
+  <script src="/theme.js"></script>
+</head>
+<body class="fc-app">
+  <div id="toast" class="toast" hidden></div>
+
+  <header class="fc-bar">
+    <a class="fc-mark wordmark" href="/switchhead">Switch<em>head</em></a>
+    <nav class="menu-nav">
+      <a class="menu-nav-link" href="/">The house</a>
+      <a class="menu-nav-link" href="/cards">Thievery</a>
+      <a class="menu-nav-link" href="/battle">Battle</a>
+    </nav>
+    <button class="theme-switch" data-theme-toggle type="button" data-word="Plain design" aria-label="Plain design" aria-pressed="false">
+      <span class="theme-chip" aria-hidden="true">
+        <span class="theme-face theme-face-plain"></span>
+        <span class="theme-face theme-face-vault"></span>
+      </span>
+    </button>
+    <div class="fc-who">
+      <button id="who" class="fc-who-btn" type="button" aria-haspopup="true" aria-expanded="false"></button>
+      <div id="who-menu" class="fc-menu" hidden>
+        <a href="/">Back to the house</a>
+        <button data-theme-toggle type="button" aria-pressed="false">Plain design</button>
+        <button data-act="signout" type="button">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="btl-main sh-main">
+
+    <!-- Four screens, one at a time, and the snapshot says which: no room is
+         the front door, a room with no game is the lobby, a game is the
+         table, and a finished game is the finishing order. -->
+
+    <!-- ============================================== the front door ==== -->
+    <section id="screen-door" class="btl-screen" hidden>
+      <div class="panel btl-door">
+        <p class="eyebrow">Two to eight players</p>
+        <h1 class="btl-door-head">Switchhead</h1>
+        <p class="btl-door-say">
+          Get rid of your cards, and do not be the last one holding any. But
+          the hands swap when nobody is looking, and every so often the goal
+          turns over &mdash; go out then, and you go out at the bottom.
+        </p>
+        <div class="btl-door-acts">
+          <button id="open-room" class="btn primary" type="button">Open a room</button>
+          <form id="join" class="btl-join" autocomplete="off">
+            <label class="sr-only" for="code">Room code</label>
+            <input id="code" name="code" maxlength="4" placeholder="CODE" spellcheck="false"
+                   autocapitalize="characters" inputmode="latin" />
+            <button class="btn ghost" type="submit">Join</button>
+          </form>
+        </div>
+        <p class="hint">
+          A room is four characters and lives in memory only. Share the code;
+          a code for a game already under way lets you watch it and sits you
+          down for the next one.
+        </p>
+      </div>
+
+      <div class="panel sh-rules">
+        <h2 class="btl-head">How it plays</h2>
+        <ul class="sh-rule-list">
+          <li>Three cards face down, three face up on top of them, three in your hand. Before the first card you may swap cards between your hand and your face-up row.</li>
+          <li>Play a card as high as the one on the pile or higher &mdash; several of one rank at once if you have them &mdash; and draw back up to three while the deck lasts. Cannot, or would rather not? Pick up the pile.</li>
+          <li>When your hand is gone, play from your face-up row; when that is gone, turn the face-down cards over one at a time and hope.</li>
+          <li><b>The swap.</b> Every few seconds there is an even chance two players&rsquo; hands trade places. Nothing warns you.</li>
+          <li><b>The goal.</b> Every five to fifteen turns it turns over. While it says <em>win</em>, going out takes the best place left. While it says <em>lose</em>, going out takes the worst.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- =================================================== the lobby ==== -->
+    <section id="screen-lobby" class="btl-screen" hidden>
+      <div class="btl-lobby-grid">
+
+        <div class="panel btl-setup">
+          <h2 class="btl-head">The special cards</h2>
+          <p class="hint sh-specials-say">
+            The first three are always in play. The host adds any of the rest.
+          </p>
+          <!-- Filled from the catalog the server sends, so that what this
+               page promises and what the rules do are written down once. -->
+          <div class="sh-specials" id="specials"></div>
+          <button id="start" class="btn primary btl-start" type="button">Deal</button>
+          <p class="hint" id="host-note" hidden>Only the host picks the cards and deals.</p>
+        </div>
+
+        <div class="panel btl-room">
+          <h2 class="btl-head">The room</h2>
+          <p class="btl-code-say">Share this code</p>
+          <p class="btl-code" id="room-code">&mdash;</p>
+          <button class="btn ghost btl-copy" type="button" data-act="copy">Copy the link</button>
+          <ul class="btl-players" id="players"></ul>
+          <button class="btn ghost" type="button" data-act="leave">Leave the room</button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =================================================== the table ==== -->
+    <section id="screen-table" class="btl-screen" hidden>
+      <!-- The goal is the one thing on this page that must never be missed,
+           so it is the widest thing on it and it changes colour. -->
+      <div class="sh-goal" id="goal" role="status" aria-live="polite">
+        <span class="sh-goal-word" id="goal-word"></span>
+        <span class="sh-goal-say" id="goal-say"></span>
+      </div>
+
+      <p class="btl-banner" id="table-banner" hidden></p>
+
+      <div class="sh-others" id="others"></div>
+
+      <div class="panel sh-centre">
+        <div class="sh-stack">
+          <div class="sh-card is-back" aria-hidden="true"></div>
+          <span class="sh-stack-say" id="deck-say"></span>
+        </div>
+        <div class="sh-pile-wrap">
+          <div class="sh-pile" id="pile" aria-label="The pile"></div>
+          <span class="sh-stack-say" id="pile-say"></span>
+        </div>
+        <div class="sh-stack">
+          <div class="sh-card is-burnt" aria-hidden="true"></div>
+          <span class="sh-stack-say" id="burnt-say"></span>
+        </div>
+      </div>
+
+      <p class="sh-need" id="need"></p>
+
+      <div class="panel sh-mine" id="mine">
+        <div class="sh-row-head">
+          <h2 class="btl-head" id="mine-head">Your cards</h2>
+          <span class="sh-turn" id="turn-say"></span>
+        </div>
+
+        <p class="sh-row-label">Face down <span id="down-say"></span></p>
+        <div class="sh-row" id="my-down"></div>
+
+        <p class="sh-row-label">Face up</p>
+        <div class="sh-row" id="my-up"></div>
+
+        <p class="sh-row-label">In your hand</p>
+        <div class="sh-row sh-hand" id="my-hand"></div>
+
+        <div class="sh-acts" id="acts">
+          <button class="btn primary" type="button" id="play-btn" data-act="play">Play</button>
+          <button class="btn" type="button" id="pickup-btn" data-act="pickup">Pick up the pile</button>
+          <button class="btn primary" type="button" id="ready-btn" data-act="ready">Ready</button>
+          <button class="btn ghost" type="button" id="nudge-btn" data-act="nudge" hidden></button>
+        </div>
+        <p class="hint" id="acts-say"></p>
+      </div>
+
+      <ol class="sh-log" id="log"></ol>
+    </section>
+
+    <!-- ========================================== the finishing order === -->
+    <section id="screen-end" class="btl-screen" hidden>
+      <div class="panel btl-end">
+        <p class="eyebrow">The game</p>
+        <h2 class="btl-end-head" id="end-head"></h2>
+        <ol class="btl-standings" id="standings"></ol>
+        <p class="hint" id="end-note"></p>
+        <div class="btl-end-acts" id="end-host">
+          <button id="rematch" class="btn primary" type="button">Deal again</button>
+          <button id="again" class="btn ghost" type="button">Back to the lobby</button>
+        </div>
+        <p class="hint" id="end-guest" hidden>The host decides what happens next.</p>
+        <p class="btl-end-link"><a class="linkish" href="/#stats">Your record</a></p>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="/switchhead.js"></script>
+</body>
+</html>

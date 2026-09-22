@@ -7,12 +7,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm start              # serve on PORT (default 3000)
 npm run dev            # same, with --watch
-npm test               # all seven suites, in order; any failure stops the run
+npm test               # all eight suites, in order; any failure stops the run
 npm run test:source    # the source as bytes: no literal control characters
 npm run test:game      # the card game: real server, real clients, whole rounds played out
 npm run test:powerups  # the five/six-hand power-up rules, played against game.js directly
 npm run test:site      # the front hall, the addresses, and the lifetime record
 npm run test:battle    # the marker, a match played out, and the one rule about the back
+npm run test:switchhead # the shedding rules against shed.js, then a game over the socket
 npm run test:flashcards # the flashcards room over HTTP
 npm run test:r2        # the storage layer, against a stub S3 client
 npm run r2:check       # are the four R2_* variables real? needs them in the environment
@@ -45,7 +46,7 @@ Windows `child.kill('SIGTERM')` is a hard kill and nothing is flushed at all.
 
 ## The shape of the site
 
-One server, a hall and three rooms off it:
+One server, a hall and four rooms off it:
 
 | Address | What answers | Login |
 |---|---|---|
@@ -53,9 +54,10 @@ One server, a hall and three rooms off it:
 | `/cards`, `/cards/ABCD` | `server/site.js` — the card game | never |
 | `/flashcards` | `server/flashcards.js` | required |
 | `/battle`, `/battle/ABCD` | `server/battle.js` | required |
+| `/switchhead`, `/switchhead/ABCD` | `server/switchhead.js` | required |
 | `/api/site/…` | the door, the menu's figures, the members panel | mostly |
 | `/api/flashcards/…` | the collection, the post, the panel | yes |
-| *(the battle room has no API — all of it is socket)* | | |
+| *(the battle room and Switchhead have no API — all of it is socket)* | | |
 | anything else | the static block in `server/index.js`, out of `public/` | no |
 
 **The card game** (`server/game.js`, `bot.js`, `deal.js`, `powerups.js`,
@@ -79,6 +81,10 @@ that has to outlive the process.
 people out: it is behind the login like the flashcards, but its rooms are
 memory like the card game's, and it has no HTTP API at all. See "The battle
 room".
+
+**Switchhead** (`server/switchhead.js`, `shed.js`; `public/switchhead.{js,css}`)
+is the battle room's shape once more — behind the login, rooms in memory, all
+of it over the shared socket under a `switchhead:` prefix. See "Switchhead".
 
 **Two names that are not the same thing.** The card game is called *Thievery*
 — the site's own name, because it is the thing the site was built for — and is
@@ -508,6 +514,37 @@ best deck (five cards minimum) for the Stats panel.
   answer on how close it is to the card, and a duel won by the faster typist
   would be grading something else.
 
+## Switchhead
+
+The old shedding game with two things done to it: every `SWAP_MS` (3s) there
+is an even chance two players' hands swap, and every five to fifteen turns
+the goal turns over between getting rid of your cards and hanging on to
+them. `shed.js` is the rules and is pure, with an injectable `rand`;
+`switchhead.js` is the rooms, the swap clock and the record. The header of
+`shed.js` has every rule; what is easy to break:
+
+- **A swap leaves no trace.** `shuffleHands` writes nothing to the log and
+  the room pushes the new state exactly as after any move — no message type
+  of its own, no animation in the page (the stylesheet deliberately has no
+  transition on a card). Adding any indication breaks the game's one idea.
+  Only hands with cards in are swapped, so a swap can never put somebody out.
+- **The goal flip is the opposite**: logged, and the loudest thing on the
+  page. How many turns until the next one (`flipIn`) is never sent.
+- **Places fill from both ends.** Going out while the goal is `win` takes the
+  best place left; while it is `lose`, the worst. The last one holding cards
+  takes what remains. With no flips that is the ordinary game. Picking the
+  pile up is allowed on any turn, because otherwise "lose" is a goal nobody
+  can pursue.
+- **Twos, tens and four of a kind are fixed**; sevens, fours and fives are the
+  host's (`OPTIONAL`). A five's cover is the same player's, straight away:
+  higher than five or a two, never a see-through four.
+- **`viewFor` sends no face-down card to anybody, owner included,** and only
+  a count of anybody else's hand. `test/switchhead.test.js` walks every
+  message for a card object anywhere outside the allowed paths.
+
+The record is `stats.switchhead` (`recordSwitchhead`), migrated by `fill()`
+like the battle block: first place is `wins`, last is `heads`.
+
 ## Environment
 
 | Variable | Effect |
@@ -519,6 +556,7 @@ best deck (five cards minimum) for the Stats panel.
 | `THIEVERY_ADMIN_RESET=1` | reset that password for one boot |
 | `THIEVERY_ALLOW_EPHEMERAL=1` | permit the throwaway disk in production |
 | `THIEVERY_BOT_PACE` | bot think-time multiplier; the game suite sets it low |
+| `THIEVERY_SWAP_MS` | Switchhead's swap clock, default 3000; its suite sets 40 |
 
 R2 keys are 32 hex characters and secrets 64 — a `cfut_`-prefixed value is a
 Cloudflare API token, not an S3 credential.

@@ -26,6 +26,7 @@ import * as Bot from './bot.js';
 import * as Flashcards from './flashcards.js';
 import * as Site from './site.js';
 import * as Battle from './battle.js';
+import * as Switchhead from './switchhead.js';
 import * as Stats from './stats.js';
 import { currentUser } from './plumbing.js';
 import { shuffle, DEAL_SPLITS, SEAT_COUNTS, MIN_SEATS, MAX_SEATS, MAX_PER_SEAT, usesPowerUps } from './deal.js';
@@ -93,6 +94,10 @@ function serve(req, res) {
   // no API of its own — everything a battle does happens to several people at
   // once and goes over the socket — so this is the page and nothing else.
   if (Battle.handle(req, res, url)) return;
+
+  // Switchhead is the same shape again: a page behind the login, and
+  // everything else over the socket.
+  if (Switchhead.handle(req, res, url)) return;
 
   // Then the front hall, which owns "/" and the card table at /cards. It has
   // to come before the static block for the same reason: that block serves
@@ -1009,6 +1014,8 @@ wss.on('connection', (ws, req) => {
     // the card table's state and a table cannot reach a battle's. It is
     // asked first because the prefix makes the question free.
     if (Battle.socket(ws, msg)) return;
+    // Switchhead shares it on the same terms, under its own prefix.
+    if (Switchhead.socket(ws, msg)) return;
     try {
       if (msg.type === 'create' || msg.type === 'join') handleJoin(ws, msg);
       else if (msg.type === 'ping') send(ws, { type: 'pong' });
@@ -1020,6 +1027,7 @@ wss.on('connection', (ws, req) => {
   ws.on('close', () => {
     handleDisconnect(ws);
     Battle.closed(ws);
+    Switchhead.closed(ws);
   });
   ws.on('error', () => {});
 });
@@ -1045,6 +1053,7 @@ setInterval(() => {
     if (!anyone && now - room.emptySince > ROOM_TTL_MS) rooms.delete(code);
   }
   Battle.sweep(now);
+  Switchhead.sweep(now);
 }, 60_000);
 
 // The house decks are checked before anything is served, so a deck with a

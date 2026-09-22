@@ -52,6 +52,8 @@ export function blank() {
     shared: pair(), // rounds where somebody else was playing your hand too
     // --- the battle room, which is a different game entirely
     battle: battleBlank(),
+    // --- and Switchhead, which is a third
+    switchhead: switchBlank(),
   };
 }
 
@@ -78,6 +80,27 @@ const battleBlank = () => ({
   decks: {},  // id -> { matches, cards, points }
 });
 
+// Switchhead's figures, in their own object for the same reason as the
+// battle room's: a game of Switchhead is not a round of deduction, and one win
+// rate across the two would be a figure about nothing.
+//
+// Two ways to finish that matter, and they are not each other's opposite: a
+// win is first place, and `heads` is the other end — last, the Switchhead.
+// At a table of five most games are neither, which is why `seats` is kept:
+// the page can say how big the tables were, and a win at two players is not
+// the same claim as a win at eight.
+const switchBlank = () => ({
+  games: 0,   // games played through to the end
+  wins: 0,    // finished first
+  heads: 0,   // finished last: the Switchhead
+  seats: 0,   // the sum of the table sizes, over every game
+  pickups: 0, // piles picked up, including a face-down card that would not go
+  burns: 0,   // piles burnt, by a ten or by four of a kind
+  flips: 0,   // times the goal turned over in the games played
+  streak: 0,  // games in a row not finished as the Switchhead
+  best: 0,    // the longest such run there has ever been
+});
+
 // A record written before a field existed is still somebody's record, so it
 // is filled in rather than replaced. Anything missing arrives at nought,
 // which is true: those rounds were played, they were simply not counted this
@@ -91,6 +114,7 @@ function fill(mine) {
   // had fewer figures than it has now is still somebody's record, and the
   // fields it never knew about arrive at nought rather than undefined.
   mine.battle = { ...battleBlank(), ...(mine.battle || {}) };
+  mine.switchhead = { ...switchBlank(), ...(mine.switchhead || {}) };
   return mine;
 }
 
@@ -205,6 +229,36 @@ export function recordBattle(userId, { solo = false, won = false, cards = 0, poi
 }
 
 /**
+ * A game of Switchhead has ended with this account at the table.
+ *
+ * `won` is first place and `head` is last. `players` is how many were
+ * dealt in. The room counts an account once per game before it calls this.
+ * Like a battle, a game moves the two dates and leaves the round counters
+ * alone.
+ */
+export function recordSwitchhead(userId, { won = false, head = false, players = 0, pickups = 0, burns = 0, flips = 0 } = {}) {
+  if (!userId || !available()) return;
+  const mine = recordFor(userId);
+  const sh = mine.switchhead;
+  sh.games += 1;
+  if (won) sh.wins += 1;
+  if (head) sh.heads += 1;
+  sh.seats += players;
+  sh.pickups += pickups;
+  sh.burns += burns;
+  sh.flips += flips;
+  if (head) {
+    sh.streak = 0;
+  } else {
+    sh.streak += 1;
+    if (sh.streak > sh.best) sh.best = sh.streak;
+  }
+  if (!mine.first) mine.first = Date.now();
+  mine.last = Date.now();
+  touch();
+}
+
+/**
  * What the menu is told. A fresh account has never played anything, which is
  * a blank record rather than an absence: the page prints zeros and says so in
  * words, and has nothing to special-case.
@@ -244,6 +298,11 @@ export function forUser(userId) {
       // nobody can print.
       average: mine.battle.cards ? mine.battle.points / mine.battle.cards : 0,
       duelRate: mine.battle.duels ? mine.battle.wins / mine.battle.duels : 0,
+    },
+    switchhead: {
+      ...mine.switchhead,
+      winRate: mine.switchhead.games ? mine.switchhead.wins / mine.switchhead.games : 0,
+      headRate: mine.switchhead.games ? mine.switchhead.heads / mine.switchhead.games : 0,
     },
   };
 }

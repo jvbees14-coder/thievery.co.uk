@@ -28,6 +28,7 @@
       <a class="menu-nav-link" href="/cards">Thievery</a>
       <a class="menu-nav-link" id="nav-flashcards" href="/flashcards">Flashcards</a>
       <a class="menu-nav-link" id="nav-battle" href="/battle">Battle</a>
+      <a class="menu-nav-link" id="nav-switchhead" href="/switchhead">Switchhead</a>
       <a class="menu-nav-link" id="nav-members" href="#members" hidden>Members</a>
     </nav>
     <button class="theme-switch" data-theme-toggle type="button" data-word="Plain design" aria-label="Plain design" aria-pressed="false">
@@ -93,6 +94,17 @@
         </p>
         <p class="menu-tile-daily" id="tile-battle-daily" hidden></p>
         <p class="menu-tile-figure" id="tile-battle-figure">&nbsp;</p>
+      </a>
+
+      <a class="menu-tile" id="tile-switchhead" href="/switchhead">
+        <span class="menu-tile-mark" aria-hidden="true">&#9674;</span>
+        <h2>Switchhead</h2>
+        <p class="menu-tile-say">The shedding game</p>
+        <p class="menu-tile-blurb">
+          Do not be the last one holding cards. The hands swap without warning,
+          and every so often the goal turns over and going out puts you last.
+        </p>
+        <p class="menu-tile-figure" id="tile-switchhead-figure">&nbsp;</p>
       </a>
 
       <a class="menu-tile" href="#stats">
@@ -177,6 +189,13 @@
         </thead>
         <tbody id="battle-decks"></tbody>
       </table>
+
+      <!-- Switchhead, which is a third game and is added into nothing above.
+           First place and last are both worth counting, because at a table
+           of five most games are neither. -->
+      <h3 class="menu-modes-head">Switchhead</h3>
+      <div class="menu-figures" id="switchhead-figures"></div>
+      <p class="menu-note" id="switchhead-note">&nbsp;</p>
 
       <p class="hint">
         A round counts once, however many seats one account is sitting at, and

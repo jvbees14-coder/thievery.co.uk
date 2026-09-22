@@ -89,7 +89,7 @@
   // --- drawing ---------------------------------------------------------------
 
   function render() {
-    const { user, play, collection, battle, rooms } = state;
+    const { user, play, collection, battle, switchhead, rooms } = state;
 
     $('#hello').textContent = user.displayName;
     $('#who').textContent = user.displayName;
@@ -130,6 +130,14 @@
         ? `Today’s ten, ${daily.deck.name}: ${daily.yours.points} — ${ordinal(daily.yours.place)} of ${daily.entrants}`
         : `Today’s ten is ${daily.deck.name}. Not played yet.`;
     }
+    // Switchhead's tile says how it has gone for you, and what is left of
+    // it is the same shut notice as the others.
+    $('#tile-switchhead-figure').textContent = switchhead.games
+      ? `${plural(switchhead.games, 'game', 'games')} · ${plural(switchhead.wins, 'win', 'wins')} · ${switchhead.heads} as the Switchhead`
+      : 'Open a room and share the code';
+    $('#tile-switchhead').classList.toggle('is-shut', !rooms.switchhead);
+    $('#nav-switchhead').classList.toggle('is-shut', !rooms.switchhead);
+    if (!rooms.switchhead) $('#tile-switchhead-figure').textContent = 'The room is closed for a moment';
     $('#tile-battle').classList.toggle('is-shut', !rooms.battle);
     $('#nav-battle').classList.toggle('is-shut', !rooms.battle);
     if (!rooms.battle) $('#tile-battle-figure').textContent = 'The room is closed for a moment';
@@ -153,6 +161,7 @@
 
     renderModes(play);
     renderBattle(battle);
+    renderSwitchhead(switchhead);
 
     const bots = play.rounds - play.versus;
     const botWins = play.wins - play.versusWins;
@@ -219,6 +228,22 @@
         </tr>`
       )
       .join('');
+  }
+
+  // Switchhead's record. First and last are the two ends worth a figure each;
+  // the table size says what they were won against.
+  function renderSwitchhead(sh) {
+    $('#switchhead-figures').innerHTML = [
+      figure(sh.games.toLocaleString('en-GB'), 'Games played'),
+      figure(sh.wins.toLocaleString('en-GB'), 'Out first', percent(sh.winRate, sh.games)),
+      figure(sh.heads.toLocaleString('en-GB'), 'The Switchhead', percent(sh.headRate, sh.games)),
+      figure(sh.best.toLocaleString('en-GB'), 'Best run', sh.streak ? `${sh.streak} without being it` : 'games without being it'),
+      figure(sh.pickups.toLocaleString('en-GB'), 'Piles picked up'),
+      figure(sh.burns.toLocaleString('en-GB'), 'Piles burnt'),
+    ].join('');
+    $('#switchhead-note').textContent = sh.games
+      ? `At tables of ${(sh.seats / sh.games).toFixed(1)} players on average. The goal turned over ${plural(sh.flips, 'time', 'times')} across them.`
+      : 'Nothing played yet. A game of Switchhead fills this in.';
   }
 
   const rowFor = (play, key) => (key.startsWith('seats.') ? play.seats[key.slice(6)] : play[key]) || { rounds: 0, wins: 0 };

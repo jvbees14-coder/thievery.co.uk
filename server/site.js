@@ -36,6 +36,7 @@ import * as Stats from './stats.js';
 import * as Store from './store.js';
 import * as Flashcards from './flashcards.js';
 import * as Battle from './battle.js';
+import * as Switchhead from './switchhead.js';
 import * as Daily from './daily.js';
 import * as Decks from './decks.js';
 import { send, fail, originOk, currentUser, requireUser } from './plumbing.js';
@@ -143,8 +144,10 @@ function snapshot(user) {
       // Today's ten, and how this account stands on them.
       daily: Daily.forUser(user.id),
     },
+    // Switchhead's record, and how many rooms are open, for its tile.
+    switchhead: { ...play.switchhead, rooms: Switchhead.openRooms() },
     // A tile that leads somewhere shut should say so before it is pressed.
-    rooms: { flashcards: Flashcards.isOpen(), battle: Battle.isOpen() },
+    rooms: { flashcards: Flashcards.isOpen(), battle: Battle.isOpen(), switchhead: Switchhead.isOpen() },
   };
 }
 

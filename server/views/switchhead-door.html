@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Switchhead — Thievery.co.uk</title>
+  <meta name="description" content="Switchhead at Thievery.co.uk: the shedding card game where hands swap without warning and the goal turns from winning to losing and back. Two to eight players, one room code." />
+  <link rel="canonical" href="https://thievery.co.uk/switchhead" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Thievery.co.uk" />
+  <meta property="og:title" content="Switchhead — Thievery.co.uk" />
+  <meta property="og:description" content="Do not be the last one holding cards — unless the goal has turned. And keep an eye on your hand: it may not be yours for long." />
+  <meta property="og:url" content="https://thievery.co.uk/switchhead" />
+  <meta property="og:image" content="https://thievery.co.uk/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Switchhead — Thievery.co.uk" />
+  <meta name="twitter:description" content="The shedding game where hands swap without warning." />
+  <meta name="twitter:image" content="https://thievery.co.uk/og-image.png" />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c14'/%3E%3Crect x='7' y='6' width='12' height='17' rx='2' fill='none' stroke='%23d4af5a' stroke-width='2'/%3E%3Crect x='13' y='10' width='12' height='17' rx='2' fill='%230a0c14' stroke='%23d4af5a' stroke-width='2'/%3E%3C/svg%3E" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="apple-touch-icon" href="/icons/icon-180.png" />
+  <meta name="theme-color" content="#0a0c14" />
+  <link rel="preload" href="/fonts/limelight-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/eb-garamond-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/fonts.css" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/flashcards.css" />
+  <link rel="stylesheet" href="/menu.css" />
+  <link rel="stylesheet" href="/plain.css" />
+  <script src="/theme.js"></script>
+</head>
+<body>
+  <div id="toast" class="toast" hidden></div>
+
+  <button class="theme-switch is-corner" data-theme-toggle type="button" data-word="Plain design" aria-label="Plain design" aria-pressed="false">
+    <span class="theme-chip" aria-hidden="true">
+      <span class="theme-face theme-face-plain"></span>
+      <span class="theme-face theme-face-vault"></span>
+    </span>
+  </button>
+
+  <section class="screen home">
+    <div class="home-card door-card" data-api="/api/site" data-next="/switchhead">
+      <p class="eyebrow">Members shed, members swap</p>
+      <h1 class="logo wordmark">Switchhead<em>Thievery.co.uk</em></h1>
+      <p class="tagline">
+        The old shedding game: three down, three up, three in your hand, and
+        whoever is left holding cards at the end is the Switchhead. Except
+        that every few seconds two hands may swap without a word of warning,
+        and every so often the goal turns over &mdash; and going out then
+        puts you at the bottom.
+      </p>
+
+      <div class="door-tabs" role="tablist">
+        <button class="door-tab is-on" data-pane="signin" role="tab" aria-selected="true">Sign in</button>
+        <button class="door-tab" data-pane="join" role="tab" aria-selected="false">Open an account</button>
+      </div>
+
+      <form id="signin" class="door-pane" autocomplete="on">
+        <div class="field">
+          <label for="si-user">Username</label>
+          <input id="si-user" name="username" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" required />
+        </div>
+        <div class="field">
+          <label for="si-pass">Password</label>
+          <input id="si-pass" name="password" type="password" maxlength="200" autocomplete="current-password" required />
+        </div>
+        <button class="btn primary" type="submit">Sign in</button>
+      </form>
+
+      <form id="join" class="door-pane" hidden autocomplete="on">
+        <div class="field">
+          <label for="jo-user">Username</label>
+          <input id="jo-user" name="username" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" required />
+          <p class="hint">3 to 20 characters: letters, numbers, dots, dashes, underscores.</p>
+        </div>
+        <div class="field">
+          <label for="jo-name">Display name <span class="opt">optional</span></label>
+          <div class="input-row">
+            <input id="jo-name" name="displayName" maxlength="24" autocomplete="nickname" placeholder="How the table sees you" />
+            <button id="jo-roll" class="icon-btn" type="button" title="Deal me an alias" aria-label="Deal me an alias">&#10227;</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="jo-pass">Password</label>
+          <input id="jo-pass" name="password" type="password" maxlength="200" autocomplete="new-password" required />
+          <p class="hint">At least 10 characters. Length beats punctuation.</p>
+        </div>
+        <button class="btn primary" type="submit">Open an account</button>
+      </form>
+
+      <p id="door-error" class="door-error" hidden></p>
+
+      <!-- The table itself never needed a name and still does not. Saying so
+           on the door matters: somebody handed a room code should not be
+           made to open an account to answer it. -->
+      <div class="door-open">
+        <h2>Or just play</h2>
+        <p>
+          <b>Thievery</b>, the deduction card game, is open to anybody with a room
+          code &mdash; no account, nothing kept.
+        </p>
+        <p><a class="btn" href="/cards">To the card table &rarr;</a></p>
+      </div>
+    </div>
+  </section>
+
+  <script src="/door.js"></script>
+</body>
+</html>
