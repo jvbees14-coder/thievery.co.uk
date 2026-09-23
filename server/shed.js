@@ -4,12 +4,12 @@
 // Switchhead is the old card game about not being the last one holding cards,
 // with two things done to it:
 //
-//   * **The hands move.** Every few seconds there is an even chance that two
-//     players' hands are swapped wholesale. Nothing says when — not the page,
-//     not the log, not a message on the socket. The cards in front of you are
-//     simply different. That is the room's business (`switchhead.js` keeps
-//     the clock) and `shuffleHands` below is the whole of the rule.
-//   * **The goal turns over.** Every five to fifteen turns the object flips
+//   * **The hands move.** Every ten to fifteen turns two players' hands are
+//     swapped wholesale. Nothing says when — not the page, not the log, not
+//     a message on the socket. The cards in front of you are simply
+//     different. The count is kept in `advance` beside the goal's, and
+//     `shuffleHands` below is the whole of the rule.
+//   * **The goal turns over.** Every ten to fifteen turns the object flips
 //     from getting rid of your cards to hanging on to them, and back. Unlike
 //     the swap this *is* announced, loudly: a goal nobody knows about is not
 //     a goal. How many turns until the next one is never said.
@@ -70,12 +70,14 @@ const PACK_AT = 6;
 // Cards in the hand while the deck lasts.
 export const HAND = 3;
 
-// The chance, on each tick of the room's clock, that two hands change places.
-export const SWAP_CHANCE = 0.5;
+// How many turns go by before two hands change places. Worked out afresh at
+// every swap, and never sent to anybody.
+export const SWAP_MIN = 10;
+export const SWAP_MAX = 15;
 
-// How many turns a goal lasts before it turns over. Worked out afresh at
-// every flip, and never sent to anybody.
-export const FLIP_MIN = 5;
+// How many turns a goal lasts before it turns over. The same, and kept apart
+// from the swap's count, so that the two do not arrive together.
+export const FLIP_MIN = 10;
 export const FLIP_MAX = 15;
 
 const SUITS = ['S', 'H', 'D', 'C'];
@@ -178,6 +180,7 @@ export function createGame({ players, specials = {}, rand = systemRand }) {
     goal: 'win',
     flipIn: between(rand, FLIP_MIN, FLIP_MAX),
     flips: 0,
+    swapIn: between(rand, SWAP_MIN, SWAP_MAX),
     turns: 0,
     cover: false, // the player on turn has laid a five and must cover it
     specials: Object.fromEntries(OPTIONAL.map((key) => [key, !!specials[key]])),
@@ -399,6 +402,11 @@ function advance(g) {
     g.flips += 1;
     log(g, g.goal === 'lose' ? 'The goal has turned: hang on to your cards.' : 'The goal has turned back: get rid of them.', 'goal');
   }
+  g.swapIn -= 1;
+  if (g.swapIn <= 0) {
+    shuffleHands(g);
+    g.swapIn = between(g.rand, SWAP_MIN, SWAP_MAX);
+  }
 }
 
 function refusal(g, rank) {
@@ -458,17 +466,20 @@ function begin(g) {
 // --- the swap ----------------------------------------------------------------
 
 /**
- * One tick of the room's clock: an even chance that two hands change places.
- * Only hands with something in them are swapped — a player down to their
- * face-up row has no hand to lose, and handing them somebody else's would
- * put cards back into a game they have all but finished by luck alone.
+ * Two hands, picked at random, change places. `advance` calls this when the
+ * swap's count of turns runs out. Only hands with something in them are
+ * swapped — a player down to their face-up row has no hand to lose, and
+ * handing them somebody else's would put cards back into a game they have
+ * all but finished by luck alone. If fewer than two hands have cards in,
+ * nothing moves and the count starts again.
  *
  * Returns whether anything moved. Nothing is written to the log: there is
- * deliberately no trace of a swap anywhere but in the cards themselves.
+ * deliberately no trace of a swap anywhere but in the cards themselves, and
+ * because it happens inside a turn it reaches the table in the same push as
+ * that turn's move.
  */
 export function shuffleHands(g, rand = g.rand) {
   if (g.phase !== 'play') return false;
-  if (rand() >= SWAP_CHANCE) return false;
   const holders = g.seats.map((_, i) => i).filter((i) => inPlay(g, i) && g.seats[i].hand.length);
   if (holders.length < 2) return false;
   const a = holders.splice(Math.floor(rand() * holders.length), 1)[0];
@@ -513,7 +524,8 @@ const card = (c) => ({ id: c.id, rank: c.rank, suit: c.suit });
  * The game as one seat sees it. `seat` of -1 is somebody watching.
  *
  * What is never in here: anybody's face-down cards, the order of the deck,
- * anybody's hand but your own, and how many turns until the goal turns over.
+ * anybody's hand but your own, and how many turns until the goal turns over
+ * or the hands next swap.
  */
 export function viewFor(g, seat) {
   const mine = seat >= 0 && seat < g.seats.length ? g.seats[seat] : null;

@@ -516,20 +516,22 @@ best deck (five cards minimum) for the Stats panel.
 
 ## Switchhead
 
-The old shedding game with two things done to it: every `SWAP_MS` (3s) there
-is an even chance two players' hands swap, and every five to fifteen turns
+The old shedding game with two things done to it: every ten to fifteen turns
+two players' hands swap, and on a separate count of ten to fifteen turns
 the goal turns over between getting rid of your cards and hanging on to
-them. `shed.js` is the rules and is pure, with an injectable `rand`;
-`switchhead.js` is the rooms, the swap clock and the record. The header of
+them. Both counts (`swapIn`, `flipIn`) run in `advance` in `shed.js`, which
+is the rules and is pure, with an injectable `rand`; `switchhead.js` is the
+rooms and the record, and has no timer. The header of
 `shed.js` has every rule; what is easy to break:
 
 - **A swap leaves no trace.** `shuffleHands` writes nothing to the log and
-  the room pushes the new state exactly as after any move — no message type
-  of its own, no animation in the page (the stylesheet deliberately has no
+  the swap reaches the table inside the push for the move that ended the
+  count — no message type of its own, no animation in the page (the stylesheet deliberately has no
   transition on a card). Adding any indication breaks the game's one idea.
   Only hands with cards in are swapped, so a swap can never put somebody out.
+  Neither count is ever sent.
 - **The goal flip is the opposite**: logged, and the loudest thing on the
-  page. How many turns until the next one (`flipIn`) is never sent.
+  page.
 - **Places fill from both ends.** Going out while the goal is `win` takes the
   best place left; while it is `lose`, the worst. The last one holding cards
   takes what remains. With no flips that is the ordinary game. Picking the
@@ -556,7 +558,6 @@ like the battle block: first place is `wins`, last is `heads`.
 | `THIEVERY_ADMIN_RESET=1` | reset that password for one boot |
 | `THIEVERY_ALLOW_EPHEMERAL=1` | permit the throwaway disk in production |
 | `THIEVERY_BOT_PACE` | bot think-time multiplier; the game suite sets it low |
-| `THIEVERY_SWAP_MS` | Switchhead's swap clock, default 3000; its suite sets 40 |
 
 R2 keys are 32 hex characters and secrets 64 — a `cfut_`-prefixed value is a
 Cloudflare API token, not an S3 credential.

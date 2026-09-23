@@ -2,8 +2,8 @@
 // /switchhead — the shedding game, with the hands moving under you.
 //
 // The rules are in `shed.js`, and this is everything around them: the rooms,
-// the lobby where the host picks which special cards are in, the socket, the
-// clock that swaps hands, and the record.
+// the lobby where the host picks which special cards are in, the socket and
+// the record.
 //
 // It is the battle room's shape and not the card table's. Behind the login,
 // because the rounds are counted against a name and a room with nobody in it
@@ -15,15 +15,11 @@
 //
 // --- the swap -----------------------------------------------------------------
 //
-// Every `SWAP_MS` a room that is playing asks `Shed.shuffleHands` whether two
-// hands should change places. The answer is an even chance. When they do, the
-// room pushes the new state out exactly as it would after anybody's move — no
-// message of its own, no log line, no field saying something happened. That
-// is the rule: there is no indication a swap is coming, and none that it came,
-// beyond the cards.
-//
-// The clock belongs to the room and is cleared whenever the game stops being
-// played, so a finished or forgotten room is not left ticking.
+// The room has no part in it. Every ten to fifteen turns `shed.js` swaps two
+// hands inside the move that ends the count, and the room pushes the result
+// exactly as it would after any move — no message of its own, no log line, no
+// field saying something happened. That is the rule: there is no indication
+// a swap is coming, and none that it came, beyond the cards.
 //
 // --- what a player may know -----------------------------------------------------
 //
@@ -55,10 +51,6 @@ const views = {
 // The room needs the ledger to know who is sitting down, so it shuts with it.
 export const isOpen = () => available();
 
-// How often the clock asks whether two hands swap. The suite winds it down so
-// that a whole game sees a great many swaps in a second or two.
-export const SWAP_MS = Number(process.env.THIEVERY_SWAP_MS) || 3000;
-
 export const MAX_WATCHERS = 16;
 
 const ROOM_TTL_MS = 60 * 60_000;
@@ -88,7 +80,6 @@ function createRoom() {
     specials: Object.fromEntries(Shed.OPTIONAL.map((k) => [k, false])),
     players: [],
     game: null,
-    clock: null,
     emptySince: Date.now(),
   };
   rooms.set(room.code, room);
@@ -98,28 +89,7 @@ function createRoom() {
 const connected = (room) => room.players.filter((p) => p.connected);
 const seated = (room) => room.players.filter((p) => !p.watcher);
 
-function stopClock(room) {
-  if (room.clock) {
-    clearInterval(room.clock);
-    room.clock = null;
-  }
-}
-
-function startClock(room) {
-  stopClock(room);
-  const g = room.game;
-  room.clock = setInterval(() => {
-    if (rooms.get(room.code) !== room || room.game !== g || g.phase === 'ended') return stopClock(room);
-    // Nobody at the table, nobody to swap in front of.
-    if (!connected(room).length) return;
-    if (Shed.shuffleHands(g)) push(room);
-  }, SWAP_MS);
-  // A test that imports this module must not be kept alive by a room's clock.
-  room.clock.unref?.();
-}
-
 function forget(room) {
-  stopClock(room);
   rooms.delete(room.code);
 }
 
@@ -153,11 +123,9 @@ function startGame(room) {
   for (const p of room.players) if (p.watcher) p.seat = -1;
   room.game = Shed.createGame({ players: people.map((p) => ({ name: p.name })), specials: room.specials });
   room.game.recorded = false;
-  startClock(room);
 }
 
 function toLobby(room) {
-  stopClock(room);
   room.game = null;
   room.players = room.players.filter((p) => p.connected);
   for (const p of room.players) {
@@ -184,7 +152,6 @@ function recordGame(room) {
   const g = room.game;
   if (!g || g.phase !== 'ended' || g.recorded) return;
   g.recorded = true;
-  stopClock(room);
   const rows = Shed.standings(g);
   const seen = new Set();
   for (const p of room.players) {

@@ -2,13 +2,12 @@
 //
 // Two suites in one file.
 //
-//   * **The rules**, played against `shed.js` directly. A swap is a coin
-//     toss and a goal flip is a random count, so a test that waited for
+//   * **The rules**, played against `shed.js` directly. A swap and a goal
+//     flip each come on a random count of turns, so a test that waited for
 //     either over a socket would wait a long time and then fail for the
-//     wrong reason. Here the table is set up by hand and the coin is loaded.
-//   * **A game**, over a real socket against a real server, with the swap
-//     clock wound down so that hands move many times while it is played.
-//     Every message every client receives is kept and searched for a card
+//     wrong reason. Here the table is set up by hand and the counts are set.
+//   * **A game**, over a real socket against a real server, played to the
+//     end with the hands swapping underneath it. Every message every client receives is kept and searched for a card
 //     anywhere it should not be: somebody else's hand, anybody's face-down
 //     row, or the deck.
 //
@@ -249,7 +248,7 @@ await check('picking up is a move on any turn, but an empty pile is nothing to p
   assert.equal(g.seats[0].pickups, 1);
 });
 
-await check('the goal turns over after its count of turns, and the next count is five to fifteen', () => {
+await check('the goal turns over after its count of turns, and the next count is ten to fifteen', () => {
   const rolls = [0.99, 0.0];
   const g = table({ rand: () => (rolls.length ? rolls.shift() : 0.5) });
   g.seats[0].hand = [c(3), c(4), c(5)];
@@ -298,7 +297,29 @@ await check('with no flips, it is the ordinary game: the last one holding cards 
   assert.equal(Shed.standings(g)[2].name, 'P2');
 });
 
-await check('a swap is an even chance, moves only hands with cards in, and leaves no trace', () => {
+await check('the hands swap after their count of turns, and the next count is ten to fifteen', () => {
+  const g = table({ seats: 3 });
+  g.seats[0].hand = [c(3), c(4)];
+  g.seats[1].hand = [c(6), c(7)];
+  g.seats[2].hand = [c(9), c(11)];
+  g.flipIn = 99;
+  g.swapIn = 2;
+  Shed.play(g, 0, [g.seats[0].hand[0].id]);
+  assert.equal(g.swapIn, 1);
+  // The swap comes inside the move that ends the count, so it is between
+  // the hands as they stand once seat 1 has laid its card.
+  const laid = g.seats[1].hand[0].id;
+  const between = g.seats.map((x) => x.hand.filter((y) => y.id !== laid).map((y) => y.id).join());
+  Shed.play(g, 1, [laid]);
+  const after = g.seats.map((x) => x.hand.map((y) => y.id).join());
+  const moved = after.filter((h, i) => h !== between[i]).length;
+  assert.equal(moved, 2, 'exactly two hands changed places');
+  assert.deepEqual([...after].sort(), [...between].sort(), 'the same hands, in different seats');
+  assert.ok(g.swapIn >= Shed.SWAP_MIN && g.swapIn <= Shed.SWAP_MAX);
+  assert.ok(g.log.every((l) => l.kind !== 'swap' && !/swap/i.test(l.text)), 'nothing in the log');
+});
+
+await check('a swap moves only hands with cards in, and never before the start', () => {
   const g = table({ seats: 3 });
   const a = [c(3), c(4)];
   const b = [c(9)];
@@ -307,7 +328,6 @@ await check('a swap is an even chance, moves only hands with cards in, and leave
   g.seats[1].up = [c(5)];
   g.seats[2].hand = b;
   const logged = g.log.length;
-  assert.equal(Shed.shuffleHands(g, () => 0.5), false, 'at or over the half, nothing moves');
   assert.equal(Shed.shuffleHands(g, () => 0.1), true);
   assert.equal(g.seats[0].hand, b);
   assert.equal(g.seats[2].hand, a);
@@ -330,6 +350,7 @@ await check('what a seat is told: its own hand, everybody’s face-up row, and c
   assert.equal(v.seats[1].up.length, 3);
   const text = JSON.stringify(v);
   assert.ok(!text.includes('flipIn'), 'the count to the next flip stays on the server');
+  assert.ok(!text.includes('swapIn'), 'and so does the count to the next swap');
   for (const s of g.seats) for (const x of s.down) assert.ok(!text.includes(`"${x.id}"`), 'no face-down card');
   for (const x of g.seats[1].hand) assert.ok(!text.includes(`"${x.id}"`), 'no other hand');
   for (const x of g.deck) assert.ok(!text.includes(`"${x.id}"`), 'no deck');
@@ -342,7 +363,7 @@ console.log('a game');
 
 let PORT = 0;
 const child = spawn(process.execPath, [path.join(__dirname, '..', 'server', 'index.js')], {
-  env: { ...process.env, PORT: '0', THIEVERY_DATA_DIR: DATA_DIR, THIEVERY_SWAP_MS: '40' },
+  env: { ...process.env, PORT: '0', THIEVERY_DATA_DIR: DATA_DIR },
   stdio: ['ignore', 'pipe', 'inherit'],
 });
 await new Promise((resolve, reject) => {
@@ -443,7 +464,6 @@ class Player {
     this.state = null;
     this.errors = [];
     this.seq = 0;
-    this.swapsSeen = 0;
   }
   connect() {
     return new Promise((resolve, reject) => {
@@ -454,12 +474,6 @@ class Player {
         const msg = JSON.parse(data.toString());
         audit(this.who.name, msg);
         if (msg.type === 'switchhead:state') {
-          const was = this.state?.game;
-          const now = msg.state.game;
-          // A push in play where nothing was logged is a swap, and it is
-          // the only thing that pushes that way.
-          if (was && now && was.phase === 'play' && now.phase === 'play' &&
-              JSON.stringify(was.log) === JSON.stringify(now.log)) this.swapsSeen += 1;
           this.state = msg.state;
           this.seq += 1;
         } else if (msg.type === 'switchhead:error') {
@@ -574,16 +588,16 @@ await check('a whole game played out, with the hands swapping underneath it', as
     if (Date.now() > until) throw new Error('the game did not finish');
     A.move();
     B.move();
-    // Slow enough that the swap clock gets a good many turns at the table.
     await new Promise((r) => setTimeout(r, 8));
   }
   await B.waitFor((s) => s.game.phase === 'ended', 'the end');
   const rows = A.state.game.standings;
   assert.equal(rows.length, 2);
   assert.equal(rows[1].head, true);
-  const swaps = A.swapsSeen + B.swapsSeen;
-  assert.ok(swaps > 0, 'the hands moved at least once');
-  console.log(`        (${swaps} swaps seen, ${A.state.game.flips} goal flips)`);
+  // A swap rides inside a move's push and leaves nothing a client could
+  // count, which is the point of it; the rules suite above is where it is
+  // checked. What this game proves is that none of them leaked a card.
+  console.log(`        (${A.state.game.flips} goal flips)`);
 });
 
 await check('the game is on both records: one first, one the Switchhead', async () => {
