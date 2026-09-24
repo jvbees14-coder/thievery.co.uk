@@ -283,16 +283,23 @@ async function run() {
     const overview = ok(await admin.call('/api/site/admin/users'), 'overview');
     const row = overview.users.find((u) => u.username === 'alice');
     ok(await admin.call(`/api/site/admin/users/${row.id}`, { method: 'DELETE' }), 'delete account');
-    // The store holds a change for a moment before writing it, so the file
-    // is waited for rather than read straight away.
-    const file = fs.readdirSync(DATA_DIR).find((f) => f.endsWith('.json'));
+    // The store holds a change for a moment before writing it, and writes it
+    // to a temporary file renamed over the real one, so the file is waited
+    // for by name and a read that lands mid-rename is simply tried again.
+    // Looking the file up in a listing instead once caught the moment when
+    // only the temporary one was there.
+    const file = path.join(DATA_DIR, 'flashcards.json');
     let doc = null;
-    for (let i = 0; i < 40; i++) {
-      doc = JSON.parse(fs.readFileSync(path.join(DATA_DIR, file), 'utf8'));
-      if (!doc.maps[id]) break;
+    for (let i = 0; i < 60; i++) {
+      try {
+        doc = JSON.parse(fs.readFileSync(file, 'utf8'));
+        if (!doc.maps[id]) break;
+      } catch {
+        // not written yet, or caught mid-rename
+      }
       await new Promise((r) => setTimeout(r, 100));
     }
-    assert.ok(!doc.maps[id], 'a map outlived its account');
+    assert.ok(doc && !doc.maps[id], 'a map outlived its account');
   });
 
   console.log(`\n${checks} checks passed.`);
