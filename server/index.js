@@ -29,6 +29,7 @@ import * as Battle from './battle.js';
 import * as Switchhead from './switchhead.js';
 import * as Stats from './stats.js';
 import { currentUser } from './plumbing.js';
+import { readView } from './views.js';
 import { shuffle, DEAL_SPLITS, SEAT_COUNTS, MIN_SEATS, MAX_SEATS, MAX_PER_SEAT, usesPowerUps } from './deal.js';
 import * as PowerUps from './powerups.js';
 
@@ -60,6 +61,15 @@ const MIME = {
 // had none. Not one of them costs anything here: this page is never framed,
 // its types are never worth guessing at, and no full address of ours is any
 // other site's business.
+// What an address nobody recognises is answered with. A page with the bar's
+// way home on it, rather than two words of plain text.
+const NOT_FOUND = readView('404.html');
+
+function notFound(res) {
+  res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache', ...SAFE_HEADERS });
+  res.end(NOT_FOUND);
+}
+
 const SAFE_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'same-origin',
@@ -118,6 +128,12 @@ function serve(req, res) {
     res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
     return res.end(Flashcards.isOpen() ? 'ok' : 'ok (flashcards closed)');
   }
+  // The game's page is in public/ but is served at /cards, where the room
+  // codes are understood. Asked for by its file name, it is sent there.
+  if (file === '/cards.html') {
+    res.writeHead(301, { Location: '/cards', 'Cache-Control': 'no-store' });
+    return res.end();
+  }
   const abs = path.normalize(path.join(PUBLIC_DIR, file));
   if (!abs.startsWith(PUBLIC_DIR)) {
     res.writeHead(403);
@@ -135,8 +151,7 @@ function serve(req, res) {
         res.writeHead(301, { Location: `/cards/${bare.toUpperCase()}`, 'Cache-Control': 'no-store' });
         return res.end();
       }
-      res.writeHead(404);
-      return res.end('Not found');
+      return notFound(res);
     }
     // Everything here is still revalidated on every visit — a room code in the
     // address bar has to reach today's markup rather than last week's — but a
@@ -148,10 +163,7 @@ function serve(req, res) {
       return res.end();
     }
     fs.readFile(abs, (err, data) => {
-      if (err) {
-        res.writeHead(404);
-        return res.end('Not found');
-      }
+      if (err) return notFound(res);
       res.writeHead(200, {
         'Content-Type': MIME[path.extname(abs)] || 'application/octet-stream',
         'Cache-Control': 'no-cache',
@@ -847,7 +859,7 @@ function handleAction(ws, msg) {
     case 'lobby:botLevel': {
       requireHost();
       requireLobby();
-      if (!Bot.BOT_LEVELS.includes(msg.level)) throw new Error('Pick how hard the house should play');
+      if (!Bot.BOT_LEVELS.includes(msg.level)) throw new Error('Pick how hard the bots should play');
       room.botLevel = msg.level;
       break;
     }

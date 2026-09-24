@@ -24,7 +24,7 @@
   const BOT_LEVELS = ['novice', 'sharp', 'ruthless'];
   const BOT_LEVEL_LABEL = { novice: 'Novice', sharp: 'Sharp', ruthless: 'Ruthless' };
   const BOT_LEVEL_HINT = {
-    novice: 'Guesses inside the rule, but never shops around &mdash; kind to a beginner',
+    novice: 'Guesses inside the rule, but never shops around. Kind to a beginner',
     sharp: 'Reads the row: a hidden card is fenced in by the ones either side',
     ruthless: 'Counts the whole table. It will take every card you let it',
   };
@@ -121,7 +121,7 @@
 
   function send(msg) {
     if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
-    else toast('Not connected — trying to reconnect…');
+    else toast('Not connected. Trying to reconnect…');
   }
 
   function joinWith(msg) {
@@ -315,7 +315,7 @@
   // Brass ticker-tape, diamonds and suit glyphs rain down on a winner.
   function confetti() {
     const c = $('#confetti');
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches || window.thieveryStill?.()) return;
     const ctx = c.getContext('2d');
     c.width = innerWidth;
     c.height = innerHeight;
@@ -547,7 +547,7 @@
     const url = `${location.origin}/cards/${state.room.code}`;
     if (!CAN_SHARE) return copyText(url);
     navigator
-      .share({ title: 'Thievery.co.uk', text: `Come and play — the room code is ${state.room.code}`, url })
+      .share({ title: 'Thievery.co.uk', text: `Come and play Thievery. The room code is ${state.room.code}`, url })
       .catch(() => {}); // cancelling a share sheet is not an error worth saying
   }
 
@@ -691,16 +691,14 @@
             <span class="wordmark">Thievery<em>.co.uk</em></span>
           </button>
           <small>Round ${state.room.round || '–'}</small>
-          <!-- The way out of the game altogether, rather than out of the room:
-               the wordmark leaves the table and lands you back on its own front
-               screen, and this goes through to the house. -->
-          <a class="top-link" href="/">The house</a>
+          <a class="top-link" href="/">Home</a>
         </div>
         <div class="codebox">
           <span class="muted">Room</span>
           <span class="code">${esc(code)}</span>
           <button class="btn small" data-action="copy-link">${CAN_SHARE ? 'Share invite' : 'Copy invite link'}</button>
           ${extra}
+          <button class="btn small ghost motion-btn" data-motion-toggle type="button" title="Banner animations">Animations <span class="motion-state"></span></button>
         </div>
       </div>
       ${testBar()}`;
@@ -819,12 +817,12 @@
       if (!here.length) {
         open = `<div class="occupant open">
             <span>Waiting for a player${DOTS}</span>
-            ${isHost ? `<button class="btn small" data-action="add-bot" data-seat="${i}">Deal the house in</button>` : ''}
+            ${isHost ? `<button class="btn small" data-action="add-bot" data-seat="${i}">Add a bot</button>` : ''}
           </div>`;
       } else if (sharingNext) {
         open = `<div class="occupant open"><span>The next to join shares this hand${DOTS}</span></div>`;
       } else if (i === nextSeat) {
-        open = `<div class="occupant open"><span>The next to join takes this hand back off the house${DOTS}</span></div>`;
+        open = `<div class="occupant open"><span>The next person to join takes over from the bot${DOTS}</span></div>`;
       }
       seats.push(`
         <li class="${here.length ? '' : 'empty'}">
@@ -847,7 +845,7 @@
           ${
             me.waiting
               ? `<div class="panel waiting-note">
-                   <h2>You are in &mdash; dealt next round</h2>
+                   <h2>You&rsquo;re in. You&rsquo;ll be dealt in next round.</h2>
                    <p class="panel-note lead">
                      A round is already being played and its cards are dealt, so there is no hand to give you
                      until it finishes. You have a place at this table and will be dealt in the moment it does.
@@ -865,12 +863,12 @@
             <h2>Players <span class="muted">(${r.players.length}/${r.maxPlayers})</span><span class="panel-sub">hand order is the order of play</span></h2>
             <ul class="players">${seats.join('')}</ul>
             <p class="panel-note">
-              ${r.seats} hands are dealt. The first ${r.seats} players get one each; anyone after that joins a player already seated, and the pair share that hand &mdash; they see the same cards, and either of them can guess when their turn comes.
+              ${r.seats} hands are dealt. The first ${r.seats} players get one each. Anyone after that shares a hand with someone already seated: they see the same cards, and either can play on their turn.
             </p>
             ${
               r.powerUps
                 ? `<p class="panel-note">
-                     At ${r.seats} hands the same 26 cards are spread ${SPLIT_LABEL[r.seats]}, so every row is short and there is far less to fence a hidden card in with. That is why this size is dealt with <b>power-ups</b> &mdash; one drawn at the start of each of your turns, three in hand at most &mdash; to hand back the reading the short rows take away, and to give the table a way to cut somebody's run short. There is no switching them off at this size.
+                     At ${r.seats} hands the 26 cards are spread ${SPLIT_LABEL[r.seats]}, so rows are short and hidden cards are harder to pin down. To make up for it, this size is played with <b>power-ups</b>: you draw one at the start of each turn and can hold up to three.
                    </p>
                    <p class="panel-note">
                      Five and six are still ${r.seats} hands rather than ${r.seats} people: everyone can have a hand of their own, and anyone past the ${r.seats === 5 ? 'fifth' : 'sixth'} doubles up exactly as they would at a smaller table. A shared hand shares its power-ups too.
@@ -883,7 +881,7 @@
                 : ''
             }
             <p class="panel-note">
-              A hand nobody has taken can go to the house instead, so one or two of you can still play a full table. Bots never share a hand, and give theirs up the moment a person arrives to want it.
+              Empty hands can be given to bots, so one or two of you can still play a full table. A bot hands its seat over as soon as a person joins.
             </p>
             ${
               r.customDeal
@@ -892,7 +890,7 @@
             }
             ${
               isHost
-                ? `<p class="panel-note">Use the arrows to change the order of play, or click two players to swap them &mdash; that is also how you choose who shares with whom.${
+                ? `<p class="panel-note">Use the arrows to change the order of play, or click two players to swap them. That&rsquo;s also how you choose who shares with whom.${
                     teamsOn ? ' Hands 1 &amp; 3 are Team A, 2 &amp; 4 are Team B.' : ''
                   }</p>`
                 : ''
@@ -944,7 +942,7 @@
               )}
             </div>
             <div class="setting">
-              <div><div class="label">The house</div><div class="hint">${BOT_LEVEL_HINT[r.botLevel]}</div></div>
+              <div><div class="label">Bots</div><div class="hint">${BOT_LEVEL_HINT[r.botLevel]}</div></div>
               ${seg(
                 'botLevel',
                 BOT_LEVELS.map((l) => ({ label: BOT_LEVEL_LABEL[l], attrs: `data-action="bot-level" data-level="${l}"` })),
@@ -978,11 +976,11 @@
                   <div class="panel-note">${
                     ready
                       ? spare > 0
-                        ? `Ready when you are &mdash; or hold on: ${plural(spare, 'more player')} can still join${
-                            folk.length < r.players.length ? ', the first of them taking a hand back off the house' : ' and share a hand'
+                        ? `Ready when you are. ${plural(spare, 'more player')} can still join${
+                            folk.length < r.players.length ? ', taking over from a bot' : ' and share a hand'
                           }.`
-                        : 'The table is full. Deal them in.'
-                      : `Waiting for ${plural(short, 'more player')}, or deal the house into ${
+                        : 'The table is full.'
+                      : `Waiting for ${plural(short, 'more player')}, or add a bot to ${
                           short === 1 ? 'the empty hand' : 'the empty hands'
                         }${DOTS}`
                   }</div>`
@@ -1566,7 +1564,7 @@
     return `<div class="ranks ${marking ? 'marking' : ''}">${RANKS.map((r, i) => {
       const rank = i + 1;
       const cls = note.no.includes(rank) ? 'no' : note.maybe.includes(rank) ? 'maybe' : '';
-      const say = cls === 'no' ? `${r} — you ruled it out` : cls === 'maybe' ? `${r} — you think it likely` : r;
+      const say = cls === 'no' ? `${r}: you ruled it out` : cls === 'maybe' ? `${r}: you think it likely` : r;
       return `<button class="${cls}" data-action="${marking ? 'mark' : 'rank'}" data-rank="${rank}"
         aria-label="${esc(say)}">${r}</button>`;
     }).join('')}</div>`;
@@ -1666,7 +1664,7 @@
     if (turnAway) {
       return `
         <p class="prompt">${n(g.turn)} ${isAre(g.turn)} offline</p>
-        <p class="sub">The table is waiting on a hand nobody is at. Passing it costs them only the go &mdash; no card turns over and nothing is given away.</p>
+        <p class="sub">The table is waiting on a hand nobody is at. Skipping it only costs them this turn. No card turns over.</p>
         ${
           isHost
             ? '<div class="actions-row"><button class="btn" data-action="pass-turn">Pass their turn</button></div>'
@@ -1688,7 +1686,7 @@
       } else if (myTurn) {
         body = `<p class="prompt">Waiting for ${n(activePartner)} to show you a card${DOTS}</p>`;
         if (partnerAway) {
-          body += `<div class="actions-row"><button class="btn" data-action="skip-show">Partner is offline — skip</button></div>`;
+          body += `<div class="actions-row"><button class="btn" data-action="skip-show">Partner is offline: skip</button></div>`;
         }
       } else {
         body = `<p class="prompt">${n(activePartner)} ${isAre(activePartner)} showing ${n(g.turn)} a card${DOTS}</p>`;
@@ -1783,7 +1781,7 @@
             ui.leaveArmed = false;
             render();
           }, 4000);
-          toast('Leaving in the middle of a round — click the wordmark again to confirm', 'info');
+          toast('You’re in the middle of a round. Click the logo again to leave.', 'info');
           return render();
         }
         clearTimeout(leaveArmTimer);

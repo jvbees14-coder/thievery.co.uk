@@ -270,6 +270,39 @@ async function run() {
     assert.ok(res.html.includes('Create game'));
   });
 
+  await check('about and privacy are open to anybody', async () => {
+    for (const where of ['/about', '/privacy']) {
+      const res = await stranger.page(where);
+      assert.equal(res.status, 200, `${where} answered ${res.status}`);
+      assert.ok(res.html.includes('class="site-foot"'), `${where} has no footer`);
+      assert.ok(!res.html.includes('{{'), `${where} has a placeholder left in it`);
+    }
+    assert.ok((await stranger.page('/about')).html.includes('MIT'), 'the decks are credited');
+  });
+
+  await check('an address nobody recognises is a page, and still a 404', async () => {
+    const res = await stranger.page('/no-such-page');
+    assert.equal(res.status, 404);
+    assert.ok(res.html.includes('Nothing here'), 'expected the not-found page');
+    assert.ok(res.html.includes('href="/cards"'), 'the not-found page should point at the table');
+  });
+
+  await check('the game page by its file name is sent to /cards', async () => {
+    const res = await stranger.page('/cards.html');
+    assert.equal(res.status, 301);
+    assert.equal(res.location, '/cards');
+  });
+
+  // The views and the game page are annotated for whoever maintains them.
+  // None of that is for the visitor, so none of it may reach a browser.
+  await check('no page is served with its comments or its placeholders in it', async () => {
+    for (const where of ['/', '/cards', '/cards/ABCD', '/flashcards', '/battle', '/switchhead', '/about', '/privacy', '/nowhere']) {
+      const { html } = await stranger.page(where);
+      assert.ok(!html.includes('<!--'), `${where} was served with a comment in it`);
+      assert.ok(!html.includes('{{'), `${where} was served with a placeholder in it`);
+    }
+  });
+
   await check('anything else under /cards goes back to the table', async () => {
     const res = await stranger.page('/cards/nonsense');
     assert.equal(res.status, 302);
@@ -315,12 +348,17 @@ async function run() {
     const body = ok(await alice.call('register', { method: 'POST', body: { username: 'alice', password: 'a-long-enough-password', displayName: 'Alice' } }), 'register');
     assert.equal(body.user.username, 'alice');
     assert.equal(body.play.rounds, 0, 'a new account has played nothing');
-    assert.equal(body.collection.count, 3, 'a new account is dealt three cards');
+    assert.equal(body.collection.count, 0, 'a new account starts with no cards');
   });
 
   await check('the menu is served once there is a cookie', async () => {
     const res = await alice.page('/');
     assert.ok(res.html.includes('menu-grid'), 'expected the menu');
+    // One bar on every page, with every room on it and nothing left over.
+    for (const room of ['/cards', '/flashcards', '/battle', '/switchhead']) {
+      assert.ok(res.html.includes(`href="${room}"`), `the bar does not link to ${room}`);
+    }
+    assert.ok(!res.html.includes('<!--') && !res.html.includes('{{'), 'the menu was served unrendered');
     assert.ok(!res.html.includes('Open an account'), 'the door was served to a member');
   });
 

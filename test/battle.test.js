@@ -411,6 +411,31 @@ async function run() {
     assert.equal(new Set(bio.cards).size, bio.cards.length, 'a card is in the biology deck twice');
   });
 
+  await check('the lobby offers subjects and our own decks, and no source sets', () => {
+    const listed = Decks.catalog().filter((d) => d.listed);
+    assert.ok(listed.length > 0, 'nothing is listed');
+    for (const d of listed) assert.ok(d.topic || d.house, `${d.id} is listed but is neither a subject nor ours`);
+    assert.ok(!listed.some((d) => d.id.startsWith('mmlu-')), 'a subject paper is listed on its own');
+    // The sources stay in the catalog, because rooms and the record hold their ids.
+    assert.ok(Decks.has('mmlu-anatomy'), 'a source deck can no longer be found by id');
+  });
+
+  await check('every question in the converted sets is under some subject', () => {
+    const topics = Decks.catalog().filter((d) => d.topic).map((d) => Decks.deck(d.id));
+    const filed = new Set(topics.flatMap((d) => d.cards));
+    for (const id of ['arc-challenge', 'arc-easy', 'openbookqa', 'qasc', 'sciq']) {
+      const source = Decks.deck(id);
+      if (!source) continue; // a checkout without the converted decks
+      const lost = source.cards.filter((c) => !filed.has(c));
+      // A card the same as one already filed (front and options) is dropped
+      // as a duplicate, which is the only way one may be missing.
+      const key = (c) => c.front + '|' + c.options.join('|');
+      const keys = new Set([...filed].map(key));
+      const orphans = lost.filter((c) => !keys.has(key(c)));
+      assert.equal(orphans.length, 0, `${orphans.length} cards from ${id} are in no subject`);
+    }
+  });
+
   await check('the CSV reader handles quotes, doubled quotes and newlines', () => {
     const rows = Decks.parseCsv('plain,"quoted, with comma","says ""hi""","two\nlines",d,A\n');
     assert.equal(rows.length, 1);
@@ -1084,6 +1109,74 @@ async function run() {
   });
 
   // =========================================================================
+
+  // --- the question list --------------------------------------------------
+
+  const bankOf = (b, request) =>
+    new Promise((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error(`${b.label}: no question list came back`)), 5000);
+      b.waiters.push((msg) => {
+        if (msg.type !== 'battle:bank') return false;
+        clearTimeout(t);
+        resolve(msg);
+        return true;
+      });
+      b.send({ type: 'battle:browse', ...request });
+    });
+
+  const dora = await member('dora');
+  const d = new Battler(dora);
+  await d.connect();
+
+  await check('the question list pages through a subject, answers and all', async () => {
+    const first = await bankOf(d, { deck: 'topic-physics', query: '', offset: 0 });
+    assert.equal(first.kind, 'choice');
+    assert.equal(first.cards.length, 25);
+    assert.ok(first.total > 25);
+    const card = first.cards[0];
+    assert.ok(card.front && Array.isArray(card.options) && Number.isInteger(card.answer), 'a question came back without its answer');
+    const second = await bankOf(d, { deck: 'topic-physics', query: '', offset: 25 });
+    assert.notEqual(second.cards[0].front, card.front, 'the second page was the first again');
+  });
+
+  await check('the question list searches questions and answers', async () => {
+    const all = await bankOf(d, { deck: 'topic-physics', query: '', offset: 0 });
+    const found = await bankOf(d, { deck: 'topic-physics', query: 'VELOCITY', offset: 0 });
+    assert.ok(found.total > 0 && found.total < all.total, 'a search did not narrow the list');
+    for (const c of found.cards) {
+      assert.ok((c.front + ' ' + c.options.join(' ')).toLowerCase().includes('velocity'), 'a result does not match the search');
+    }
+  });
+
+  await check('the question list offers only what the lobby does', async () => {
+    assert.match(await d.expectError({ type: 'battle:browse', deck: 'mmlu-anatomy' }, 'a source set'), /no such subject/i);
+  });
+
+  await check('today\u2019s ten are not in the question list', async () => {
+    const { deck, cards } = Daily.dealFor();
+    const listed = await bankOf(d, { deck: deck.id, query: '', offset: 0 });
+    assert.equal(listed.total, deck.cards.length - cards.length, 'the list does not leave out exactly the daily ten');
+    for (const c of cards) {
+      const hit = await bankOf(d, { deck: deck.id, query: c.front, offset: 0 });
+      assert.ok(!hit.cards.some((x) => x.front === c.front && JSON.stringify(x.options) === JSON.stringify(c.options)), 'a daily card is in the list');
+    }
+  });
+
+  await check('the question list is shut to anybody in a match', async () => {
+    d.send({ type: 'battle:create' });
+    await d.waitFor((st) => !!st.code, 'a room');
+    d.send({ type: 'battle:settings', mode: 'solo', source: 'preset', presetId: 'topic-physics', length: 5, clock: 0 });
+    await d.waitFor((st) => st.presetId === 'topic-physics', 'the settings');
+    d.send({ type: 'battle:start' });
+    await d.waitFor((st) => st.match && st.match.phase === 'asking', 'the first card');
+    assert.match(await d.expectError({ type: 'battle:browse', deck: 'topic-physics' }, 'browsing mid-match'), /closed while you/i);
+    d.send({ type: 'battle:leave' });
+    await new Promise((r) => setTimeout(r, 100));
+    const after = await bankOf(d, { deck: 'topic-physics', query: '', offset: 0 });
+    assert.ok(after.total > 0, 'the list stayed shut after leaving the match');
+  });
+
+  d.close();
 
   console.log('');
   await check('no message ever carried the back of a card that was still open', () => {

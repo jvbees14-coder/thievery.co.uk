@@ -356,14 +356,14 @@ async function run() {
       const hall = await fetch(`http://localhost:${port}/`);
       assert.equal(hall.status, 503, 'the hall cannot check a session it cannot read');
       const hallText = await hall.text();
-      assert.match(hallText, /closed for now/i);
+      assert.match(hallText, /unavailable right now/i);
       assert.match(hallText, /\/cards/, 'the closed hall should still point at the table');
       assert.equal((await fetch(`http://localhost:${port}/api/site/me`)).status, 503);
 
       // The room says so plainly, and its API refuses rather than pretending.
       const page = await fetch(`http://localhost:${port}/flashcards`);
       assert.equal(page.status, 503);
-      assert.match(await page.text(), /closed for now/i);
+      assert.match(await page.text(), /unavailable right now/i);
 
       const api = await fetch(`http://localhost:${port}/api/flashcards/me`);
       assert.equal(api.status, 503);
@@ -373,7 +373,7 @@ async function run() {
       // API of its own to check — everything it does goes over the socket.
       const battle = await fetch(`http://localhost:${port}/battle`);
       assert.equal(battle.status, 503);
-      assert.match(await battle.text(), /closed for now/i);
+      assert.match(await battle.text(), /unavailable right now/i);
 
       const register = await fetch(`http://localhost:${port}/api/flashcards/register`, {
         method: 'POST',

@@ -35,7 +35,7 @@
       // A session that has expired underneath us is not an error worth a
       // message; the door is the answer.
       if (res.status === 401) location.href = '/';
-      throw new Error(payload.error || 'That did not work.');
+      throw new Error(payload.error || 'Something went wrong. Try again.');
     }
     return payload;
   }
@@ -92,18 +92,20 @@
     const { user, play, collection, battle, switchhead, rooms } = state;
 
     $('#hello').textContent = user.displayName;
+    const hour = new Date().getHours();
+    $('#greeting').textContent = hour < 5 ? 'Evening' : hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
     $('#who').textContent = user.displayName;
 
     // --- the tiles
     $('#tile-table-figure').textContent = play.rounds
       ? `${plural(play.rounds, 'round', 'rounds')} played · ${plural(play.wins, 'win', 'wins')}`
-      : 'No rounds on the ledger yet';
+      : 'No games yet';
     $('#tile-flashcards-figure').textContent = collection.count
       ? `${plural(collection.count, 'card', 'cards')} · worth ${collection.worth.toLocaleString('en-GB')}`
-      : 'Three cards are waiting to be looked at';
+      : 'No cards yet. Make your first one.';
     $('#tile-stats-figure').textContent = play.rounds
       ? `${percent(play.rate, play.rounds)} of them won · best run of ${play.best}`
-      : 'Sit down at a table and it starts counting';
+      : 'Play a game to start counting';
     $('#tile-account-figure').textContent = `Signed in as ${user.username}`;
     // The battle tile says what you have done there rather than what is
     // waiting: a room is four characters somebody has to give you, so there
@@ -114,20 +116,20 @@
       ? `${plural(battle.cards, 'card', 'cards')} answered · ${Math.round(battle.average)} out of 100 on average` +
         (battle.duels ? ` · ${percent(battle.duelRate, battle.duels)} of duels won` : '')
       : battle.owned
-        ? `${plural(battle.owned, 'card', 'cards')} to revise on, or take a house deck`
-        : 'House decks are ready — or write a card and revise on your own';
+        ? `${plural(battle.owned, 'card', 'cards')} to revise on, or pick one of our decks`
+        : 'Pick one of our decks, or make some cards';
 
     // A door that is shut says so rather than waiting to be pressed.
     $('#tile-flashcards').classList.toggle('is-shut', !rooms.flashcards);
     $('#nav-flashcards').classList.toggle('is-shut', !rooms.flashcards);
-    if (!rooms.flashcards) $('#tile-flashcards-figure').textContent = 'The room is closed for a moment';
+    if (!rooms.flashcards) $('#tile-flashcards-figure').textContent = 'Unavailable right now';
     // Today's ten gets its own line: what the deck is, and whether this
     // account has played it yet.
     const daily = battle.daily;
     $('#tile-battle-daily').hidden = !daily || !daily.deck || !rooms.battle;
     if (daily && daily.deck) {
       $('#tile-battle-daily').textContent = daily.yours
-        ? `Today’s ten, ${daily.deck.name}: ${daily.yours.points} — ${ordinal(daily.yours.place)} of ${daily.entrants}`
+        ? `Today’s ten, ${daily.deck.name}: ${daily.yours.points} points, ${ordinal(daily.yours.place)} of ${daily.entrants}`
         : `Today’s ten is ${daily.deck.name}. Not played yet.`;
     }
     // Switchhead's tile says how it has gone for you, and what is left of
@@ -137,10 +139,10 @@
       : 'Open a room and share the code';
     $('#tile-switchhead').classList.toggle('is-shut', !rooms.switchhead);
     $('#nav-switchhead').classList.toggle('is-shut', !rooms.switchhead);
-    if (!rooms.switchhead) $('#tile-switchhead-figure').textContent = 'The room is closed for a moment';
+    if (!rooms.switchhead) $('#tile-switchhead-figure').textContent = 'Unavailable right now';
     $('#tile-battle').classList.toggle('is-shut', !rooms.battle);
     $('#nav-battle').classList.toggle('is-shut', !rooms.battle);
-    if (!rooms.battle) $('#tile-battle-figure').textContent = 'The room is closed for a moment';
+    if (!rooms.battle) $('#tile-battle-figure').textContent = 'Unavailable right now';
 
     // --- the admin's door
     for (const id of ['#tile-members', '#nav-members', '#who-members']) $(id).hidden = !user.admin;
@@ -148,7 +150,7 @@
     // --- the record
     $('#stats-lede').textContent = play.rounds
       ? `Counting since ${new Date(play.first).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}.`
-      : 'Nothing counted yet. Play a round at the table and this fills itself in.';
+      : 'Nothing yet. Play a game of Thievery and this fills in.';
 
     $('#stats-figures').innerHTML = [
       figure(play.rounds.toLocaleString('en-GB'), 'Rounds played'),
@@ -166,11 +168,11 @@
     const bots = play.rounds - play.versus;
     const botWins = play.wins - play.versusWins;
     $('#stats-people').textContent = play.versus
-      ? `${plural(play.versus, 'round', 'rounds')}, ${plural(play.versusWins, 'won', 'won')} — ${percent(play.versusRate, play.versus)}.`
-      : 'None yet. A table with somebody else at it counts here.';
+      ? `${plural(play.versus, 'round', 'rounds')}, ${plural(play.versusWins, 'won', 'won')} (${percent(play.versusRate, play.versus)}).`
+      : 'None yet.';
     $('#stats-bots').textContent = bots
-      ? `${plural(bots, 'round', 'rounds')}, ${plural(botWins, 'won', 'won')} — ${percent(bots ? botWins / bots : 0, bots)}.`
-      : 'None yet. A table of bots counts here.';
+      ? `${plural(bots, 'round', 'rounds')}, ${plural(botWins, 'won', 'won')} (${percent(bots ? botWins / bots : 0, bots)}).`
+      : 'None yet.';
 
     // --- the account
     $('#account-lede').textContent = `Opened ${new Date(user.created).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}.`;
@@ -184,14 +186,14 @@
   // have never sat at a six-hand table is worth as much as the rate would be,
   // and a table whose rows come and go is one nobody can read twice.
   const MODES = [
-    { key: 'seats.3', name: 'Three hands', note: 'the deduction game as written' },
+    { key: 'seats.3', name: 'Three hands', note: 'the original game' },
     { key: 'seats.4', name: 'Four hands', note: 'the usual table' },
     { key: 'seats.5', name: 'Five hands', note: 'dealt power-ups' },
     { key: 'seats.6', name: 'Six hands', note: 'dealt power-ups' },
     { key: 'plain', name: 'Without power-ups', note: 'three and four hands' },
     { key: 'powered', name: 'With power-ups', note: 'five and six hands' },
     { key: 'teams', name: 'Partnerships', note: 'four hands, two teams' },
-    { key: 'shared', name: 'Sharing a hand', note: 'somebody else played it too' },
+    { key: 'shared', name: 'Sharing a hand', note: 'two players, one hand' },
   ];
 
   const ordinal = (n) => {
@@ -214,8 +216,8 @@
     $('#battle-best').textContent = b.bestDeck
       ? `Your best deck is ${b.bestDeck.name}, at ${Math.round(b.bestDeck.average)} out of 100 on average.`
       : b.cards
-        ? `Answer ${b.bestDeckMin} cards on one deck and the house will say which you are best at.`
-        : 'Nothing answered yet. A match in the battle room fills this in.';
+        ? `Answer ${b.bestDeckMin} cards on one deck to see which you're best at.`
+        : 'Nothing yet. Play a Battle match and this fills in.';
 
     $('#battle-table').hidden = !b.decks.length;
     $('#battle-decks').innerHTML = b.decks
@@ -243,7 +245,7 @@
     ].join('');
     $('#switchhead-note').textContent = sh.games
       ? `At tables of ${(sh.seats / sh.games).toFixed(1)} players on average. The goal turned over ${plural(sh.flips, 'time', 'times')} across them.`
-      : 'Nothing played yet. A game of Switchhead fills this in.';
+      : 'Nothing yet.';
   }
 
   const rowFor = (play, key) => (key.startsWith('seats.') ? play.seats[key.slice(6)] : play[key]) || { rounds: 0, wins: 0 };
@@ -267,7 +269,7 @@
     note.hidden = older <= 0;
     if (older > 0) {
       note.textContent =
-        `${plural(older, 'round', 'rounds')} played before the house began counting by table are in the total above, and in none of these rows.`;
+        `${plural(older, 'round', 'rounds')} from before we counted by table are in the totals, but not in this table.`;
     }
   }
 
@@ -288,7 +290,6 @@
     // one thing at a time rather than a grid with a form under it.
     $('.menu-grid').hidden = ['stats', 'account', 'members'].includes(panel);
     $('.menu-hello').hidden = !!panel;
-    $('.menu-lede').hidden = !!panel;
     if (panel === 'members') openMembers(which);
     if (panel) window.scrollTo(0, 0);
   }
@@ -310,7 +311,7 @@
       say('');
       state = await api('account', { method: 'POST', body: { displayName: $('#ac-name').value } });
       render();
-      toast('That is what the table calls you now.', 'info');
+      toast('Name saved.', 'info');
     })
   );
 
@@ -355,7 +356,7 @@
     const off = members.filter((u) => u.disabled).length;
     $('#tile-members-figure').textContent = `${plural(total, 'account', 'accounts')}${off ? ` · ${off} suspended` : ''}`;
     $('#members-lede').textContent =
-      `${plural(total, 'account', 'accounts')} on the books${off ? `, ${off} of them suspended` : ''}. Pick one to change it.`;
+      `${plural(total, 'account', 'accounts')}${off ? `, ${off} suspended` : ''}.`;
 
     const term = $('#members-search').value.trim().toLowerCase();
     const list = members.filter(

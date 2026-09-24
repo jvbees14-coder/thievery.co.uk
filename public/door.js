@@ -51,9 +51,11 @@
   }
 
   $('#jo-roll').addEventListener('click', (ev) => {
+    // Held on to, because currentTarget is gone by the time the timer fires.
+    const button = ev.currentTarget;
     $('#jo-name').value = pick(ADJECTIVES) + pick(NOUNS);
-    ev.currentTarget.classList.add('spun');
-    setTimeout(() => ev.currentTarget.classList.remove('spun'), 560);
+    button.classList.add('spun');
+    setTimeout(() => button.classList.remove('spun'), 560);
   });
 
   // --- submitting ------------------------------------------------------------
@@ -71,14 +73,14 @@
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
-        say(payload.error || 'That did not work.');
+        say(payload.error || 'Something went wrong. Try again.');
         return;
       }
       // The cookie is set; asking for the page again gets what is behind the
       // door rather than the door.
       location.href = NEXT;
     } catch {
-      say('The house is not answering. Try again in a moment.');
+      say('Couldn’t reach the server. Try again in a moment.');
     } finally {
       button.disabled = false;
     }

@@ -460,56 +460,21 @@ export function publicCard(card, viewerId) {
   };
 }
 
-// --- a hand to start with --------------------------------------------------
+// --- the old welcome ---------------------------------------------------------
 
-// Nobody wants to arrive at a trading post with nothing to trade, and a new
-// account with an empty collection cannot take part at all. These three are
-// dealt on the first visit. They are about the site itself, so they are worth
-// having, and they go through the same appraisal as everything else — the
-// welcome is three cards, not three favours.
-const WELCOME = [
-  {
-    front: 'In Thievery, how many people can share a single hand?',
-    back: 'Two. The first three or four players get a hand each; everybody after that pairs up with someone already seated, sees exactly the same cards, and either of them may play it when its turn comes round.',
-    hint: 'A hand is not the same thing as a player.',
-    category: 'Thievery',
-    tags: ['rules', 'hands'],
-  },
-  {
-    front: 'A hidden black card sits between a face-up 4 and a face-up 7. What can it be?',
-    back: 'A black 4, 5, 6 or 7. Hands are lined up in ascending order, so a hidden card is fenced in by whatever is showing either side of it — and ties are possible, so the neighbours are included.',
-    hint: 'Ascending order, and the ends count.',
-    category: 'Thievery',
-    tags: ['deduction', 'strategy'],
-  },
-  {
-    front: 'Why can a partnership game only be played with four hands?',
-    back: 'Because the Show step depends on each hand having exactly one partner. Hands 1 and 3 are one team and hands 2 and 4 the other; with three hands somebody is left without a partner to show to.',
-    hint: 'Count the partners.',
-    category: 'Thievery',
-    tags: ['rules', 'teams'],
-  },
-];
-
-export function dealWelcome(user) {
-  if (cardsOf(user.id).length) return [];
-  return WELCOME.map((content) => {
-    const card = createCard(user, content);
-    // Struck by the house on the account's behalf, so the author line reads
-    // honestly rather than claiming they wrote it.
-    card.authorId = null;
-    card.authorName = 'The House';
-
-    // And struck common, whatever the roll said. These three are written well
-    // enough to come up legendary about one time in nine, and they are printed
-    // for every account that opens — which would put more legendaries into the
-    // world than every card anybody actually wrote. A reprint everybody has
-    // cannot be rare; that is what the word means. They are still worth
-    // something, so a new account has something to trade on its first visit.
-    card.rarity = 'common';
-    card.value = valueFor(card.craft, 'common', card.seed);
-    card.history.push({ at: Date.now(), event: 'welcomed', to: user.id });
-    touch();
-    return card;
-  });
+// New accounts used to be dealt three cards about the rules of Thievery,
+// struck by the house and marked with a 'welcomed' event in their history.
+// They are no longer dealt, and the ones already out there are taken back:
+// from whoever holds them now, traded or not, and off the trading post. It
+// runs on every boot and finds nothing after the first, so there is no flag
+// to keep. Returns how many went.
+export function sweepWelcome() {
+  let gone = 0;
+  for (const card of Object.values(data().cards)) {
+    if ((card.history || []).some((h) => h.event === 'welcomed')) {
+      deleteCard(card);
+      gone++;
+    }
+  }
+  return gone;
 }

@@ -76,6 +76,11 @@
       if (msg.type === 'battle:catalog') {
         catalog = msg;
         fillPickers();
+        if (browsing()) askBank(0);
+        return;
+      }
+      if (msg.type === 'battle:bank') {
+        drawBank(msg);
         return;
       }
       if (msg.type === 'battle:state') {
@@ -142,29 +147,27 @@
 
   function fillPickers() {
     if (!catalog) return;
-    // Three groups, because there are eighty of these and they are not the
-    // same sort of thing: a dozen cards somebody here wrote, a subject paper
-    // of four-option questions, or a topic gathered from across the others.
-    // A flat list of eighty would bury the first two under the rest.
-    //
-    // The topics come first, because "Biology" is what somebody sitting down
-    // to revise actually wants, and which paper a question came in is a
-    // detail they should not have to know.
+    // Two groups: the subjects, each gathered from every question set that
+    // has anything on it, and the few decks written here. The sets the
+    // subjects are drawn from are not offered on their own; which set a
+    // question came from is a detail nobody revising should have to know.
     const group = (label, decks) =>
       decks.length
         ? `<optgroup label="${esc(label)}">` +
           decks
-            .map((d) => `<option value="${esc(d.id)}">${esc(d.name)} — ${d.count.toLocaleString('en-GB')} cards</option>`)
+            .map((d) => `<option value="${esc(d.id)}">${esc(d.name)} (${d.count.toLocaleString('en-GB')} cards)</option>`)
             .join('') +
           '</optgroup>'
         : '';
     $('#deck').innerHTML =
-      group('By topic', catalog.decks.filter((d) => d.topic)) +
-      group('Written by the house', catalog.decks.filter((d) => d.house)) +
-      group('Subject papers', catalog.decks.filter((d) => !d.house && !d.topic));
+      group('Subjects', catalog.decks.filter((d) => d.topic)) +
+      group('Our own decks', catalog.decks.filter((d) => d.house));
+    const kept = $('#bank-deck').value;
+    $('#bank-deck').innerHTML = $('#deck').innerHTML;
+    if (kept) $('#bank-deck').value = kept;
     $('#length').innerHTML = catalog.lengths.map((n) => `<option value="${n}">${n} cards</option>`).join('');
     $('#clock').innerHTML = catalog.clocks
-      .map((n) => `<option value="${n}">${n === 0 ? 'Untimed' : n + ' seconds'}${n && n <= 15 ? ' — quick-fire' : ''}</option>`)
+      .map((n) => `<option value="${n}">${n === 0 ? 'Untimed' : n + ' seconds'}${n && n <= 15 ? ' (quick-fire)' : ''}</option>`)
       .join('');
   }
 
@@ -177,11 +180,11 @@
     $('#today-deck').textContent = d.deck.name;
     const most = d.length * 100;
     $('#today-say').textContent = d.yours
-      ? `You scored ${d.yours.points} out of ${most} — ${ordinal(d.yours.place)} of ${d.entrants}.`
+      ? `You scored ${d.yours.points} out of ${most}, ${ordinal(d.yours.place)} of ${d.entrants}.`
       : d.entrants
         ? `${plural(d.entrants, 'person has', 'people have')} played it today. Ten cards, untimed, just you.`
         : 'Nobody has played it yet today. Ten cards, untimed, just you.';
-    $('#today-play').textContent = d.yours ? 'Play it again, for practice' : 'Play today’s ten';
+    $('#today-play').textContent = d.yours ? 'Play again for practice' : 'Play today’s ten';
     $('#today-board').innerHTML = d.top.map(boardRow).join('');
   }
 
@@ -198,8 +201,8 @@
     // page, because the page is the same one for everybody.
     $('#who').textContent = state ? state.you.name : whoami;
 
-    const which = screenFor(state);
-    for (const name of ['door', 'lobby', 'card', 'end']) {
+    const which = !state && browsing() ? 'bank' : screenFor(state);
+    for (const name of ['door', 'bank', 'lobby', 'card', 'end']) {
       $('#screen-' + name).hidden = name !== which;
     }
     if (which === 'lobby') drawLobby();
@@ -244,8 +247,8 @@
     $('#deck-blurb').textContent = deck
       ? deck.blurb +
         (deck.kind === 'choice'
-          ? ' Pick one of four — right or wrong, nothing in between.'
-          : ' Type the answer; the house marks how close you got.')
+          ? ' Multiple choice.'
+          : ' Type the answer and get a mark for how close you are.')
       : '';
 
     // The two things a setting can quietly get wrong, said where it is set.
@@ -258,14 +261,14 @@
     const typed = s.source === 'mine' || (deck && deck.kind !== 'choice');
     $('#clock-note').textContent =
       quick && typed
-        ? 'Quick-fire suits a four-option deck. On a card you type into, it is mostly a typing test.'
-        : 'Per card. Untimed is the one revision wants.';
+        ? 'Quick-fire works best with multiple-choice subjects.'
+        : 'Time limit per card.';
 
     $('#start').hidden = !host;
     $('#host-note').hidden = host;
     const alone = s.players.filter((p) => !p.watching).length < 2;
     $('#start').textContent =
-      s.mode === 'solo' ? 'Start revising' : alone ? 'Waiting for somebody to join' : 'Deal the cards';
+      s.mode === 'solo' ? 'Start revising' : alone ? 'Waiting for someone to join' : 'Start';
     $('#start').disabled = s.mode === 'duel' && alone;
   }
 
@@ -282,7 +285,7 @@
     // Whoever is not answering is told why, so an empty space where the box
     // should be never reads as the page having broken.
     const banner = s.you.watching
-      ? 'You are watching. You will be dealt in to the next match if there is a seat.'
+      ? 'You’re watching. You’ll join the next match if there’s room.'
       : m.inMatch && m.outAt
         ? `You went out on card ${m.outAt}. Watching the rest.`
         : !m.inMatch
@@ -317,7 +320,7 @@
       const outstanding = m.answered.filter((a) => !a.done).length;
       $('#waiting-on').textContent = outstanding
         ? plural(outstanding, 'one more answer', 'more answers')
-        : 'the house';
+        : 'the marks';
     }
     if (!open || !mine) $('#answer').value = answered ? '' : $('#answer').value;
     syncAnswerButton();
@@ -331,7 +334,7 @@
       // up rather than swapped out, so the answer lands where the question
       // was and there is nothing to re-read.
       if (choice) $('#choices').hidden = false;
-      $('#back-label').textContent = choice ? 'The right answer' : 'The back of the card';
+      $('#back-label').textContent = choice ? 'The right answer' : 'The answer';
       $('#card-back').textContent = m.card.back == null ? '' : m.card.back;
       $('#marks').innerHTML = m.marks.map((mk) => markRow(mk, s.you.id)).join('');
       $('#next').hidden = !s.you.host;
@@ -462,10 +465,10 @@
       .join('');
 
     $('#end-note').textContent = solo
-      ? 'Every card you answered is below, with what the house was looking for.'
+      ? 'Every card you answered is below, with the right answer.'
       : sudden
-        ? 'Lasting longest decides it; marks break a tie, and the clock breaks one of those.'
-        : 'Marks decide it; the clock only breaks a tie.';
+        ? 'Whoever lasts longest wins. Marks break a tie, then time.'
+        : 'Highest marks win. Time only breaks a tie.';
 
     // What happens next is the host's to say.
     const host = s.you.host;
@@ -484,10 +487,10 @@
         '<li class="btl-board-row"><span></span><span>Nobody yet.</span><b></b></li>';
       const on = s.daily.board.find((r) => r.you);
       $('#end-daily-note').textContent = s.match.retry
-        ? 'Going over the misses is revision, and does not go on the board.'
+        ? 'Practice rounds don’t go on the board.'
         : on
           ? `Your first go of the day stands at ${ordinal(on.place)}. Later goes are practice.`
-          : 'Only your first go of the day goes on the board.';
+          : 'Only your first try each day goes on the board.';
     }
 
     $('#review').innerHTML = (s.match.review || [])
@@ -495,7 +498,7 @@
         (c) => `<article class="panel btl-review-card">
           <p class="btl-review-front">${esc(c.front)}</p>
           <p class="btl-review-back"><b>The back:</b> ${esc(c.back)}</p>
-          <p class="btl-review-said"><b>You said:</b> ${c.text ? esc(c.text) : '<i>nothing</i>'} — ${c.points}/100</p>
+          <p class="btl-review-said"><b>You said:</b> ${c.text ? esc(c.text) : '<i>nothing</i>'} · ${c.points}/100</p>
         </article>`
       )
       .join('');
@@ -563,6 +566,69 @@
   });
 
   $('#open-room').addEventListener('click', () => say({ type: 'battle:create' }));
+
+  // --- the question list -----------------------------------------------------
+  //
+  // Only reachable from the front door, at #questions. The server sends a
+  // page of twenty-five at a time and refuses the lot to anybody in a match.
+
+  const browsing = () => location.hash === '#questions';
+  let bankShown = 0;
+  let bankTimer = 0;
+
+  function askBank(offset) {
+    if (!catalog || !$('#bank-deck').value) return;
+    say({ type: 'battle:browse', deck: $('#bank-deck').value, query: $('#bank-query').value.trim(), offset });
+  }
+
+  const LETTER = (i) => String.fromCharCode(65 + i);
+
+  function bankItem(c, kind) {
+    if (kind === 'choice') {
+      return `<li class="btl-q">
+        <p class="btl-q-front">${esc(c.front)}</p>
+        <ol class="btl-q-options">${c.options.map((o, i) => `<li><b>${LETTER(i)}</b> ${esc(o)}</li>`).join('')}</ol>
+        <details class="btl-q-answer"><summary>Show answer</summary><p>${LETTER(c.answer)}. ${esc(c.options[c.answer])}</p></details>
+      </li>`;
+    }
+    return `<li class="btl-q">
+      <p class="btl-q-front">${esc(c.front)}</p>
+      ${c.hint ? `<p class="hint">Hint: ${esc(c.hint)}</p>` : ''}
+      <details class="btl-q-answer"><summary>Show answer</summary><p>${esc(c.back)}</p></details>
+    </li>`;
+  }
+
+  function drawBank(msg) {
+    // A reply to a search that has since been typed over is thrown away.
+    if (msg.deck !== $('#bank-deck').value || msg.query !== $('#bank-query').value.trim()) return;
+    const html = msg.cards.map((c) => bankItem(c, msg.kind)).join('');
+    if (msg.offset === 0) {
+      $('#bank-list').innerHTML = html;
+      bankShown = 0;
+    } else {
+      $('#bank-list').insertAdjacentHTML('beforeend', html);
+    }
+    bankShown = msg.offset + msg.cards.length;
+    $('#bank-count').textContent = msg.total
+      ? `${msg.total.toLocaleString('en-GB')} question${msg.total === 1 ? '' : 's'}${msg.query ? ` matching \u201c${msg.query}\u201d` : ''}. Showing ${bankShown.toLocaleString('en-GB')}.`
+      : 'No questions match that.';
+    $('#bank-more').hidden = bankShown >= msg.total;
+  }
+
+  $('#bank-deck').addEventListener('change', () => askBank(0));
+  $('#bank-query').addEventListener('input', () => {
+    clearTimeout(bankTimer);
+    bankTimer = setTimeout(() => askBank(0), 250);
+  });
+  $('#bank-form').addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    askBank(0);
+  });
+  $('#bank-more').addEventListener('click', () => askBank(bankShown));
+  window.addEventListener('hashchange', () => {
+    render();
+    if (browsing()) askBank(0);
+  });
 
   $('#join').addEventListener('submit', (ev) => {
     ev.preventDefault();

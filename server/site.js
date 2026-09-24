@@ -40,20 +40,21 @@ import * as Switchhead from './switchhead.js';
 import * as Daily from './daily.js';
 import * as Decks from './decks.js';
 import { send, fail, originOk, currentUser, requireUser } from './plumbing.js';
+import { readView, render } from './views.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const VIEWS = path.join(__dirname, 'views');
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
 // The menu is kept out of public/ for the same reason the flashcards room is:
 // anything in there is served to anybody who asks for it by name, and a page
 // listing what one member has won is not a page to leave lying in the open.
 // The game page is the opposite and lives in public/ where it always has.
-const readView = (name) => fs.readFileSync(path.join(VIEWS, name), 'utf8');
 const views = {
   menu: readView('menu.html'),
   door: readView('menu-door.html'),
   closed: readView('menu-closed.html'),
+  about: readView('about.html'),
+  privacy: readView('privacy.html'),
 };
 
 // --- the card table --------------------------------------------------------
@@ -83,7 +84,7 @@ function serveGame(req, res, isRoom) {
       // the same markup and the code stops working within the hour.
       ...(isRoom ? { 'X-Robots-Tag': 'noindex, follow' } : {}),
     });
-    res.end(html);
+    res.end(render(String(html)));
   });
 }
 
@@ -202,6 +203,19 @@ export function handle(req, res, url) {
   // the same on both sides, so the whole of it is handed straight over and
   // the block below decides whether it was a room code.
   const wasGame = pathname === '/logic' || pathname.startsWith('/logic/');
+  // About and Privacy are plain pages that need nothing from the ledger, so
+  // they are answered before anything that does, and stay up in an outage.
+  if (pathname === '/about' || pathname === '/privacy') {
+    res.writeHead(200, {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-cache',
+      'Referrer-Policy': 'same-origin',
+      'X-Content-Type-Options': 'nosniff',
+      'Content-Security-Policy': "frame-ancestors 'none'",
+    });
+    res.end(pathname === '/about' ? views.about : views.privacy);
+    return true;
+  }
   if (!isApi && !isHall && !isGame && !wasGame) return false;
 
   const method = req.method;
@@ -235,7 +249,7 @@ export function handle(req, res, url) {
 
   // --- the hall
   if (!Store.available()) {
-    if (isApi) send(res, 503, { error: 'The house cannot reach its ledger. Nothing has been lost.' });
+    if (isApi) send(res, 503, { error: 'Accounts are unavailable right now. Nothing has been lost.' });
     else serveClosed(req, res);
     return true;
   }

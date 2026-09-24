@@ -4,21 +4,21 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark" />
-  <title>Thievery.co.uk — Free Online Card Game, Flashcards &amp; Lifetime Stats</title>
-  <meta name="description" content="Thievery.co.uk: play Cards, the free online deduction card game for 1 to 12 players, and open an account to keep a lifetime record of every round won, write flashcards, have them appraised and traded, and put a question to the board." />
+  <title>Thievery: steal their cards before they steal yours</title>
+  <meta name="description" content="Thievery is a free deduction card game for 2 to 12 players in your browser. Share a room code and play, no sign-up needed. Make an account to keep your stats, write and trade flashcards, and quiz your friends." />
   <link rel="canonical" href="https://thievery.co.uk/" />
 
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Thievery.co.uk" />
-  <meta property="og:title" content="Thievery.co.uk — the card table and the members' room" />
-  <meta property="og:description" content="Play Thievery for nothing with a room code. Open an account and the house keeps count: every round, every win, every card you have written." />
+  <meta property="og:title" content="Thievery: steal their cards before they steal yours" />
+  <meta property="og:description" content="A free deduction card game for 2 to 12 players. Share a room code and play, no sign-up needed." />
   <meta property="og:url" content="https://thievery.co.uk/" />
   <meta property="og:image" content="https://thievery.co.uk/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Thievery.co.uk — the card table and the members' room" />
-  <meta name="twitter:description" content="Play Thievery for nothing with a room code. Open an account and the house keeps count." />
+  <meta name="twitter:title" content="Thievery: steal their cards before they steal yours" />
+  <meta name="twitter:description" content="A free deduction card game for 2 to 12 players. Share a room code and play, no sign-up needed." />
   <meta name="twitter:image" content="https://thievery.co.uk/og-image.png" />
 
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c14'/%3E%3Cpath d='M16 4l10 12-10 12L6 16z' fill='none' stroke='%23d4af5a' stroke-width='2'/%3E%3Cpath d='M16 10l5 6-5 6-5-6z' fill='%23d4af5a'/%3E%3C/svg%3E" />
@@ -31,28 +31,17 @@
   <link rel="stylesheet" href="/style.css" />
   <link rel="stylesheet" href="/flashcards.css" />
   <link rel="stylesheet" href="/menu.css" />
-  <link rel="stylesheet" href="/plain.css" />
-  <script src="/theme.js"></script>
+  <script src="/prefs.js"></script>
 </head>
 <body>
   <div id="toast" class="toast" hidden></div>
 
-  <button class="theme-switch is-corner" data-theme-toggle type="button" data-word="Plain design" aria-label="Plain design" aria-pressed="false">
-    <span class="theme-chip" aria-hidden="true">
-      <span class="theme-face theme-face-plain"></span>
-      <span class="theme-face theme-face-vault"></span>
-    </span>
-  </button>
-
   <section class="screen home">
     <div class="home-card door-card" data-api="/api/site" data-next="/">
-      <p class="eyebrow">Est. for cheats, sleuths &amp; card sharps</p>
       <h1 class="logo wordmark">Thievery<em>.co.uk</em></h1>
       <p class="tagline">
-        A name at the door buys you a ledger: every round you play at the
-        table counted, every card you write appraised and kept, and a board
-        where members put questions to each other. Sign in, or open an account
-        &mdash; it costs nothing and the house asks for nothing but a name.
+        Sign in to keep a record of every game you play, make and trade
+        flashcards, and quiz your friends.
       </p>
 
       <div class="door-tabs" role="tablist">
@@ -76,42 +65,36 @@
         <div class="field">
           <label for="jo-user">Username</label>
           <input id="jo-user" name="username" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" required />
-          <p class="hint">3 to 20 characters: letters, numbers, dots, dashes, underscores.</p>
+          <p class="hint">3 to 20 letters, numbers, dots, dashes or underscores.</p>
         </div>
         <div class="field">
           <label for="jo-name">Display name <span class="opt">optional</span></label>
           <div class="input-row">
-            <input id="jo-name" name="displayName" maxlength="24" autocomplete="nickname" placeholder="How the table sees you" />
-            <button id="jo-roll" class="icon-btn" type="button" title="Deal me an alias" aria-label="Deal me an alias">&#10227;</button>
+            <input id="jo-name" name="displayName" maxlength="24" autocomplete="nickname" placeholder="What other players see" />
+            <button id="jo-roll" class="icon-btn" type="button" title="Pick a random name" aria-label="Pick a random name"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M15.5 7.5A6 6 0 1 0 16 12" /><path d="M16 3.5v4h-4" /></svg></button>
           </div>
         </div>
         <div class="field">
           <label for="jo-pass">Password</label>
           <input id="jo-pass" name="password" type="password" maxlength="200" autocomplete="new-password" required />
-          <p class="hint">At least 10 characters. Length beats punctuation.</p>
+          <p class="hint">At least 10 characters.</p>
         </div>
         <button class="btn primary" type="submit">Open an account</button>
-        <p class="hint">
-          Three flashcards are dealt to a new account, so you arrive with
-          something to trade.
-        </p>
       </form>
 
       <p id="door-error" class="door-error" hidden></p>
 
-      <!-- The table itself never needed a name and still does not. Saying so
-           on the door matters: somebody handed a room code should not be
-           made to open an account to answer it. -->
       <div class="door-open">
-        <h2>Or just play</h2>
+        <h2>Just want to play?</h2>
         <p>
-          <b>Thievery</b>, the deduction card game, is open to anybody with a room
-          code &mdash; no account, nothing kept. Signing in only means the
-          rounds are added up afterwards.
+          Thievery, the card game, doesn&rsquo;t need an account. Your games
+          just won&rsquo;t be counted.
         </p>
-        <p><a class="btn" href="/cards">To the card table &rarr;</a></p>
+        <p><a class="btn" href="/cards">Play Thievery</a></p>
       </div>
     </div>
+
+    {{foot}}
   </section>
 
   <script src="/door.js"></script>

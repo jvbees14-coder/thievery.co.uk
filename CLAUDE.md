@@ -55,10 +55,11 @@ One server, a hall and four rooms off it:
 | `/flashcards` | `server/flashcards.js` | required |
 | `/battle`, `/battle/ABCD` | `server/battle.js` | required |
 | `/switchhead`, `/switchhead/ABCD` | `server/switchhead.js` | required |
+| `/about`, `/privacy` | `server/site.js` — plain pages, up even in an outage | never |
 | `/api/site/…` | the door, the menu's figures, the members panel | mostly |
 | `/api/flashcards/…` | the collection, the post, the panel | yes |
 | *(the battle room and Switchhead have no API — all of it is socket)* | | |
-| anything else | the static block in `server/index.js`, out of `public/` | no |
+| anything else | the static block in `server/index.js`, out of `public/`; a miss is `views/404.html` | no |
 
 **The card game** (`server/game.js`, `bot.js`, `deal.js`, `powerups.js`,
 `index.js`; `public/cards.html`, `app.js`) is deliberately stateless. Rooms live
@@ -260,6 +261,7 @@ is worth relative to new ones.
   by name. That is both the flashcards app and the hall's menu; a logged-out
   visitor gets the door page at the same URL. The game page is the exception
   and stays in `public/cards.html`, because it is not behind anything.
+  See "The pages" for how every one of them is put together on the way out.
 - The admin is whoever matches `THIEVERY_ADMIN_USERNAME`, named by the
   environment so the name cannot be claimed by whoever registers first.
   `/api/flashcards/admin/*` answers **404** to everyone else, not 403.
@@ -405,7 +407,8 @@ A deck says which kind it deals, and every card in it is that kind:
 
 - **`text`** — a front and a back. You type; `grade.js` marks how close you
   got, out of 100. A member's own flashcards are always this.
-- **`choice`** — a front and four options, one right. You pick. It is 100 or
+- **`choice`** — a front and two to eight options (`MIN_OPTIONS`/`MAX_OPTIONS`;
+  most have four, QASC has eight), one right. You pick. It is 100 or
   nought, and it is deliberately **not** run through the marker: "close" is
   something an answer can be and a choice cannot.
 
@@ -422,7 +425,7 @@ reveal and record all read one sort of mark. A choice's working (`found`,
 
 `decks.js` is fixed sets in the source — not in the document, so a house deck
 cannot be traded, lost with an account, or put out of reach by a bucket. There
-are two sources:
+are three sources:
 
 - **Hand-written**, in `WRITTEN` at the top of the file. Two small `text`
   decks; the battle suite plays against them.
@@ -432,6 +435,22 @@ are two sources:
   cards. They live under `server/` and not beside the tests **because the
   Dockerfile copies `server/` and `public/` and nothing else**; a deck the
   image does not carry is a deck nobody can play.
+- **`server/decks/*.deck.json`**, five converted grade-school science sets,
+  about 31,000 choice cards: ARC easy and challenge (CC BY-SA 4.0), OpenBookQA
+  (Apache 2.0), QASC (CC BY 4.0) and SciQ (**CC BY-NC 3.0, non-commercial**:
+  the site must stay free of ads and charges while it carries SciQ). Made once
+  by `scripts/decks-import.js`; `scripts/decks-topics*.js` put a `topic` on the
+  cards they were sure of. All five are credited on `/about`, and a new set
+  must be too.
+
+**The lobby lists subjects, not sources.** `topicDecks` gathers every choice
+card into a topic deck (`topic-biology` and so on): an MMLU paper by the map
+in `SUBJECT_TOPICS`, a converted card by its own `topic`, and a converted card
+with none into **General science** by the deck it came from (`CATCH_ALL`), so
+no question is left out of every list. `catalog()` marks topics and the
+hand-written decks `listed`; the sources stay in the catalog unlisted, because
+rooms, the record and `stats.battle.decks` hold their ids. The daily deck
+picks from the topics, so adding cards to a topic changes that day's ten.
 
 An id is load-bearing and must never be reused or renamed, because a room being
 set up holds that string. CSV decks are `mmlu-` plus the hyphenated subject.
@@ -476,7 +495,7 @@ rather than only here.
   `inAt(room, p, at)` — not `isPlaying` — is what asks whether a card is in
   front of somebody. Standings put how long you lasted ahead of the marks.
 - **The clock** was always there (`CLOCKS`); ten and fifteen seconds are the
-  quick-fire settings, meant for four-option decks.
+  quick-fire settings, meant for multiple-choice subjects.
 
 ### Watchers
 
@@ -504,6 +523,25 @@ the door both show it via `Daily.forUser`, which strips account ids.
 The record also files battle matches **by deck** (`stats.battle.decks`, keyed
 by deck id or `'mine'`), and `site.js` turns that into names, averages and a
 best deck (five cards minimum) for the Stats panel.
+
+### The question list
+
+`battle:browse` (a deck id, a search, an offset) answers with `battle:bank`:
+twenty-five questions of a listed deck **with their answers**. It is the one
+place a house card's answer leaves the server while no card of it is open,
+which is why it is fenced in `browse()`:
+
+- It is refused to anybody **connected** and playing in a match that has not
+  ended (`inLiveMatch`). Not to a watcher, and not to somebody who has walked
+  away from a seat, or a half-done solo run would lock them out for an hour.
+- **Today's daily ten are left out** (`hiddenToday`, by card object, which
+  covers every topic that shares them), because the daily board is the score
+  strangers compare.
+
+It cannot stop two friends at one table cheating together, and does not try.
+The page reaches it at `/battle#questions`, from the front door only. The
+one-rule audit in `test/battle.test.js` watches state messages, so it does not
+see the bank; the bank has its own checks after the daily ones.
 
 ### Two smaller things
 
@@ -547,6 +585,38 @@ rooms and the record, and has no timer. The header of
 The record is `stats.switchhead` (`recordSwitchhead`), migrated by `fill()`
 like the battle block: first place is `wins`, last is `heads`.
 
+## The pages
+
+Every page is read through `server/views.js` (`readView`, or `render` for
+`public/cards.html`), which does two things:
+
+- **Puts in the shared pieces.** `{{bar:<room>}}` is the one site bar, with
+  every room on it and the current one marked; `{{bar:public}}` is the same
+  without the account menu; `{{foot}}` is the footer; `{{contact}}` is
+  `THIEVERY_CONTACT_EMAIL` as a link. The bar used to be copied into each
+  view and drifted until every room linked to a different set of the others.
+  Change it in `views.js`, never in a view.
+- **Takes the HTML comments out.** The views are annotated for whoever
+  maintains them, and a visitor can read anything that reaches the browser.
+  `test/site.test.js` fails if any page is served with `<!--` or `{{` in it.
+  Comments in `public/*.js` and `*.css` still reach the browser; there is no
+  build step to strip them.
+
+`/cards.html` is redirected to `/cards` so the game page is never served raw.
+
+There is one design. A second, plain one used to be switchable per browser;
+it was removed. `public/prefs.js` is loaded in every `<head>` and holds the
+one per-browser choice left: whether the banners animate. It sets
+`data-motion="still"` on `<html>`, `style.css` stills the banners and the
+shake under it, and `app.js` asks `window.thieveryStill()` before the
+confetti. It lives in localStorage because the card table has no account to
+keep it against. Controls are `[data-motion-toggle]` buttons (the on/off word
+is drawn by CSS from `.motion-state`) and `[data-motion-check]` checkboxes.
+
+New accounts start with an empty collection. They used to be dealt three
+cards about the rules; `Cards.sweepWelcome()` runs on every boot and deletes
+any card whose history has a `welcomed` event, wherever it now is.
+
 ## Environment
 
 | Variable | Effect |
@@ -558,6 +628,7 @@ like the battle block: first place is `wins`, last is `heads`.
 | `THIEVERY_ADMIN_RESET=1` | reset that password for one boot |
 | `THIEVERY_ALLOW_EPHEMERAL=1` | permit the throwaway disk in production |
 | `THIEVERY_BOT_PACE` | bot think-time multiplier; the game suite sets it low |
+| `THIEVERY_CONTACT_EMAIL` | the address About and Privacy tell people to write to; without it they say "the site's admin" |
 
 R2 keys are 32 hex characters and secrets 64 — a `cfut_`-prefixed value is a
 Cloudflare API token, not an S3 credential.
@@ -573,9 +644,26 @@ Render's build uses `--omit=dev`; `wrangler` is a dev dependency and pulls in
 Read a neighbouring file before writing a new one — the voice is consistent
 and deliberate. Comments are prose in full sentences explaining *why*, with a
 header block at the top of each module and `// --- section ---` dividers.
-British spelling throughout, in code comments and user-facing copy alike. The
-domain vocabulary is a card table: hands, the house, striking a card, the
-trading post, laying a card down.
+British spelling throughout, in code comments and user-facing copy alike. In
+comments, the domain vocabulary is a card table: hands, the house, striking a
+card, the trading post, laying a card down.
+
+**User-facing copy is a different voice, and much plainer.** It was rewritten
+because it read as generated. The rules for it:
+
+- Say what the player needs and stop. Never explain *why* a thing is built
+  the way it is ("lives in memory only", "an empty ledger must never be saved
+  over a full one"); that belongs in a comment.
+- Controls say what they do: Create card, Edit, Delete, Start, Submit,
+  Withdraw, Add a bot. Flavour belongs in headlines and banners, not buttons.
+- "The house" is not used on the page for the home page, the bots, the admin
+  or the marker. They are Home, bots, Admin and "we".
+- Em-dashes are rare: at most one on a page. Use a full stop, a colon or
+  brackets.
+- Small capitals are for primary buttons and field labels only; other
+  buttons are set in the body face.
+- No stock examples (photosynthesis) and no promises about features that do
+  not exist.
 
 Dependencies are `ws` and `@aws-sdk/client-s3`, there are no dev dependencies,
 and that is meant to stay true. The fonts and the icons are served out of

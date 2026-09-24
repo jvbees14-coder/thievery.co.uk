@@ -62,10 +62,10 @@ input, select, textarea { font: inherit; }
 b { font-weight: 700; }
 
 /* --- the room behind the game ---------------------------------------------
-   Two fixed layers sit under everything: a brass sunburst that turns once
-   every few minutes, and pools of coloured light that drift across it, so the
-   page is never quite still. */
-body::before, body::after { content: ""; position: fixed; pointer-events: none; }
+   One fixed layer under everything: a brass sunburst, still. It used to turn,
+   with pools of coloured light drifting across it, and a page that is never
+   quite still is a page that looks like a template. */
+body::before { content: ""; position: fixed; pointer-events: none; }
 body::before {
   inset: -30%;
   z-index: -2;
@@ -74,22 +74,8 @@ body::before {
     repeating-conic-gradient(from 0deg at 50% 50%, rgba(212, 175, 90, 0.055) 0deg 2.4deg, transparent 2.4deg 9deg);
   -webkit-mask: radial-gradient(closest-side at 50% 50%, #000 0%, rgba(0, 0, 0, 0.5) 42%, transparent 76%);
   mask: radial-gradient(closest-side at 50% 50%, #000 0%, rgba(0, 0, 0, 0.5) 42%, transparent 76%);
-  animation: turn 260s linear infinite;
 }
-body::after {
-  inset: -15%;
-  z-index: -1;
-  background:
-    radial-gradient(900px 620px at 18% 12%, rgba(212, 175, 90, 0.085), transparent 62%),
-    radial-gradient(820px 620px at 84% 88%, rgba(142, 31, 46, 0.13), transparent 60%),
-    radial-gradient(700px 500px at 60% 40%, rgba(95, 154, 132, 0.07), transparent 62%);
-  animation: drift 46s ease-in-out infinite alternate;
-}
-@keyframes turn { to { transform: rotate(360deg); } }
-@keyframes drift {
-  from { transform: translate3d(-3%, -2%, 0) scale(1.04); }
-  to { transform: translate3d(3%, 2.5%, 0) scale(1.13); }
-}
+
 
 /* --- wordmark -------------------------------------------------------------- */
 .wordmark {
@@ -97,7 +83,6 @@ body::after {
   font-weight: 400;
   letter-spacing: 0.02em;
   color: var(--ivory);
-  text-shadow: 0 0 24px rgba(212, 175, 90, 0.25);
 }
 .wordmark em {
   font-style: normal;
@@ -142,11 +127,11 @@ body::after {
 /* --- generic --------------------------------------------------------------- */
 .btn {
   appearance: none;
-  font-family: var(--caps);
+  font-family: var(--body);
   font-weight: 600;
-  font-size: 13px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 16px;
+  letter-spacing: 0.01em;
+  text-transform: none;
   border: 1px solid var(--brass-dim);
   background: transparent;
   color: var(--ivory);
@@ -161,13 +146,18 @@ body::after {
 .btn:active { transform: translateY(1px) scale(0.98); }
 .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
 .btn.primary {
+  font-family: var(--caps);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   background: linear-gradient(180deg, var(--brass-bright) 0%, var(--brass) 55%, #b8923f 100%);
   color: #1c1506;
   border-color: transparent;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 8px 20px rgba(212, 175, 90, 0.18);
 }
 .btn.primary:hover { filter: brightness(1.06); }
-.btn.small { padding: 7px 12px 5px; font-size: 11px; letter-spacing: 0.09em; }
+.btn.small { padding: 5px 11px; font-size: 14px; }
+.btn.small.primary { padding: 7px 12px 5px; font-size: 11px; letter-spacing: 0.09em; }
 .btn.ghost { border-color: transparent; color: var(--text-dim); }
 .btn.ghost:hover { color: var(--ivory); border-color: var(--brass-dim); background: transparent; }
 
@@ -264,25 +254,10 @@ input[type="number"]::-webkit-inner-spin-button { appearance: none; -webkit-appe
 
 /* --- home ------------------------------------------------------------------ */
 .screen.home { position: relative; display: grid; place-items: center; min-height: 100vh; padding: 24px; overflow: hidden; }
-.screen.home::before {
-  /* The vault door, turning against the sunburst behind the page. */
-  content: ""; position: absolute; inset: -20%; pointer-events: none;
-  background: repeating-conic-gradient(from 0deg at 50% 42%, rgba(212, 175, 90, 0.075) 0deg 3deg, transparent 3deg 11deg);
-  -webkit-mask: radial-gradient(closest-side at 50% 42%, #000 0%, rgba(0, 0, 0, 0.55) 45%, transparent 78%);
-  mask: radial-gradient(closest-side at 50% 42%, #000 0%, rgba(0, 0, 0, 0.55) 45%, transparent 78%);
-  animation: turn 150s linear infinite reverse;
-}
-.screen.home::after {
-  content: ""; position: absolute; left: 50%; top: 42%; width: 900px; height: 900px; transform: translate(-50%, -50%);
-  border-radius: 50%; pointer-events: none;
-  border: 1px solid var(--brass-faint);
-  box-shadow: 0 0 0 40px transparent, 0 0 0 41px var(--brass-ghost), 0 0 0 120px transparent, 0 0 0 121px rgba(212, 175, 90, 0.05);
-  animation: breathe 18s ease-in-out infinite;
-}
-@keyframes breathe {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.85; }
-  50% { transform: translate(-50%, -50%) scale(1.045); opacity: 1; }
-}
+/* A page whose card has the footer under it keeps the card in the middle of
+   the screen and the footer at the bottom, rather than splitting the height
+   between the two. */
+.screen.home:has(> .site-foot) { grid-template-rows: 1fr auto; padding-bottom: 0; }
 .home-card {
   position: relative; z-index: 1;
   width: min(100%, 460px);
@@ -833,7 +808,7 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
   .banner::before, .banner-inner, .banner.exposed, .banner.win, body.shake { animation-duration: 0.01s; }
   .banner-hint { animation-delay: 0.2s; }
   .card, .drag-clone { transition: none; }
-  body::before, body::after, .screen.home::before, .screen.home::after, .dots i { animation: none; }
+  .dots i { animation: none; }
   .seg::before { transition: none; }
   .dd-menu, .toast, .rules ol, .rules-body, .popup { animation: none; }
 }
@@ -1077,3 +1052,94 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
   .rules-body { font-size: 14.5px; }
   .rules-body h3 { margin-top: 22px; }
 }
+
+/* --- banners, held still ------------------------------------------------------
+   The choice in the account settings and on the card table (prefs.js puts
+   data-motion="still" on <html>). The banner says the same thing for the same
+   time; it simply appears and goes, without the sweep, the slam or the shake.
+   The confetti is stopped in app.js, since it is drawn rather than styled. */
+:root[data-motion="still"] .banner::before { animation: none; transform: translateY(-50%) rotate(-3deg); }
+:root[data-motion="still"] .banner-inner { animation: none; }
+:root[data-motion="still"] .banner.exposed,
+:root[data-motion="still"] .banner.win { animation: none; }
+:root[data-motion="still"] .banner.dismiss { visibility: hidden; }
+:root[data-motion="still"] .banner-hint { animation: none; opacity: 0.9; }
+:root[data-motion="still"] body.shake { animation: none; }
+
+/* The on/off word on any switch for it, drawn here so that a switch the card
+   table re-renders a dozen times a minute never has to be relabelled. */
+.motion-state::after { content: "on"; }
+:root[data-motion="still"] .motion-state::after { content: "off"; }
+.motion-state { color: var(--brass); }
+.motion-btn { margin-left: 4px; }
+
+/* --- the bar's links ----------------------------------------------------------
+   Every page's bar is the same one (server/views.js), so its links are styled
+   here rather than in whichever room happened to draw them first. */
+.menu-nav { display: flex; gap: 4px; flex: 1; justify-content: center; }
+.menu-nav-link {
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 16px;
+  white-space: nowrap;
+}
+.menu-nav-link:hover { color: var(--ivory); background: var(--brass-ghost); }
+.menu-nav-link[aria-current="page"] { color: var(--brass); }
+.menu-nav-link.is-shut { opacity: 0.55; }
+@media (max-width: 720px) {
+  .menu-nav { order: 3; flex-basis: 100%; justify-content: flex-start; overflow-x: auto; margin: 0 -6px; }
+}
+
+/* --- the foot of every page ------------------------------------------------- */
+.site-foot {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 18px;
+  max-width: 1180px; margin: 0 auto; padding: 28px clamp(14px, 3vw, 32px) 32px;
+  font-size: 14px; color: var(--text-faint);
+}
+.site-foot nav { display: flex; gap: 18px; }
+.site-foot a { color: var(--text-dim); text-decoration: none; }
+.site-foot a:hover { color: var(--brass); }
+.site-foot p { margin: 0; }
+.screen.home > .site-foot { width: 100%; }
+
+/* --- the alias roller's icon ------------------------------------------------ */
+.icon-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* --- how to play, short and long ---------------------------------------------- */
+.rules-steps { margin: 4px 0 0; padding-left: 20px; }
+.rules-steps > li { margin: 0 0 14px; }
+.rules-steps > li::marker { color: var(--brass); font-family: var(--caps); font-weight: 700; }
+.rules-full { margin-top: 6px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 10px; }
+.rules-full > summary { cursor: pointer; color: var(--brass); font-weight: 600; }
+.rules-full > summary:hover { color: var(--brass-bright); }
+
+/* --- plain pages: about, privacy ------------------------------------------- */
+.page-main { max-width: 760px; margin: 0 auto; padding: clamp(22px, 4vw, 44px) 16px 20px; }
+.prose { padding: clamp(22px, 4vw, 40px); }
+.prose h1 { margin: 0 0 14px; font-family: var(--display); font-weight: 400; font-size: clamp(30px, 5vw, 40px); color: var(--ivory); }
+.prose h2 { margin: 28px 0 8px; font-family: var(--caps); font-size: 17px; font-weight: 600; color: var(--ivory); }
+.prose p, .prose li { color: var(--text); }
+.prose a { color: var(--brass); }
+.prose-lede { font-size: 19px; }
+.prose-licence { margin: 0 0 14px; font-size: 13px; color: var(--text-dim); }
+.prose-licence summary { cursor: pointer; color: var(--brass); }
+.prose-licence p { color: var(--text-dim); }
+
+/* --- the 404 ----------------------------------------------------------------- */
+.not-found { text-align: center; }
+.not-found-card { width: 84px; height: auto; margin: 0 auto -4px; display: block; }
+.not-found-card rect { fill: var(--ink-4); stroke: var(--brass-dim); stroke-width: 2; stroke-dasharray: 7 6; }
+.not-found-card path { fill: none; stroke: var(--brass-dim); stroke-width: 2; }
+
+/* A short page still keeps its foot at the bottom of the window. */
+body:has(> .site-foot) { display: flex; flex-direction: column; }
+body:has(> .site-foot) > main { flex: 1 0 auto; width: 100%; }
+
+/* The animations switch under the table's home card reads as a link, like
+   the one beside it. */
+.home-foot button { appearance: none; background: none; border: 0; padding: 0; font: inherit; color: var(--text-dim); cursor: pointer; }
+.home-foot button:hover { color: var(--brass); }
+.home-foot > span { margin: 0 6px; color: var(--text-faint); }
+.prose ul { padding-left: 20px; } .prose li { margin: 0 0 8px; }

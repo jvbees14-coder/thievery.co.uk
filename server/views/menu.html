@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark" />
-  <title>The house — Thievery.co.uk</title>
+  <title>Home · Thievery</title>
   <meta name="robots" content="noindex, nofollow" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c14'/%3E%3Cpath d='M16 4l10 12-10 12L6 16z' fill='none' stroke='%23d4af5a' stroke-width='2'/%3E%3Cpath d='M16 10l5 6-5 6-5-6z' fill='%23d4af5a'/%3E%3C/svg%3E" />
   <link rel="manifest" href="/site.webmanifest" />
@@ -16,137 +16,110 @@
   <link rel="stylesheet" href="/style.css" />
   <link rel="stylesheet" href="/flashcards.css" />
   <link rel="stylesheet" href="/menu.css" />
-  <link rel="stylesheet" href="/plain.css" />
-  <script src="/theme.js"></script>
+  <script src="/prefs.js"></script>
 </head>
 <body class="menu-page">
   <div id="toast" class="toast" hidden></div>
 
-  <header class="fc-bar">
-    <a class="fc-mark wordmark" href="/">Thievery<em>.co.uk</em></a>
-    <nav class="menu-nav">
-      <a class="menu-nav-link" href="/cards">Thievery</a>
-      <a class="menu-nav-link" id="nav-flashcards" href="/flashcards">Flashcards</a>
-      <a class="menu-nav-link" id="nav-battle" href="/battle">Battle</a>
-      <a class="menu-nav-link" id="nav-switchhead" href="/switchhead">Switchhead</a>
-      <a class="menu-nav-link" id="nav-members" href="#members" hidden>Members</a>
-    </nav>
-    <button class="theme-switch" data-theme-toggle type="button" data-word="Plain design" aria-label="Plain design" aria-pressed="false">
-      <span class="theme-chip" aria-hidden="true">
-        <span class="theme-face theme-face-plain"></span>
-        <span class="theme-face theme-face-vault"></span>
-      </span>
-    </button>
-    <div class="fc-who">
-      <button id="who" class="fc-who-btn" type="button" aria-haspopup="true" aria-expanded="false"></button>
-      <div id="who-menu" class="fc-menu" hidden>
-        <a href="#account">Account settings</a>
-        <a href="#members" id="who-members" hidden>Members</a>
-        <button data-theme-toggle type="button" aria-pressed="false">Plain design</button>
-        <button data-act="signout" type="button">Sign out</button>
-      </div>
-    </div>
-  </header>
+  {{bar:home}}
 
   <main class="menu-main">
-    <p class="eyebrow">The house</p>
-    <h1 class="menu-hello">Evening, <span id="hello">&hellip;</span></h1>
-    <p class="menu-lede">
-      Everything here is kept against your name. The table is through the first
-      door; the ledger is the rest of it.
-    </p>
+    <h1 class="menu-hello"><span id="greeting">Hello</span>, <span id="hello">&hellip;</span></h1>
 
-    <!-- The doors off the hall. Three lead somewhere else and two open a
-         panel further down this page: a tile is a tile either way, so the
-         grid does not care which is which, and the next feature is one more
-         block of markup. -->
+    <!-- The tiles. Thievery is the one the site was built for, so it is
+         drawn twice the width of the rest. The icons are inline so they take
+         the tile's colour and cost no request. -->
     <div class="menu-grid">
-      <a class="menu-tile" href="/cards">
-        <span class="menu-tile-mark" aria-hidden="true">&#9670;</span>
+      <a class="menu-tile menu-tile-lead" href="/cards">
+        <svg class="menu-tile-icon" viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="5" y="7" width="13" height="19" rx="2" transform="rotate(-10 11.5 16.5)" />
+          <rect x="14" y="6" width="13" height="19" rx="2" transform="rotate(8 20.5 15.5)" />
+          <path d="M20.5 12.5l2.4 3-2.4 3-2.4-3z" />
+        </svg>
         <h2>Thievery</h2>
-        <p class="menu-tile-say">The card table</p>
         <p class="menu-tile-blurb">
-          The deduction game, 1 to 12 players, three to six hands. Share a room
-          code and steal their secrets before they steal yours.
+          Work out the hidden cards in everyone else&rsquo;s hand before they
+          work out yours. For 2 to 12 players, or fill the empty seats with bots.
         </p>
         <p class="menu-tile-figure" id="tile-table-figure">&nbsp;</p>
+        <span class="btn primary menu-tile-go">Play</span>
       </a>
 
       <a class="menu-tile" id="tile-flashcards" href="/flashcards">
-        <span class="menu-tile-mark" aria-hidden="true">&#9671;</span>
+        <svg class="menu-tile-icon" viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="4" y="9" width="20" height="15" rx="2" />
+          <path d="M8 6h18a2 2 0 0 1 2 2v12" />
+          <path d="M8 14h12M8 18h8" />
+        </svg>
         <h2>Flashcards</h2>
-        <p class="menu-tile-say">The members&rsquo; room</p>
         <p class="menu-tile-blurb">
-          Write a card. The house appraises it, stamps it and mints it. Print
-          it, or lay it down and trade it blind for cards of equal worth.
+          Write your own cards. Each one gets a rarity when you make it. Print
+          them, or put them up for trade.
         </p>
         <p class="menu-tile-figure" id="tile-flashcards-figure">&nbsp;</p>
       </a>
 
       <a class="menu-tile" id="tile-battle" href="/battle">
-        <span class="menu-tile-mark" aria-hidden="true">&#9678;</span>
+        <svg class="menu-tile-icon" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M6 6l12 12M6 6h5M6 6v5" />
+          <path d="M26 6L14 18M26 6h-5M26 6v5" />
+          <path d="M11 21l-4 4M21 21l4 4M9 19l4 4M23 19l-4 4" />
+        </svg>
         <h2>Battle</h2>
-        <p class="menu-tile-say">The revision room</p>
         <p class="menu-tile-blurb">
-          A card, front first: type what is on the back and the house marks
-          how close you got. Duel somebody on your collections, or sit down
-          alone and simply revise.
+          See the front of a card, type the back, and get a mark out of 100.
+          Play alone or against friends, on your cards or ours.
         </p>
         <p class="menu-tile-daily" id="tile-battle-daily" hidden></p>
         <p class="menu-tile-figure" id="tile-battle-figure">&nbsp;</p>
       </a>
 
       <a class="menu-tile" id="tile-switchhead" href="/switchhead">
-        <span class="menu-tile-mark" aria-hidden="true">&#9674;</span>
+        <svg class="menu-tile-icon" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M6 11h18l-4-4M26 21H8l4 4" />
+        </svg>
         <h2>Switchhead</h2>
-        <p class="menu-tile-say">The shedding game</p>
         <p class="menu-tile-blurb">
-          Do not be the last one holding cards. The hands swap without warning,
-          and every so often the goal turns over and going out puts you last.
+          Get rid of your cards first. Except the hands swap without warning,
+          and sometimes going out first puts you last.
         </p>
         <p class="menu-tile-figure" id="tile-switchhead-figure">&nbsp;</p>
       </a>
 
       <a class="menu-tile" href="#stats">
-        <span class="menu-tile-mark" aria-hidden="true">&#9672;</span>
+        <svg class="menu-tile-icon" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M6 26h20M9 26V16M15 26V9M21 26V13" />
+        </svg>
         <h2>Stats</h2>
-        <p class="menu-tile-say">Lifetime record</p>
-        <p class="menu-tile-blurb">
-          Every round you have played at the table and every one you have won,
-          counted since the day you opened the account.
-        </p>
+        <p class="menu-tile-blurb">Games played and won, in every room.</p>
         <p class="menu-tile-figure" id="tile-stats-figure">&nbsp;</p>
       </a>
 
       <a class="menu-tile" href="#account">
-        <span class="menu-tile-mark" aria-hidden="true">&#9673;</span>
+        <svg class="menu-tile-icon" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="16" cy="12" r="5" />
+          <path d="M7 26c1.5-5 5-7 9-7s7.5 2 9 7" />
+        </svg>
         <h2>Account</h2>
-        <p class="menu-tile-say">Name, and the keys to it</p>
-        <p class="menu-tile-blurb">
-          Change what the table calls you, change your username, change your
-          password &mdash; which signs every other device out.
-        </p>
+        <p class="menu-tile-blurb">Your name, your password, and whether the banners animate.</p>
         <p class="menu-tile-figure" id="tile-account-figure">&nbsp;</p>
       </a>
 
-      <!-- The admin's door, and only the admin's. It is drawn for nobody
-           else, and the addresses behind it answer 404 to anybody else
-           whether it is drawn or not. -->
       <a class="menu-tile menu-tile-house" id="tile-members" href="#members" hidden>
-        <span class="menu-tile-mark" aria-hidden="true">&#9733;</span>
+        <svg class="menu-tile-icon" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="12" cy="12" r="4" />
+          <circle cx="22" cy="13" r="3" />
+          <path d="M4 25c1-4 4-6 8-6s7 2 8 6M20 19c3 0 6 1.5 7 5" />
+        </svg>
         <h2>Members</h2>
-        <p class="menu-tile-say">The house&rsquo;s book</p>
-        <p class="menu-tile-blurb">
-          Every account on the site. Rename one, reset a password, suspend it,
-          sign it out everywhere, or close it for good.
-        </p>
+        <p class="menu-tile-blurb">Rename, reset, suspend or close accounts.</p>
         <p class="menu-tile-figure" id="tile-members-figure">&nbsp;</p>
       </a>
     </div>
 
     <!-- --------------------------------------------------------- stats -->
     <section id="stats" class="menu-panel panel" hidden>
-      <h2 class="menu-panel-head">Lifetime record</h2>
+      <h2 class="menu-panel-head">Your stats</h2>
       <p class="menu-panel-lede" id="stats-lede">&nbsp;</p>
 
       <div class="menu-figures" id="stats-figures"></div>
@@ -157,30 +130,21 @@
           <p class="menu-note" id="stats-people">&nbsp;</p>
         </div>
         <div>
-          <h3>Against the house</h3>
+          <h3>Against bots</h3>
           <p class="menu-note" id="stats-bots">&nbsp;</p>
         </div>
       </div>
 
-      <!-- The same rounds again, split by what kind of game they were. A
-           three-hand table and a six-hand one are not the same game — the
-           deck does not grow, so the bigger table is dealt power-ups to make
-           up for how little there is left to deduce from — and one win rate
-           across both of them measures nothing in particular. -->
-      <h3 class="menu-modes-head">By the kind of game</h3>
+      <h3 class="menu-modes-head">By table</h3>
       <table class="menu-modes">
         <thead>
-          <tr><th scope="col">Mode</th><th scope="col">Played</th><th scope="col">Won</th><th scope="col">Rate</th></tr>
+          <tr><th scope="col">Table</th><th scope="col">Played</th><th scope="col">Won</th><th scope="col">Rate</th></tr>
         </thead>
         <tbody id="stats-modes"></tbody>
       </table>
       <p class="hint" id="stats-modes-note" hidden></p>
 
-      <!-- The battle room, which is not the same game and is not added into
-           anything above. Marks are out of 100 a card, so the figure worth
-           having is the average — per deck, because a mark on the capitals
-           and a mark on professional law say very different things. -->
-      <h3 class="menu-modes-head">The battle room</h3>
+      <h3 class="menu-modes-head">Battle</h3>
       <div class="menu-figures" id="battle-figures"></div>
       <p class="menu-note" id="battle-best">&nbsp;</p>
       <table class="menu-modes" id="battle-table">
@@ -190,19 +154,12 @@
         <tbody id="battle-decks"></tbody>
       </table>
 
-      <!-- Switchhead, which is a third game and is added into nothing above.
-           First place and last are both worth counting, because at a table
-           of five most games are neither. -->
       <h3 class="menu-modes-head">Switchhead</h3>
       <div class="menu-figures" id="switchhead-figures"></div>
       <p class="menu-note" id="switchhead-note">&nbsp;</p>
 
-      <p class="hint">
-        A round counts once, however many seats one account is sitting at, and
-        only rounds played to the end are counted. Rounds played signed out are
-        not recorded anywhere at all.
-      </p>
-      <p class="menu-panel-foot"><a href="#">&larr; back to the hall</a></p>
+      <p class="hint">Games played while signed out aren&rsquo;t counted.</p>
+      <p class="menu-panel-foot"><a href="#">&larr; Home</a></p>
     </section>
 
     <!-- ------------------------------------------------------- account -->
@@ -214,38 +171,49 @@
         <div class="field">
           <label for="ac-name">Display name</label>
           <input id="ac-name" name="displayName" maxlength="24" autocomplete="nickname" required />
-          <p class="hint">What the table and the trading post call you.</p>
+          <p class="hint">Shown to other players.</p>
         </div>
-        <button class="btn primary" type="submit">Save the name</button>
+        <button class="btn primary" type="submit">Save name</button>
       </form>
 
       <form id="account-keys" class="menu-form" autocomplete="on">
         <div class="field">
           <label for="ac-user">Username</label>
           <input id="ac-user" name="username" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" />
-          <p class="hint">What you sign in with. Leave it alone to keep it.</p>
+          <p class="hint">What you sign in with.</p>
         </div>
         <div class="field">
           <label for="ac-new">New password <span class="opt">optional</span></label>
           <input id="ac-new" name="password" type="password" maxlength="200" autocomplete="new-password" />
-          <p class="hint">At least 10 characters. Changing it signs every other device out.</p>
+          <p class="hint">At least 10 characters. Changing it signs you out on your other devices.</p>
         </div>
         <div class="field">
           <label for="ac-now">Current password</label>
           <input id="ac-now" name="currentPassword" type="password" maxlength="200" autocomplete="current-password" required />
-          <p class="hint">Needed for either of the two above.</p>
+          <p class="hint">Needed to change your username or password.</p>
         </div>
         <button class="btn primary" type="submit">Save</button>
       </form>
 
+      <!-- Kept by prefs.js in this browser, not on the account: the card
+           table reads it too, and nobody has to sign in there. -->
+      <div class="menu-form">
+        <h3 class="menu-form-head">Display</h3>
+        <label class="fc-check"><input type="checkbox" data-motion-check checked /> Animate banners</label>
+        <p class="hint">
+          The full-screen announcements for a steal, a miss or a win. With this
+          off they still appear, just without the sweep, the screen shake or
+          the confetti. Saved in this browser.
+        </p>
+      </div>
+
       <p id="account-error" class="door-error" hidden></p>
-      <p class="menu-panel-foot"><a href="#">&larr; back to the hall</a></p>
+      <p class="menu-panel-foot"><a href="#">&larr; Home</a></p>
     </section>
 
     <!-- ------------------------------------------------------- members -->
     <!-- The list is #members and one account is #members/<id>, so the back
-         button leaves an account the way it came in. What is in somebody's
-         collection is the flashcards panel's business and is left there. -->
+         button leaves an account the way it came in. -->
     <section id="members" class="menu-panel panel" hidden>
       <h2 class="menu-panel-head">Members</h2>
       <p class="menu-panel-lede" id="members-lede">&nbsp;</p>
@@ -253,16 +221,18 @@
       <div id="members-all">
         <div class="field">
           <label for="members-search">Find an account</label>
-          <input id="members-search" type="search" autocomplete="off" spellcheck="false" placeholder="name or username" />
+          <input id="members-search" type="search" autocomplete="off" spellcheck="false" placeholder="Name or username" />
         </div>
         <div id="members-list" class="menu-members"></div>
       </div>
 
       <div id="member" hidden></div>
 
-      <p class="menu-panel-foot"><a href="#">&larr; back to the hall</a></p>
+      <p class="menu-panel-foot"><a href="#">&larr; Home</a></p>
     </section>
   </main>
+
+  {{foot}}
 
   <script src="/menu.js"></script>
 </body>

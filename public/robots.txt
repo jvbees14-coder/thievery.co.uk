@@ -1,4 +1,3 @@
-# Thievery.co.uk — the front door is open to everyone.
 User-agent: *
 Allow: /
 

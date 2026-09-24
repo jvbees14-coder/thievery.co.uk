@@ -74,10 +74,7 @@
 // on the back of an open card appearing in any of them.
 // ---------------------------------------------------------------------------
 
-import fs from 'node:fs';
-import path from 'node:path';
 import crypto from 'node:crypto';
-import { fileURLToPath } from 'node:url';
 import * as Accounts from './accounts.js';
 import * as Cards from './cards.js';
 import * as Decks from './decks.js';
@@ -86,13 +83,11 @@ import * as Grade from './grade.js';
 import * as Stats from './stats.js';
 import { available } from './store.js';
 import { currentUser } from './plumbing.js';
+import { readView } from './views.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const VIEWS = path.join(__dirname, 'views');
 
 // Behind a login, so out of public/ — anything in there is served to anybody
 // who asks for it by name.
-const readView = (name) => fs.readFileSync(path.join(VIEWS, name), 'utf8');
 const views = {
   app: readView('battle.html'),
   door: readView('battle-door.html'),
@@ -820,6 +815,81 @@ const catalogFor = (ws) =>
     bands: Grade.BANDS,
   });
 
+// --- the question bank --------------------------------------------------------
+//
+// Every question the lobby can deal, answers and all, to read through and
+// search. It is the one place a house card's answer is sent while no card is
+// open, and so it is the one place the one rule could be walked round: a
+// player with the bank in a second tab could search for the question in front
+// of them. Two things stop that from mattering.
+//
+//   * The bank is shut to anybody at the table in a match that has not
+//     ended. Watching does not count, and nor does having walked away: a
+//     seat is kept for somebody who leaves mid-match, but somebody who left
+//     a solo run half-done should not find the bank locked for an hour. To
+//     look something up they have to leave the table, and the room shows
+//     them as away while they do.
+//   * Today's daily ten are left out of it until the day turns over, because
+//     the daily board is the one score here that strangers compare.
+//
+// Neither stops two friends in one room from cheating together, and nothing
+// could. It stops the bank being the easy way to do it.
+
+export const BANK_PAGE = 25;
+const BANK_QUERY_MAX = 100;
+
+let dailyHidden = { key: null, cards: new Set() };
+function hiddenToday() {
+  const key = Daily.todayKey();
+  if (dailyHidden.key !== key) {
+    let cards = [];
+    try {
+      cards = Daily.dealFor(key).cards;
+    } catch {
+      /* no daily deck today, so nothing to hide */
+    }
+    // The deal hands back the deck's own card objects, and a topic deck
+    // shares those objects with its sources, so one set covers every list.
+    dailyHidden = { key, cards: new Set(cards) };
+  }
+  return dailyHidden.cards;
+}
+
+const inLiveMatch = (account) =>
+  [...rooms.values()].some(
+    (r) => r.match && r.match.phase !== 'ended' && r.players.some((p) => p.userId === account.id && p.connected && isPlaying(r, p))
+  );
+
+const bankCard = (c, kind) =>
+  kind === 'choice'
+    ? { front: c.front, options: c.options, answer: c.answer }
+    : { front: c.front, back: c.back, hint: c.hint || '' };
+
+function browse(ws, account, msg) {
+  if (inLiveMatch(account)) throw new Error('The question list is closed while you’re in a match.');
+  const listed = Decks.catalog().find((d) => d.id === msg.deck && d.listed);
+  if (!listed) throw new Error('No such subject.');
+  const deck = Decks.deck(listed.id);
+  const query = String(msg.query || '').trim().toLowerCase().slice(0, BANK_QUERY_MAX);
+  const offset = Math.max(0, Math.floor(Number(msg.offset) || 0));
+  const hidden = hiddenToday();
+  const matches = deck.cards.filter((c) => {
+    if (hidden.has(c)) return false;
+    if (!query) return true;
+    const text = deck.kind === 'choice' ? c.front + ' ' + c.options.join(' ') : c.front + ' ' + c.back;
+    return text.toLowerCase().includes(query);
+  });
+  send(ws, {
+    type: 'battle:bank',
+    deck: listed.id,
+    query: String(msg.query || ''),
+    offset,
+    total: matches.length,
+    kind: deck.kind,
+    cards: matches.slice(offset, offset + BANK_PAGE).map((c) => bankCard(c, deck.kind)),
+  });
+}
+
 function attach(room, player, ws) {
   if (player.ws && player.ws !== ws) {
     const old = player.ws;
@@ -941,7 +1011,7 @@ function settings(room, player, msg) {
     room.mode = msg.mode;
   }
   if (msg.source !== undefined) {
-    if (msg.source !== 'preset' && msg.source !== 'mine') throw new Error('Cards come from a house deck or your own.');
+    if (msg.source !== 'preset' && msg.source !== 'mine') throw new Error('Cards come from one of our decks or your own.');
     room.source = msg.source;
   }
   if (msg.presetId !== undefined) {
@@ -1118,6 +1188,10 @@ export function socket(ws, msg) {
     }
     if (msg.type === 'battle:daily') {
       daily(ws, account);
+      return true;
+    }
+    if (msg.type === 'battle:browse') {
+      browse(ws, account, msg);
       return true;
     }
 

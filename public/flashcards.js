@@ -36,7 +36,7 @@
       // A session that has expired underneath us is not an error worth a
       // message; the door is the answer.
       if (res.status === 401) location.href = '/flashcards';
-      throw new Error(payload.error || 'That did not work.');
+      throw new Error(payload.error || 'Something went wrong. Try again.');
     }
     return payload;
   }
@@ -158,10 +158,10 @@
     const operations = ops
       ? `<div class="fc-ops">
            ${card.pooled
-             ? `<button class="fc-op on" data-act="withdraw" data-id="${card.id}">On the table &mdash; take back</button>`
+             ? `<button class="fc-op on" data-act="withdraw" data-id="${card.id}">On offer: withdraw</button>`
              : `<button class="fc-op" data-act="offer" data-id="${card.id}">Offer</button>
-                <button class="fc-op" data-act="edit" data-id="${card.id}">Re-cut</button>
-                <button class="fc-op danger" data-act="burn" data-id="${card.id}">Burn</button>`}
+                <button class="fc-op" data-act="edit" data-id="${card.id}">Edit</button>
+                <button class="fc-op danger" data-act="burn" data-id="${card.id}">Delete</button>`}
          </div>`
       : '';
 
@@ -210,8 +210,8 @@
       .join('');
     $('#ledger').innerHTML = `
       <div class="fc-stat"><b>${s.count}</b><span>Cards held</span></div>
-      <div class="fc-stat"><b>${s.worth.toLocaleString('en-GB')}</b><span>Total worth</span></div>
-      <div class="fc-stat"><b>${state.pool.filter((p) => p.mine).length}</b><span>On the table</span></div>
+      <div class="fc-stat"><b>${s.worth.toLocaleString('en-GB')}</b><span>Total value</span></div>
+      <div class="fc-stat"><b>${state.pool.filter((p) => p.mine).length}</b><span>On offer</span></div>
       ${rarityStats}`;
   }
 
@@ -311,7 +311,7 @@
     for (const id of ['f-front', 'f-back', 'f-hint', 'f-category', 'f-tags']) $('#' + id).value = '';
     editing = null;
     $('#edit-note').hidden = true;
-    $('#mint').textContent = 'Strike the card';
+    $('#mint').textContent = 'Create card';
     countUp();
     scheduleAppraisal();
   }
@@ -324,8 +324,8 @@
     $('#f-tags').value = (card.tags || []).join(', ');
     editing = card.id;
     $('#edit-note').hidden = false;
-    $('#edit-note').textContent = `Re-cutting ${mintNo(card.mint)}. Its rarity is already struck and will not change.`;
-    $('#mint').textContent = 'Save the re-cut';
+    $('#edit-note').textContent = `Editing ${mintNo(card.mint)}. Its rarity won’t change.`;
+    $('#mint').textContent = 'Save changes';
     showTab('make');
     countUp();
     scheduleAppraisal();
@@ -344,7 +344,7 @@
           </div>
         </div>
         <div class="fc-offer-worth">${entry.value}</div>
-        ${entry.mine ? `<button class="fc-op" data-act="withdraw" data-id="${entry.id}">Take back</button>` : ''}
+        ${entry.mine ? `<button class="fc-op" data-act="withdraw" data-id="${entry.id}">Withdraw</button>` : ''}
       </div>`;
   }
 
@@ -477,10 +477,10 @@
     $('#panel-stats').innerHTML = `
       <div class="fc-stat"><b>${s.accounts}</b><span>Accounts</span></div>
       <div class="fc-stat"><b>${s.cards}</b><span>Cards in play</span></div>
-      <div class="fc-stat"><b>${s.minted}</b><span>Ever struck</span></div>
-      <div class="fc-stat"><b>${s.pooled}</b><span>On the table</span></div>
+      <div class="fc-stat"><b>${s.minted}</b><span>Ever made</span></div>
+      <div class="fc-stat"><b>${s.pooled}</b><span>On offer</span></div>
       <div class="fc-stat"><b>${s.trades}</b><span>Trades logged</span></div>
-      <div class="fc-stat"><b>${s.worth.toLocaleString('en-GB')}</b><span>Total worth</span></div>
+      <div class="fc-stat"><b>${s.worth.toLocaleString('en-GB')}</b><span>Total value</span></div>
       ${RARITY_ORDER.filter((r) => s.byRarity[r])
         .map((r) => `<div class="fc-stat" data-rarity="${r}" style="--r-ink:${state.rarities[r].ink}">
                        <b>${s.byRarity[r]}</b><span>${esc(state.rarities[r].label)}</span></div>`)
@@ -599,15 +599,15 @@
           <input id="a-user" maxlength="20" value="${esc(u.username)}" autocapitalize="none" spellcheck="false" />
         </div>
         <div class="field">
-          <label for="a-new">New password <span class="opt">leave blank to keep it</span></label>
+          <label for="a-new">New password <span class="opt">optional</span></label>
           <input id="a-new" type="password" maxlength="200" autocomplete="new-password" />
         </div>
         <div class="field">
-          <label for="a-cur">Current password <span class="opt">needed to change a username or password</span></label>
+          <label for="a-cur">Current password <span class="opt">to change username or password</span></label>
           <input id="a-cur" type="password" maxlength="200" autocomplete="current-password" />
         </div>
         <button class="btn primary" type="submit">Save</button>
-        <p class="fc-note">Changing your password signs out every other device.</p>
+        <p class="fc-note">Changing your password signs you out on your other devices.</p>
       </form>`);
 
     $('#acct-form').addEventListener('submit', guard(async (ev) => {
@@ -669,7 +669,7 @@
                   </div>
                   <div class="fc-offer-worth">${c.value}</div>
                   <button class="fc-op" data-act="ad-open" data-id="${c.id}">Open</button>
-                  <button class="fc-op danger" data-act="ad-burn" data-id="${c.id}">Burn</button>
+                  <button class="fc-op danger" data-act="ad-burn" data-id="${c.id}">Delete</button>
                 </div>`).join('')
             : '<p class="fc-empty">No cards.</p>'}
         </div>
@@ -746,7 +746,7 @@
       esc(card.rarityLabel),
       mintNo(card.mint),
       `craft ${card.craft}`,
-      `struck ${when(card.created)}`,
+      `made ${when(card.created)}`,
       card.edited ? `re-cut ${when(card.edited)}` : null,
       `by ${esc(card.authorName || 'anon')}`,
       card.traded ? plural(card.traded, 'trade', 'trades') : 'never traded',
@@ -759,7 +759,7 @@
       <p class="fc-note">${facts}</p>
 
       <div class="fc-cardshow">${cardHtml(card, { ops: false })}</div>
-      <p class="fc-note">Click the card to turn it over. A long back is cut to fit the card; the whole of it is in the form below.</p>
+      <p class="fc-note">Click the card to flip it. Long answers are cut short on the card; the full text is in the form below.</p>
 
       <form id="ac-form" class="fc-form" autocomplete="off">
         <h4 class="fc-h4">The card</h4>
@@ -797,7 +797,7 @@
             </div>
           </div>` : ''}
 
-        <h4 class="fc-h4">What its owner cannot change</h4>
+        <h4 class="fc-h4">Admin only</h4>
         <div class="fc-row">
           <div class="field">
             <label for="ac-rarity">Rarity</label>
@@ -806,7 +806,7 @@
             </select>
           </div>
           <div class="field">
-            <label for="ac-value">Worth</label>
+            <label for="ac-value">Value</label>
             <input id="ac-value" type="number" min="1" value="${card.value}" />
           </div>
         </div>
@@ -820,8 +820,8 @@
           The rarity is never re-rolled &mdash; set it here if it needs setting.
         </p>
         <div class="fc-actions">
-          <button class="btn primary" type="submit">Save the card</button>
-          <button class="btn ghost" data-act="ac-burn" type="button">Burn it</button>
+          <button class="btn primary" type="submit">Save card</button>
+          <button class="btn ghost" data-act="ac-burn" type="button">Delete card</button>
         </div>
       </form>`);
 
@@ -852,7 +852,7 @@
         toast(`Moved to ${res.owner.displayName}.`, 'info');
         return adminAccountModal(account.id);
       }
-      toast(res.unpooled ? 'Saved, and taken off the table — its worth changed.' : 'Saved.', 'info');
+      toast(res.unpooled ? 'Saved. Its value changed, so it was taken off offer.' : 'Saved.', 'info');
       adminCardModal(res.card, account);
     }));
 
@@ -863,13 +863,13 @@
       if (button.dataset.act === 'ac-burn') {
         const sure = await ask(
           `Burn ${mintNo(card.mint)}?`,
-          `${snip(card.front)} — worth ${card.value}. It is gone for good, and so is the worth.`,
-          'Burn it',
+          `${snip(card.front)} (value ${card.value}). This can’t be undone.`,
+          'Delete',
         );
         if (!sure) return;
         await api('admin/cards/' + encodeURIComponent(card.id), { method: 'DELETE' });
         await loadPanel();
-        toast('Burnt.', 'info');
+        toast('Deleted.', 'info');
         return adminAccountModal(account.id);
       }
     }));
@@ -938,7 +938,7 @@
     banner(
       'traded',
       'While you were out',
-      `${plural(fresh, 'swap', 'swaps')} settled — ${plural(got.length, 'card', 'cards')} in, worth ${worthOf(got)}`,
+      `${plural(fresh, 'trade', 'trades')} went through: ${plural(got.length, 'card', 'cards')} in, value ${worthOf(got)}`,
       { ink: state.rarities[bestRarity(got)].ink },
     );
   }
@@ -992,7 +992,7 @@
       state = result;
       drawAll();
       if (!settled) {
-        toast('On the table. It will go the moment somebody offers a match.', 'info');
+        toast('Offered. It’ll be swapped as soon as there’s a match.', 'info');
         return;
       }
       // A swap that settled the instant it was offered is the whole point of
@@ -1006,13 +1006,13 @@
         `${plural(swap.got.length, 'card', 'cards')} from ${swap.withName}, worth ${worthOf(swap.got)}${more}`,
         { ink: state.rarities[bestRarity(swap.got)].ink }
       );
-      toast('The ledger has the detail.', 'info');
+      toast('Details are in your trade history.', 'info');
       return;
     }
     if (act === 'withdraw') {
       state = await api('trade/withdraw', { method: 'POST', body: { id } });
       drawAll();
-      toast('Taken back off the table.', 'info');
+      toast('Offer withdrawn.', 'info');
       return;
     }
     if (act === 'edit') {
@@ -1021,14 +1021,14 @@
     if (act === 'burn') {
       const card = state.cards.find((c) => c.id === id);
       const sure = await ask(
-        'Burn this card?',
-        `${snip(card.front)} — worth ${card.value}. It is gone for good, and the worth with it.`,
-        'Burn it',
+        'Delete this card?',
+        `${snip(card.front)} (value ${card.value}). This can’t be undone.`,
+        'Delete',
       );
       if (!sure) return;
       state = await api('cards/' + encodeURIComponent(id), { method: 'DELETE' });
       drawAll();
-      banner('burnt', 'Burnt', `${snip(card.front)} — ${card.value} gone with it`);
+      banner('burnt', 'Deleted', snip(card.front));
       return;
     }
     if (act === 'acct') return adminAccountModal(id);
@@ -1059,7 +1059,7 @@
     clearForm();
     drawAll();
     if (wasEditing) {
-      toast('Re-cut. Its worth has been appraised again.', 'info');
+      toast('Saved. Its score has been recalculated.', 'info');
       showTab('collection');
     } else {
       // A new card is worth looking at before it disappears into the pile.
@@ -1067,7 +1067,7 @@
       // across the card otherwise — and the card is waiting behind it.
       const card = result.card;
       $('#reveal-card').innerHTML = cardHtml(card, { ops: false });
-      banner('struck', card.rarityLabel, `${snip(card.front)} — worth ${card.value}`, {
+      banner('struck', card.rarityLabel, `${snip(card.front)} · value ${card.value}`, {
         ink: state.rarities[card.rarity].ink,
         then: () => { $('#reveal').hidden = false; },
       });
@@ -1111,7 +1111,7 @@
     });
     const box = $('#mythic-result');
     box.hidden = false;
-    box.innerHTML = `Struck <b>${esc(result.card.title || result.card.front)}</b> &mdash; ${mintNo(result.card.mint)}, worth ${result.card.value} &mdash; and gave it to <b>${esc(result.to.displayName)}</b> (@${esc(result.to.username)}).`;
+    box.innerHTML = `Made <b>${esc(result.card.title || result.card.front)}</b> (${mintNo(result.card.mint)}, value ${result.card.value}) and gave it to <b>${esc(result.to.displayName)}</b> (@${esc(result.to.username)}).`;
     ev.target.reset();
     await loadPanel();
   }));

@@ -475,9 +475,7 @@ does not walk the odds upwards, because each attempt is a fresh seed. And
 legendary is the one thing the seed exists to prevent. Re-cutting does move
 the craft mark and the worth, since the card really has changed.
 
-A new account is dealt three cards about the game, so it has something to
-trade on its first visit. They are struck common however well they score:
-they are reprints, and a card everybody has cannot be rare.
+A new account starts with an empty collection.
 
 **Mythic** is not on the table at all. There is no craft score that can roll
 one — they are struck by the house and given away.

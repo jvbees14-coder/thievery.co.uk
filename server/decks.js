@@ -319,7 +319,18 @@ for (const [topic, subjects] of Object.entries(SUBJECT_TOPICS)) {
   for (const s of subjects) TOPIC_OF_DECK.set('mmlu-' + s, topic);
 }
 
-export const TOPICS = Object.keys(SUBJECT_TOPICS);
+// The converted decks are all grade-school science, which is a topic in its
+// own right. A card from one of them that the topic pass left untagged is
+// filed here by the deck it came from, which is bookkeeping rather than a
+// guess: it is certainly science, and nothing more specific was claimed.
+// Without this, six in ten of those cards would be in no topic at all, and
+// since the lobby lists topics rather than sources, in no list either.
+const GENERAL_SCIENCE = 'General science';
+const CATCH_ALL = new Map(
+  ['arc-challenge', 'arc-easy', 'openbookqa', 'qasc', 'sciq'].map((id) => [id, GENERAL_SCIENCE])
+);
+
+export const TOPICS = [...Object.keys(SUBJECT_TOPICS), GENERAL_SCIENCE];
 
 // A topic needs this many cards before it is worth being its own deck. Below
 // it the lobby gains a line and nobody gains a match.
@@ -347,7 +358,7 @@ function topicDecks(decks) {
     if (d.kind !== 'choice') continue;
     const whole = TOPIC_OF_DECK.get(d.id) || null;
     for (const c of d.cards) {
-      const topic = whole || c.topic || null;
+      const topic = whole || c.topic || CATCH_ALL.get(d.id) || null;
       if (!topic) continue;
       if (!piles.has(topic)) {
         piles.set(topic, []);
@@ -373,7 +384,7 @@ function topicDecks(decks) {
     .map(([topic, cards]) => ({
       id: slug(topic),
       name: topic,
-      blurb: `${cards.length.toLocaleString('en-GB')} questions on ${topic.toLowerCase()}, from every deck that has any.`,
+      blurb: `${cards.length.toLocaleString('en-GB')} multiple-choice questions.`,
       kind: 'choice',
       house: false,
       topic: true,
@@ -400,6 +411,11 @@ export const catalog = () =>
     kind: d.kind,
     house: d.house,
     topic: d.topic === true,
+    // What the lobby offers: the topics, and the decks written here. The
+    // source decks the topics are gathered from stay in the catalog, because
+    // their ids are held by rooms and by the record, but a source is a
+    // detail nobody choosing what to revise should have to know.
+    listed: d.topic === true || d.house === true,
     count: d.cards.length,
   }));
 

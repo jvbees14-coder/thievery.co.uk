@@ -18,9 +18,6 @@
 //     them, so there is no shell to poke at.
 // ---------------------------------------------------------------------------
 
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import * as Accounts from './accounts.js';
 import * as Cards from './cards.js';
 import * as Trading from './trading.js';
@@ -28,16 +25,14 @@ import * as Door from './door.js';
 import * as Stats from './stats.js';
 import { data, touch } from './store.js';
 import * as Store from './store.js';
+import { readView } from './views.js';
 import * as R2 from './r2.js';
 import { send, fail, readBody, cookies, originOk, currentUser, requireUser, requireAdmin } from './plumbing.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const VIEWS = path.join(__dirname, 'views');
 
 // The app's markup is kept out of public/ on purpose: anything in there is
 // served to anyone who asks for it by name, and this is the one page on the
 // site that has to be earned.
-const readView = (name) => fs.readFileSync(path.join(VIEWS, name), 'utf8');
 const views = {
   app: readView('flashcards.html'),
   door: readView('flashcards-door.html'),
@@ -575,6 +570,9 @@ export async function start() {
     );
     return;
   }
+
+  const swept = Cards.sweepWelcome();
+  if (swept) console.log(`flashcards: took back ${swept} of the old welcome cards`);
 
   await Accounts.ensureAdmin();
   // Sessions nobody has used for a month are swept once an hour, on the same

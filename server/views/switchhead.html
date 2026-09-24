@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark" />
-  <title>Switchhead — Thievery.co.uk</title>
+  <title>Switchhead · Thievery</title>
   <meta name="robots" content="noindex, nofollow" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c14'/%3E%3Crect x='7' y='6' width='12' height='17' rx='2' fill='none' stroke='%23d4af5a' stroke-width='2'/%3E%3Crect x='13' y='10' width='12' height='17' rx='2' fill='%230a0c14' stroke='%23d4af5a' stroke-width='2'/%3E%3C/svg%3E" />
   <link rel="manifest" href="/site.webmanifest" />
@@ -18,34 +18,12 @@
   <link rel="stylesheet" href="/menu.css" />
   <link rel="stylesheet" href="/battle.css" />
   <link rel="stylesheet" href="/switchhead.css" />
-  <link rel="stylesheet" href="/plain.css" />
-  <script src="/theme.js"></script>
+  <script src="/prefs.js"></script>
 </head>
 <body class="fc-app">
   <div id="toast" class="toast" hidden></div>
 
-  <header class="fc-bar">
-    <a class="fc-mark wordmark" href="/switchhead">Switch<em>head</em></a>
-    <nav class="menu-nav">
-      <a class="menu-nav-link" href="/">The house</a>
-      <a class="menu-nav-link" href="/cards">Thievery</a>
-      <a class="menu-nav-link" href="/battle">Battle</a>
-    </nav>
-    <button class="theme-switch" data-theme-toggle type="button" data-word="Plain design" aria-label="Plain design" aria-pressed="false">
-      <span class="theme-chip" aria-hidden="true">
-        <span class="theme-face theme-face-plain"></span>
-        <span class="theme-face theme-face-vault"></span>
-      </span>
-    </button>
-    <div class="fc-who">
-      <button id="who" class="fc-who-btn" type="button" aria-haspopup="true" aria-expanded="false"></button>
-      <div id="who-menu" class="fc-menu" hidden>
-        <a href="/">Back to the house</a>
-        <button data-theme-toggle type="button" aria-pressed="false">Plain design</button>
-        <button data-act="signout" type="button">Sign out</button>
-      </div>
-    </div>
-  </header>
+  {{bar:switchhead}}
 
   <main class="btl-main sh-main">
 
@@ -56,12 +34,11 @@
     <!-- ============================================== the front door ==== -->
     <section id="screen-door" class="btl-screen" hidden>
       <div class="panel btl-door">
-        <p class="eyebrow">Two to eight players</p>
         <h1 class="btl-door-head">Switchhead</h1>
         <p class="btl-door-say">
-          Get rid of your cards, and do not be the last one holding any. But
-          the hands swap when nobody is looking, and every so often the goal
-          turns over &mdash; go out then, and you go out at the bottom.
+          Get rid of your cards, and don&rsquo;t be the last one holding any.
+          But the hands swap when nobody&rsquo;s looking, and sometimes the
+          goal flips: go out then, and you finish last.
         </p>
         <div class="btl-door-acts">
           <button id="open-room" class="btn primary" type="button">Open a room</button>
@@ -73,9 +50,8 @@
           </form>
         </div>
         <p class="hint">
-          A room is four characters and lives in memory only. Share the code;
-          a code for a game already under way lets you watch it and sits you
-          down for the next one.
+          For 2 to 8 players. Share the room code with friends. If a game has
+          already started, you can watch and join the next one.
         </p>
       </div>
 
@@ -83,10 +59,10 @@
         <h2 class="btl-head">How it plays</h2>
         <ul class="sh-rule-list">
           <li>Three cards face down, three face up on top of them, three in your hand. Before the first card you may swap cards between your hand and your face-up row.</li>
-          <li>Play a card as high as the one on the pile or higher &mdash; several of one rank at once if you have them &mdash; and draw back up to three while the deck lasts. Cannot, or would rather not? Pick up the pile.</li>
+          <li>Play a card at least as high as the one on the pile (several of one rank at once, if you have them) and draw back up to three while the deck lasts. Can&rsquo;t, or don&rsquo;t want to? Pick up the pile.</li>
           <li>When your hand is gone, play from your face-up row; when that is gone, turn the face-down cards over one at a time and hope.</li>
           <li><b>The swap.</b> Every ten to fifteen turns two players&rsquo; hands trade places. Nothing warns you.</li>
-          <li><b>The goal.</b> Every ten to fifteen turns it turns over. While it says <em>win</em>, going out takes the best place left. While it says <em>lose</em>, going out takes the worst.</li>
+          <li><b>The goal.</b> Every ten to fifteen turns it flips. While it says <em>win</em>, going out takes the best place left. While it says <em>lose</em>, going out takes the worst.</li>
         </ul>
       </div>
     </section>
@@ -108,12 +84,12 @@
         </div>
 
         <div class="panel btl-room">
-          <h2 class="btl-head">The room</h2>
+          <h2 class="btl-head">Room</h2>
           <p class="btl-code-say">Share this code</p>
           <p class="btl-code" id="room-code">&mdash;</p>
-          <button class="btn ghost btl-copy" type="button" data-act="copy">Copy the link</button>
+          <button class="btn ghost btl-copy" type="button" data-act="copy">Copy link</button>
           <ul class="btl-players" id="players"></ul>
-          <button class="btn ghost" type="button" data-act="leave">Leave the room</button>
+          <button class="btn ghost" type="button" data-act="leave">Leave</button>
         </div>
 
       </div>
@@ -187,12 +163,14 @@
           <button id="rematch" class="btn primary" type="button">Deal again</button>
           <button id="again" class="btn ghost" type="button">Back to the lobby</button>
         </div>
-        <p class="hint" id="end-guest" hidden>The host decides what happens next.</p>
-        <p class="btl-end-link"><a class="linkish" href="/#stats">Your record</a></p>
+        <p class="hint" id="end-guest" hidden>Waiting for the host to choose what&rsquo;s next.</p>
+        <p class="btl-end-link"><a class="linkish" href="/#stats">Your stats</a></p>
       </div>
     </section>
 
   </main>
+
+  {{foot}}
 
   <script src="/switchhead.js"></script>
 </body>

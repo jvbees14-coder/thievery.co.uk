@@ -389,3 +389,22 @@
 }
 .btl-running li.is-out { opacity: 0.5; text-decoration: line-through; }
 .btl-mark-who i.is-out { color: var(--bad); }
+
+/* --- the question list ------------------------------------------------------ */
+
+.btl-door-bank { margin: 14px 0 0; font-size: 15px; }
+.btl-bank { max-width: 820px; margin: 0 auto; padding: clamp(18px, 3vw, 30px); }
+.btl-bank-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.btl-bank-head .btl-door-head { margin: 0; }
+.btl-bank-tools { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr); gap: 10px; margin: 16px 0 6px; }
+.btl-bank-tools select, .btl-bank-tools input { width: 100%; }
+.btl-bank-list { list-style: none; margin: 10px 0 16px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.btl-q { padding: 14px 16px; border: 1px solid var(--brass-faint); border-radius: var(--radius); background: rgba(0, 0, 0, 0.18); }
+.btl-q-front { margin: 0 0 8px; color: var(--ivory); }
+.btl-q-options { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 3px; color: var(--text-dim); font-size: 15px; }
+.btl-q-options b { display: inline-block; width: 1.4em; color: var(--brass-dim); font-family: var(--caps); }
+.btl-q-answer summary { cursor: pointer; color: var(--brass); font-size: 14px; }
+.btl-q-answer p { margin: 6px 0 0; color: var(--jade-bright); }
+@media (max-width: 560px) {
+  .btl-bank-tools { grid-template-columns: 1fr; }
+}

@@ -13,7 +13,6 @@
 // ---------------------------------------------------------------------------
 
 import * as Accounts from './accounts.js';
-import * as Cards from './cards.js';
 import { touch } from './store.js';
 import { readBody, sessionCookie, clientIp, send, requireUser, cookies, SESSION_MAX_AGE } from './plumbing.js';
 
@@ -70,11 +69,6 @@ export async function register(req, res, reply) {
     displayName: body.displayName,
   });
   noteRegistration(ip);
-  // Three cards to start with, so a new account can take part at the trading
-  // post on its first visit rather than its third. It happens at the door
-  // rather than on the first trip to the flashcards room because an account
-  // is an account whichever door opened it.
-  Cards.dealWelcome(user);
   const token = Accounts.startSession(user);
   send(res, 200, reply(user), { 'Set-Cookie': sessionCookie(req, token, SESSION_MAX_AGE) });
 }

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Privacy · Thievery</title>
+  <meta name="description" content="What Thievery.co.uk keeps about you, where, and how to have it removed." />
+  <link rel="canonical" href="https://thievery.co.uk/privacy" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c14'/%3E%3Cpath d='M16 4l10 12-10 12L6 16z' fill='none' stroke='%23d4af5a' stroke-width='2'/%3E%3Cpath d='M16 10l5 6-5 6-5-6z' fill='%23d4af5a'/%3E%3C/svg%3E" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="apple-touch-icon" href="/icons/icon-180.png" />
+  <meta name="theme-color" content="#0a0c14" />
+  <link rel="preload" href="/fonts/eb-garamond-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/fonts.css" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/flashcards.css" />
+  <script src="/prefs.js"></script>
+</head>
+<body>
+  {{bar:public}}
+
+  <!-- Every line here is a claim about what the code does. Change the code,
+       change this page: accounts.js, plumbing.js, stats.js and the
+       localStorage/sessionStorage calls in public/ are what it describes. -->
+  <main class="page-main">
+    <article class="panel prose">
+      <h1>Privacy</h1>
+      <p class="prose-lede">
+        The short version: we keep what&rsquo;s needed to run your account and
+        nothing else. No ads, no analytics, and no third-party scripts, fonts or
+        trackers on any page.
+      </p>
+
+      <h2>Playing without an account</h2>
+      <p>
+        The card game at <a href="/cards">/cards</a> needs no account. Game rooms
+        exist only in the server&rsquo;s memory and are forgotten an hour after
+        everyone leaves. Nothing about a game you play signed out is stored.
+      </p>
+
+      <h2>If you open an account</h2>
+      <p>We store:</p>
+      <ul>
+        <li>your username and display name;</li>
+        <li>your password, as a salted scrypt hash (never the password itself);</li>
+        <li>when you opened the account and when you were last seen;</li>
+        <li>the flashcards you make, and trades you take part in;</li>
+        <li>your game results, used for your stats page and the daily Battle board.</li>
+      </ul>
+      <p>
+        Your display name is shown to other players. Other members can also see
+        the front of any card you offer for trade, but never the back.
+      </p>
+      <p>
+        This is kept in a single file in Cloudflare R2 storage. The site runs on
+        Render. The site&rsquo;s admin can see account details in order to fix
+        problems and deal with abuse.
+      </p>
+
+      <h2>Cookies and browser storage</h2>
+      <p>
+        There is one cookie: a session cookie that keeps you signed in, which
+        lasts 30 days. It&rsquo;s only set when you sign in. We don&rsquo;t use
+        any other cookies.
+      </p>
+      <p>
+        Your browser also remembers a few things on your own device: the name
+        you last played under, your notes during a game (which are never sent
+        to us), whether banner animations are on, and which trades you&rsquo;ve
+        already seen.
+      </p>
+
+      <h2>Your IP address</h2>
+      <p>
+        To stop people guessing passwords or opening accounts in bulk, the server
+        counts failed sign-ins and new accounts per IP address. The counts are
+        kept only in the server&rsquo;s memory, are never written to disk, and
+        are cleared whenever the server restarts.
+      </p>
+
+      <h2>Deleting your account</h2>
+      <p>
+        To have your account and everything attached to it deleted, get in touch
+        with {{contact}} and tell us your username. Deleting an account removes
+        its cards and its stats too.
+      </p>
+    </article>
+  </main>
+
+  {{foot}}
+</body>
+</html>

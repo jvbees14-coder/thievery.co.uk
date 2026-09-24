@@ -27,21 +27,16 @@
 // down cards and everybody else's hand stay on the server.
 // ---------------------------------------------------------------------------
 
-import fs from 'node:fs';
-import path from 'node:path';
 import crypto from 'node:crypto';
-import { fileURLToPath } from 'node:url';
 import * as Accounts from './accounts.js';
 import * as Shed from './shed.js';
 import * as Stats from './stats.js';
 import { available } from './store.js';
 import { currentUser } from './plumbing.js';
+import { readView } from './views.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const VIEWS = path.join(__dirname, 'views');
 
 // Behind a login, so out of public/.
-const readView = (name) => fs.readFileSync(path.join(VIEWS, name), 'utf8');
 const views = {
   app: readView('switchhead.html'),
   door: readView('switchhead-door.html'),

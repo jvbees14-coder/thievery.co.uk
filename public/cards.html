@@ -4,23 +4,23 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark" />
-  <title>Thievery — Free Online Multiplayer Card Game</title>
-  <meta name="description" content="Thievery is a free online deduction card game for 1 to 12 players. Share a room code, guess your opponents' hidden cards and flip them all before they flip yours. Three to six hands, with power-ups at the larger sizes; play on your own against the house." />
+  <title>Thievery: a free online deduction card game</title>
+  <meta name="description" content="Thievery is a free deduction card game for 2 to 12 players in your browser. Share a room code, work out everyone else's hidden cards and flip them before they flip yours. No sign-up, and bots to fill empty seats." />
   <link rel="canonical" href="https://thievery.co.uk/cards" />
 
   <!-- How a link to the table looks when it is passed around. -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Thievery.co.uk" />
-  <meta property="og:title" content="Thievery — Free Online Multiplayer Card Game" />
-  <meta property="og:description" content="Steal their secrets before they steal yours. A free online deduction card game for 1 to 12 players — no sign-up, just a room code." />
+  <meta property="og:title" content="Thievery: a free online deduction card game" />
+  <meta property="og:description" content="Work out their hidden cards before they work out yours. A free deduction card game for 2 to 12 players. No sign-up, just a room code." />
   <meta property="og:url" content="https://thievery.co.uk/cards" />
   <meta property="og:image" content="https://thievery.co.uk/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="Thievery.co.uk — a free online deduction card game for 1 to 12 players" />
+  <meta property="og:image:alt" content="Thievery.co.uk, a free online deduction card game" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Thievery — Free Online Multiplayer Card Game" />
-  <meta name="twitter:description" content="Steal their secrets before they steal yours. A free online deduction card game for 1 to 12 players — no sign-up, just a room code." />
+  <meta name="twitter:title" content="Thievery: a free online deduction card game" />
+  <meta name="twitter:description" content="Work out their hidden cards before they work out yours. A free deduction card game for 2 to 12 players. No sign-up, just a room code." />
   <meta name="twitter:image" content="https://thievery.co.uk/og-image.png" />
 
   <script type="application/ld+json">
@@ -31,7 +31,7 @@
     "alternateName": "Thievery.co.uk",
     "url": "https://thievery.co.uk/cards",
     "image": "https://thievery.co.uk/og-image.png",
-    "description": "Thievery is a free online multiplayer deduction card game for 1 to 12 players. The cards are dealt into three, four, five or six hands; the first few players take a hand each, and anybody after that shares a hand with someone already seated, two to a hand. Five and six hands are dealt power-ups, because the same 26 cards spread that thin leave much less to deduce from. A hand nobody has taken can be played by the house at one of three levels, so one or two people can still play a full table. Everyone arranges their hand face down in ascending order; on your turn you pick an opponent's hidden card and guess its rank. Flip every opponent card face up to win the round.",
+    "description": "Thievery is a free online multiplayer deduction card game for 1 to 12 players. The cards are dealt into three, four, five or six hands; the first few players take a hand each, and anybody after that shares a hand with someone already seated, two to a hand. Five and six hands are dealt power-ups, because the same 26 cards spread that thin leave much less to deduce from. A hand nobody has taken can be played by a bot at one of three levels, so one or two people can still play a full table. Everyone arranges their hand face down in ascending order; on your turn you pick an opponent's hidden card and guess its rank. Flip every opponent card face up to win the round.",
     "genre": ["Card game", "Deduction", "Multiplayer"],
     "playMode": ["SinglePlayer", "MultiPlayer"],
     "numberOfPlayers": { "@type": "QuantitativeValue", "minValue": 1, "maxValue": 12 },
@@ -51,6 +51,7 @@
   <link rel="preload" href="/fonts/eb-garamond-400-latin.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="/fonts.css" />
   <link rel="stylesheet" href="/style.css" />
+  <script src="/prefs.js"></script>
 </head>
 <body>
   <div id="toast" class="toast" hidden></div>
@@ -61,18 +62,16 @@
   <div id="popups" class="popups"></div>
   <div id="conn" class="conn" hidden>Reconnecting<span class="dots"><i>.</i><i>.</i><i>.</i></span></div>
 
-  <!-- Home screen (static markup so typed input survives state updates) -->
   <section id="home" class="screen home">
     <div class="home-card">
-      <p class="eyebrow">Est. for cheats, sleuths &amp; card sharps</p>
       <h1 class="logo wordmark">Thievery<em>.co.uk</em></h1>
-      <p class="tagline">Steal their secrets before they steal yours. A deduction card game for 1&ndash;12 players, one room code.</p>
+      <p class="tagline">Work out everyone else&rsquo;s hidden cards before they work out yours. For 2 to 12 players, or play against bots.</p>
 
       <div class="field">
         <label for="name">Your name</label>
         <div class="input-row">
           <input id="name" maxlength="20" placeholder="e.g. LuckyHorse" autocomplete="nickname" />
-          <button id="reroll" class="icon-btn" type="button" title="Deal me another alias" aria-label="Deal me another alias">&#10227;</button>
+          <button id="reroll" class="icon-btn" type="button" title="Pick a random name" aria-label="Pick a random name"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M15.5 7.5A6 6 0 1 0 16 12" /><path d="M16 3.5v4h-4" /></svg></button>
         </div>
       </div>
 
@@ -88,155 +87,146 @@
       <details class="rules">
         <summary><h2>How to play</h2></summary>
         <div class="rules-body">
-          <p class="rules-lede">
-            Everyone can see the <b>colour</b> of every card on the table. Nobody but its owner can see the
-            <b>rank</b>. Your job is to work out the ranks in front of you and name them out loud before
-            anybody manages the same trick on you.
-          </p>
+          <ol class="rules-steps">
+            <li>
+              <b>Sort your hand.</b> You&rsquo;re dealt a row of cards. Put them
+              in order, lowest to highest, and lock in. Then every row on the
+              table turns face down.
+            </li>
+            <li>
+              <b>Read the table.</b> Everyone can see each card&rsquo;s colour
+              and position, but only you know your own ranks. Because every row
+              is in order, a hidden card has to fit between its neighbours.
+              <figure class="rules-figure">
+                <svg viewBox="0 0 236 96" role="img" aria-labelledby="fence-title fence-desc">
+                  <title id="fence-title">How a hidden card is fenced in</title>
+                  <desc id="fence-desc">
+                    A row of four cards. A red card lies sideways and is face down. Then a black card face up
+                    showing 4, a black card face down, and a black card face up showing 7. The hidden black
+                    card sits between the 4 and the 7, so it can only be a 4, 5, 6 or 7.
+                  </desc>
+                  <defs>
+                    <pattern id="fence-lattice" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                      <line x1="0" y1="0" x2="0" y2="6" stroke="#d4af5a" stroke-opacity="0.3" stroke-width="1" />
+                    </pattern>
+                  </defs>
+                  <rect x="2" y="15" width="66" height="46" rx="4" fill="#3a1119" stroke="#7a2634" />
+                  <rect x="6" y="19" width="58" height="38" rx="2" fill="url(#fence-lattice)" stroke="#d4af5a" stroke-opacity="0.3" />
+                  <rect x="76" y="5" width="46" height="66" rx="4" fill="#f4ecd8" stroke="#c9bfa5" />
+                  <text x="99" y="44" text-anchor="middle" fill="#111420" font-family="Cinzel, Georgia, serif" font-size="19" font-weight="700">4</text>
+                  <rect x="130" y="5" width="46" height="66" rx="4" fill="#1c2130" stroke="#3a4157" />
+                  <rect x="134" y="9" width="38" height="58" rx="2" fill="url(#fence-lattice)" stroke="#d4af5a" stroke-opacity="0.3" />
+                  <text x="153" y="44" text-anchor="middle" fill="#d4af5a" font-family="Cinzel, Georgia, serif" font-size="19" font-weight="700">?</text>
+                  <rect x="184" y="5" width="46" height="66" rx="4" fill="#f4ecd8" stroke="#c9bfa5" />
+                  <text x="207" y="44" text-anchor="middle" fill="#111420" font-family="Cinzel, Georgia, serif" font-size="19" font-weight="700">7</text>
+                  <path d="M99 80 v5 H207 v-5" fill="none" stroke="#d4af5a" stroke-opacity="0.65" />
+                  <text x="153" y="94" text-anchor="middle" fill="#d4af5a" font-family="Cinzel, Georgia, serif" font-size="9" letter-spacing="1.4">4 5 6 7</text>
+                </svg>
+                <figcaption>
+                  Red cards lie sideways and black ones stand up. The hidden black card is between a 4 and a 7,
+                  so it can only be a 4, 5, 6 or 7.
+                </figcaption>
+              </figure>
+            </li>
+            <li>
+              <b>Guess.</b> On your turn, pick someone else&rsquo;s hidden card
+              and name its rank. Get it right and it flips face up, and you go
+              again. Get it wrong and the turn passes. Flip all of everyone
+              else&rsquo;s cards to win.
+            </li>
+          </ol>
 
-          <h3>1. The deal</h3>
-          <p>
-            The deck is 26 cards &mdash; Ace to King in one red suit, Ace to King in one black suit &mdash; dealt
-            out into three, four, five or six hands, as evenly as the table allows. There is no draw pile and
-            nothing is held back: every card is in somebody&rsquo;s row from the first move to the last.
-          </p>
-          <p>
-            The first few players &mdash; as many as there are hands &mdash; take one each. Anyone after that joins
-            somebody already seated: the two of them share that hand, see exactly the same cards, and either can
-            play it when their turn comes round. Two to a hand and no more, so six hands seat up to twelve people.
-          </p>
-          <p>
-            A hand nobody has taken can be dealt to <b>the house</b> instead, so one or two of you can still
-            play a full table. Bots come at three levels &mdash; a <b>Novice</b> who only plays the colours, a
-            <b>Sharp</b> one who reads the row, and a <b>Ruthless</b> one who counts the whole table &mdash;
-            and they see no more of your cards than anybody else does. A bot hands its seat straight back
-            when a real player turns up to want it.
-          </p>
+          <details class="rules-full">
+            <summary>Full rules</summary>
 
-          <h3>2. Arrange your hand</h3>
-          <p>
-            You are dealt your cards face up &mdash; to you, and to nobody else. Drag them into
-            <b>ascending order</b>, ace low, and press <b>Lock in</b>. Two cards of the same rank can go either
-            way round, and an <b>ace is wild in position</b>: you may hide it anywhere in the row.
-          </p>
-          <p>
-            Once everyone has locked in, all the rows turn face down at once. Red cards lie sideways and black
-            cards stand upright, so from now on the whole table knows the colour and the position of every
-            card, and only you know what yours actually are.
-          </p>
+            <h3>The deal</h3>
+            <p>
+              The deck is 26 cards: Ace to King in one red suit and Ace to King in one black suit. They&rsquo;re
+              dealt into three, four, five or six hands, as evenly as possible. There&rsquo;s no draw pile, so
+              every card is in somebody&rsquo;s row from start to finish.
+            </p>
+            <p>
+              The first players to join take a hand each. After that, new players share a hand with someone
+              already seated: both see the same cards, and either can play it on their turn. Two to a hand at
+              most, so six hands seat up to twelve people.
+            </p>
+            <p>
+              Empty hands can be given to <b>bots</b>, so one or two of you can still play a full table. There
+              are three levels: <b>Novice</b> only goes by colour, <b>Sharp</b> reads the row, and
+              <b>Ruthless</b> counts the whole table. Bots can&rsquo;t see any more of your cards than anyone
+              else can, and give up their seat as soon as a person wants it.
+            </p>
 
-          <h3>3. Read the table</h3>
-          <!-- The one idea the whole game turns on, drawn rather than described:
-               a row runs low to high, so whatever is showing either side of a
-               hidden card fences it in. Inline because it is four rectangles
-               and a line, and a request for a picture of four rectangles is a
-               request too many. -->
-          <figure class="rules-figure">
-            <svg viewBox="0 0 236 96" role="img" aria-labelledby="fence-title fence-desc">
-              <title id="fence-title">How a hidden card is fenced in</title>
-              <desc id="fence-desc">
-                A row of four cards. A red card lies sideways and is face down. Then a black card face up
-                showing 4, a black card face down, and a black card face up showing 7. The hidden black
-                card sits between the 4 and the 7, so it can only be a 4, 5, 6 or 7.
-              </desc>
-              <defs>
-                <pattern id="fence-lattice" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                  <line x1="0" y1="0" x2="0" y2="6" stroke="#d4af5a" stroke-opacity="0.3" stroke-width="1" />
-                </pattern>
-              </defs>
+            <h3>Sorting your hand</h3>
+            <p>
+              You&rsquo;re dealt your cards face up, and only you can see them. Drag them into
+              <b>ascending order</b> (ace low) and press <b>Lock in</b>. Two cards of the same rank can go
+              either way round, and an <b>ace is wild</b>: you can put it anywhere in the row.
+            </p>
+            <p>
+              Once everyone has locked in, every row turns face down at once. Red cards lie sideways and black
+              cards stand upright, so everyone knows the colour and position of every card, but only you know
+              the ranks of yours.
+            </p>
 
-              <!-- A red card, lying on its side, face down. -->
-              <rect x="2" y="15" width="66" height="46" rx="4" fill="#3a1119" stroke="#7a2634" />
-              <rect x="6" y="19" width="58" height="38" rx="2" fill="url(#fence-lattice)" stroke="#d4af5a" stroke-opacity="0.3" />
+            <h3>Reading the table</h3>
+            <p>
+              Because every row is in order, a hidden card is fenced in by its neighbours. Colour narrows it
+              further: there&rsquo;s exactly one 9 of each colour, so once the black 9 has been flipped
+              anywhere, no other black card can be a 9. Every flip gives everybody more to go on, including the
+              person who made it.
+            </p>
 
-              <!-- A black 4, face up. -->
-              <rect x="76" y="5" width="46" height="66" rx="4" fill="#f4ecd8" stroke="#c9bfa5" />
-              <text x="99" y="44" text-anchor="middle" fill="#111420" font-family="Cinzel, Georgia, serif" font-size="19" font-weight="700">4</text>
+            <h3>Taking your turn</h3>
+            <p>Click any face-down card that isn&rsquo;t yours and name a rank from Ace to King.</p>
+            <ul>
+              <li><b>Right:</b> the card flips face up for everyone, and you go again. A good run can clear out
+                someone&rsquo;s whole row in one turn.</li>
+              <li><b>Wrong:</b> nothing else happens. You don&rsquo;t lose anything; the turn just passes to the
+                next hand.</li>
+            </ul>
 
-              <!-- The card in question, face down and upright, so black. -->
-              <rect x="130" y="5" width="46" height="66" rx="4" fill="#1c2130" stroke="#3a4157" />
-              <rect x="134" y="9" width="38" height="58" rx="2" fill="url(#fence-lattice)" stroke="#d4af5a" stroke-opacity="0.3" />
-              <text x="153" y="44" text-anchor="middle" fill="#d4af5a" font-family="Cinzel, Georgia, serif" font-size="19" font-weight="700">?</text>
+            <h3>Winning</h3>
+            <p>
+              The round ends as soon as one hand has turned over <b>every card it could guess at</b>, meaning
+              every card belonging to everyone else. That hand wins, and if two people share it, they both win.
+            </p>
 
-              <!-- And a black 7, face up. -->
-              <rect x="184" y="5" width="46" height="66" rx="4" fill="#f4ecd8" stroke="#c9bfa5" />
-              <text x="207" y="44" text-anchor="middle" fill="#111420" font-family="Cinzel, Georgia, serif" font-size="19" font-weight="700">7</text>
+            <h3>Five and six hands: power-ups</h3>
+            <p>
+              The deck stays at 26 cards however many hands there are, so at six hands each row is only four or
+              five cards long. With fewer neighbours, hidden cards are much harder to pin down, and one lucky
+              streak can run through half the table.
+            </p>
+            <p>
+              So at <b>five and six hands</b> everyone draws a <b>power-up</b> at the start of each of their
+              turns (one per turn, up to three held at once, never two of the same). Three and four hands never
+              get them, and bots don&rsquo;t draw any.
+            </p>
+            <p>
+              The common ones give you private information: look at one hidden card, or find out how many of a
+              rank are still face down. The rarer ones interrupt: <b>trip the alarm</b> ends whatever run is
+              going on, and anyone can use it at any time, even out of turn.
+            </p>
 
-              <!-- The fence itself. -->
-              <path d="M99 80 v5 H207 v-5" fill="none" stroke="#d4af5a" stroke-opacity="0.65" />
-              <text x="153" y="94" text-anchor="middle" fill="#d4af5a" font-family="Cinzel, Georgia, serif" font-size="9" letter-spacing="1.4">4 5 6 7</text>
-            </svg>
-            <figcaption>
-              Red lies sideways and black stands upright, so every colour is public. The row runs low to high,
-              which fences the hidden card in: it can only be a 4, 5, 6 or 7.
-            </figcaption>
-          </figure>
-          <p>
-            Because every row is in ascending order, a hidden card is fenced in by its neighbours. A face-down
-            card sitting between a face-up 4 and a face-up 7 has to be a 4, 5, 6 or 7. Colour narrows it
-            further: there is exactly one 9 of each colour in the deck, so once the black 9 has turned over
-            anywhere on the table, no other black card is a 9. Every flip tightens the picture for everybody
-            &mdash; including for the person who did the flipping.
-          </p>
-
-          <h3>4. Take your turn</h3>
-          <p>
-            Click any face-down card that is not yours and name a rank, from Ace to King.
-          </p>
-          <ul>
-            <li><b>Right:</b> the card flips face up for the whole table &mdash; and you go again. A good run can
-              empty somebody out in a single turn.</li>
-            <li><b>Wrong:</b> nothing happens. You lose no cards and give nothing away beyond the guess itself;
-              the turn simply passes to the next hand.</li>
-          </ul>
-
-          <h3>5. Win the round</h3>
-          <p>
-            The round ends the instant one hand has <b>every card it could guess at</b> face up &mdash; that is,
-            every card belonging to everyone else. That hand wins, and both players win it if the hand is
-            shared. Playing on your own account, that makes the winner the last person still holding
-            anything face down.
-          </p>
-
-          <h3>Five and six hands: power-ups</h3>
-          <p>
-            The deck does not grow with the table. At six hands the same 26 cards are spread 5/5/4/4/4/4, so
-            every row is four or five cards instead of six or seven &mdash; and a hidden card with almost no
-            neighbours is barely fenced in at all. There is less to deduce, exactly when there are more people
-            wanting to deduce it, and one hot streak can run through half the table before anybody else gets
-            a turn.
-          </p>
-          <p>
-            So at <b>five and six hands</b> everybody draws a <b>power-up</b> at the start of each of their own
-            turns &mdash; one per turn, never one per guess &mdash; and may carry three at a time. You never draw
-            a second copy of something you are already holding. There is no switch for it: those two sizes are
-            always dealt with them, and three and four hands never are. The house draws none.
-          </p>
-          <p>
-            The common ones buy information, and buy it for you alone: read one hidden card, or hear how many of
-            a rank are still face down anywhere on the table. The rarer ones interrupt: <b>trip the alarm</b> ends
-            whatever run is going on, and anybody may pull it at any time, including out of turn. That is the
-            table&rsquo;s way of stopping somebody six correct guesses deep.
-          </p>
-
-          <h3>Partnerships (four hands)</h3>
-          <p>
-            A four-hand table can be played as two teams instead: hands 1 and 3 against hands 2 and 4. You only
-            guess against the hands opposite you, and at the start of your turn your partner may privately
-            <b>show</b> you one of their face-down cards &mdash; or show you nothing. It is the one way to pass
-            information across the table without handing it to the other side.
-          </p>
+            <h3>Partnerships (four hands)</h3>
+            <p>
+              A four-hand table can be played in teams: hands 1 and 3 against hands 2 and 4. You only guess at
+              the other team&rsquo;s cards, and at the start of your turn your partner can privately
+              <b>show</b> you one of their face-down cards, or choose not to.
+            </p>
+          </details>
         </div>
       </details>
 
-      <!-- The way back. The table asks for no account and keeps nothing, so
-           the hall is a door somebody may want rather than one they have to
-           go through: the only thing signing in changes here is that the
-           rounds are counted afterwards. -->
       <p class="home-foot">
-        <a href="/">The house &mdash; your lifetime record, the flashcards room, your account</a>
+        <a href="/">Your account and stats</a>
+        <span aria-hidden="true">&middot;</span>
+        <button class="linkish" data-motion-toggle type="button">Banner animations <span class="motion-state"></span></button>
       </p>
     </div>
+
+    {{foot}}
   </section>
 
   <!-- Lobby + game are rendered here -->

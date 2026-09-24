@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark" />
-  <title>Battle — Thievery.co.uk</title>
+  <title>Battle · Thievery</title>
   <meta name="robots" content="noindex, nofollow" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c14'/%3E%3Cpath d='M9 6l7 10-7 10M23 6l-7 10 7 10' fill='none' stroke='%23d4af5a' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E" />
   <link rel="manifest" href="/site.webmanifest" />
@@ -17,34 +17,12 @@
   <link rel="stylesheet" href="/flashcards.css" />
   <link rel="stylesheet" href="/menu.css" />
   <link rel="stylesheet" href="/battle.css" />
-  <link rel="stylesheet" href="/plain.css" />
-  <script src="/theme.js"></script>
+  <script src="/prefs.js"></script>
 </head>
 <body class="fc-app">
   <div id="toast" class="toast" hidden></div>
 
-  <header class="fc-bar">
-    <a class="fc-mark wordmark" href="/battle">The<em>Battle</em></a>
-    <nav class="menu-nav">
-      <a class="menu-nav-link" href="/">The house</a>
-      <a class="menu-nav-link" href="/cards">Thievery</a>
-      <a class="menu-nav-link" href="/flashcards">Flashcards</a>
-    </nav>
-    <button class="theme-switch" data-theme-toggle type="button" data-word="Plain design" aria-label="Plain design" aria-pressed="false">
-      <span class="theme-chip" aria-hidden="true">
-        <span class="theme-face theme-face-plain"></span>
-        <span class="theme-face theme-face-vault"></span>
-      </span>
-    </button>
-    <div class="fc-who">
-      <button id="who" class="fc-who-btn" type="button" aria-haspopup="true" aria-expanded="false"></button>
-      <div id="who-menu" class="fc-menu" hidden>
-        <a href="/">Back to the house</a>
-        <button data-theme-toggle type="button" aria-pressed="false">Plain design</button>
-        <button data-act="signout" type="button">Sign out</button>
-      </div>
-    </div>
-  </header>
+  {{bar:battle}}
 
   <main class="btl-main">
 
@@ -57,12 +35,11 @@
     -->
     <section id="screen-door" class="btl-screen" hidden>
       <div class="panel btl-door">
-        <p class="eyebrow">The revision room</p>
-        <h1 class="btl-door-head">Answer the card</h1>
+        <h1 class="btl-door-head">Battle</h1>
         <p class="btl-door-say">
-          A card is shown front first. Type what you think is on the back and
-          the house marks how close you got &mdash; on your own flashcards or
-          on a deck of ours, against somebody else or against nobody at all.
+          See the front of a card, type what&rsquo;s on the back, and get a
+          mark out of 100 for how close you got. Use your own flashcards or
+          one of our decks, on your own or against friends.
         </p>
 
         <div class="btl-door-acts">
@@ -75,11 +52,10 @@
           </form>
         </div>
         <p class="hint">
-          A room is four characters and lives in memory only. Share the code
-          and it is a duel; open one and start it alone and it is revision.
-          Either way the room is forgotten an hour after the last person
-          leaves. A code for a match already under way lets you watch it.
+          Share the room code to play against friends, or start on your own to
+          revise. If a match has already started, the code lets you watch.
         </p>
+        <p class="btl-door-bank"><a class="linkish" href="#questions">Browse every question</a></p>
       </div>
 
       <!-- Today's ten. The same cards for everybody, worked out from the date,
@@ -90,7 +66,31 @@
         <p class="btl-today-say" id="today-say"></p>
         <button class="btn primary" type="button" data-act="daily" id="today-play">Play today&rsquo;s ten</button>
         <ol class="btl-board" id="today-board"></ol>
-        <p class="hint">Only your first go of the day goes on the board. The day turns over at midnight GMT.</p>
+        <p class="hint">Only your first try each day goes on the board. New cards every day at midnight UTC.</p>
+      </div>
+    </section>
+
+    <!-- ============================================ the question list === -->
+    <!-- Reached from the front door at #questions, and only from there:
+         the server refuses it to anybody in a match. The answers are in the
+         page once a batch arrives; "Show answer" is for the reader, not a
+         lock. -->
+    <section id="screen-bank" class="btl-screen" hidden>
+      <div class="panel btl-bank">
+        <div class="btl-bank-head">
+          <h1 class="btl-door-head">Questions</h1>
+          <a class="linkish" href="#">&larr; Back to Battle</a>
+        </div>
+        <form id="bank-form" class="btl-bank-tools" autocomplete="off">
+          <label class="sr-only" for="bank-deck">Subject</label>
+          <select id="bank-deck"></select>
+          <label class="sr-only" for="bank-query">Search</label>
+          <input id="bank-query" type="search" maxlength="100" placeholder="Search questions and answers" spellcheck="false" />
+        </form>
+        <p class="hint" id="bank-count">&nbsp;</p>
+        <ol class="btl-bank-list" id="bank-list"></ol>
+        <button class="btn" id="bank-more" type="button" hidden>Show more</button>
+        <p class="hint">Today&rsquo;s ten daily questions are left out until tomorrow.</p>
       </div>
     </section>
 
@@ -99,41 +99,41 @@
       <div class="btl-lobby-grid">
 
         <div class="panel btl-setup">
-          <h2 class="btl-head">The match</h2>
+          <h2 class="btl-head">Match settings</h2>
 
           <div class="field">
-            <label>Who is playing</label>
-            <div class="btl-choice" id="pick-mode" role="group" aria-label="Who is playing">
+            <label>Players</label>
+            <div class="btl-choice" id="pick-mode" role="group" aria-label="Players">
               <button class="btl-opt" type="button" data-set="mode" data-value="duel">
-                <b>Duel</b><span>Everybody in the room, marked side by side</span>
+                <b>Duel</b><span>Everyone in the room</span>
               </button>
               <button class="btl-opt" type="button" data-set="mode" data-value="solo">
-                <b>Solo</b><span>Just you, just revision</span>
+                <b>Solo</b><span>Just you</span>
               </button>
             </div>
           </div>
 
           <div class="field">
-            <label>How it is settled</label>
-            <div class="btl-choice" id="pick-rule" role="group" aria-label="How it is settled">
+            <label>Scoring</label>
+            <div class="btl-choice" id="pick-rule" role="group" aria-label="Scoring">
               <button class="btl-opt" type="button" data-set="rule" data-value="marks">
-                <b>On marks</b><span>Every card is played, and the most marks takes it</span>
+                <b>Total marks</b><span>Highest total wins</span>
               </button>
               <button class="btl-opt" type="button" data-set="rule" data-value="sudden">
-                <b>Sudden death</b><span>Miss one and you are out &mdash; last one standing</span>
+                <b>Sudden death</b><span>Get one wrong and you&rsquo;re out</span>
               </button>
             </div>
             <p class="hint" id="rule-note" hidden></p>
           </div>
 
           <div class="field">
-            <label>What you are asked</label>
-            <div class="btl-choice" id="pick-source" role="group" aria-label="What you are asked">
+            <label>Cards</label>
+            <div class="btl-choice" id="pick-source" role="group" aria-label="Cards">
               <button class="btl-opt" type="button" data-set="source" data-value="preset">
-                <b>A house deck</b><span>A fixed set, the same for everybody</span>
+                <b>One of our decks</b><span>Pick a subject</span>
               </button>
               <button class="btl-opt" type="button" data-set="source" data-value="mine">
-                <b>Your flashcards</b><span>The cards in the room&rsquo;s collections</span>
+                <b>Your flashcards</b><span>From everyone in the room</span>
               </button>
             </div>
             <!--
@@ -143,15 +143,13 @@
               else's cards.
             -->
             <p class="hint" id="mine-note" hidden>
-              A duel on flashcards deals an <b>equal share from every
-              collection in the room</b> and shuffles them together, so
-              whatever knowing your own cards is worth, both sides get the
-              same amount of it.
+              Everyone&rsquo;s collection gets an <b>equal share</b> of the
+              cards, so nobody has more of their own cards than anyone else.
             </p>
           </div>
 
           <div class="field" id="deck-field">
-            <label for="deck">Which deck</label>
+            <label for="deck">Deck</label>
             <select id="deck" data-set="presetId"></select>
             <p class="hint" id="deck-blurb"></p>
           </div>
@@ -162,23 +160,23 @@
               <select id="length" data-set="length"></select>
             </div>
             <div class="field">
-              <label for="clock">Clock</label>
+              <label for="clock">Time limit</label>
               <select id="clock" data-set="clock"></select>
-              <p class="hint" id="clock-note">Per card. Untimed is the one revision wants.</p>
+              <p class="hint" id="clock-note">Time limit per card.</p>
             </div>
           </div>
 
-          <button id="start" class="btn primary btl-start" type="button">Deal the cards</button>
-          <p class="hint" id="host-note" hidden>Only the host sets the match up.</p>
+          <button id="start" class="btn primary btl-start" type="button">Start</button>
+          <p class="hint" id="host-note" hidden>Only the host can change these.</p>
         </div>
 
         <div class="panel btl-room">
-          <h2 class="btl-head">The room</h2>
+          <h2 class="btl-head">Room</h2>
           <p class="btl-code-say">Share this code</p>
           <p class="btl-code" id="room-code">&mdash;</p>
-          <button class="btn ghost btl-copy" type="button" data-act="copy">Copy the link</button>
+          <button class="btn ghost btl-copy" type="button" data-act="copy">Copy link</button>
           <ul class="btl-players" id="players"></ul>
-          <button class="btn ghost" type="button" data-act="leave">Leave the room</button>
+          <button class="btn ghost" type="button" data-act="leave">Leave</button>
         </div>
 
       </div>
@@ -211,25 +209,25 @@
 
         <form id="answer-form" class="btl-answer" autocomplete="off">
           <label class="sr-only" for="answer">Your answer</label>
-          <textarea id="answer" rows="3" placeholder="What is on the back?" spellcheck="false"></textarea>
-          <button class="btn primary" type="submit">Lay it down</button>
-          <p class="hint">Your own words are fine. The house marks the meaning, not the wording.</p>
+          <textarea id="answer" rows="3" placeholder="Your answer" spellcheck="false"></textarea>
+          <button class="btn primary" type="submit">Submit</button>
+          <p class="hint">Your own words are fine, and small typos are forgiven.</p>
         </form>
 
         <div id="waiting" class="btl-waiting" hidden>
-          <p class="btl-waiting-say">Answer in. Waiting for <span id="waiting-on"></span>&hellip;</p>
+          <p class="btl-waiting-say">Answer sent. Waiting for <span id="waiting-on"></span>&hellip;</p>
         </div>
       </article>
 
       <!-- Revealed. Only now does the back exist on this page. -->
       <div id="reveal" class="btl-reveal" hidden>
         <div class="panel btl-back">
-          <p class="eyebrow" id="back-label">The back of the card</p>
+          <p class="eyebrow" id="back-label">The answer</p>
           <p class="btl-back-text" id="card-back"></p>
         </div>
         <div id="marks" class="btl-marks"></div>
         <button id="next" class="btn primary" type="button">Next card</button>
-        <p class="hint" id="next-note" hidden>Waiting for the host to turn the next one over.</p>
+        <p class="hint" id="next-note" hidden>Waiting for the host to show the next card.</p>
       </div>
 
       <ol class="btl-running" id="running"></ol>
@@ -247,8 +245,8 @@
           <button id="retry" class="btn" type="button" hidden></button>
           <button id="again" class="btn ghost" type="button">Back to the lobby</button>
         </div>
-        <p class="hint" id="end-guest" hidden>The host decides what happens next: a rematch, the misses, or the lobby.</p>
-        <p class="btl-end-link"><a class="linkish" href="/flashcards">The collection</a></p>
+        <p class="hint" id="end-guest" hidden>Waiting for the host to choose what&rsquo;s next.</p>
+        <p class="btl-end-link"><a class="linkish" href="/flashcards">Your flashcards</a></p>
 
         <!-- The day's board, when this was the daily deck. -->
         <div class="btl-end-daily" id="end-daily" hidden>
@@ -261,6 +259,8 @@
     </section>
 
   </main>
+
+  {{foot}}
 
   <script src="/battle.js"></script>
 </body>

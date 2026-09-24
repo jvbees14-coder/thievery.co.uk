@@ -207,7 +207,7 @@
           const words = `<span class="sh-special-words"><b>${esc(sp.name)}</b><span>${esc(sp.say)}</span>
             <i>${sp.fixed ? 'Always in play' : on ? 'In play' : 'Left out'}</i></span>`;
           if (sp.fixed) {
-            return `<div class="sh-special is-fixed is-on" title="Always in play — cannot be taken out">
+            return `<div class="sh-special is-fixed is-on" title="Always in play">
               ${face}<span class="sh-lock" aria-hidden="true">&#128274;</span>${words}</div>`;
           }
           return `<button class="sh-special${on ? ' is-on' : ''}" type="button" data-act="special" data-key="${esc(sp.key)}"
@@ -221,14 +221,14 @@
     const people = s.players.filter((p) => !p.watching).length;
     const enough = people >= s.minPlayers;
     $('#start').disabled = !enough;
-    $('#start').textContent = enough ? `Deal to ${plural(people, 'player', 'players')}` : 'Waiting for somebody to join';
+    $('#start').textContent = enough ? `Deal to ${plural(people, 'player', 'players')}` : 'Waiting for someone to join';
   }
 
   // --- the table -------------------------------------------------------------
 
   const GOALS = {
     win: { word: 'Get rid of your cards', say: 'Going out now takes the best place left.' },
-    lose: { word: 'Hang on to them', say: 'The goal has turned. Going out now takes the worst place left.' },
+    lose: { word: 'Hang on to them', say: 'The goal has flipped. Going out now takes the worst place left.' },
   };
 
   function drawTable() {
@@ -243,14 +243,14 @@
     $('#goal').className = `sh-goal is-${g.goal}${g.flips !== lastFlips ? ' is-new' : ''}`;
     $('#goal-word').textContent = swapping ? 'Arrange your cards' : goal.word;
     $('#goal-say').textContent = swapping
-      ? 'Swap cards between your hand and your face-up row, then say you are ready.'
+      ? 'Swap cards between your hand and your face-up row, then press Ready.'
       : goal.say;
     lastFlips = g.flips;
 
     const banner = s.you.watching
-      ? 'You are watching. You will be dealt in to the next game if there is a seat.'
+      ? 'You’re watching. You’ll join the next game if there’s room.'
       : you && you.place != null
-        ? `You are out — ${ordinal(you.place)}. Watching the rest.`
+        ? `You’re out in ${ordinal(you.place)} place. Watching the rest.`
         : '';
     $('#table-banner').textContent = banner;
     $('#table-banner').hidden = !banner;
@@ -300,7 +300,7 @@
   function need(g) {
     if (g.cover) return 'The five must be covered: higher than a five, or a two.';
     const top = g.pile.top;
-    if (!top) return 'The pile is empty — anything goes.';
+    if (!top) return 'The pile is empty, so anything goes.';
     const always = ['twos', 'tens'];
     if (g.specials.four) always.push('fours');
     if (g.specials.five) always.push('fives');
@@ -319,10 +319,10 @@
         ? 'Ready. Waiting for the others.'
         : 'Arrange, then say ready.'
       : you.place != null
-        ? `Out — ${ordinal(you.place)}`
+        ? `Out: ${ordinal(you.place)}`
         : myTurn
           ? g.cover
-            ? 'Your turn — cover the five'
+            ? 'Your turn: cover the five'
             : 'Your turn'
           : `${g.seats[g.turn].name} to play`;
     $('#mine').classList.toggle('is-turn', myTurn);
@@ -396,7 +396,7 @@
       : s.players.find((p) => !p.connected && p.seat === g.turn);
     $('#nudge-btn').hidden = !stuck;
     if (stuck) {
-      $('#nudge-btn').textContent = swapping ? `${stuck.name} is away — deal them in as they are` : `${stuck.name} is away — move them on`;
+      $('#nudge-btn').textContent = swapping ? `${stuck.name} is away: start without them` : `${stuck.name} is away: skip their turn`;
       $('#nudge-btn').dataset.id = stuck.id;
     }
   }
@@ -427,8 +427,8 @@
       )
       .join('');
     $('#end-note').textContent = s.game.flips
-      ? `The goal turned over ${plural(s.game.flips, 'time', 'times')}.`
-      : 'The goal never turned over.';
+      ? `The goal flipped ${plural(s.game.flips, 'time', 'times')}.`
+      : 'The goal never flipped.';
     $('#end-host').hidden = !s.you.host;
     $('#end-guest').hidden = s.you.host;
   }

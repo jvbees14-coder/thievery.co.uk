@@ -156,10 +156,10 @@ async function run() {
   const bob = visitor();
   let aliceState;
 
-  await check('an account opens and is dealt three cards', async () => {
+  await check('an account opens with an empty collection', async () => {
     aliceState = ok(await alice.call('register', { method: 'POST', body: { username: 'alice', password: 'a-long-enough-password', displayName: 'Alice' } }), 'register');
     assert.equal(aliceState.user.username, 'alice');
-    assert.equal(aliceState.cards.length, 3, 'a new account should arrive with three cards');
+    assert.equal(aliceState.cards.length, 0, 'a new account should arrive with no cards');
     assert.equal(aliceState.user.admin, false);
   });
 
@@ -210,7 +210,8 @@ async function run() {
     assert.ok(card.value > 0);
     assert.ok(card.mint > 0);
     assert.ok(['common', 'uncommon', 'rare', 'epic', 'legendary'].includes(card.rarity), 'a member cannot mint a mythic');
-    assert.equal(res.cards.length, 4);
+    assert.equal(res.cards.length, 1);
+    aliceState = res;
   });
 
   await check('an empty card is refused', async () => {
@@ -551,13 +552,14 @@ async function run() {
   await check('closing an account takes its cards with it', async () => {
     const victim = visitor();
     ok(await victim.call('register', { method: 'POST', body: { username: 'departing', password: 'a-long-enough-password' } }), 'register');
+    ok(await victim.call('cards', { method: 'POST', body: goodCard(900) }), 'create');
     const overview = ok(await house.call('admin/overview'), 'overview');
     const id = overview.users.find((u) => u.username === 'departing').id;
     const before = ok(await house.call('admin/overview'), 'overview').stats.cards;
     ok(await house.call('admin/users/' + id, { method: 'DELETE' }), 'delete');
     const after = ok(await house.call('admin/overview'), 'overview');
     assert.ok(!after.users.some((u) => u.username === 'departing'));
-    assert.equal(after.stats.cards, before - 3, 'the three welcome cards should have gone too');
+    assert.equal(after.stats.cards, before - 1, 'its card should have gone too');
     assert.equal((await victim.call('me')).status, 401, 'a closed account should not still be signed in');
   });
 
@@ -612,6 +614,36 @@ async function run() {
     assert.equal(after.status, 200, 'the session did not survive the restart');
     assert.equal(after.body.cards.length, before.cards.length, 'the collection changed size over a restart');
     assert.equal(after.body.user.username, 'alice');
+  });
+
+  await check('the old welcome cards are taken back on boot, wherever they are', async () => {
+    // Accounts used to be dealt three cards with a 'welcomed' event in their
+    // history. Plant two the way they were left, one in the collection and
+    // one on the trading post, and a restart should take both back and
+    // nothing else.
+    const before = ok(await alice.call('me'), 'me');
+    child.kill('SIGTERM');
+    await new Promise((r) => child.once('exit', r));
+    const file = path.join(DATA_DIR, 'flashcards.json');
+    const doc = JSON.parse(fs.readFileSync(file, 'utf8'));
+    const like = doc.cards[before.cards[0].id];
+    for (const id of ['welcome-kept', 'welcome-pooled']) {
+      doc.cards[id] = {
+        ...like,
+        id,
+        authorId: null,
+        authorName: 'The House',
+        pooled: id === 'welcome-pooled',
+        history: [{ at: 1, event: 'struck' }, { at: 1, event: 'welcomed', to: like.ownerId }],
+      };
+    }
+    doc.pool.push('welcome-pooled');
+    fs.writeFileSync(file, JSON.stringify(doc));
+    await startServer();
+    const after = ok(await alice.call('me'), 'me');
+    assert.equal(after.cards.length, before.cards.length, 'the welcome cards were not taken back, or took something with them');
+    assert.ok(!after.cards.some((c) => c.id.startsWith('welcome-')));
+    assert.ok(!after.pool.some((p) => p.id.startsWith('welcome-')), 'a welcome card was left on the trading post');
   });
 
   console.log(`\n${checks} checks passed.`);
