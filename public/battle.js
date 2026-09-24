@@ -67,6 +67,7 @@
       if (!msg || typeof msg.type !== 'string') return;
 
       if (msg.type === 'battle:you') {
+        if (testing && !state) say({ type: 'battle:create' });
         whoami = msg.name;
         today = msg.daily || null;
         $('#who').textContent = whoami;
@@ -87,6 +88,10 @@
         const was = state && state.match ? state.match.at : -1;
         const wasPhase = state && state.match ? state.match.phase : null;
         state = msg.state;
+        if (testing && state.you.host && !state.match) {
+          say({ type: 'battle:settings', mode: 'solo', source: 'mine', ownDeck: testing.deck, ownSub: testing.sub });
+          testing = null;
+        }
         if (location.pathname !== '/battle/' + state.code) history.replaceState(null, '', '/battle/' + state.code);
         // A new card, or a card that has just turned over, means the box is
         // free again and whatever was typed in it is spent.
@@ -111,6 +116,11 @@
     });
     ws.addEventListener('error', () => {});
   }
+
+  // Arrived from "Test yourself" in the flashcards room: a deck, and maybe a
+  // sub-deck, to open a solo room on. Used once and forgotten.
+  const asked = new URLSearchParams(location.search);
+  let testing = asked.get('deck') ? { deck: asked.get('deck'), sub: asked.get('sub') || '' } : null;
 
   function say(obj) {
     if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
@@ -242,7 +252,8 @@
     for (const el of [$('#deck'), $('#length'), $('#clock')]) el.disabled = !host;
 
     $('#deck-field').hidden = s.source !== 'preset';
-    $('#mine-note').hidden = s.source !== 'mine';
+    $('#mine-note').hidden = s.source !== 'mine' || s.mode !== 'duel';
+    drawOwnPickers(s, host);
     const deck = catalog && catalog.decks.find((d) => d.id === s.presetId);
     $('#deck-blurb').textContent = deck
       ? deck.blurb +
@@ -270,6 +281,40 @@
     $('#start').textContent =
       s.mode === 'solo' ? 'Start revising' : alone ? 'Waiting for someone to join' : 'Start';
     $('#start').disabled = s.mode === 'duel' && alone;
+  }
+
+  // Your own flashcards, solo: a deck, and a sub-deck that defaults to all of
+  // it. The host picks from their own decks; anybody else is shown the names.
+  function drawOwnPickers(s, host) {
+    const shown = s.source === 'mine' && s.mode === 'solo';
+    $('#own-fields').hidden = !shown;
+    $('#own-note').hidden = true;
+    if (!shown) return;
+    const deckSel = $('#own-deck');
+    const subSel = $('#own-sub');
+    if (host) {
+      const decks = s.yourDecks || [];
+      deckSel.innerHTML =
+        '<option value="">All your flashcards</option>' +
+        decks.map((d) => `<option value="${esc(d.id)}">${esc(d.name)} (${d.count})</option>`).join('');
+      deckSel.value = s.ownDeck || '';
+      const deck = decks.find((d) => d.id === s.ownDeck);
+      subSel.innerHTML =
+        `<option value="">${deck ? 'All flashcards in this deck' : 'Pick a deck first'}</option>` +
+        (deck ? deck.subs.map((x) => `<option value="${esc(x.id)}">${esc(x.name)} (${x.count})</option>`).join('') : '');
+      subSel.value = s.ownSub || '';
+      deckSel.disabled = false;
+      subSel.disabled = !deck || !deck.subs.length;
+      if (!decks.length) {
+        $('#own-note').hidden = false;
+        $('#own-note').innerHTML = 'You can sort your cards into decks in <a class="linkish" href="/flashcards">Flashcards</a>.';
+      }
+    } else {
+      deckSel.innerHTML = `<option>${esc(s.ownDeckName || 'All their flashcards')}</option>`;
+      subSel.innerHTML = `<option>${esc(s.ownSubName || (s.ownDeck ? 'All flashcards in this deck' : '—'))}</option>`;
+      deckSel.disabled = true;
+      subSel.disabled = true;
+    }
   }
 
   // --- a card ----------------------------------------------------------------
@@ -643,11 +688,12 @@
   $('#rematch').addEventListener('click', () => say({ type: 'battle:rematch' }));
   $('#retry').addEventListener('click', () => say({ type: 'battle:retry' }));
 
-  for (const id of ['#deck', '#length', '#clock']) {
+  for (const id of ['#deck', '#length', '#clock', '#own-deck', '#own-sub']) {
     $(id).addEventListener('change', (ev) => {
       const key = ev.target.dataset.set;
       const raw = ev.target.value;
-      say({ type: 'battle:settings', [key]: key === 'presetId' ? raw : Number(raw) });
+      const text = key === 'presetId' || key === 'ownDeck' || key === 'ownSub';
+      say({ type: 'battle:settings', [key]: text ? raw : Number(raw) });
     });
   }
 

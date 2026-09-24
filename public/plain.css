@@ -284,3 +284,6 @@
    slab, and its letters are in the hairline colour, which here is a border. */
 :root[data-theme="plain"] .btl-q { background: var(--ink-4); }
 :root[data-theme="plain"] .btl-q-options b { color: var(--text-faint); }
+
+/* --- decks and sub-decks ---------------------------------------------------- */
+:root[data-theme="plain"] .fc-deck { background: var(--ink-2); }

@@ -70,6 +70,7 @@ function empty() {
     mints: 0,      // how many cards have ever been struck, for serial numbers
     stats: {},     // id -> how that account has fared at the card table
     daily: {},     // YYYY-MM-DD -> id -> the first run of that day's deck
+    sections: {},  // id -> a member's own deck or sub-deck (sections.js)
   };
 }
 

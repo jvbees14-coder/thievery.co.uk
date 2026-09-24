@@ -21,6 +21,7 @@
 import * as Accounts from './accounts.js';
 import * as Cards from './cards.js';
 import * as Trading from './trading.js';
+import * as Sections from './sections.js';
 import * as Door from './door.js';
 import * as Stats from './stats.js';
 import { data, touch } from './store.js';
@@ -75,7 +76,8 @@ function collectionFor(user) {
   for (const r of Cards.RARITIES) byRarity[r] = 0;
   for (const c of cards) byRarity[c.rarity] += 1;
   return {
-    cards: cards.map((c) => Cards.publicCard(c, user.id)),
+    cards: cards.map((c) => ({ ...Cards.publicCard(c, user.id), deck: Sections.sectionOf(c)?.id || null })),
+    decks: Sections.listFor(user.id),
     stats: { count: cards.length, worth, byRarity, limit: Cards.CARDS_PER_USER },
   };
 }
@@ -94,6 +96,7 @@ function snapshot(user) {
       category: Cards.CATEGORY_MAX,
       tags: Cards.TAGS_MAX,
       tag: Cards.TAG_MAX,
+      deckName: Sections.NAME_MAX,
     },
   };
 }
@@ -121,8 +124,12 @@ async function handleAppraise(req, res) {
 async function handleCreateCard(req, res) {
   const user = requireUser(req);
   const body = await readBody(req);
+  // The deck is checked before the card is struck, so a bad one refuses the
+  // whole thing rather than leaving a card made and unfiled.
+  if (body.deck) Sections.own(user.id, body.deck);
   const card = Cards.createCard(user, body);
-  send(res, 200, { card: Cards.publicCard(card, user.id), ...snapshot(user) });
+  if (body.deck) Sections.file(user, card, body.deck);
+  send(res, 200, { card: { ...Cards.publicCard(card, user.id), deck: Sections.sectionOf(card)?.id || null }, ...snapshot(user) });
 }
 
 async function handleEditCard(req, res, id) {
@@ -130,8 +137,32 @@ async function handleEditCard(req, res, id) {
   const card = ownCard(user, id);
   if (card.pooled) throw Object.assign(new Error('Take it off the table before you re-cut it.'), { status: 400 });
   const body = await readBody(req);
+  if (body.deck) Sections.own(user.id, body.deck);
   Cards.editCard(card, body);
-  send(res, 200, { card: Cards.publicCard(card, user.id), ...snapshot(user) });
+  if (body.deck !== undefined) Sections.file(user, card, body.deck);
+  send(res, 200, { card: { ...Cards.publicCard(card, user.id), deck: Sections.sectionOf(card)?.id || null }, ...snapshot(user) });
+}
+
+// --- decks and sub-decks ----------------------------------------------------
+
+async function handleCreateDeck(req, res) {
+  const user = requireUser(req);
+  const body = await readBody(req);
+  const section = Sections.create(user, { name: body.name, parentId: body.parentId || null });
+  send(res, 200, { deck: { id: section.id, name: section.name, parentId: section.parentId }, ...snapshot(user) });
+}
+
+async function handleRenameDeck(req, res, id) {
+  const user = requireUser(req);
+  const body = await readBody(req);
+  Sections.rename(user, id, body.name);
+  send(res, 200, snapshot(user));
+}
+
+function handleDeleteDeck(req, res, id) {
+  const user = requireUser(req);
+  Sections.remove(user, id);
+  send(res, 200, snapshot(user));
 }
 
 function handleDeleteCard(req, res, id) {
@@ -288,6 +319,7 @@ export function adminDeleteUser(req, res, id) {
   // And so does the record of how they played. An account that is gone must
   // not leave a row behind keyed to an id nothing will ever look up again.
   delete data().stats[user.id];
+  Sections.removeAllFor(user.id);
   touch();
   adminOverview(req, res);
 }
@@ -372,6 +404,7 @@ async function adminPatchCard(req, res, id) {
       Trading.unpool(card);
       (card.history ||= []).push({ at: Date.now(), event: 'moved', from: card.ownerId, to: to.id });
       card.ownerId = to.id;
+      Sections.unfile(card);
     }
   }
 
@@ -505,6 +538,11 @@ export function handle(req, res, url) {
       if (head === 'cards' && !a && method === 'POST') return handleCreateCard(req, res);
       if (head === 'cards' && a && method === 'POST') return handleEditCard(req, res, a);
       if (head === 'cards' && a && method === 'DELETE') return handleDeleteCard(req, res, a);
+
+      // --- a member's own decks and sub-decks
+      if (head === 'decks' && !a && method === 'POST') return handleCreateDeck(req, res);
+      if (head === 'decks' && a && method === 'POST') return handleRenameDeck(req, res, a);
+      if (head === 'decks' && a && method === 'DELETE') return handleDeleteDeck(req, res, a);
 
       // --- the trading post
       if (head === 'trade' && a === 'offer' && method === 'POST') return handleOffer(req, res);

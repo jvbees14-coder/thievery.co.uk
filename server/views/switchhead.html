@@ -62,8 +62,8 @@
           <li>Three cards face down, three face up on top of them, three in your hand. Before the first card you may swap cards between your hand and your face-up row.</li>
           <li>Play a card at least as high as the one on the pile (several of one rank at once, if you have them) and draw back up to three while the deck lasts. Can&rsquo;t, or don&rsquo;t want to? Pick up the pile.</li>
           <li>When your hand is gone, play from your face-up row; when that is gone, turn the face-down cards over one at a time and hope.</li>
-          <li><b>The swap.</b> Every ten to fifteen turns two players&rsquo; hands trade places. Nothing warns you.</li>
-          <li><b>The goal.</b> Every ten to fifteen turns it flips. While it says <em>win</em>, going out takes the best place left. While it says <em>lose</em>, going out takes the worst.</li>
+          <li><b>The swap.</b> Every ten to fifteen turns (or however many the host sets) two players&rsquo; hands trade places. Nothing warns you.</li>
+          <li><b>The goal.</b> Every ten to fifteen turns (the host can change this too) it flips. While it says <em>win</em>, going out takes the best place left. While it says <em>lose</em>, going out takes the worst.</li>
         </ul>
       </div>
     </section>
@@ -80,6 +80,29 @@
           <!-- Filled from the catalog the server sends, so that what this
                page promises and what the rules do are written down once. -->
           <div class="sh-specials" id="specials"></div>
+
+          <h2 class="btl-head sh-timing-head">Timing</h2>
+          <div class="sh-timings">
+            <div class="sh-timing">
+              <span class="sh-timing-label">Hands swap every</span>
+              <label class="sr-only" for="swap-min">Fewest turns between hand swaps</label>
+              <input id="swap-min" type="number" inputmode="numeric" data-timing="swapMin" />
+              <span>to</span>
+              <label class="sr-only" for="swap-max">Most turns between hand swaps</label>
+              <input id="swap-max" type="number" inputmode="numeric" data-timing="swapMax" />
+              <span>turns</span>
+            </div>
+            <div class="sh-timing">
+              <span class="sh-timing-label">The goal flips every</span>
+              <label class="sr-only" for="flip-min">Fewest turns between goal flips</label>
+              <input id="flip-min" type="number" inputmode="numeric" data-timing="flipMin" />
+              <span>to</span>
+              <label class="sr-only" for="flip-max">Most turns between goal flips</label>
+              <input id="flip-max" type="number" inputmode="numeric" data-timing="flipMax" />
+              <span>turns</span>
+            </div>
+          </div>
+          <p class="hint" id="timing-note">A random number of turns in that range, picked again after each one.</p>
           <button id="start" class="btn primary btl-start" type="button">Deal</button>
           <p class="hint" id="host-note" hidden>Only the host picks the cards and deals.</p>
         </div>

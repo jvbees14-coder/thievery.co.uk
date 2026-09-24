@@ -149,6 +149,21 @@
             </p>
           </div>
 
+          <!-- Your own flashcards, solo: which of your decks, and which
+               sub-deck of it. A duel deals from everybody's whole collection
+               instead, so these are only shown for solo. -->
+          <div class="btl-dials" id="own-fields" hidden>
+            <div class="field">
+              <label for="own-deck">Deck</label>
+              <select id="own-deck" data-set="ownDeck"></select>
+            </div>
+            <div class="field">
+              <label for="own-sub">Sub-deck</label>
+              <select id="own-sub" data-set="ownSub"></select>
+            </div>
+          </div>
+          <p class="hint" id="own-note" hidden></p>
+
           <div class="field" id="deck-field">
             <label for="deck">Deck</label>
             <select id="deck" data-set="presetId"></select>

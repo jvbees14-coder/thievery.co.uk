@@ -852,6 +852,67 @@ async function run() {
     c.close();
   });
 
+  // --- your own decks ------------------------------------------------------
+
+  await check('solo on your own deck deals only that deck, and a sub-deck only that', async () => {
+    const eve = await member('eve');
+    const deck = ok(await eve.fc('decks', { method: 'POST', body: { name: 'Rivers' } }), 'a deck').deck.id;
+    const sub = ok(await eve.fc('decks', { method: 'POST', body: { name: 'Long ones', parentId: deck } }), 'a sub-deck').deck.id;
+    const make = async (i, where) =>
+      ok(
+        await eve.fc('cards', {
+          method: 'POST',
+          body: { front: `Eve asks river question ${i}`, back: `Eve answers river number ${i} plainly`, category: 'test', deck: where },
+        }),
+        'a card'
+      ).card.front;
+    const inSub = [await make(1, sub), await make(2, sub)];
+    const inDeck = [...inSub, await make(3, deck), await make(4, deck)];
+    const loose = [await make(5, ''), await make(6, '')];
+
+    const e = new Battler(eve);
+    await e.connect();
+    e.send({ type: 'battle:create' });
+    await e.waitFor((st) => !!st.code, 'a room');
+    e.send({ type: 'battle:settings', mode: 'solo', source: 'mine', ownDeck: deck, length: 10, clock: 0 });
+    await e.waitFor((st) => st.ownDeck === deck, 'the deck');
+    assert.equal(e.state.yourDecks[0].count, 4, 'the lobby is not told how many cards the deck holds');
+    assert.equal(e.state.ownSub, '', 'a new deck does not start on all of itself');
+
+    const fronts = async () => {
+      const seen = new Set();
+      e.send({ type: 'battle:start' });
+      let st = await e.waitFor((x) => x.match && x.match.phase === 'asking', 'the first card');
+      const total = st.match.total;
+      for (let i = 0; i < total; i++) {
+        st = await e.waitFor((x) => x.match && x.match.at === i && x.match.phase === 'asking', `card ${i + 1}`);
+        seen.add(st.match.card.front);
+        e.send({ type: 'battle:answer', text: 'no idea' });
+        st = await e.waitFor((x) => x.match && (x.match.phase !== 'asking' || x.match.at !== i), 'the reveal');
+        if (st.match.phase === 'reveal') e.send({ type: 'battle:next' });
+      }
+      await e.waitFor((x) => x.match && x.match.phase === 'ended', 'the end');
+      e.send({ type: 'battle:again' });
+      await e.waitFor((x) => !x.match, 'the lobby');
+      return seen;
+    };
+
+    const whole = await fronts();
+    assert.deepEqual([...whole].sort(), [...inDeck].sort(), 'the deck dealt something else, or not all of itself');
+    assert.ok(loose.every((x) => !whole.has(x)), 'an unfiled card was dealt');
+
+    e.send({ type: 'battle:settings', ownSub: sub });
+    await e.waitFor((st) => st.ownSub === sub, 'the sub-deck');
+    const part = await fronts();
+    assert.deepEqual([...part].sort(), [...inSub].sort(), 'the sub-deck dealt something else');
+
+    // Somebody else's deck is not a setting anybody can choose.
+    const stranger = ok(await (await member('fern')).fc('decks', { method: 'POST', body: { name: 'Hers' } }), 'her deck').deck.id;
+    assert.match(await e.expectError({ type: 'battle:settings', ownDeck: stranger }, "another member's deck"), /no such deck/i);
+    assert.match(await e.expectError({ type: 'battle:settings', ownDeck: sub }, 'a sub-deck as a deck'), /sub-deck, not a deck/i);
+    e.close();
+  });
+
   // --- leaving --------------------------------------------------------------
 
   await check('a card is not left open by somebody who has gone', async () => {

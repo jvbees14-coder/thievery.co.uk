@@ -584,3 +584,25 @@ textarea:focus, select:focus, input:focus {
      the card still reads correctly in plain black if the request is refused. */
   .fc-print-card, .fc-print-card::before, .fc-page { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* --- decks and sub-decks ------------------------------------------------------- */
+
+.fc-deck-new { display: flex; gap: 10px; margin: 0 0 20px; max-width: 560px; }
+.fc-deck-new input { flex: 1; }
+.fc-decks { display: flex; flex-direction: column; gap: 12px; max-width: 760px; }
+.fc-deck { border: 1px solid var(--brass-faint); border-radius: var(--radius); padding: 10px 14px 12px; background: rgba(16, 19, 29, 0.6); }
+.fc-deck-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 6px 0; }
+.fc-deck-row.is-sub { padding-left: 22px; border-top: 1px solid var(--brass-ghost); }
+.fc-deck-row.is-sub .fc-deck-name::before { content: "› "; color: var(--text-faint); }
+.fc-deck-name { font-weight: 600; color: var(--ivory); }
+.fc-deck-row.is-sub .fc-deck-name { font-weight: 400; color: var(--text); }
+.fc-deck-acts { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+.fc-deck-acts a.fc-op { text-decoration: none; }
+.fc-op.is-off { opacity: 0.45; cursor: default; }
+.fc-sub-new { display: flex; gap: 8px; margin: 8px 0 0 22px; }
+.fc-sub-new input { flex: 1; max-width: 320px; padding: 7px 10px; }
+.fc-deck-tag { color: var(--brass); }
+@media (max-width: 560px) {
+  .fc-deck-new, .fc-sub-new { flex-direction: column; }
+  .fc-deck-acts { margin-left: 0; }
+}

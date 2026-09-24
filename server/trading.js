@@ -169,6 +169,8 @@ function handOver(card, toUserId, tradeId) {
   const from = card.ownerId;
   card.ownerId = toUserId;
   card.pooled = false;
+  // Filed in the old owner's deck, which the new owner does not have.
+  delete card.section;
   removeFromPool(card.id);
   (card.history ||= []).push({ at: Date.now(), event: 'traded', from, to: toUserId, trade: tradeId });
 }

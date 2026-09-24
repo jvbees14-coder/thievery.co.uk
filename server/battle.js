@@ -77,6 +77,7 @@
 import crypto from 'node:crypto';
 import * as Accounts from './accounts.js';
 import * as Cards from './cards.js';
+import * as Sections from './sections.js';
 import * as Decks from './decks.js';
 import * as Daily from './daily.js';
 import * as Grade from './grade.js';
@@ -167,6 +168,12 @@ function createRoom() {
     length: DEFAULT_LENGTH,
     clock: DEFAULT_CLOCK,
     rule: 'marks', // 'marks' or 'sudden'
+    // On the host's own flashcards, solo: which of their decks, and which
+    // sub-deck of it. Empty is all of it. A duel ignores both, because it
+    // deals an equal share of every collection and one player's decks are
+    // not in anybody else's.
+    ownDeck: '',
+    ownSub: '',
     daily: null, // the day's key while the room is playing the daily deck
     players: [],
     match: null,
@@ -199,7 +206,12 @@ function forget(room) {
 function removePlayer(room, player) {
   const i = room.players.indexOf(player);
   if (i >= 0) room.players.splice(i, 1);
-  if (room.hostId === player.id) room.hostId = room.players[0]?.id ?? null;
+  if (room.hostId === player.id) {
+    room.hostId = room.players[0]?.id ?? null;
+    // The chosen deck was the old host's, and the new one has none of it.
+    room.ownDeck = '';
+    room.ownSub = '';
+  }
   if (!room.players.length) {
     room.emptySince = Date.now();
     // Nobody left and no match to come back to: that code will never be typed
@@ -341,12 +353,16 @@ function dealFrom(room, people) {
   // Members' own cards. Everybody's collection is read first, so that a
   // player with nothing in theirs is named rather than silently contributing
   // none and losing a duel they never had a card in.
+  const narrowed = room.mode === 'solo' && room.ownDeck;
   const holdings = people.map((p) => {
-    const owned = p.userId ? Cards.cardsOf(p.userId) : [];
+    const owned = !p.userId ? [] : narrowed ? Sections.cardsIn(p.userId, room.ownDeck, room.ownSub) : Cards.cardsOf(p.userId);
     return { player: p, cards: shuffled(owned.filter((c) => c.front && c.back)) };
   });
 
   const empty = holdings.filter((h) => !h.cards.length);
+  if (narrowed && empty.length) {
+    throw new Error(room.ownSub ? 'That sub-deck has no cards in it yet.' : 'That deck has no cards in it yet.');
+  }
   if (empty.length) {
     const who = empty.map((h) => h.player.name).join(' and ');
     throw new Error(
@@ -673,6 +689,14 @@ export function viewFor(room, player) {
     length: room.length,
     clock: room.clock,
     rule: room.rule,
+    ownDeck: room.ownDeck,
+    ownSub: room.ownSub,
+    // Their names, for everybody else in the room, who cannot see the host's decks.
+    ownDeckName: (room.ownDeck && Sections.byId(room.ownDeck)?.name) || '',
+    ownSubName: (room.ownSub && Sections.byId(room.ownSub)?.name) || '',
+    // The viewer's own decks, for the lobby's pickers. Names and counts only.
+    // Sent in the lobby and not during a match, where nothing reads them.
+    yourDecks: room.match ? null : player.userId ? Sections.listFor(player.userId) : [],
     pass: PASS,
     // While the room is on the daily deck: which day, which deck, and the
     // board as it stands, so the result screen can say where the run landed.
@@ -1018,6 +1042,26 @@ function settings(room, player, msg) {
     if (!Decks.has(msg.presetId)) throw new Error('No such deck.');
     room.presetId = String(msg.presetId);
   }
+  // The host's own deck, and then the sub-deck, which must be inside it. A
+  // new deck starts on all of itself.
+  if (msg.ownDeck !== undefined) {
+    const id = String(msg.ownDeck || '');
+    if (id) {
+      const deck = Sections.own(player.userId, id);
+      if (deck.parentId) throw new Error('That is a sub-deck, not a deck.');
+    }
+    if (id !== room.ownDeck) room.ownSub = '';
+    room.ownDeck = id;
+  }
+  if (msg.ownSub !== undefined) {
+    const id = String(msg.ownSub || '');
+    if (id) {
+      if (!room.ownDeck) throw new Error('Pick a deck first.');
+      const sub = Sections.own(player.userId, id);
+      if (sub.parentId !== room.ownDeck) throw new Error('That sub-deck is not in that deck.');
+    }
+    room.ownSub = id;
+  }
   if (msg.length !== undefined) {
     const n = Number(msg.length);
     if (!LENGTHS.includes(n)) throw new Error('That is not one of the match lengths.');
@@ -1107,7 +1151,11 @@ function toLobby(room) {
   for (const p of room.players) {
     if (p.watcher && seated(room).length < MAX_PLAYERS) p.watcher = false;
   }
-  if (!room.players.some((p) => p.id === room.hostId)) room.hostId = seated(room)[0]?.id ?? null;
+  if (!room.players.some((p) => p.id === room.hostId)) {
+    room.hostId = seated(room)[0]?.id ?? null;
+    room.ownDeck = '';
+    room.ownSub = '';
+  }
   if (!room.players.length) forget(room);
 }
 

@@ -39,6 +39,7 @@
   <main class="fc-main">
     <nav class="fc-tabs" role="tablist">
       <button class="fc-tab is-on" data-tab="collection" role="tab">Collection</button>
+      <button class="fc-tab" data-tab="decks" role="tab">Decks</button>
       <button class="fc-tab" data-tab="make" role="tab">Make a card</button>
       <button class="fc-tab" data-tab="trade" role="tab">Trading post</button>
       <button class="fc-tab" data-tab="print" role="tab">Print</button>
@@ -51,6 +52,9 @@
 
       <div class="fc-toolbar">
         <input id="search" class="fc-search" type="search" placeholder="Search fronts, backs, categories&hellip;" />
+        <select id="filter-deck" class="fc-select" aria-label="Filter by deck">
+          <option value="">Every deck</option>
+        </select>
         <select id="filter-rarity" class="fc-select" aria-label="Filter by rarity">
           <option value="">Every rarity</option>
         </select>
@@ -68,6 +72,23 @@
       <p id="cards-empty" class="fc-empty" hidden>
         Nothing in the collection yet. <button class="linkish" data-goto="make" type="button">Make a card</button>.
       </p>
+    </section>
+
+    <!-- ------------------------------------------------------------ decks -->
+    <section id="tab-decks" class="fc-pane" hidden>
+      <h2 class="fc-h">Decks</h2>
+      <p class="fc-lede">
+        Sort your cards into decks, and decks into sub-decks, then test
+        yourself on just that part in Battle. Each card goes in one deck or
+        sub-deck, which you choose when you make or edit it.
+      </p>
+      <form id="new-deck" class="fc-deck-new" autocomplete="off">
+        <label class="sr-only" for="new-deck-name">New deck name</label>
+        <input id="new-deck-name" maxlength="40" placeholder="New deck, e.g. Biology" />
+        <button class="btn primary" type="submit">Create deck</button>
+      </form>
+      <div id="deck-list" class="fc-decks"></div>
+      <p id="decks-empty" class="fc-empty" hidden>No decks yet.</p>
     </section>
 
     <!-- ------------------------------------------------------------- make -->
@@ -97,6 +118,14 @@
               <label for="f-category">Category <span class="opt">optional</span></label>
               <input id="f-category" maxlength="24" placeholder="Art" />
             </div>
+          </div>
+          <div class="field">
+            <label for="f-deck">Deck <span class="opt">optional</span></label>
+            <select id="f-deck"><option value="">No deck</option></select>
+            <p class="hint" id="f-deck-hint" hidden>
+              To put cards in a deck, make one in the
+              <button class="linkish" data-goto="decks" type="button">Decks</button> tab.
+            </p>
           </div>
           <div class="field">
             <label for="f-tags">Tags <span class="opt">up to four, comma separated</span></label>

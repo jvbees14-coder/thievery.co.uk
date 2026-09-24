@@ -80,6 +80,29 @@ export const SWAP_MAX = 15;
 export const FLIP_MIN = 10;
 export const FLIP_MAX = 15;
 
+// Those four are the defaults. The host may set each range, between these
+// bounds, and `timings` is how a game carries what they chose. One turn is the
+// shortest, which is chaos but is a game; fifty is the longest, which at most
+// tables means it never happens, and that is a game too.
+export const COUNT_LOWEST = 1;
+export const COUNT_HIGHEST = 50;
+export const DEFAULT_TIMINGS = Object.freeze({ swapMin: SWAP_MIN, swapMax: SWAP_MAX, flipMin: FLIP_MIN, flipMax: FLIP_MAX });
+
+/** A set of timings, checked: whole turns, in bounds, and each min no more than its max. */
+export function cleanTimings(t = {}) {
+  const out = {};
+  for (const key of Object.keys(DEFAULT_TIMINGS)) {
+    const v = t[key] === undefined ? DEFAULT_TIMINGS[key] : Number(t[key]);
+    if (!Number.isInteger(v) || v < COUNT_LOWEST || v > COUNT_HIGHEST) {
+      throw new Error(`A count is a whole number of turns from ${COUNT_LOWEST} to ${COUNT_HIGHEST}.`);
+    }
+    out[key] = v;
+  }
+  if (out.swapMin > out.swapMax) throw new Error('The fewest turns between swaps cannot be more than the most.');
+  if (out.flipMin > out.flipMax) throw new Error('The fewest turns between goal flips cannot be more than the most.');
+  return out;
+}
+
 const SUITS = ['S', 'H', 'D', 'C'];
 const RANKS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]; // ace high
 
@@ -138,8 +161,9 @@ export function describe(cards) {
  * a player is given is their index in it. `rand` is for the tests, which
  * would rather know what was dealt.
  */
-export function createGame({ players, specials = {}, rand = systemRand }) {
+export function createGame({ players, specials = {}, timings = DEFAULT_TIMINGS, rand = systemRand }) {
   const n = players.length;
+  const t = cleanTimings(timings);
   if (n < MIN_PLAYERS || n > MAX_PLAYERS) throw new Error(`Switchhead is for ${MIN_PLAYERS} to ${MAX_PLAYERS} players.`);
 
   const packs = n >= PACK_AT ? 2 : 1;
@@ -178,9 +202,10 @@ export function createGame({ players, specials = {}, rand = systemRand }) {
     burnt: 0,
     turn: 0,
     goal: 'win',
-    flipIn: between(rand, FLIP_MIN, FLIP_MAX),
+    flipIn: between(rand, t.flipMin, t.flipMax),
     flips: 0,
-    swapIn: between(rand, SWAP_MIN, SWAP_MAX),
+    swapIn: between(rand, t.swapMin, t.swapMax),
+    timings: t, // the ranges, which are no secret; the counts above are
     turns: 0,
     cover: false, // the player on turn has laid a five and must cover it
     specials: Object.fromEntries(OPTIONAL.map((key) => [key, !!specials[key]])),
@@ -398,14 +423,14 @@ function advance(g) {
   g.flipIn -= 1;
   if (g.flipIn <= 0) {
     g.goal = g.goal === 'win' ? 'lose' : 'win';
-    g.flipIn = between(g.rand, FLIP_MIN, FLIP_MAX);
+    g.flipIn = between(g.rand, g.timings.flipMin, g.timings.flipMax);
     g.flips += 1;
     log(g, g.goal === 'lose' ? 'The goal has turned: hang on to your cards.' : 'The goal has turned back: get rid of them.', 'goal');
   }
   g.swapIn -= 1;
   if (g.swapIn <= 0) {
     shuffleHands(g);
-    g.swapIn = between(g.rand, SWAP_MIN, SWAP_MAX);
+    g.swapIn = between(g.rand, g.timings.swapMin, g.timings.swapMax);
   }
 }
 

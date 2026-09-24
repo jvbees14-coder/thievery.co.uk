@@ -244,6 +244,68 @@ async function run() {
     assert.ok(res.card.craft < card.craft, 'a worse back should appraise lower');
   });
 
+  // --- decks and sub-decks ---------------------------------------------------
+
+  let bio, cells;
+
+  await check('a deck and a sub-deck inside it can be made, and nothing deeper', async () => {
+    const made = ok(await alice.call('decks', { method: 'POST', body: { name: 'Biology' } }), 'a deck');
+    bio = made.deck.id;
+    assert.equal(made.decks.length, 1);
+    const sub = ok(await alice.call('decks', { method: 'POST', body: { name: 'Cells', parentId: bio } }), 'a sub-deck');
+    cells = sub.deck.id;
+    assert.equal(sub.decks[0].subs[0].name, 'Cells');
+    const deeper = await alice.call('decks', { method: 'POST', body: { name: 'Organelles', parentId: cells } });
+    assert.equal(deeper.status, 400, 'a sub-deck inside a sub-deck was allowed');
+    const twin = await alice.call('decks', { method: 'POST', body: { name: 'biology' } });
+    assert.equal(twin.status, 400, 'two decks with one name were allowed');
+    assert.equal((await alice.call('decks', { method: 'POST', body: { name: '   ' } })).status, 400);
+  });
+
+  await check("a deck is its owner's alone", async () => {
+    assert.equal((await bob.call('decks', { method: 'POST', body: { name: 'Mine now', parentId: bio } })).status, 404);
+    assert.equal((await bob.call('decks/' + bio, { method: 'DELETE' })).status, 404);
+    const card = ok(await bob.call('cards', { method: 'POST', body: goodCard(700) }), 'a card of bob').card;
+    assert.equal((await bob.call('cards/' + card.id, { method: 'POST', body: { ...goodCard(700), deck: bio } })).status, 404);
+    ok(await bob.call('cards/' + card.id, { method: 'DELETE' }), 'tidy up');
+  });
+
+  await check('a card is filed in a deck when it is made, and moved when it is edited', async () => {
+    const made = ok(await alice.call('cards', { method: 'POST', body: { ...goodCard(701), deck: cells } }), 'filed');
+    assert.equal(made.card.deck, cells, 'the card sent back does not say which deck it is in');
+    const filed = made.cards.find((c) => c.id === made.card.id);
+    assert.equal(filed.deck, cells);
+    assert.equal(made.decks[0].count, 1, 'a card in a sub-deck counts towards its deck');
+    assert.equal(made.decks[0].subs[0].count, 1);
+
+    const moved = ok(await alice.call('cards/' + made.card.id, { method: 'POST', body: { ...goodCard(701), deck: bio } }), 'moved');
+    assert.equal(moved.cards.find((c) => c.id === made.card.id).deck, bio);
+    assert.equal(moved.decks[0].subs[0].count, 0);
+    const out = ok(await alice.call('cards/' + made.card.id, { method: 'POST', body: { ...goodCard(701), deck: '' } }), 'unfiled');
+    assert.equal(out.cards.find((c) => c.id === made.card.id).deck, null);
+    // And back into the sub-deck, for the checks below.
+    ok(await alice.call('cards/' + made.card.id, { method: 'POST', body: { ...goodCard(701), deck: cells } }), 'refiled');
+  });
+
+  await check('a bad deck refuses the card rather than leaving it made and unfiled', async () => {
+    const before = ok(await alice.call('me'), 'me').cards.length;
+    assert.equal((await alice.call('cards', { method: 'POST', body: { ...goodCard(702), deck: 'nope' } })).status, 404);
+    assert.equal(ok(await alice.call('me'), 'me').cards.length, before);
+  });
+
+  await check('a deck can be renamed, and deleting one keeps its cards', async () => {
+    const renamed = ok(await alice.call('decks/' + cells, { method: 'POST', body: { name: 'The cell' } }), 'rename');
+    assert.equal(renamed.decks[0].subs[0].name, 'The cell');
+    const temp = ok(await alice.call('decks', { method: 'POST', body: { name: 'Scratch' } }), 'a spare deck').deck.id;
+    const card = ok(await alice.call('cards', { method: 'POST', body: { ...goodCard(703), deck: temp } }), 'in it').card;
+    const after = ok(await alice.call('decks/' + temp, { method: 'DELETE' }), 'delete');
+    assert.ok(!after.decks.some((d) => d.id === temp));
+    const kept = after.cards.find((c) => c.id === card.id);
+    assert.ok(kept, 'deleting a deck deleted a card');
+    assert.equal(kept.deck, null);
+    ok(await alice.call('cards/' + card.id, { method: 'DELETE' }), 'tidy up');
+  });
+
   // --- the trading post ----------------------------------------------------
 
   await check('an offered card waits when nothing matches it', async () => {
@@ -310,6 +372,14 @@ async function run() {
   });
 
   // --- the panel -----------------------------------------------------------
+
+  await check('a card that changes hands leaves its old deck behind', async () => {
+    // Alice's cards went on offer wholesale above, the one filed in a
+    // sub-deck among them. Whatever Bob holds now is in none of his decks,
+    // because he has none, and certainly not in hers.
+    const bobs = ok(await bob.call('me'), 'me');
+    assert.ok(bobs.cards.every((c) => c.deck === null), 'a traded card arrived still filed');
+  });
 
   await check('an ordinary member cannot see the panel exists', async () => {
     for (const [route, method] of [['admin/overview', 'GET'], ['admin/mythic', 'POST'], ['admin/users/x', 'GET']]) {

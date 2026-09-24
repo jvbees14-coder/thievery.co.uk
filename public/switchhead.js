@@ -216,12 +216,34 @@
         .join('');
     }
 
+    // The timings. An input somebody is typing in is left alone, or a push
+    // arriving mid-keystroke would put the old number back under them.
+    for (const input of document.querySelectorAll('[data-timing]')) {
+      if (catalog && catalog.counts) {
+        input.min = String(catalog.counts.lowest);
+        input.max = String(catalog.counts.highest);
+      }
+      if (document.activeElement !== input && s.timings) input.value = String(s.timings[input.dataset.timing]);
+      input.disabled = !host;
+    }
+
     $('#start').hidden = !host;
     $('#host-note').hidden = host;
     const people = s.players.filter((p) => !p.watching).length;
     const enough = people >= s.minPlayers;
     $('#start').disabled = !enough;
     $('#start').textContent = enough ? `Deal to ${plural(people, 'player', 'players')}` : 'Waiting for someone to join';
+  }
+
+  for (const input of document.querySelectorAll('[data-timing]')) {
+    input.addEventListener('change', () => {
+      const value = Number(input.value);
+      if (!Number.isInteger(value)) {
+        if (state && state.timings) input.value = String(state.timings[input.dataset.timing]);
+        return;
+      }
+      say({ type: 'switchhead:settings', timing: input.dataset.timing, value });
+    });
   }
 
   // --- the table -------------------------------------------------------------

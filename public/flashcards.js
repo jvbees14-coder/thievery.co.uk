@@ -179,6 +179,7 @@
             <div class="fc-cardfoot">
               <span>${mintNo(card.mint)}</span>
               ${card.category ? `<span class="fc-sep">&middot;</span><span>${esc(card.category)}</span>` : ''}
+              ${card.deck && deckPath(card.deck) ? `<span class="fc-sep">&middot;</span><span class="fc-deck-tag">${esc(deckPath(card.deck))}</span>` : ''}
               ${tags}
             </div>
           </div>
@@ -218,8 +219,11 @@
   function visibleCards() {
     const term = $('#search').value.trim().toLowerCase();
     const rarity = $('#filter-rarity').value;
+    const deck = $('#filter-deck').value;
     let list = state.cards.filter((c) => {
       if (rarity && c.rarity !== rarity) return false;
+      if (deck === '-' && c.deck) return false;
+      if (deck && deck !== '-' && c.deck !== deck && parentOf(c.deck) !== deck) return false;
       if (!term) return true;
       return [c.front, c.back, c.category, c.title, ...(c.tags || [])]
         .join(' ')
@@ -299,6 +303,7 @@
       hint: $('#f-hint').value,
       category: $('#f-category').value,
       tags: $('#f-tags').value.split(',').map((t) => t.trim()).filter(Boolean),
+      deck: $('#f-deck').value,
     };
   }
 
@@ -322,6 +327,7 @@
     $('#f-hint').value = card.hint || '';
     $('#f-category').value = card.category || '';
     $('#f-tags').value = (card.tags || []).join(', ');
+    $('#f-deck').value = card.deck || '';
     editing = card.id;
     $('#edit-note').hidden = false;
     $('#edit-note').textContent = `Editing ${mintNo(card.mint)}. Its rarity won’t change.`;
@@ -330,6 +336,124 @@
     countUp();
     scheduleAppraisal();
   }
+
+  // --- decks and sub-decks ---------------------------------------------------
+  //
+  // Two levels: a deck, and sub-decks inside it. The server sends them as a
+  // list of decks, each with its sub-decks, and a card carries the id of the
+  // one it is filed in, which may be either.
+
+  function deckIndex() {
+    const index = new Map();
+    for (const d of state.decks || []) {
+      index.set(d.id, { name: d.name, parent: null });
+      for (const s of d.subs) index.set(s.id, { name: s.name, parent: d.id, parentName: d.name });
+    }
+    return index;
+  }
+
+  const parentOf = (id) => (id && deckIndex().get(id)?.parent) || null;
+
+  function deckPath(id) {
+    const found = deckIndex().get(id);
+    if (!found) return '';
+    return found.parent ? `${found.parentName} › ${found.name}` : found.name;
+  }
+
+  // A select of every deck and sub-deck, with whatever leads it. The value it
+  // held is kept if it still exists.
+  function fillDeckSelect(select, lead) {
+    const was = select.value;
+    select.innerHTML =
+      lead +
+      (state.decks || [])
+        .map(
+          (d) =>
+            `<option value="${esc(d.id)}">${esc(d.name)}</option>` +
+            d.subs.map((s) => `<option value="${esc(s.id)}">${esc(d.name)} › ${esc(s.name)}</option>`).join('')
+        )
+        .join('');
+    select.value = [...select.options].some((o) => o.value === was) ? was : '';
+  }
+
+  const testLink = (deckId, subId = '') =>
+    '/battle?deck=' + encodeURIComponent(deckId) + (subId ? '&sub=' + encodeURIComponent(subId) : '');
+
+  function deckRow(entry, deckId, sub) {
+    const id = sub ? sub.id : deckId;
+    const test = entry.count
+      ? `<a class="fc-op" href="${testLink(deckId, sub ? sub.id : '')}">Test yourself</a>`
+      : '<span class="fc-op is-off" title="No cards in it yet">Test yourself</span>';
+    return `<div class="fc-deck-row${sub ? ' is-sub' : ''}">
+        <span class="fc-deck-name">${esc(entry.name)}</span>
+        <span class="fc-tally">${plural(entry.count, 'card', 'cards')}</span>
+        <span class="fc-deck-acts">
+          ${test}
+          <button class="fc-op" data-act="deck-rename" data-id="${esc(id)}" type="button">Rename</button>
+          <button class="fc-op danger" data-act="deck-delete" data-id="${esc(id)}" type="button">Delete</button>
+        </span>
+      </div>`;
+  }
+
+  function drawDecks() {
+    const decks = state.decks || [];
+    $('#decks-empty').hidden = decks.length > 0;
+    $('#deck-list').innerHTML = decks
+      .map(
+        (d) => `<div class="fc-deck">
+          ${deckRow(d, d.id, null)}
+          ${d.subs.map((s) => deckRow(s, d.id, s)).join('')}
+          <form class="fc-sub-new" data-parent="${esc(d.id)}" autocomplete="off">
+            <label class="sr-only" for="sub-${esc(d.id)}">New sub-deck in ${esc(d.name)}</label>
+            <input id="sub-${esc(d.id)}" maxlength="${state.limits.deckName}" placeholder="New sub-deck" />
+            <button class="btn small" type="submit">Add sub-deck</button>
+          </form>
+        </div>`
+      )
+      .join('');
+
+    fillDeckSelect($('#f-deck'), '<option value="">No deck</option>');
+    $('#f-deck-hint').hidden = decks.length > 0;
+    fillDeckSelect($('#filter-deck'), '<option value="">Every deck</option><option value="-">Not in a deck</option>');
+  }
+
+  const renameDeck = guard(async (id) => {
+    const found = deckIndex().get(id);
+    if (!found) return;
+    openModal(`
+      <h3>Rename ${found.parent ? 'sub-deck' : 'deck'}</h3>
+      <form id="deck-rename-form" class="fc-form" autocomplete="off">
+        <div class="field">
+          <label for="deck-rename-name">Name</label>
+          <input id="deck-rename-name" maxlength="${state.limits.deckName}" value="${esc(found.name)}" />
+        </div>
+        <button class="btn primary" type="submit">Save</button>
+      </form>`);
+    $('#deck-rename-name').focus();
+    $('#deck-rename-form').addEventListener('submit', guard(async (ev) => {
+      ev.preventDefault();
+      state = await api('decks/' + encodeURIComponent(id), { method: 'POST', body: { name: $('#deck-rename-name').value } });
+      closeModal();
+      drawAll();
+      toast('Renamed.', 'info');
+    }));
+  });
+
+  const deleteDeck = guard(async (id) => {
+    const found = deckIndex().get(id);
+    if (!found) return;
+    const sure = await ask(
+      `Delete ${found.parent ? 'this sub-deck' : 'this deck'}?`,
+      found.parent
+        ? 'Its cards stay in your collection, just not in this sub-deck.'
+        : 'Its sub-decks go too. The cards in it stay in your collection, just not in a deck.',
+      'Delete'
+    );
+    if (!sure) return;
+    state = await api('decks/' + encodeURIComponent(id), { method: 'DELETE' });
+    drawAll();
+    toast('Deleted.', 'info');
+  });
 
   // --- the trading post ------------------------------------------------------
 
@@ -863,6 +987,7 @@
     const held = new Set(state.cards.map((c) => c.id));
     for (const id of selected) if (!held.has(id)) selected.delete(id);
 
+    drawDecks();
     drawCollection();
     drawTrade();
     if (!$('#tab-print').hidden) drawPicker();
@@ -942,6 +1067,8 @@
       location.href = '/flashcards';
       return;
     }
+    if (act === 'deck-rename') return renameDeck(id);
+    if (act === 'deck-delete') return deleteDeck(id);
     if (act === 'modal-close') return closeModal();
     if (act === 'reveal-close') { $('#reveal').hidden = true; return; }
 
@@ -1001,7 +1128,23 @@
   });
 
   // The collection's controls.
-  for (const id of ['search', 'filter-rarity', 'sort']) $('#' + id).addEventListener('input', drawCollection);
+  for (const id of ['search', 'filter-deck', 'filter-rarity', 'sort']) $('#' + id).addEventListener('input', drawCollection);
+
+  // Making a deck, and a sub-deck inside one.
+  $('#new-deck').addEventListener('submit', guard(async (ev) => {
+    ev.preventDefault();
+    state = await api('decks', { method: 'POST', body: { name: $('#new-deck-name').value } });
+    $('#new-deck-name').value = '';
+    drawAll();
+  }));
+  document.addEventListener('submit', guard(async (ev) => {
+    const form = ev.target.closest && ev.target.closest('.fc-sub-new');
+    if (!form) return;
+    ev.preventDefault();
+    const input = form.querySelector('input');
+    state = await api('decks', { method: 'POST', body: { name: input.value, parentId: form.dataset.parent } });
+    drawAll();
+  }));
 
   // The make form.
   for (const id of ['f-front', 'f-back', 'f-hint', 'f-category', 'f-tags']) {

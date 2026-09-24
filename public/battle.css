@@ -408,3 +408,5 @@
 @media (max-width: 560px) {
   .btl-bank-tools { grid-template-columns: 1fr; }
 }
+
+#own-fields { margin-top: -4px; }

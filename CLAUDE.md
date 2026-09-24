@@ -254,6 +254,35 @@ the ratio-based marks are scaled by `substance`, so padding and near-empty
 cards both score low. Changing these numbers changes what every existing card
 is worth relative to new ones.
 
+### Decks and sub-decks
+
+A member's own decks are `server/sections.js`, under `sections` in the
+document, and called **sections** in the code because "deck" already means
+`decks.js` (the battle room's house decks). On the page they are Deck and
+Sub-deck. Two levels exactly: a section with no `parentId` is a deck, and a
+sub-deck's parent must be a deck. A card carries `card.section`, either kind,
+and "a deck" always means the deck and all its sub-decks (`cardsIn`).
+
+- **Filing is only honoured while the section is the card's owner's**
+  (`sectionOf`). Trading and the panel's "move to" also clear it, so a card
+  never turns up in a stranger's deck, but the read-side check is the one to
+  rely on.
+- **Deleting a deck never deletes a card.** It takes its sub-decks with it
+  and unfiles everything that was in them.
+- The routes are `POST /api/flashcards/decks` (`name`, `parentId`),
+  `POST|DELETE /api/flashcards/decks/:id`, and a `deck` field on card create
+  and edit ('' unfiles). A bad deck on create refuses the card outright, so
+  there is never a card made but not filed. The snapshot carries `decks`
+  (with counts) and each card's `deck`.
+
+In the battle room, **solo on your own flashcards** can be narrowed to a deck
+and a sub-deck (`room.ownDeck`, `room.ownSub`; empty is all). A duel ignores
+both: it deals an equal share of every collection, and one player's decks do
+not exist in anybody else's. The host's list comes in `viewFor` as
+`yourDecks` (lobby only); the others get `ownDeckName`/`ownSubName`. The
+choice is cleared when the host changes. "Test yourself" in the flashcards
+room links to `/battle?deck=…&sub=…`, which opens a solo room on it.
+
 ### Access control
 
 - The HTML of anything behind a login lives in `server/views/`, **not**
@@ -561,7 +590,7 @@ see the bank; the bank has its own checks after the daily ones.
 
 ## Switchhead
 
-The old shedding game with two things done to it: every ten to fifteen turns
+The old shedding game with two things done to it: every ten to fifteen turns (by default; the host sets both)
 two players' hands swap, and on a separate count of ten to fifteen turns
 the goal turns over between getting rid of your cards and hanging on to
 them. Both counts (`swapIn`, `flipIn`) run in `advance` in `shed.js`, which
@@ -582,6 +611,12 @@ rooms and the record, and has no timer. The header of
   takes what remains. With no flips that is the ordinary game. Picking the
   pile up is allowed on any turn, because otherwise "lose" is a goal nobody
   can pursue.
+- **The two counts are the host's to set.** `room.timings` holds four whole
+  numbers, `swapMin`/`swapMax` and `flipMin`/`flipMax`, each from 1 to 50
+  and ten to fifteen by default; `Shed.cleanTimings` is the only check, and
+  `createGame` stores them on `g.timings` for `advance` to redraw from.
+  Moving one end of a range past the other drags the other with it. The
+  ranges are sent; the counts drawn from them never are.
 - **Twos, tens and four of a kind are fixed**; sevens, fours and fives are the
   host's (`OPTIONAL`). A five's cover is the same player's, straight away:
   higher than five or a two, never a see-through four.

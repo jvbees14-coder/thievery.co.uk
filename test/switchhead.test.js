@@ -319,6 +319,30 @@ await check('the hands swap after their count of turns, and the next count is te
   assert.ok(g.log.every((l) => l.kind !== 'swap' && !/swap/i.test(l.text)), 'nothing in the log');
 });
 
+await check('the host\u2019s timings are what the counts are drawn from', () => {
+  const timings = { swapMin: 2, swapMax: 2, flipMin: 3, flipMax: 3 };
+  const g = Shed.createGame({ players: [{ name: 'A' }, { name: 'B' }, { name: 'C' }], timings });
+  assert.equal(g.swapIn, 2);
+  assert.equal(g.flipIn, 3);
+  assert.deepEqual(g.timings, timings);
+  // And after a count runs out, the next one is drawn from the same range.
+  const t = table({ seats: 3 });
+  t.timings = { swapMin: 4, swapMax: 4, flipMin: 1, flipMax: 1 };
+  t.seats[0].hand = [c(3), c(4)];
+  t.seats[1].hand = [c(6), c(7)];
+  t.seats[2].hand = [c(9), c(11)];
+  t.swapIn = 1;
+  t.flipIn = 1;
+  Shed.play(t, 0, [t.seats[0].hand[0].id]);
+  assert.equal(t.swapIn, 4, 'the next swap was not drawn from the host\u2019s range');
+  assert.equal(t.flipIn, 1, 'the next flip was not drawn from the host\u2019s range');
+  refused(() => Shed.cleanTimings({ swapMin: 0 }), /whole number/);
+  refused(() => Shed.cleanTimings({ flipMax: 51 }), /whole number/);
+  refused(() => Shed.cleanTimings({ swapMin: 1.5 }), /whole number/);
+  refused(() => Shed.cleanTimings({ swapMin: 9, swapMax: 3 }), /cannot be more/);
+  assert.deepEqual(Shed.cleanTimings(), { ...Shed.DEFAULT_TIMINGS });
+});
+
 await check('a swap moves only hands with cards in, and never before the start', () => {
   const g = table({ seats: 3 });
   const a = [c(3), c(4)];
@@ -552,6 +576,23 @@ await check('the host opens a room and picks the extra cards; the fixed three ca
   await A.errorLike(/always in play/);
   A.send({ type: 'switchhead:start' });
   await A.errorLike(/somebody to play against/);
+});
+
+await check('the host sets the timings, and one end drags the other', async () => {
+  assert.deepEqual(A.state.timings, { ...Shed.DEFAULT_TIMINGS });
+  A.send({ type: 'switchhead:settings', timing: 'swapMin', value: 20 });
+  await A.waitFor((st) => st.timings.swapMin === 20, 'the new swap minimum');
+  assert.equal(A.state.timings.swapMax, 20, 'the maximum was left below the minimum');
+  A.send({ type: 'switchhead:settings', timing: 'flipMax', value: 4 });
+  await A.waitFor((st) => st.timings.flipMax === 4, 'the new flip maximum');
+  assert.equal(A.state.timings.flipMin, 4, 'the minimum was left above the maximum');
+  A.send({ type: 'switchhead:settings', timing: 'flipMin', value: 0 });
+  await A.errorLike(/whole number/);
+  A.send({ type: 'switchhead:settings', timing: 'nonsense', value: 3 });
+  await A.errorLike(/No such setting/);
+  // Back to the usual, so the game played below is the ordinary one.
+  for (const [timing, value] of Object.entries(Shed.DEFAULT_TIMINGS)) A.send({ type: 'switchhead:settings', timing, value });
+  await A.waitFor((st) => JSON.stringify(st.timings) === JSON.stringify(Shed.DEFAULT_TIMINGS), 'the usual timings');
 });
 
 await check('a guest joins by code, and cannot change the cards', async () => {

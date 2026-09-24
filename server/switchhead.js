@@ -73,6 +73,9 @@ function createRoom() {
     // The host's choice of extra cards. Twos, tens and four of a kind are not
     // in here because they cannot be taken out.
     specials: Object.fromEntries(Shed.OPTIONAL.map((k) => [k, false])),
+    // How many turns between hand swaps, and between goal flips: the host's
+    // ranges, ten to fifteen for both unless they change them.
+    timings: { ...Shed.DEFAULT_TIMINGS },
     players: [],
     game: null,
     emptySince: Date.now(),
@@ -116,7 +119,7 @@ function startGame(room) {
   if (people.length > Shed.MAX_PLAYERS) throw new Error(`Switchhead is for at most ${Shed.MAX_PLAYERS} players.`);
   people.forEach((p, i) => (p.seat = i));
   for (const p of room.players) if (p.watcher) p.seat = -1;
-  room.game = Shed.createGame({ players: people.map((p) => ({ name: p.name })), specials: room.specials });
+  room.game = Shed.createGame({ players: people.map((p) => ({ name: p.name })), specials: room.specials, timings: room.timings });
   room.game.recorded = false;
 }
 
@@ -175,6 +178,7 @@ export function viewFor(room, player) {
     code: room.code,
     hostId: room.hostId,
     specials: room.specials,
+    timings: room.timings,
     minPlayers: Shed.MIN_PLAYERS,
     maxPlayers: Shed.MAX_PLAYERS,
     players: room.players.map((p) => ({
@@ -215,6 +219,7 @@ const catalogFor = (ws) =>
     specials: Shed.SPECIALS,
     minPlayers: Shed.MIN_PLAYERS,
     maxPlayers: Shed.MAX_PLAYERS,
+    counts: { lowest: Shed.COUNT_LOWEST, highest: Shed.COUNT_HIGHEST, defaults: Shed.DEFAULT_TIMINGS },
   });
 
 function attach(room, player, ws) {
@@ -301,6 +306,19 @@ function dropped(ws) {
 function settings(room, player, msg) {
   requireHost(room, player);
   if (room.game) throw new Error('The game has already started.');
+  // A count: one end of a range. Moving one end past the other drags the
+  // other with it, so the pair can never be left the wrong way round and
+  // nobody has to change them in a particular order.
+  if (msg.timing !== undefined) {
+    const key = String(msg.timing);
+    if (!(key in Shed.DEFAULT_TIMINGS)) throw new Error('No such setting.');
+    const next = { ...room.timings, [key]: Number(msg.value) };
+    const [kind, end] = [key.slice(0, 4), key.slice(4)];
+    if (end === 'Min' && next[kind + 'Max'] < next[key]) next[kind + 'Max'] = next[key];
+    if (end === 'Max' && next[kind + 'Min'] > next[key]) next[kind + 'Min'] = next[key];
+    room.timings = Shed.cleanTimings(next);
+    return;
+  }
   const key = String(msg.special || '');
   if (!Shed.OPTIONAL.includes(key)) {
     // A fixed card is on the page, with a lock on it, and cannot be asked for.
