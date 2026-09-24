@@ -719,15 +719,31 @@ async function run() {
   console.log(`\n${checks} checks passed.`);
 }
 
+// Clearing up is not a check. The server is waited for before its data is
+// taken away, because one killed in the middle of a save can still be writing
+// into the directory while it is being removed (ENOTEMPTY, on a busy CI
+// runner); and a directory that will not go is left in the temp folder with a
+// word to say so, rather than failing a run whose checks all passed.
+async function tidyUp() {
+  if (child && child.exitCode === null && child.signalCode === null) {
+    const gone = new Promise((resolve) => child.once('exit', resolve));
+    child.kill();
+    await Promise.race([gone, new Promise((resolve) => setTimeout(resolve, 3000))]);
+  }
+  try {
+    fs.rmSync(DATA_DIR, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+  } catch (err) {
+    console.warn(`(could not remove ${DATA_DIR}: ${err.code || err.message})`);
+  }
+}
+
 run()
-  .then(() => {
-    child?.kill();
-    fs.rmSync(DATA_DIR, { recursive: true, force: true });
+  .then(async () => {
+    await tidyUp();
     process.exit(0);
   })
-  .catch((err) => {
+  .catch(async (err) => {
     console.error('\nFAILED:', err.message);
-    child?.kill();
-    fs.rmSync(DATA_DIR, { recursive: true, force: true });
+    await tidyUp();
     process.exit(1);
   });
