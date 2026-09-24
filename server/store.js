@@ -71,6 +71,7 @@ function empty() {
     stats: {},     // id -> how that account has fared at the card table
     daily: {},     // YYYY-MM-DD -> id -> the first run of that day's deck
     sections: {},  // id -> a member's own deck or sub-deck (sections.js)
+    maps: {},      // id -> a member's mind map (maps.js)
   };
 }
 

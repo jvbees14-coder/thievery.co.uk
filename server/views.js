@@ -36,6 +36,7 @@ const ROOMS = [
   { id: 'flashcards', href: '/flashcards', name: 'Flashcards' },
   { id: 'battle', href: '/battle', name: 'Battle' },
   { id: 'switchhead', href: '/switchhead', name: 'Switchhead' },
+  { id: 'mindmaps', href: '/mindmaps', name: 'Mind maps' },
 ];
 
 export function bar(current = '', { signedIn = true } = {}) {

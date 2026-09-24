@@ -1,0 +1,141 @@
+/* Thievery.co.uk — mind maps.
+ *
+ * The sheet is drawn from the --mm-* tokens below, which the page reads and
+ * writes onto every bubble and branch as attributes. That is so an exported
+ * copy looks like what is on screen; it also means a colour changed here has
+ * to be changed as a token, or the export will not follow it. plain.css has
+ * its own set for the plain design. */
+
+:root {
+  --mm-paper: #10131d;
+  --mm-root: #d4af5a;
+  --mm-root-ink: #0a0c14;
+  --mm-bubble: #171b28;
+  --mm-ink: #ece5d4;
+  --mm-c0: #d4af5a;
+  --mm-c1: #7fd3cc;
+  --mm-c2: #e9a2b8;
+  --mm-c3: #9ecdb7;
+  --mm-c4: #e5946b;
+  --mm-c5: #a9b4f0;
+}
+
+.mm-main {
+  padding: clamp(14px, 3vw, 32px);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.mm-screen[hidden] { display: none; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+/* --- the list of maps ------------------------------------------------------ */
+
+.mm-list-panel { max-width: 720px; margin: 0 auto; padding: clamp(18px, 3vw, 30px); }
+.mm-head { font-family: var(--display); font-weight: 400; font-size: 34px; color: var(--ivory); margin: 0 0 8px; }
+.mm-say { margin: 0 0 22px; color: var(--text-dim); }
+.mm-new { margin: 0 0 26px; }
+.mm-new .input-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.mm-new input { flex: 1 1 240px; min-width: 0; }
+.mm-subhead { font-family: var(--caps); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); margin: 0 0 10px; }
+.mm-count { color: var(--text-faint); font-family: var(--body); letter-spacing: 0; text-transform: none; font-size: 13px; }
+.mm-list { list-style: none; margin: 0; padding: 0; }
+.mm-item {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 10px 0; border-top: 1px solid var(--brass-faint);
+}
+.mm-item-name { flex: 1 1 200px; min-width: 0; color: var(--ivory); text-decoration: none; font-size: 18px; overflow-wrap: anywhere; }
+.mm-item-name:hover { color: var(--brass); }
+.mm-item-meta { color: var(--text-faint); font-size: 14px; }
+
+/* --- a map open ---------------------------------------------------------------- */
+
+.mm-tools { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; margin: 0 0 12px; }
+.mm-title {
+  margin: 0; font-family: var(--display); font-weight: 400; font-size: 22px; color: var(--ivory);
+  flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40ch;
+}
+.mm-state { color: var(--text-faint); font-size: 14px; margin-right: auto; }
+.mm-acts { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.mm-stage {
+  position: relative;
+  height: calc(100vh - 210px);
+  height: calc(100dvh - 210px);
+  min-height: 360px;
+  border: 1px solid var(--brass-faint);
+  border-radius: var(--radius);
+  background: var(--mm-paper);
+  overflow: hidden;
+}
+.mm-sheet {
+  display: block; width: 100%; height: 100%;
+  font-family: var(--body);
+  touch-action: none;
+  user-select: none; -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  cursor: grab;
+}
+.mm-sheet:active { cursor: grabbing; }
+.mm-measure { visibility: hidden; }
+.mm-hint { margin: 10px 0 0; }
+
+.mm-node { cursor: pointer; outline: none; }
+.mm-node:focus-visible .mm-bubble { stroke: var(--ivory); stroke-width: 3; }
+.mm-node.is-root:focus-visible .mm-bubble { stroke: var(--ivory); stroke-width: 3; }
+
+/* The ring that fills round a bubble while it is held, so a finger can tell
+   a hold from a press before the branch appears. */
+.mm-ring { stroke-dasharray: 100; stroke-dashoffset: 100; opacity: 0; pointer-events: none; }
+.mm-node.is-holding .mm-ring {
+  opacity: 1; stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.45s linear, opacity 0.1s;
+}
+
+.mm-editor {
+  position: absolute; z-index: 5;
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 8px;
+  background: var(--ink-3); border: 1px solid var(--brass); border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.mm-editor[hidden] { display: none; }
+.mm-editor textarea {
+  width: 100%; resize: none; box-sizing: border-box;
+  font: inherit; font-size: 17px; line-height: 1.3;
+  color: var(--text); background: var(--ink-2);
+  border: 1px solid var(--brass-dim); border-radius: 3px; padding: 6px 8px;
+}
+.mm-editor textarea:focus { outline: none; border-color: var(--brass); }
+.mm-editor-acts { display: flex; gap: 6px; }
+
+@media (max-width: 640px) {
+  .mm-stage { height: calc(100dvh - 260px); }
+  .mm-title { max-width: 100%; flex-basis: 100%; order: -1; }
+}
+
+/* --- print ------------------------------------------------------------------------ */
+
+/* The map and nothing else: dark ink on white whatever the design, so it
+   prints the same in either. The script points the sheet at the whole map
+   for as long as the print lasts. */
+@media print {
+  @page { margin: 12mm; }
+  body.mm-editing > *:not(main),
+  body.mm-editing .mm-tools,
+  body.mm-editing .mm-hint,
+  body.mm-editing .mm-editor,
+  body.mm-editing #screen-list { display: none !important; }
+  /* flashcards.css, loaded for the bar, hides everything but its own card
+     sheet when printing; the map is this page's sheet. */
+  body.mm-editing > main.mm-main { display: block !important; }
+  html, body, .mm-main { background: #fff !important; padding: 0; margin: 0; }
+  body.mm-editing .mm-stage { border: 0; background: #fff; height: auto; min-height: 0; overflow: visible; }
+  body.mm-editing .mm-sheet { width: 100%; height: auto; max-height: 180mm; }
+  .mm-bubble { fill: #fff; }
+  .mm-node.is-root .mm-bubble { fill: #eee; stroke: #111; stroke-width: 2; }
+  .mm-sheet text { fill: #111; }
+  .mm-branch, .mm-bubble { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}

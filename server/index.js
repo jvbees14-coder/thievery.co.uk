@@ -27,6 +27,7 @@ import * as Flashcards from './flashcards.js';
 import * as Site from './site.js';
 import * as Battle from './battle.js';
 import * as Switchhead from './switchhead.js';
+import * as Mindmaps from './mindmaps.js';
 import * as Stats from './stats.js';
 import { currentUser } from './plumbing.js';
 import { readView } from './views.js';
@@ -108,6 +109,10 @@ function serve(req, res) {
   // Switchhead is the same shape again: a page behind the login, and
   // everything else over the socket.
   if (Switchhead.handle(req, res, url)) return;
+
+  // The mind maps are the flashcards' shape: a page and a JSON API, behind
+  // the login, with nothing over the socket.
+  if (Mindmaps.handle(req, res, url)) return;
 
   // Then the front hall, which owns "/" and the card table at /cards. It has
   // to come before the static block for the same reason: that block serves

@@ -287,3 +287,21 @@
 
 /* --- decks and sub-decks ---------------------------------------------------- */
 :root[data-theme="plain"] .fc-deck { background: var(--ink-2); }
+
+/* --- mind maps ---------------------------------------------------------------
+   The sheet is drawn from its own tokens, which are read by the script and
+   written onto the bubbles, so they are redefined here rather than overridden. */
+:root[data-theme="plain"] {
+  --mm-paper: #ffffff;
+  --mm-root: #2563eb;
+  --mm-root-ink: #ffffff;
+  --mm-bubble: #ffffff;
+  --mm-ink: #1f2937;
+  --mm-c0: #2563eb;
+  --mm-c1: #0e7490;
+  --mm-c2: #be185d;
+  --mm-c3: #16a34a;
+  --mm-c4: #d97706;
+  --mm-c5: #7c3aed;
+}
+:root[data-theme="plain"] .mm-editor { background: #fff; }

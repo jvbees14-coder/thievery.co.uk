@@ -37,6 +37,8 @@ import * as Store from './store.js';
 import * as Flashcards from './flashcards.js';
 import * as Battle from './battle.js';
 import * as Switchhead from './switchhead.js';
+import * as Mindmaps from './mindmaps.js';
+import * as Maps from './maps.js';
 import * as Daily from './daily.js';
 import * as Decks from './decks.js';
 import { send, fail, originOk, currentUser, requireUser } from './plumbing.js';
@@ -147,8 +149,15 @@ function snapshot(user) {
     },
     // Switchhead's record, and how many rooms are open, for its tile.
     switchhead: { ...play.switchhead, rooms: Switchhead.openRooms() },
+    // How many mind maps, and nothing about what is in them.
+    mindmaps: { count: Maps.ofUser(user.id).length },
     // A tile that leads somewhere shut should say so before it is pressed.
-    rooms: { flashcards: Flashcards.isOpen(), battle: Battle.isOpen(), switchhead: Switchhead.isOpen() },
+    rooms: {
+      flashcards: Flashcards.isOpen(),
+      battle: Battle.isOpen(),
+      switchhead: Switchhead.isOpen(),
+      mindmaps: Mindmaps.isOpen(),
+    },
   };
 }
 

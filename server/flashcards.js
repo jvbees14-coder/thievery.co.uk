@@ -22,6 +22,7 @@ import * as Accounts from './accounts.js';
 import * as Cards from './cards.js';
 import * as Trading from './trading.js';
 import * as Sections from './sections.js';
+import * as Maps from './maps.js';
 import * as Door from './door.js';
 import * as Stats from './stats.js';
 import { data, touch } from './store.js';
@@ -320,6 +321,7 @@ export function adminDeleteUser(req, res, id) {
   // not leave a row behind keyed to an id nothing will ever look up again.
   delete data().stats[user.id];
   Sections.removeAllFor(user.id);
+  Maps.removeAllFor(user.id);
   touch();
   adminOverview(req, res);
 }

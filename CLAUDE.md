@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm start              # serve on PORT (default 3000)
 npm run dev            # same, with --watch
-npm test               # all eight suites, in order; any failure stops the run
+npm test               # all nine suites, in order; any failure stops the run
 npm run test:source    # the source as bytes: no literal control characters
 npm run test:game      # the card game: real server, real clients, whole rounds played out
 npm run test:powerups  # the five/six-hand power-up rules, played against game.js directly
@@ -15,6 +15,7 @@ npm run test:site      # the front hall, the addresses, and the lifetime record
 npm run test:battle    # the marker, a match played out, and the one rule about the back
 npm run test:switchhead # the shedding rules against shed.js, then a game over the socket
 npm run test:flashcards # the flashcards room over HTTP
+npm run test:mindmaps  # the mind maps over HTTP: the tree check, the revisions, whose map
 npm run test:r2        # the storage layer, against a stub S3 client
 npm run r2:check       # are the four R2_* variables real? needs them in the environment
 npm run icons          # redraw public/icons/*.png from the mark in the script
@@ -46,7 +47,7 @@ Windows `child.kill('SIGTERM')` is a hard kill and nothing is flushed at all.
 
 ## The shape of the site
 
-One server, a hall and four rooms off it:
+One server, a hall and five rooms off it:
 
 | Address | What answers | Login |
 |---|---|---|
@@ -55,9 +56,11 @@ One server, a hall and four rooms off it:
 | `/flashcards` | `server/flashcards.js` | required |
 | `/battle`, `/battle/ABCD` | `server/battle.js` | required |
 | `/switchhead`, `/switchhead/ABCD` | `server/switchhead.js` | required |
+| `/mindmaps` | `server/mindmaps.js` | required |
 | `/about`, `/privacy` | `server/site.js` — plain pages, up even in an outage | never |
 | `/api/site/…` | the door, the menu's figures, the members panel | mostly |
 | `/api/flashcards/…` | the collection, the post, the panel | yes |
+| `/api/mindmaps/…` | a member's maps | yes |
 | *(the battle room and Switchhead have no API — all of it is socket)* | | |
 | anything else | the static block in `server/index.js`, out of `public/`; a miss is `views/404.html` | no |
 
@@ -86,6 +89,10 @@ room".
 **Switchhead** (`server/switchhead.js`, `shed.js`; `public/switchhead.{js,css}`)
 is the battle room's shape once more — behind the login, rooms in memory, all
 of it over the shared socket under a `switchhead:` prefix. See "Switchhead".
+
+**Mind maps** (`server/mindmaps.js`, `maps.js`; `public/mindmaps.{js,css}`)
+are the flashcards' shape: behind the login, a JSON API, no socket, and the
+maps kept in the stored document. See "Mind maps".
 
 **Two names that are not the same thing.** The card game is called *Thievery*
 — the site's own name, because it is the thing the site was built for — and is
@@ -195,8 +202,8 @@ thing that will tell you.
 ## The stored document
 
 Everything that outlives the process is in one JSON document: accounts,
-sessions, cards, the trading post, the lifetime record, and the battle room's
-daily board. It is the
+sessions, cards, the trading post, the lifetime record, the battle room's
+daily board, and the mind maps. It is the
 flashcards room's file historically and still carries its name, but the hall
 and the card table read and write it too.
 
@@ -626,6 +633,35 @@ rooms and the record, and has no timer. The header of
 
 The record is `stats.switchhead` (`recordSwitchhead`), migrated by `fill()`
 like the battle block: first place is `wins`, last is `heads`.
+
+## Mind maps
+
+A map is a tree of bubbles under `maps` in the document, and the page sends
+the whole tree back on every save (`POST /api/mindmaps/maps/:id` with
+`nodes` and `rev`). `Maps.clean` is the one check on its shape (one bubble
+in the middle, every parent present, no loops, the limits in `maps.js`) and
+it drops an empty bubble together with whatever hangs off it. Everything
+about drawing, placing and exporting is in `public/mindmaps.js`; the
+server never renders a map.
+
+- **A save names the revision it was made from.** A stale one is a 409, not
+  an overwrite, so a second tab cannot quietly throw away the first's work.
+- **A press means three things** in `mindmaps.js`: let go quickly and it
+  edits, hold for 450ms and it adds a branch, move and it drags the bubble
+  with its branches. The hold timer must be cancelled from the gesture that
+  started it; cancelling it from the current one (already cleared by then)
+  made every click grow a branch.
+- **Only a new branch is placed.** Nothing else moves when one is added, so
+  a dragged bubble stays put. Tidy lays out the whole map, and asks first.
+- **Colours are written on the elements**, read from the `--mm-*` tokens
+  (redefined in `plain.css`), so an exported copy looks like the screen. The
+  export also embeds the EB Garamond file, because an SVG drawn into a
+  canvas for the PNG cannot fetch anything.
+- **Printing** points the sheet at the map's own bounds on `beforeprint`.
+  `flashcards.css`, loaded for the bar, hides everything but its own card
+  sheet in print, and `mindmaps.css` has to put `<main>` back.
+- A deleted account takes its maps (`adminDeleteUser` calls
+  `Maps.removeAllFor`).
 
 ## The pages
 

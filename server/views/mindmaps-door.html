@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Mind maps · Thievery</title>
+  <meta name="description" content="Make mind maps: start with one idea in the middle, branch out from it, and save them as PNG or SVG, or print them." />
+  <link rel="canonical" href="https://thievery.co.uk/mindmaps" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Thievery.co.uk" />
+  <meta property="og:title" content="Mind maps · Thievery" />
+  <meta property="og:description" content="Start with one idea in the middle and branch out from it." />
+  <meta property="og:url" content="https://thievery.co.uk/mindmaps" />
+  <meta property="og:image" content="https://thievery.co.uk/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Mind maps · Thievery" />
+  <meta name="twitter:description" content="Start with one idea in the middle and branch out from it." />
+  <meta name="twitter:image" content="https://thievery.co.uk/og-image.png" />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c14'/%3E%3Crect x='7' y='6' width='12' height='17' rx='2' fill='none' stroke='%23d4af5a' stroke-width='2'/%3E%3Crect x='13' y='10' width='12' height='17' rx='2' fill='%230a0c14' stroke='%23d4af5a' stroke-width='2'/%3E%3C/svg%3E" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="apple-touch-icon" href="/icons/icon-180.png" />
+  <meta name="theme-color" content="#0a0c14" />
+  <link rel="preload" href="/fonts/limelight-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/eb-garamond-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/fonts.css" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/flashcards.css" />
+  <link rel="stylesheet" href="/menu.css" />
+  <link rel="stylesheet" href="/plain.css" />
+  <script src="/prefs.js"></script>
+</head>
+<body>
+  <div id="toast" class="toast" hidden></div>
+
+  <section class="screen home">
+    <div class="home-card door-card" data-api="/api/site" data-next="/mindmaps">
+      <h1 class="logo wordmark">Mind maps<em>Thievery.co.uk</em></h1>
+      <p class="tagline">
+        Start with one idea in the middle and branch out from it. Your maps are saved to your account, and you can download them as a picture or print them.
+      </p>
+
+      <div class="door-tabs" role="tablist">
+        <button class="door-tab is-on" data-pane="signin" role="tab" aria-selected="true">Sign in</button>
+        <button class="door-tab" data-pane="join" role="tab" aria-selected="false">Open an account</button>
+      </div>
+
+      <form id="signin" class="door-pane" autocomplete="on">
+        <div class="field">
+          <label for="si-user">Username</label>
+          <input id="si-user" name="username" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" required />
+        </div>
+        <div class="field">
+          <label for="si-pass">Password</label>
+          <input id="si-pass" name="password" type="password" maxlength="200" autocomplete="current-password" required />
+        </div>
+        <button class="btn primary" type="submit">Sign in</button>
+      </form>
+
+      <form id="join" class="door-pane" hidden autocomplete="on">
+        <div class="field">
+          <label for="jo-user">Username</label>
+          <input id="jo-user" name="username" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" required />
+          <p class="hint">3 to 20 letters, numbers, dots, dashes or underscores.</p>
+        </div>
+        <div class="field">
+          <label for="jo-name">Display name <span class="opt">optional</span></label>
+          <div class="input-row">
+            <input id="jo-name" name="displayName" maxlength="24" autocomplete="nickname" placeholder="What other players see" />
+            <button id="jo-roll" class="icon-btn" type="button" title="Pick a random name" aria-label="Pick a random name"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M15.5 7.5A6 6 0 1 0 16 12" /><path d="M16 3.5v4h-4" /></svg></button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="jo-pass">Password</label>
+          <input id="jo-pass" name="password" type="password" maxlength="200" autocomplete="new-password" required />
+          <p class="hint">At least 10 characters.</p>
+        </div>
+        <button class="btn primary" type="submit">Open an account</button>
+      </form>
+
+      <p id="door-error" class="door-error" hidden></p>
+
+      <div class="door-open">
+        <h2>Just want to play?</h2>
+        <p>
+          Thievery, the card game, doesn&rsquo;t need an account. Your games
+          just won&rsquo;t be counted.
+        </p>
+        <p><a class="btn" href="/cards">Play Thievery</a></p>
+      </div>
+    </div>
+
+    {{foot}}
+  </section>
+
+  <script src="/door.js"></script>
+</body>
+</html>

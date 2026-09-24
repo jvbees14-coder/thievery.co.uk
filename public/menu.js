@@ -89,7 +89,7 @@
   // --- drawing ---------------------------------------------------------------
 
   function render() {
-    const { user, play, collection, battle, switchhead, rooms } = state;
+    const { user, play, collection, battle, switchhead, mindmaps, rooms } = state;
 
     $('#hello').textContent = user.displayName;
     const hour = new Date().getHours();
@@ -143,6 +143,12 @@
     $('#tile-battle').classList.toggle('is-shut', !rooms.battle);
     $('#nav-battle').classList.toggle('is-shut', !rooms.battle);
     if (!rooms.battle) $('#tile-battle-figure').textContent = 'Unavailable right now';
+    $('#tile-mindmaps-figure').textContent = mindmaps && mindmaps.count
+      ? plural(mindmaps.count, 'map', 'maps')
+      : 'No maps yet. Start one.';
+    $('#tile-mindmaps').classList.toggle('is-shut', !rooms.mindmaps);
+    $('#nav-mindmaps').classList.toggle('is-shut', !rooms.mindmaps);
+    if (!rooms.mindmaps) $('#tile-mindmaps-figure').textContent = 'Unavailable right now';
 
     // --- the admin's door
     for (const id of ['#tile-members', '#nav-members', '#who-members']) $(id).hidden = !user.admin;

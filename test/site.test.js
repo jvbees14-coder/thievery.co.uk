@@ -297,7 +297,7 @@ async function run() {
   // The views and the game page are annotated for whoever maintains them.
   // None of that is for the visitor, so none of it may reach a browser.
   await check('no page is served with its comments or its placeholders in it', async () => {
-    for (const where of ['/', '/cards', '/cards/ABCD', '/flashcards', '/battle', '/switchhead', '/about', '/privacy', '/nowhere']) {
+    for (const where of ['/', '/cards', '/cards/ABCD', '/flashcards', '/battle', '/switchhead', '/mindmaps', '/about', '/privacy', '/nowhere']) {
       const { html } = await stranger.page(where);
       assert.ok(!html.includes('<!--'), `${where} was served with a comment in it`);
       assert.ok(!html.includes('{{'), `${where} was served with a placeholder in it`);
@@ -350,13 +350,14 @@ async function run() {
     assert.equal(body.user.username, 'alice');
     assert.equal(body.play.rounds, 0, 'a new account has played nothing');
     assert.equal(body.collection.count, 0, 'a new account starts with no cards');
+    assert.equal(body.mindmaps.count, 0, 'a new account starts with no mind maps');
   });
 
   await check('the menu is served once there is a cookie', async () => {
     const res = await alice.page('/');
     assert.ok(res.html.includes('menu-grid'), 'expected the menu');
     // One bar on every page, with every room on it and nothing left over.
-    for (const room of ['/cards', '/flashcards', '/battle', '/switchhead']) {
+    for (const room of ['/cards', '/flashcards', '/battle', '/switchhead', '/mindmaps']) {
       assert.ok(res.html.includes(`href="${room}"`), `the bar does not link to ${room}`);
     }
     assert.ok(!res.html.includes('<!--') && !res.html.includes('{{'), 'the menu was served unrendered');
