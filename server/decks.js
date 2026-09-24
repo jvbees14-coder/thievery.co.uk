@@ -11,14 +11,14 @@
 //
 //   * **`text`** — a front and a back. You type what you think the back says
 //     and `grade.js` marks how close you got, out of 100. This is what a
-//     member's own flashcards always are, and what the two hand-written decks
-//     below are.
+//     member's own flashcards always are.
 //   * **`choice`** — a front and a handful of options, one of them right. You
 //     pick one. There is no "close" about it: a choice is 100 or nought.
 //     Usually four, because that is what the papers deal, but see
 //     `MAX_OPTIONS` below: nothing in the room counts on it.
 //
-// The second kind exists because of what is in `decks/`: the MMLU sets, which
+// The site's own decks are all this second kind; a `text` house deck is
+// only ever a test fixture (see EXTRA_DIR). It exists because of what is in `decks/`: the MMLU sets, which
 // are multiple-choice by construction. Flattening them into `text` cards was
 // the obvious move and it is the wrong one — half those questions are "which
 // of the following…", and a question that cannot be read without its options
@@ -44,7 +44,7 @@
 //
 // --- adding a deck ---------------------------------------------------------
 //
-// There are three ways in, and they exist for three different reasons:
+// There are two ways in, and they exist for two different reasons:
 //
 //   * a CSV in `decks/` in the MMLU shape (`question,A,B,C,D,letter`, no
 //     header, named `*_test.csv`) — the published papers, kept exactly as
@@ -52,8 +52,7 @@
 //   * a `*.deck.json` in `decks/` — anything converted from somewhere else,
 //     written by `scripts/decks-import.js`. It carries its own id, name and
 //     blurb, because a converted deck has no filename convention worth
-//     trusting and nothing should have to guess what it is called;
-//   * an object in `WRITTEN` below — the decks written here, in the source.
+//     trusting and nothing should have to guess what it is called.
 //
 // The shape is the whole contract, and the JSON file is exactly it:
 //
@@ -88,54 +87,12 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CSV_DIR = path.join(__dirname, 'decks');
 
-// --- the hand-written decks ------------------------------------------------
-//
-// Two of them, so the room has something short and friendly in it beside the
-// examination papers, and so the tests have a fixed `text` deck to play
-// against.
-
-const WRITTEN = [
-  {
-    id: 'bones',
-    name: 'The human skeleton',
-    blurb: 'Twelve bones, and what each of them is for.',
-    kind: 'text',
-    cards: [
-      { front: 'What is the common name for the clavicle?', back: 'The collarbone', hint: 'It joins the arm to the trunk.' },
-      { front: 'Which bone protects the brain?', back: 'The cranium, or skull', hint: '' },
-      { front: 'What is the longest bone in the human body?', back: 'The femur, the thigh bone', hint: '' },
-      { front: 'How many bones are there in an adult human body?', back: '206 bones', hint: 'More at birth, fewer once they fuse.' },
-      { front: 'What is the common name for the patella?', back: 'The kneecap', hint: '' },
-      { front: 'Which two bones make up the forearm?', back: 'The radius and the ulna', hint: '' },
-      { front: 'What is the scientific name for the backbone?', back: 'The vertebral column, or spine', hint: '' },
-      { front: 'Which bone is the stirrup, the smallest in the body?', back: 'The stapes, in the middle ear', hint: '' },
-      { front: 'What is the sternum?', back: 'The breastbone, at the front of the ribcage', hint: '' },
-      { front: 'How many pairs of ribs does a human normally have?', back: '12 pairs', hint: '' },
-      { front: 'Which bone is the scapula?', back: 'The shoulder blade', hint: '' },
-      { front: 'What tissue makes blood cells inside a bone?', back: 'Bone marrow', hint: '' },
-    ],
-  },
-  {
-    id: 'capitals',
-    name: 'Capital cities',
-    blurb: 'Twelve countries, and the city that runs each one.',
-    kind: 'text',
-    cards: [
-      { front: 'What is the capital of Australia?', back: 'Canberra', hint: 'Not the biggest city in the country.' },
-      { front: 'What is the capital of Canada?', back: 'Ottawa', hint: '' },
-      { front: 'What is the capital of Brazil?', back: 'Brasilia', hint: 'Purpose-built, and inland.' },
-      { front: 'What is the capital of Switzerland?', back: 'Bern', hint: '' },
-      { front: 'What is the capital of New Zealand?', back: 'Wellington', hint: '' },
-      { front: 'What is the capital of Turkey?', back: 'Ankara', hint: 'Not the city on the Bosphorus.' },
-      { front: 'What is the capital of South Africa?', back: 'Pretoria is the administrative capital', hint: 'It has three.' },
-      { front: 'What is the capital of Morocco?', back: 'Rabat', hint: '' },
-      { front: 'What is the capital of Vietnam?', back: 'Hanoi', hint: '' },
-      { front: 'What is the capital of Norway?', back: 'Oslo', hint: '' },
-      { front: 'What is the capital of Kazakhstan?', back: 'Astana', hint: '' },
-      { front: 'What is the capital of Portugal?', back: 'Lisbon', hint: '' },
-    ],
-  },
-];
+// A second folder of `*.deck.json`, named by the environment and read after
+// the first. It exists for the tests: the battle suite plays against two short
+// `text` decks in `test/fixtures/decks/`, because typed answers are what the
+// one-rule audit reads for, and the site itself carries no house deck of that
+// kind. Nothing in production sets it.
+const EXTRA_DIR = process.env.THIEVERY_EXTRA_DECKS ? path.resolve(process.env.THIEVERY_EXTRA_DECKS) : null;
 
 // --- the MMLU sets ---------------------------------------------------------
 //
@@ -236,8 +193,7 @@ function loadCsvDecks() {
   try {
     files = fs.readdirSync(CSV_DIR).filter((f) => f.endsWith('_test.csv'));
   } catch {
-    // No CSVs is not an error: the two hand-written decks are a working room,
-    // and a checkout without them should still boot.
+    // No CSVs is not an error: a checkout without them should still boot.
     return [];
   }
   return files
@@ -258,15 +214,16 @@ function loadCsvDecks() {
 // somebody meant to put in the room. Dropping it quietly would leave a lobby
 // that is simply missing something, with nothing anywhere saying why.
 
-function loadJsonDecks() {
+function loadJsonDecks(dir) {
+  if (!dir) return [];
   let files;
   try {
-    files = fs.readdirSync(CSV_DIR).filter((f) => f.endsWith('.deck.json'));
+    files = fs.readdirSync(dir).filter((f) => f.endsWith('.deck.json'));
   } catch {
     return [];
   }
   return files.sort().map((file) => {
-    const where = path.join(CSV_DIR, file);
+    const where = path.join(dir, file);
     let deck;
     try {
       deck = JSON.parse(fs.readFileSync(where, 'utf8'));
@@ -394,7 +351,7 @@ function topicDecks(decks) {
 
 // --- the shelf --------------------------------------------------------------
 
-const SOURCES = [...WRITTEN.map((d) => ({ ...d, house: true })), ...loadCsvDecks(), ...loadJsonDecks()];
+const SOURCES = [...loadCsvDecks(), ...loadJsonDecks(CSV_DIR), ...loadJsonDecks(EXTRA_DIR)];
 const DECKS = [...SOURCES, ...topicDecks(SOURCES)];
 const byId = new Map(DECKS.map((d) => [d.id, d]));
 
@@ -424,7 +381,7 @@ export const deck = (id) => byId.get(String(id || '')) || null;
 export const has = (id) => byId.has(String(id || ''));
 
 /** The id the lobby starts on, so a room is always set to something real. */
-export const DEFAULT_DECK = WRITTEN[0].id;
+export const DEFAULT_DECK = (DECKS.find((d) => d.house) || DECKS.find((d) => d.topic) || DECKS[0] || {}).id || null;
 
 /**
  * Every deck is well formed. Called once at start-up rather than trusted:

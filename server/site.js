@@ -107,7 +107,7 @@ function battleDecks(rows = {}) {
   const list = Object.entries(rows)
     .map(([id, r]) => ({
       id,
-      name: id === 'mine' ? 'Your own flashcards' : names.get(id) || 'A deck no longer in the house',
+      name: id === 'mine' ? 'Your own flashcards' : names.get(id) || 'A retired deck',
       matches: r.matches,
       cards: r.cards,
       average: r.cards ? r.points / r.cards : 0,

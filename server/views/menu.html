@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="/style.css" />
   <link rel="stylesheet" href="/flashcards.css" />
   <link rel="stylesheet" href="/menu.css" />
+  <link rel="stylesheet" href="/plain.css" />
   <script src="/prefs.js"></script>
 </head>
 <body class="menu-page">
@@ -199,11 +200,17 @@
            table reads it too, and nobody has to sign in there. -->
       <div class="menu-form">
         <h3 class="menu-form-head">Display</h3>
+        <fieldset class="menu-scheme">
+          <legend>Colour scheme</legend>
+          <label class="fc-check"><input type="radio" name="scheme" value="vault" data-theme-choice checked /> Dark: navy and brass</label>
+          <label class="fc-check"><input type="radio" name="scheme" value="plain" data-theme-choice /> Light: white and blue</label>
+        </fieldset>
         <label class="fc-check"><input type="checkbox" data-motion-check checked /> Animate banners</label>
         <p class="hint">
-          The full-screen announcements for a steal, a miss or a win. With this
-          off they still appear, just without the sweep, the screen shake or
-          the confetti. Saved in this browser.
+          Banners are the full-screen announcements for a steal, a miss or a
+          win. With animation off they still appear, just without the sweep,
+          the screen shake or the confetti. Both settings are saved in this
+          browser. The card game always uses the dark scheme.
         </p>
       </div>
 

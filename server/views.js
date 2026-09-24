@@ -10,7 +10,7 @@
 //   {{bar:flashcards}}   the bar, with that room marked as the one you are in
 //   {{bar:public}}       the bar without an account menu, for pages anybody sees
 //   {{foot}}             the links along the bottom of every page
-//   {{contact}}          THIEVERY_CONTACT_EMAIL as a link, or a stand-in without it
+//   {{contact}}          the contact address as a mailto link
 //
 // The other thing done here is taking the comments out. The views are
 // annotated for whoever maintains them, and none of that is for the visitor,
@@ -43,12 +43,9 @@ export function bar(current = '', { signedIn = true } = {}) {
     (r) =>
       `<a class="menu-nav-link" id="nav-${r.id}" href="${r.href}"${r.id === current ? ' aria-current="page"' : ''}>${r.name}</a>`
   ).join('\n      ');
-  // The flashcards room has its own account drawer, so there the entry opens
-  // that rather than leaving the room for the hall's settings.
-  const account =
-    current === 'flashcards'
-      ? '<button data-act="account" type="button">Account settings</button>'
-      : '<a href="/#account">Account settings</a>';
+  // Settings live in one place, the hall's account panel, whichever room
+  // the bar is drawn in.
+  const account = '<a href="/#account">Account settings</a>';
   if (!signedIn) {
     return `<header class="fc-bar">
     <a class="fc-mark wordmark" href="/">Thievery<em>.co.uk</em></a>
@@ -85,12 +82,11 @@ export const FOOT = `<footer class="site-foot">
     <p>&copy; ${new Date().getFullYear()} Thievery.co.uk</p>
   </footer>`;
 
-// Where people are told to write to. It comes from the environment rather
-// than the source, so the address is not published in the repository, and a
-// deploy without one says something true rather than printing a blank.
+// Where people are told to write to: the site's own address, unless the
+// environment names another.
+const CONTACT_EMAIL = 'admin@thievery.co.uk';
 function contact() {
-  const email = String(process.env.THIEVERY_CONTACT_EMAIL || '').trim();
-  if (!email) return 'the site&rsquo;s admin';
+  const email = String(process.env.THIEVERY_CONTACT_EMAIL || CONTACT_EMAIL).trim();
   const safe = email.replace(/[<>"&]/g, '');
   return `<a href="mailto:${safe}">${safe}</a>`;
 }

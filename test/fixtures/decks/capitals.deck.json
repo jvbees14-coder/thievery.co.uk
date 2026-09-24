@@ -1,0 +1,69 @@
+{
+  "id": "capitals",
+  "name": "Capital cities",
+  "blurb": "Twelve countries, and the city that runs each one.",
+  "kind": "text",
+  "cards": [
+    {
+      "front": "What is the capital of Australia?",
+      "back": "Canberra",
+      "hint": "Not the biggest city in the country."
+    },
+    {
+      "front": "What is the capital of Canada?",
+      "back": "Ottawa",
+      "hint": ""
+    },
+    {
+      "front": "What is the capital of Brazil?",
+      "back": "Brasilia",
+      "hint": "Purpose-built, and inland."
+    },
+    {
+      "front": "What is the capital of Switzerland?",
+      "back": "Bern",
+      "hint": ""
+    },
+    {
+      "front": "What is the capital of New Zealand?",
+      "back": "Wellington",
+      "hint": ""
+    },
+    {
+      "front": "What is the capital of Turkey?",
+      "back": "Ankara",
+      "hint": "Not the city on the Bosphorus."
+    },
+    {
+      "front": "What is the capital of South Africa?",
+      "back": "Pretoria is the administrative capital",
+      "hint": "It has three."
+    },
+    {
+      "front": "What is the capital of Morocco?",
+      "back": "Rabat",
+      "hint": ""
+    },
+    {
+      "front": "What is the capital of Vietnam?",
+      "back": "Hanoi",
+      "hint": ""
+    },
+    {
+      "front": "What is the capital of Norway?",
+      "back": "Oslo",
+      "hint": ""
+    },
+    {
+      "front": "What is the capital of Kazakhstan?",
+      "back": "Astana",
+      "hint": ""
+    },
+    {
+      "front": "What is the capital of Portugal?",
+      "back": "Lisbon",
+      "hint": ""
+    }
+  ],
+  "house": true
+}

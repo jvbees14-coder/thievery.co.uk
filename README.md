@@ -353,18 +353,17 @@ room is really for, and the reason the clock can be turned off.
 the same for everybody — or **your own flashcards**, the ones you have written
 or traded for.
 
-House decks come in two sorts, and the lobby says which is which before you
-start:
+House decks are listed by **subject**: Biology, Physics, Law, General science
+and a dozen more, about 89,000 multiple-choice questions between them. Each
+subject gathers every question on it from five published sets. You pick an
+option, and there is no "close" about it: right or wrong. The options are
+shuffled every time, so the answer is never in the same place twice.
 
-- Two short **written** decks, where you type the answer and it is marked out
-  of 100 like any flashcard.
-- Fifty-seven **subject papers** — about 14,000 four-option questions, from
-  anatomy and astronomy to jurisprudence and world religions. You pick one of
-  four, and there is no "close" about it: right or wrong. The options are
-  shuffled every time, so the answer is never in the same place twice.
-
-The papers are the [MMLU set](https://github.com/hendrycks/test) of Hendrycks
-et al., used under the MIT licence.
+The questions are from the [MMLU set](https://github.com/hendrycks/test)
+(MIT), ARC (CC BY-SA 4.0), OpenBookQA (Apache 2.0), QASC (CC BY 4.0) and SciQ
+(CC BY-NC 3.0); `/about` credits each. Every one of them can be read and
+searched at `/battle#questions`, except today's daily ten, and not while you
+are playing a match.
 
 A room is four characters. Open one and share the code, or start it alone.
 Nothing about a room is written down and it is forgotten an hour after the
@@ -372,8 +371,8 @@ last person leaves, exactly like a table at the card game.
 
 ### How a typed answer is marked
 
-This is for the cards you type at — your own flashcards and the two written
-decks. A four-option question is simply right or wrong.
+This is for the cards you type at, which are your own flashcards. A
+multiple-choice question is simply right or wrong.
 
 Out of 100, on how close what you typed is to the back of the card. It is
 trying to mark the *meaning*, and it gives ground in every direction that

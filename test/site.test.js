@@ -278,6 +278,7 @@ async function run() {
       assert.ok(!res.html.includes('{{'), `${where} has a placeholder left in it`);
     }
     assert.ok((await stranger.page('/about')).html.includes('MIT'), 'the decks are credited');
+    assert.ok((await stranger.page('/privacy')).html.includes('mailto:admin@thievery.co.uk'), 'the privacy page gives no address to write to');
   });
 
   await check('an address nobody recognises is a page, and still a 404', async () => {

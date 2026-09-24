@@ -425,10 +425,7 @@ reveal and record all read one sort of mark. A choice's working (`found`,
 
 `decks.js` is fixed sets in the source — not in the document, so a house deck
 cannot be traded, lost with an account, or put out of reach by a bucket. There
-are three sources:
-
-- **Hand-written**, in `WRITTEN` at the top of the file. Two small `text`
-  decks; the battle suite plays against them.
+are two sources, and every house deck on the site is `choice`:
 - **`server/decks/*.csv`**, 57 subject papers of four-option questions — the
   MMLU set of Hendrycks et al., MIT licensed — read at boot as published, so a
   deck can be checked against its source with `diff`. About 150ms and 14,000
@@ -447,10 +444,20 @@ are three sources:
 card into a topic deck (`topic-biology` and so on): an MMLU paper by the map
 in `SUBJECT_TOPICS`, a converted card by its own `topic`, and a converted card
 with none into **General science** by the deck it came from (`CATCH_ALL`), so
-no question is left out of every list. `catalog()` marks topics and the
-hand-written decks `listed`; the sources stay in the catalog unlisted, because
+no question is left out of every list. `catalog()` marks topics, and any
+deck with `house: true`, `listed`; the sources stay in the catalog unlisted, because
 rooms, the record and `stats.battle.decks` hold their ids. The daily deck
 picks from the topics, so adding cards to a topic changes that day's ten.
+
+**The battle suite brings its own `text` decks.** The site used to carry two
+short hand-written ones, `bones` and `capitals`; they were taken off the site
+and now live in `test/fixtures/decks/`, read from `THIEVERY_EXTRA_DECKS`,
+which `test/battle.test.js` sets before it first imports `decks.js` (and
+which the server it spawns inherits). The one-rule audit's text search needs
+a house deck you type into, and the site no longer has one. A stats row for
+either id reads as "A retired deck". `DEFAULT_DECK` is the first `house`
+deck if there is one (so, in the suite, `bones`) and otherwise the first
+topic.
 
 An id is load-bearing and must never be reused or renamed, because a room being
 set up holds that string. CSV decks are `mmlu-` plus the hyphenated subject.
@@ -593,7 +600,7 @@ Every page is read through `server/views.js` (`readView`, or `render` for
 - **Puts in the shared pieces.** `{{bar:<room>}}` is the one site bar, with
   every room on it and the current one marked; `{{bar:public}}` is the same
   without the account menu; `{{foot}}` is the footer; `{{contact}}` is
-  `THIEVERY_CONTACT_EMAIL` as a link. The bar used to be copied into each
+  the contact address as a link (admin@thievery.co.uk, or `THIEVERY_CONTACT_EMAIL`). The bar used to be copied into each
   view and drifted until every room linked to a different set of the others.
   Change it in `views.js`, never in a view.
 - **Takes the HTML comments out.** The views are annotated for whoever
@@ -604,14 +611,25 @@ Every page is read through `server/views.js` (`readView`, or `render` for
 
 `/cards.html` is redirected to `/cards` so the game page is never served raw.
 
-There is one design. A second, plain one used to be switchable per browser;
-it was removed. `public/prefs.js` is loaded in every `<head>` and holds the
-one per-browser choice left: whether the banners animate. It sets
-`data-motion="still"` on `<html>`, `style.css` stills the banners and the
-shake under it, and `app.js` asks `window.thieveryStill()` before the
-confetti. It lives in localStorage because the card table has no account to
-keep it against. Controls are `[data-motion-toggle]` buttons (the on/off word
-is drawn by CSS from `.motion-state`) and `[data-motion-check]` checkboxes.
+`public/prefs.js` is loaded in every `<head>`, after the stylesheets, and
+holds the two per-browser choices, both set in the hall's **Account** panel
+(`/#account`, which the account menu links to from every room):
+
+- **The colour scheme**: the Vault, or the plain design in `plain.css`,
+  which does nothing unless `<html>` has `data-theme="plain"`. prefs.js only
+  sets that on a page that links `plain.css`, which every view does and
+  `public/cards.html` deliberately does not: the card table keeps the Vault.
+  Radios carry `[data-theme-choice]`. The key, `thievery-theme`, is the one
+  the old corner switch used.
+- **Banner animations**: `data-motion="still"` on `<html>`, under which
+  `style.css` stills the banners and the shake, and `app.js` asks
+  `window.thieveryStill()` before the confetti. Controls are
+  `[data-motion-check]` checkboxes and `[data-motion-toggle]` buttons (the
+  card table's top bar; the on/off word is drawn by CSS from `.motion-state`).
+
+Both live in localStorage because the card table has no account to keep them
+against. A new element styled with a literal colour rather than a token
+needs a rule in `plain.css` too.
 
 New accounts start with an empty collection. They used to be dealt three
 cards about the rules; `Cards.sweepWelcome()` runs on every boot and deletes
@@ -628,7 +646,7 @@ any card whose history has a `welcomed` event, wherever it now is.
 | `THIEVERY_ADMIN_RESET=1` | reset that password for one boot |
 | `THIEVERY_ALLOW_EPHEMERAL=1` | permit the throwaway disk in production |
 | `THIEVERY_BOT_PACE` | bot think-time multiplier; the game suite sets it low |
-| `THIEVERY_CONTACT_EMAIL` | the address About and Privacy tell people to write to; without it they say "the site's admin" |
+| `THIEVERY_CONTACT_EMAIL` | overrides the address About and Privacy give, which is admin@thievery.co.uk |
 
 R2 keys are 32 hex characters and secrets 64 — a `cfut_`-prefixed value is a
 Cloudflare API token, not an S3 credential.

@@ -1,0 +1,69 @@
+{
+  "id": "bones",
+  "name": "The human skeleton",
+  "blurb": "Twelve bones, and what each of them is for.",
+  "kind": "text",
+  "cards": [
+    {
+      "front": "What is the common name for the clavicle?",
+      "back": "The collarbone",
+      "hint": "It joins the arm to the trunk."
+    },
+    {
+      "front": "Which bone protects the brain?",
+      "back": "The cranium, or skull",
+      "hint": ""
+    },
+    {
+      "front": "What is the longest bone in the human body?",
+      "back": "The femur, the thigh bone",
+      "hint": ""
+    },
+    {
+      "front": "How many bones are there in an adult human body?",
+      "back": "206 bones",
+      "hint": "More at birth, fewer once they fuse."
+    },
+    {
+      "front": "What is the common name for the patella?",
+      "back": "The kneecap",
+      "hint": ""
+    },
+    {
+      "front": "Which two bones make up the forearm?",
+      "back": "The radius and the ulna",
+      "hint": ""
+    },
+    {
+      "front": "What is the scientific name for the backbone?",
+      "back": "The vertebral column, or spine",
+      "hint": ""
+    },
+    {
+      "front": "Which bone is the stirrup, the smallest in the body?",
+      "back": "The stapes, in the middle ear",
+      "hint": ""
+    },
+    {
+      "front": "What is the sternum?",
+      "back": "The breastbone, at the front of the ribcage",
+      "hint": ""
+    },
+    {
+      "front": "How many pairs of ribs does a human normally have?",
+      "back": "12 pairs",
+      "hint": ""
+    },
+    {
+      "front": "Which bone is the scapula?",
+      "back": "The shoulder blade",
+      "hint": ""
+    },
+    {
+      "front": "What tissue makes blood cells inside a bone?",
+      "back": "Bone marrow",
+      "hint": ""
+    }
+  ],
+  "house": true
+}

@@ -1,0 +1,286 @@
+/* Thievery.co.uk — the plain design.
+ *
+ * The Vault with the deco taken off: a light page, white panels, grey
+ * hairlines, a system sans-serif, and blue where the Vault has brass. It is
+ * chosen per browser in the account settings and applied by prefs.js, which
+ * sets data-theme="plain" on <html>,
+ * and every rule in this file hangs off that attribute — so with it absent,
+ * this file does nothing at all and the Vault is exactly what it was.
+ *
+ * Most of the work is done by redefining the Vault's own tokens, because the
+ * other stylesheets are written almost entirely in them. What follows the
+ * tokens is only what a token cannot reach: the sunburst, the corner marks,
+ * the dark washes written as literal rgba() values, and the small capitals on
+ * anything you press, which read as ornament rather than as a button.
+ *
+ * It covers the hall, the flashcards room, the battle room and their doors.
+ * The card table keeps the Vault whichever is chosen: its cards, its felt and
+ * its banners are the game's own artwork rather than a skin over it. */
+
+/* --- the tokens ------------------------------------------------------------ */
+
+:root[data-theme="plain"] {
+  --ink: #f5f7fa;
+  --ink-2: #ffffff;
+  --ink-3: #ffffff;
+  --ink-4: #f8fafc;
+  /* Brass was both the accent and the colour of every border. Here the two
+     are separated: the accent is blue, and the hairlines are grey, because a
+     page ruled in its accent colour is a page with nothing left to point at. */
+  --brass: #2563eb;
+  --brass-bright: #1d4ed8;
+  --brass-dim: #cfd6e0;
+  --brass-faint: #e4e8ee;
+  --brass-ghost: rgba(37, 99, 235, 0.06);
+  --ring: rgba(37, 99, 235, 0.22);
+  --ivory: #111827;
+  --ivory-dim: #374151;
+  --text: #1f2937;
+  --text-dim: #4b5563;
+  --text-faint: #6b7280;
+  --burgundy: #b91c1c;
+  --burgundy-deep: #fee2e2;
+  --jade: #16a34a;
+  --jade-bright: #15803d;
+  --jade-pale: #166534;
+  --bad: #dc2626;
+  --team-a: #0e7490;
+  --team-b: #be185d;
+  --radius: 8px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 4px 12px rgba(16, 24, 40, 0.06);
+  --display: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --caps: var(--display);
+  --body: var(--display);
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+}
+
+:root[data-theme="plain"] body { font-size: 16px; line-height: 1.5; }
+
+/* --- the room behind the page ---------------------------------------------- */
+
+:root[data-theme="plain"] body::before, :root[data-theme="plain"] body::after,
+:root[data-theme="plain"] .screen.home::before, :root[data-theme="plain"] .screen.home::after { display: none; }
+:root[data-theme="plain"] .screen.home { background: var(--ink); }
+
+:root[data-theme="plain"] * { scrollbar-color: #c3cad4 transparent; }
+:root[data-theme="plain"] ::-webkit-scrollbar-track { background: transparent; }
+:root[data-theme="plain"] ::-webkit-scrollbar-thumb { background: #c3cad4; background-clip: content-box; }
+
+/* --- type -------------------------------------------------------------------
+   The display face was a deco poster face and wants nothing but weight to
+   stand in for it. Headings that were set in spaced capitals are set in
+   sentence case; the small labels keep their capitals, which is what labels
+   in plain software look like anyway, with less air between the letters. */
+
+:root[data-theme="plain"] .wordmark { font-weight: 700; letter-spacing: -0.01em; text-shadow: none; }
+:root[data-theme="plain"] .wordmark em { font-size: 0.5em; font-weight: 600; letter-spacing: 0.04em; vertical-align: 0.2em; }
+:root[data-theme="plain"] .logo { font-size: 34px; }
+:root[data-theme="plain"] .logo em { font-size: 12px; letter-spacing: 0.06em; color: var(--text-faint); }
+
+:root[data-theme="plain"] .eyebrow, :root[data-theme="plain"] .field > label, :root[data-theme="plain"] .field span, :root[data-theme="plain"] .label-caps,
+:root[data-theme="plain"] .fc-stat span, :root[data-theme="plain"] .fc-rarity, :root[data-theme="plain"] .fc-h4, :root[data-theme="plain"] .menu-tile-say, :root[data-theme="plain"] .menu-figure span,
+:root[data-theme="plain"] .btl-code-say, :root[data-theme="plain"] .btl-card-owner, :root[data-theme="plain"] .btl-progress, :root[data-theme="plain"] .btl-tag, :root[data-theme="plain"] .btl-choice-tag {
+  letter-spacing: 0.05em;
+}
+:root[data-theme="plain"] .field > label, :root[data-theme="plain"] .field > label span { font-size: 13px; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--ivory-dim); }
+:root[data-theme="plain"] .field > label .opt, :root[data-theme="plain"] .field > label .count { font-weight: 400; color: var(--text-faint); }
+
+:root[data-theme="plain"] .fc-h, :root[data-theme="plain"] .menu-hello, :root[data-theme="plain"] .menu-panel-head, :root[data-theme="plain"] .menu-tile h2, :root[data-theme="plain"] .menu-member-head h3,
+:root[data-theme="plain"] .btl-door-head, :root[data-theme="plain"] .btl-end-head, :root[data-theme="plain"] .btl-today-deck, :root[data-theme="plain"] .fc-modal-box h3, :root[data-theme="plain"] .fc-confirm-box h3 {
+  font-weight: 700; letter-spacing: -0.01em;
+}
+:root[data-theme="plain"] .menu-hello { font-size: clamp(26px, 4vw, 36px); }
+:root[data-theme="plain"] .menu-hello span { color: var(--brass); }
+/* A bare <h2> is a panel heading and belongs with the small headings below;
+   a classed one has been given its own size already and keeps it. */
+:root[data-theme="plain"] .panel h2:not([class]), :root[data-theme="plain"] .btl-head, :root[data-theme="plain"] .menu-modes-head, :root[data-theme="plain"] .fc-h3, :root[data-theme="plain"] .door-open h2 {
+  font-size: 16px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--ivory);
+}
+:root[data-theme="plain"] .panel h3 { letter-spacing: 0.05em; }
+:root[data-theme="plain"] .panel h3::after, :root[data-theme="plain"] .eyebrow::before, :root[data-theme="plain"] .eyebrow::after { background: var(--brass-faint); }
+:root[data-theme="plain"] .btl-front, :root[data-theme="plain"] .btl-review-front, :root[data-theme="plain"] .fc-title { font-weight: 600; letter-spacing: -0.005em; text-transform: none; }
+:root[data-theme="plain"] .btl-front { font-size: clamp(20px, 3vw, 26px); }
+:root[data-theme="plain"] .fc-stat b, :root[data-theme="plain"] .fc-meter-num b, :root[data-theme="plain"] .menu-figure b { font-weight: 600; }
+:root[data-theme="plain"] .btl-mark-score, :root[data-theme="plain"] .btl-standing-total, :root[data-theme="plain"] .btl-running b, :root[data-theme="plain"] .btl-board-row b { font-weight: 600; }
+:root[data-theme="plain"] .btl-code { font-family: var(--mono); font-weight: 600; letter-spacing: 0.2em; }
+
+/* --- things you press ------------------------------------------------------- */
+
+:root[data-theme="plain"] .btn {
+  font-size: 14px; font-weight: 600; letter-spacing: 0; text-transform: none;
+  padding: 9px 16px; border-radius: 6px;
+  background: #fff; border-color: var(--brass-dim); color: var(--ivory);
+}
+:root[data-theme="plain"] .btn:hover { background: #f3f5f8; border-color: #b8c1cd; }
+:root[data-theme="plain"] .btn:focus-visible { border-color: var(--brass); box-shadow: 0 0 0 3px var(--ring); }
+:root[data-theme="plain"] .btn:active { transform: translateY(1px); }
+:root[data-theme="plain"] .btn.primary, :root[data-theme="plain"] .btn.primary:hover {
+  background: var(--brass); border-color: var(--brass); color: #fff; box-shadow: none; filter: none;
+}
+:root[data-theme="plain"] .btn.primary:hover { background: var(--brass-bright); border-color: var(--brass-bright); }
+:root[data-theme="plain"] .btn.small { padding: 6px 11px; font-size: 13px; letter-spacing: 0; }
+:root[data-theme="plain"] .btn.ghost { background: transparent; border-color: transparent; color: var(--text-dim); }
+:root[data-theme="plain"] .btn.ghost:hover { background: #eef1f5; color: var(--ivory); border-color: transparent; }
+:root[data-theme="plain"] .home-actions .primary { padding: 11px; font-size: 15px; letter-spacing: 0; }
+
+:root[data-theme="plain"] .fc-tab, :root[data-theme="plain"] .door-tab, :root[data-theme="plain"] .menu-nav-link, :root[data-theme="plain"] .fc-who-btn, :root[data-theme="plain"] .fc-op, :root[data-theme="plain"] .seg button, :root[data-theme="plain"] .fc-backlink {
+  letter-spacing: 0; text-transform: none;
+}
+:root[data-theme="plain"] .fc-tab { font-size: 14px; font-weight: 500; color: var(--text-dim); border-radius: 6px; padding: 8px 12px; }
+:root[data-theme="plain"] .fc-tab:hover { color: var(--ivory); background: #eef1f5; }
+:root[data-theme="plain"] .fc-tab.is-on { color: var(--brass); background: var(--brass-ghost); border-color: transparent; }
+:root[data-theme="plain"] .fc-tab-admin, :root[data-theme="plain"] .fc-tab-admin.is-on { color: var(--team-b); }
+:root[data-theme="plain"] .door-tab { font-size: 14px; font-weight: 500; color: var(--text-faint); }
+:root[data-theme="plain"] .door-tab:hover { color: var(--ivory); }
+:root[data-theme="plain"] .menu-nav-link { font-size: 14px; font-weight: 500; }
+:root[data-theme="plain"] .menu-nav-link:hover { color: var(--brass); background: var(--brass-ghost); }
+:root[data-theme="plain"] .fc-who-btn { font-size: 13px; font-weight: 500; border-radius: 6px; background: #fff; }
+:root[data-theme="plain"] .fc-who-btn:hover { border-color: #b8c1cd; background: #f3f5f8; }
+:root[data-theme="plain"] .fc-op { font-size: 12px; font-weight: 500; border-color: var(--brass-dim); border-radius: 5px; padding: 4px 9px; }
+:root[data-theme="plain"] .fc-op:hover { color: var(--ivory); background: #f3f5f8; border-color: #b8c1cd; }
+:root[data-theme="plain"] .fc-op.danger:hover { color: #b91c1c; background: #fef2f2; border-color: #fecaca; }
+:root[data-theme="plain"] .fc-op.on { color: var(--jade-bright); border-color: #bbf7d0; background: #f0fdf4; }
+:root[data-theme="plain"] .fc-backlink { font-size: 13px; font-weight: 500; }
+:root[data-theme="plain"] .linkish:hover { color: var(--brass-bright); }
+
+:root[data-theme="plain"] .logo-btn::after { letter-spacing: 0.04em; }
+:root[data-theme="plain"] .logo-btn.armed { background: #fef2f2; box-shadow: 0 0 0 1px #fecaca; }
+
+/* The sliding switch keeps its slide and loses its brass. */
+:root[data-theme="plain"] .seg { background: #eef1f5; border-color: transparent; border-radius: 7px; }
+:root[data-theme="plain"] .seg::before { background: #fff; border-radius: 5px; box-shadow: 0 1px 2px rgba(16, 24, 40, 0.12), 0 0 0 1px rgba(16, 24, 40, 0.04); }
+:root[data-theme="plain"] .seg button { font-size: 13px; font-weight: 500; }
+:root[data-theme="plain"] .seg button.on { color: var(--brass); }
+:root[data-theme="plain"] .seg.locked::before { filter: none; opacity: 0.7; }
+
+/* --- fields -------------------------------------------------------------- */
+
+:root[data-theme="plain"] input, :root[data-theme="plain"] textarea, :root[data-theme="plain"] select, :root[data-theme="plain"] .dd-btn {
+  background: #fff; border-color: var(--brass-dim); color: var(--ivory); border-radius: 6px;
+}
+:root[data-theme="plain"] input, :root[data-theme="plain"] textarea, :root[data-theme="plain"] select { padding: 10px 12px; }
+:root[data-theme="plain"] input:focus, :root[data-theme="plain"] textarea:focus, :root[data-theme="plain"] select:focus {
+  border-color: var(--brass); box-shadow: 0 0 0 3px var(--ring);
+}
+:root[data-theme="plain"] input::placeholder, :root[data-theme="plain"] textarea::placeholder { color: #9aa3af; }
+:root[data-theme="plain"] .dd-btn:hover:not(:disabled) { background: #f8fafc; border-color: #b8c1cd; }
+:root[data-theme="plain"] .dd-btn:focus-visible, :root[data-theme="plain"] .dropdown.open .dd-btn { box-shadow: 0 0 0 3px var(--ring); }
+:root[data-theme="plain"] .dd-menu { background: #fff; box-shadow: var(--shadow); border-radius: 6px; }
+:root[data-theme="plain"] .dd-opt:hover { background: #f3f5f8; }
+:root[data-theme="plain"] .fc-check input, :root[data-theme="plain"] .fc-pick-item input { accent-color: var(--brass); }
+:root[data-theme="plain"] .code, :root[data-theme="plain"] .codebox .code { background: #f3f5f8; color: var(--brass); border-color: var(--brass-dim); }
+
+/* --- surfaces ---------------------------------------------------------------
+   A panel is a white sheet with a grey edge and the faintest shadow. The
+   corner marks go: they are the deco frame, and a plain sheet has none. */
+
+:root[data-theme="plain"] .panel, :root[data-theme="plain"] .home-card, :root[data-theme="plain"] .seat-row {
+  background: #fff; border-color: var(--brass-faint); box-shadow: var(--shadow);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+:root[data-theme="plain"] .panel::before, :root[data-theme="plain"] .home-card::before, :root[data-theme="plain"] .seat-row::before,
+:root[data-theme="plain"] .panel::after, :root[data-theme="plain"] .home-card::after, :root[data-theme="plain"] .seat-row::after { display: none; }
+:root[data-theme="plain"] .home-card { background: #fff; }
+
+:root[data-theme="plain"] .fc-bar { background: rgba(255, 255, 255, 0.94); border-bottom-color: var(--brass-faint); }
+:root[data-theme="plain"] .fc-menu { background: #fff; border-color: var(--brass-faint); border-radius: 8px; box-shadow: 0 10px 30px rgba(16, 24, 40, 0.12); }
+:root[data-theme="plain"] .fc-menu button:hover, :root[data-theme="plain"] .fc-menu a:hover { background: #f3f5f8; }
+/* The design switch is ruled off from the entries above it in the account
+   menu, in both designs, because it is the one that leaves you where you are. */
+.fc-menu [data-theme-toggle] { border-top: 1px solid var(--brass-faint); }
+
+/* The chip's own two faces are portraits and keep their colours in both
+   designs; what changes here is the button around it and the label under it. */
+
+:root[data-theme="plain"] .toast { background: #fef2f2; border-color: #fecaca; color: #991b1b; border-radius: 8px; }
+:root[data-theme="plain"] .toast.info { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+:root[data-theme="plain"] .conn { background: #fff; }
+:root[data-theme="plain"] .door-error { background: #fef2f2; border-color: #fecaca; color: #991b1b; border-radius: 6px; }
+:root[data-theme="plain"] .pill { border-color: var(--brass-dim); }
+
+/* Every veil over the page was a near-black wash; here it is a grey one. */
+:root[data-theme="plain"] .fc-reveal, :root[data-theme="plain"] .fc-modal, :root[data-theme="plain"] .fc-confirm { background: rgba(17, 24, 39, 0.45); backdrop-filter: blur(2px); }
+:root[data-theme="plain"] .fc-reveal-cap { color: #fff; }
+:root[data-theme="plain"] .fc-modal-box, :root[data-theme="plain"] .fc-confirm-box { background: #fff; border-color: var(--brass-faint); border-radius: 10px; box-shadow: 0 20px 50px rgba(16, 24, 40, 0.2); }
+:root[data-theme="plain"] .fc-confirm-box { border-color: #fecaca; }
+:root[data-theme="plain"] .fc-confirm-box .btn:not(.ghost), :root[data-theme="plain"] .menu-member .btn.danger { color: #b91c1c; border-color: #fecaca; background: #fff; }
+:root[data-theme="plain"] .fc-confirm-box .btn:not(.ghost):hover, :root[data-theme="plain"] .menu-member .btn.danger:hover { background: #fef2f2; border-color: #f87171; }
+:root[data-theme="plain"] .fc-danger-zone { border-top-color: #fecaca; }
+
+/* --- the flashcards room ----------------------------------------------------- */
+
+:root[data-theme="plain"] .fc-ledger { border-radius: 8px; }
+:root[data-theme="plain"] .fc-face { background: #fff; box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08); border-radius: 8px; }
+:root[data-theme="plain"] .fc-face:hover { border-color: #b8c1cd; }
+:root[data-theme="plain"] .fc-face::before { opacity: 0.9; }
+:root[data-theme="plain"] .fc-tag { border-color: var(--brass-dim); }
+:root[data-theme="plain"] .fc-card.is-pooled .fc-face { border-color: #86efac; }
+:root[data-theme="plain"] .fc-appraisal { background: #fff; box-shadow: var(--shadow); border-radius: 8px; }
+:root[data-theme="plain"] .fc-meter-track, :root[data-theme="plain"] .fc-bar-track { background: #e8ecf1; border-color: transparent; }
+:root[data-theme="plain"] .fc-meter-fill { background: var(--brass); }
+:root[data-theme="plain"] .fc-parts .fc-bar-fill { background: #93b4f5; }
+
+:root[data-theme="plain"] .fc-offer, :root[data-theme="plain"] .fc-trade, :root[data-theme="plain"] .fc-print-opts, :root[data-theme="plain"] .fc-pick-item, :root[data-theme="plain"] .fc-acct {
+  background: #fff; border-color: var(--brass-faint); border-radius: 6px;
+}
+:root[data-theme="plain"] .fc-offer, :root[data-theme="plain"] .fc-pick-item { border-left-color: var(--r-ink); }
+:root[data-theme="plain"] .fc-acct:hover, :root[data-theme="plain"] .fc-pick-item:hover { background: #f8fafc; border-color: var(--brass-dim); }
+:root[data-theme="plain"] .fc-acct.is-admin { border-color: #fbcfe8; }
+:root[data-theme="plain"] .fc-offer.is-mine, :root[data-theme="plain"] .fc-pick-item.is-on { background: #f0fdf4; border-color: #bbf7d0; }
+:root[data-theme="plain"] .fc-pick-item.is-on { border-left-color: var(--r-ink); }
+:root[data-theme="plain"] .fc-mythic-result { background: #fdf2f8; border-color: #fbcfe8; }
+
+/* The rarities are served with their inks, written for a dark card. On a white
+   one the pale ones vanish, so each is darkened here — !important because the
+   server's ink arrives as an inline style on some of them. */
+:root[data-theme="plain"] [data-rarity="common"]    { --r-ink: #6b7280 !important; }
+:root[data-theme="plain"] [data-rarity="uncommon"]  { --r-ink: #15803d !important; }
+:root[data-theme="plain"] [data-rarity="rare"]      { --r-ink: #0e7490 !important; }
+:root[data-theme="plain"] [data-rarity="epic"]      { --r-ink: #7c3aed !important; }
+:root[data-theme="plain"] [data-rarity="legendary"] { --r-ink: #b45309 !important; }
+:root[data-theme="plain"] [data-rarity="mythic"]    { --r-ink: #be185d !important; }
+/* The strike banner is lit in the rarity's own light ink, and its words are
+   dark to match; it keeps the served inks rather than the darkened ones. */
+:root[data-theme="plain"] .banner.fc [data-rarity] { --r-ink: inherit; }
+
+/* --- the hall ------------------------------------------------------------ */
+
+:root[data-theme="plain"] .menu-tile { background: #fff; border-color: var(--brass-faint); box-shadow: var(--shadow); }
+:root[data-theme="plain"] .menu-tile:hover, :root[data-theme="plain"] .menu-tile:focus-visible { background: #fff; border-color: #93b4f5; transform: translateY(-1px); }
+:root[data-theme="plain"] .menu-tile-mark { color: var(--brass); }
+:root[data-theme="plain"] .menu-tile-house { border-color: #fbcfe8; }
+:root[data-theme="plain"] .menu-tile-house .menu-tile-mark { color: var(--team-b); }
+:root[data-theme="plain"] .menu-figure { background: #f8fafc; border-color: var(--brass-faint); }
+:root[data-theme="plain"] .menu-modes td:last-child { color: var(--brass); }
+
+/* --- the battle room ------------------------------------------------------ */
+
+/* The two words under each choice are a sentence about it, not a label: the
+   hall sets every <span> in a field as brass capitals, which here would put a
+   line of blue shouting where the explanation should be. */
+:root[data-theme="plain"] .btl-opt span {
+  font-size: 12.5px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--text-dim);
+}
+:root[data-theme="plain"] .btl-opt { border-color: var(--brass-faint); border-radius: 8px; }
+:root[data-theme="plain"] .btl-opt.is-on { border-color: var(--brass); background: var(--brass-ghost); box-shadow: 0 0 0 1px var(--brass); }
+/* The room code is typed in a sans-serif here rather than in spaced capitals,
+   and four characters plus the spacing between them need the extra room. */
+:root[data-theme="plain"] .btl-today-deck { font-size: clamp(20px, 3.4vw, 26px); text-transform: none; }
+:root[data-theme="plain"] .btl-join input { width: 9ch; letter-spacing: 0.16em; font-weight: 600; }
+:root[data-theme="plain"] .btl-hint { background: #f5f7fa; border-left-color: var(--brass); border-radius: 0 6px 6px 0; }
+:root[data-theme="plain"] .btl-clock-rail { background: #e8ecf1; height: 4px; }
+:root[data-theme="plain"] .btl-back { background: #f8fafc; }
+:root[data-theme="plain"] .btl-mark, :root[data-theme="plain"] .btl-choice-opt { border-color: var(--brass-faint); }
+:root[data-theme="plain"] .btl-choice-opt { border-left-color: var(--brass-faint); }
+:root[data-theme="plain"] .btl-choice-opt:hover:not(:disabled):not(.is-shut) { background: #f8fafc; border-color: #b8c1cd; border-left-color: var(--brass); }
+:root[data-theme="plain"] .btl-choice-opt.is-right { border-left-color: var(--jade); background: #f0fdf4; }
+:root[data-theme="plain"] .btl-choice-opt.is-picked.is-shut:not(.is-right) { background: #fef2f2; }
+:root[data-theme="plain"] .btl-mark.is-close { border-left-color: #d97706; }
+:root[data-theme="plain"] .btl-mark.is-some { border-left-color: #fbbf24; }
+:root[data-theme="plain"] .btl-standing.is-won { border-color: #bfd3fb; }
+
+/* --- the question list -------------------------------------------------------
+   Each question sits on a dark wash in the Vault, which here would be a grey
+   slab, and its letters are in the hairline colour, which here is a border. */
+:root[data-theme="plain"] .btl-q { background: var(--ink-4); }
+:root[data-theme="plain"] .btl-q-options b { color: var(--text-faint); }

@@ -585,43 +585,6 @@
     });
   }
 
-  function accountModal() {
-    const u = state.user;
-    openModal(`
-      <h3>Account settings</h3>
-      <form id="acct-form" class="fc-form" autocomplete="off">
-        <div class="field">
-          <label for="a-display">Display name</label>
-          <input id="a-display" maxlength="24" value="${esc(u.displayName)}" />
-        </div>
-        <div class="field">
-          <label for="a-user">Username</label>
-          <input id="a-user" maxlength="20" value="${esc(u.username)}" autocapitalize="none" spellcheck="false" />
-        </div>
-        <div class="field">
-          <label for="a-new">New password <span class="opt">optional</span></label>
-          <input id="a-new" type="password" maxlength="200" autocomplete="new-password" />
-        </div>
-        <div class="field">
-          <label for="a-cur">Current password <span class="opt">to change username or password</span></label>
-          <input id="a-cur" type="password" maxlength="200" autocomplete="current-password" />
-        </div>
-        <button class="btn primary" type="submit">Save</button>
-        <p class="fc-note">Changing your password signs you out on your other devices.</p>
-      </form>`);
-
-    $('#acct-form').addEventListener('submit', guard(async (ev) => {
-      ev.preventDefault();
-      const body = { displayName: $('#a-display').value, currentPassword: $('#a-cur').value };
-      if ($('#a-user').value.toLowerCase() !== u.username) body.username = $('#a-user').value;
-      if ($('#a-new').value) body.password = $('#a-new').value;
-      state = await api('account', { method: 'POST', body });
-      closeModal();
-      drawAll();
-      toast('Saved.', 'info');
-    }));
-  }
-
   const adminAccountModal = guard(async (id) => {
     const detail = await api('admin/users/' + encodeURIComponent(id));
     const a = detail.account;
@@ -978,10 +941,6 @@
       await api('logout', { method: 'POST' });
       location.href = '/flashcards';
       return;
-    }
-    if (act === 'account') {
-      $('#who-menu').hidden = true;
-      return accountModal();
     }
     if (act === 'modal-close') return closeModal();
     if (act === 'reveal-close') { $('#reveal').hidden = true; return; }

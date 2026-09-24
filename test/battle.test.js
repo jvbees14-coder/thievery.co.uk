@@ -27,10 +27,17 @@ import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import WebSocket from 'ws';
 import * as Grade from '../server/grade.js';
-import * as Decks from '../server/decks.js';
-import * as Daily from '../server/daily.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// The site has no house deck you type into, and the one-rule audit is about
+// typed answers, so this suite brings two of its own: test/fixtures/decks,
+// read by decks.js from THIEVERY_EXTRA_DECKS. It has to be set before decks.js
+// is first loaded, here and in the server this spawns (which inherits the
+// environment), so those two modules are imported after it rather than above.
+process.env.THIEVERY_EXTRA_DECKS = path.join(__dirname, 'fixtures', 'decks');
+const Decks = await import('../server/decks.js');
+const Daily = await import('../server/daily.js');
 const DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'thievery-battle-'));
 
 let PORT = 0;
