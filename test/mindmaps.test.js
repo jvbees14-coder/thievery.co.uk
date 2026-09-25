@@ -177,6 +177,39 @@ async function run() {
     assert.equal(map.nodes.find((n) => n.id === 'a').y, -12.3);
   });
 
+  await check('a folded bubble and a branch colour are kept, and nothing else is', async () => {
+    const nodes = [
+      { ...root(), colour: 2, folded: true },
+      { id: 'a', parentId: 'root', text: 'Where', x: 180, y: 0, colour: 3, folded: true, secret: 'x' },
+      { id: 'b', parentId: 'a', text: 'Coast', x: 360, y: 0, colour: 1, folded: 'yes' },
+      { id: 'c', parentId: 'root', text: 'When', x: -200, y: 0, colour: 6 },
+      { id: 'd', parentId: 'root', text: 'Who', x: 0, y: 200, colour: 1.5 },
+    ];
+    const got = ok(await alice.maps(`/${id}`, { method: 'POST', body: { nodes, rev } }), 'save');
+    rev = got.rev;
+    const by = Object.fromEntries(got.nodes.map((n) => [n.id, n]));
+    assert.deepEqual(by.a, { id: 'a', parentId: 'root', text: 'Where', x: 180, y: 0, folded: true, colour: 3 });
+    assert.equal(by.root.colour, undefined, 'the middle kept a branch colour');
+    assert.equal(by.root.folded, true);
+    assert.equal(by.b.colour, undefined, 'a bubble further out kept a colour of its own');
+    assert.equal(by.b.folded, undefined, 'a fold that was not true was kept');
+    assert.equal(by.c.colour, undefined, 'a colour past the last was kept');
+    assert.equal(by.d.colour, undefined, 'a colour that is not a whole number was kept');
+    const { map } = ok(await alice.maps(`/${id}`), 'get');
+    assert.equal(map.nodes.find((n) => n.id === 'a').colour, 3, 'the colour did not survive a reload');
+  });
+
+  await check('the list carries a small preview of each map, in branch colours', async () => {
+    const { maps } = ok(await alice.maps(), 'list');
+    const { preview } = maps[0];
+    assert.equal(preview.length, 5);
+    assert.deepEqual(preview[0], [0, 0, -1, -1]);
+    const rows = Object.fromEntries(preview.map((r) => [`${r[0]},${r[1]}`, r]));
+    assert.deepEqual(rows['180,0'], [180, 0, 0, 3], 'a chosen colour was not used');
+    assert.deepEqual(rows['360,0'], [360, 0, 1, 3], 'a bubble further out did not take its branch colour');
+    assert.equal(rows['-200,0'][3], 1, 'an automatic colour was not counted by position');
+  });
+
   await check('an empty bubble is dropped, and whatever hangs off it', async () => {
     const nodes = [
       root(),
@@ -275,6 +308,38 @@ async function run() {
     const got = ok(await alice.maps(`/${other.id}`, { method: 'DELETE' }), 'delete');
     assert.deepEqual(got.maps.map((m) => m.id), [id]);
     assert.equal((await alice.maps(`/${other.id}`)).status, 404);
+  });
+
+  await check('a map can be copied, and the copy is a map of its own', async () => {
+    const { map: copy } = ok(await alice.maps('', { method: 'POST', body: { from: id } }), 'duplicate');
+    assert.notEqual(copy.id, id);
+    assert.equal(copy.rev, 1);
+    assert.equal(copy.nodes.find((n) => n.parentId === null).text, 'Holidays (copy)');
+    const { map: original } = ok(await alice.maps(`/${id}`), 'get');
+    assert.equal(copy.nodes.length, original.nodes.length);
+    ok(await alice.maps(`/${copy.id}`, { method: 'DELETE' }), 'delete the copy');
+  });
+
+  await check("a copy of somebody else's map is refused", async () => {
+    assert.equal((await bob.maps('', { method: 'POST', body: { from: id } })).status, 404);
+    assert.deepEqual(ok(await bob.maps(), 'list').maps, []);
+  });
+
+  await check('a copy of a long title still fits', async () => {
+    const long = 'w'.repeat(80);
+    const { map } = ok(await bob.maps('', { method: 'POST', body: { text: long } }), 'create');
+    const { map: copy } = ok(await bob.maps('', { method: 'POST', body: { from: map.id } }), 'duplicate');
+    const title = copy.nodes[0].text;
+    assert.ok(title.length <= 80 && title.endsWith(' (copy)'), title);
+  });
+
+  await check('no more maps than the limit, made or copied', async () => {
+    let last = null;
+    for (let i = (ok(await bob.maps(), 'list').maps.length); i < 50; i++) {
+      last = ok(await bob.maps('', { method: 'POST', body: { text: `Map ${i}` } }), 'create').map;
+    }
+    assert.equal((await bob.maps('', { method: 'POST', body: { text: 'One more' } })).status, 400);
+    assert.equal((await bob.maps('', { method: 'POST', body: { from: last.id } })).status, 400);
   });
 
   await check('a deleted account takes its maps with it', async () => {

@@ -644,17 +644,47 @@ it drops an empty bubble together with whatever hangs off it. Everything
 about drawing, placing and exporting is in `public/mindmaps.js`; the
 server never renders a map.
 
+A bubble may also carry `folded: true` (its branches are not drawn) and
+`colour` (0 to 5, one of the `--mm-c*` tokens). `clean` keeps a colour
+only on a branch of the middle, since everything further out takes its
+branch's, and drops anything else it does not know. The list's
+`summary()` carries a `preview` of the first 60 bubbles for the
+thumbnails, and `POST /api/mindmaps/maps` with `from` copies a map.
+
 - **A save names the revision it was made from.** A stale one is a 409, not
   an overwrite, so a second tab cannot quietly throw away the first's work.
-- **A press means three things** in `mindmaps.js`: let go quickly and it
+  The page then offers "Keep this version" (save again on the newer
+  revision) or "Load the other one", and warns before leaving until one is
+  chosen.
+- **One save at a time, and none dropped.** `save()` waits for the one on
+  its way and then goes, and it takes the map it is saving as an argument.
+  It used to reschedule and return, and leaving the map in that moment lost
+  the last edits.
+- **A press means several things** in `mindmaps.js`: let go quickly and it
   edits, hold for 450ms and it adds a branch, move and it drags the bubble
-  with its branches. The hold timer must be cancelled from the gesture that
-  started it; cancelling it from the current one (already cleared by then)
-  made every click grow a branch.
+  with its branches, and drop it on another bubble and it is joined to that
+  one. The + buttons beside the selected bubble and the count on a folded
+  one go through the same handlers. The hold timer must be cancelled from
+  the gesture that started it; cancelling it from the current one (already
+  cleared by then) made every click grow a branch.
+- **The keys are the usual mind-map ones**: Tab adds a branch, Enter a
+  bubble beside, F2 or Space edits, Delete removes, the arrows walk, Escape
+  leaves the sheet. Backspace deliberately does nothing. Only the selected
+  bubble is in the tab order.
+- **Undo is whole-tree snapshots.** `changed()` records a copy only if the
+  tree differs from the last one, so anything that saves is undoable and
+  nothing needs its own undo code.
+- **The sheet is drawn by key.** Each bubble and branch keeps its element
+  between draws (`drawn`, `paths`), which is what lets a glide redraw every
+  frame and the focus stay on a moving bubble. Glides stop under the
+  site's still setting and `prefers-reduced-motion`.
 - **Only a new branch is placed.** Nothing else moves when one is added, so
-  a dragged bubble stays put. Tidy lays out the whole map, and asks first.
+  a dragged bubble stays put. Tidy lays out the whole map, either side of
+  the middle, and is undoable rather than asking first.
 - **Colours are written on the elements**, read from the `--mm-*` tokens
   (redefined in `plain.css`), so an exported copy looks like the screen. The
+  shadow filter and the middle's gradient are in `#defs`, which the export
+  copies; the dots, the selection and the + buttons are not exported. The
   export also embeds the EB Garamond file, because an SVG drawn into a
   canvas for the PNG cannot fetch anything.
 - **Printing** points the sheet at the map's own bounds on `beforeprint`.

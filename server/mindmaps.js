@@ -30,7 +30,7 @@ const views = {
 
 export const isOpen = () => available();
 
-const limits = { maps: Maps.PER_USER, nodes: Maps.NODES_MAX, text: Maps.TEXT_MAX };
+const limits = { maps: Maps.PER_USER, nodes: Maps.NODES_MAX, text: Maps.TEXT_MAX, colours: Maps.COLOURS };
 
 // --- the routes -----------------------------------------------------------------
 
@@ -47,7 +47,8 @@ function list(req, res) {
 async function create(req, res) {
   const user = requireUser(req);
   const body = await readBody(req);
-  const map = Maps.create(user, body.text);
+  // A map named in `from` is copied rather than a new one started.
+  const map = body.from ? Maps.duplicate(user, body.from) : Maps.create(user, body.text);
   send(res, 200, { map });
 }
 

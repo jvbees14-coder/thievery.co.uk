@@ -35,8 +35,7 @@
       <div class="panel mm-list-panel">
         <h1 class="mm-head">Mind maps</h1>
         <p class="mm-say">
-          Start with one idea in the middle. Press and hold a bubble to add a
-          branch to it, and click a bubble to change what it says.
+          Start with one idea in the middle and branch out from it.
         </p>
 
         <form id="new-map" class="mm-new" autocomplete="off">
@@ -49,9 +48,22 @@
           </div>
         </form>
 
-        <h2 class="mm-subhead">Your maps <span id="map-count" class="mm-count"></span></h2>
+        <div class="mm-list-head">
+          <h2 class="mm-subhead">Your maps <span id="map-count" class="mm-count"></span></h2>
+          <!-- Only shown once there is something to search or sort. -->
+          <div id="list-tools" class="mm-list-tools" hidden>
+            <label class="sr-only" for="map-search">Search your maps</label>
+            <input id="map-search" type="search" placeholder="Search" autocomplete="off" />
+            <label class="sr-only" for="map-sort">Sort</label>
+            <select id="map-sort">
+              <option value="updated">Last changed</option>
+              <option value="title">A to Z</option>
+            </select>
+          </div>
+        </div>
         <ul id="map-list" class="mm-list"></ul>
         <p id="map-none" class="hint" hidden>You haven&rsquo;t made a map yet.</p>
+        <p id="map-nomatch" class="hint" hidden>No maps match that.</p>
       </div>
     </section>
 
@@ -62,23 +74,55 @@
         <h1 id="map-title" class="mm-title"></h1>
         <span id="save-state" class="mm-state" aria-live="polite"></span>
         <div class="mm-acts">
-          <button class="btn small" type="button" data-act="fit">Fit to screen</button>
+          <button class="btn small" type="button" data-act="undo" id="undo" disabled title="Undo (Ctrl+Z)">Undo</button>
+          <button class="btn small" type="button" data-act="redo" id="redo" disabled title="Redo (Ctrl+Shift+Z)">Redo</button>
           <button class="btn small" type="button" data-act="tidy">Tidy</button>
-          <button class="btn small" type="button" data-act="png">Download PNG</button>
-          <button class="btn small" type="button" data-act="svg">Download SVG</button>
-          <button class="btn small" type="button" data-act="print">Print</button>
+          <details class="mm-menu" id="export-menu">
+            <summary class="btn small">Export</summary>
+            <div class="mm-menu-list">
+              <button class="btn small ghost" type="button" data-act="png">Download PNG</button>
+              <button class="btn small ghost" type="button" data-act="svg">Download SVG</button>
+              <button class="btn small ghost" type="button" data-act="outline">Copy as outline</button>
+              <button class="btn small ghost" type="button" data-act="print">Print</button>
+            </div>
+          </details>
         </div>
       </div>
 
-      <div id="stage" class="mm-stage">
+      <!-- Shown when another tab saved this map first. -->
+      <div id="clash" class="mm-clash" role="alert" hidden>
+        <span>This map was changed in another tab.</span>
+        <button class="btn small primary" type="button" data-act="keep-mine">Keep this version</button>
+        <button class="btn small" type="button" data-act="load-theirs">Load the other one</button>
+      </div>
+
+      <div id="stage" class="mm-stage" tabindex="-1">
         <!-- The sheet. `world` is what pan and zoom move; the branches are
              drawn under the bubbles so a branch can run from centre to
-             centre and still look as if it leaves the edge. -->
+             centre and still look as if it leaves the edge. The dots, the
+             selection and the + buttons are on screen only and are never
+             exported. -->
         <svg id="sheet" class="mm-sheet" xmlns="http://www.w3.org/2000/svg" role="application"
-             aria-label="Mind map. Tab to a bubble, Enter to edit it, Insert to add a branch, Delete to remove it.">
+             aria-label="Mind map. Arrow keys move between bubbles. Tab adds a branch, Enter adds a bubble beside, F2 edits, Delete removes, Escape leaves the map.">
+          <defs id="defs">
+            <filter id="mm-shadow" x="-30%" y="-30%" width="160%" height="170%">
+              <feDropShadow id="mm-shadow-drop" dx="0" dy="2" stdDeviation="3" />
+            </filter>
+            <linearGradient id="mm-root-fill" x1="0" y1="0" x2="0" y2="1">
+              <stop id="mm-root-top" offset="0" />
+              <stop id="mm-root-bottom" offset="1" />
+            </linearGradient>
+          </defs>
+          <defs>
+            <pattern id="mm-dots" width="28" height="28" patternUnits="userSpaceOnUse">
+              <circle id="mm-dot" cx="14" cy="14" r="1.3" />
+            </pattern>
+          </defs>
+          <rect id="grid" class="mm-grid" width="100%" height="100%" fill="url(#mm-dots)" />
           <g id="world">
             <g id="branches"></g>
             <g id="bubbles"></g>
+            <g id="handles" class="mm-handles"></g>
           </g>
           <g id="measure" class="mm-measure" aria-hidden="true"></g>
         </svg>
@@ -86,16 +130,23 @@
         <div id="editor" class="mm-editor" hidden>
           <label class="sr-only" for="editor-text">Bubble text</label>
           <textarea id="editor-text" maxlength="80" rows="2"></textarea>
+          <div id="swatches" class="mm-swatches" role="group" aria-label="Branch colour" hidden></div>
           <div class="mm-editor-acts">
             <button class="btn small primary" type="button" data-act="done">Done</button>
             <button class="btn small ghost" type="button" data-act="delete" id="editor-delete">Delete</button>
           </div>
         </div>
+
+        <div class="mm-zoom" role="group" aria-label="Zoom">
+          <button class="btn small" type="button" data-act="zoom-out" aria-label="Zoom out">&minus;</button>
+          <span id="zoom-level" class="mm-zoom-level">100%</span>
+          <button class="btn small" type="button" data-act="zoom-in" aria-label="Zoom in">+</button>
+          <button class="btn small" type="button" data-act="fit">Fit to screen</button>
+        </div>
       </div>
 
       <p class="hint mm-hint">
-        Press and hold a bubble to add a branch. Click to edit. Drag a bubble to
-        move it with its branches, and drag the background to look around.
+        Click a bubble to edit it and + to branch out. Drag a bubble onto another to move it there.
       </p>
     </section>
 

@@ -18,6 +18,15 @@
 // old one is refused rather than laid over the top. The alternative is the
 // second tab quietly throwing away whatever the first one did, which is the
 // same loss as the never-overwrite rule on a smaller scale.
+//
+// --- what else a bubble may carry -----------------------------------------
+//
+// Two things, both optional, so a map saved before either existed reads
+// exactly as it did. `folded` is a bubble whose branches are tucked away on
+// the page; it is kept only when it is `true`. `colour` is one of the six
+// branch colours, by number, and is kept only on a branch of the middle,
+// because everything further out takes its colour from the branch it is on.
+// Anything else a page sends is dropped without a word.
 // ---------------------------------------------------------------------------
 
 import crypto from 'node:crypto';
@@ -27,6 +36,8 @@ export const PER_USER = 50;
 export const NODES_MAX = 250;
 export const TEXT_MAX = 80;
 export const REACH = 20_000;
+export const COLOURS = 6;
+export const PREVIEW_MAX = 60;
 
 const ID_RE = /^[A-Za-z0-9_-]{1,16}$/;
 
@@ -68,13 +79,19 @@ export function clean(nodes) {
     if (!ID_RE.test(id)) throw fail('That map will not read.');
     if (byId.has(id)) throw fail('Two bubbles have the same id.');
     const parentId = raw.parentId == null || raw.parentId === '' ? null : String(raw.parentId);
-    byId.set(id, { id, parentId, text: cleanText(raw.text), x: cleanCoord(raw.x), y: cleanCoord(raw.y) });
+    const node = { id, parentId, text: cleanText(raw.text), x: cleanCoord(raw.x), y: cleanCoord(raw.y) };
+    if (raw.folded === true) node.folded = true;
+    if (Number.isInteger(raw.colour) && raw.colour >= 0 && raw.colour < COLOURS) node.colour = raw.colour;
+    byId.set(id, node);
   }
 
   const roots = [...byId.values()].filter((n) => n.parentId === null);
   if (roots.length !== 1) throw fail('A map has exactly one bubble in the middle.');
   const root = roots[0];
   if (!root.text) throw fail('The bubble in the middle needs some words.');
+  for (const n of byId.values()) {
+    if (n.colour !== undefined && n.parentId !== root.id) delete n.colour;
+  }
 
   for (const n of byId.values()) {
     if (n.parentId !== null && !byId.has(n.parentId)) throw fail('A branch is joined to a bubble that is not there.');
@@ -127,8 +144,36 @@ export function own(userId, id) {
 
 export const titleOf = (map) => (map.nodes.find((n) => n.parentId === null)?.text || '').replace(/[\n]/g, ' ');
 
+/**
+ * Enough of a map to draw a thumbnail of it in the list: the bubbles nearest
+ * the middle, each as [x, y, which one it hangs off, which branch colour].
+ * The nodes are stored middle-outwards (`clean` walks them that way), so a
+ * bubble's parent is always earlier in the list than the bubble is.
+ */
+export function preview(map) {
+  const nodes = map.nodes.slice(0, PREVIEW_MAX);
+  const root = nodes[0];
+  const at = new Map();
+  const rows = [];
+  let first = 0;
+  for (const n of nodes) {
+    const parent = n === root ? -1 : at.get(n.parentId);
+    if (parent === undefined) continue;
+    let branch = -1;
+    if (parent === 0) {
+      branch = n.colour ?? first % COLOURS;
+      first += 1;
+    } else if (parent > 0) {
+      branch = rows[parent][3];
+    }
+    at.set(n.id, rows.length);
+    rows.push([Math.round(n.x), Math.round(n.y), parent, branch]);
+  }
+  return rows;
+}
+
 export function summary(map) {
-  return { id: map.id, title: titleOf(map), count: map.nodes.length, updated: map.updated };
+  return { id: map.id, title: titleOf(map), count: map.nodes.length, updated: map.updated, preview: preview(map) };
 }
 
 export function listFor(userId) {
@@ -138,8 +183,21 @@ export function listFor(userId) {
 }
 
 export function create(user, text) {
+  return keep(user, clean([{ id: 'root', parentId: null, text, x: 0, y: 0 }]));
+}
+
+/** A copy of one of this account's maps, as a new map of its own. */
+export function duplicate(user, fromId) {
+  const from = own(user.id, fromId);
+  const nodes = from.nodes.map((n) => ({ ...n }));
+  const root = nodes.find((n) => n.parentId === null);
+  const tag = ' (copy)';
+  root.text = root.text.slice(0, TEXT_MAX - tag.length).trimEnd() + tag;
+  return keep(user, clean(nodes));
+}
+
+function keep(user, nodes) {
   if (ofUser(user.id).length >= PER_USER) throw fail(`You can have up to ${PER_USER} maps.`);
-  const nodes = clean([{ id: 'root', parentId: null, text, x: 0, y: 0 }]);
   const now = Date.now();
   const map = {
     id: crypto.randomBytes(8).toString('base64url'),
@@ -156,7 +214,7 @@ export function create(user, text) {
 
 export function save(user, id, { nodes, rev } = {}) {
   const map = own(user.id, id);
-  if (Number(rev) !== map.rev) throw fail('This map was changed in another tab. Reload to see it.', 409);
+  if (Number(rev) !== map.rev) throw fail('This map was changed in another tab.', 409);
   map.nodes = clean(nodes);
   map.rev += 1;
   map.updated = Date.now();

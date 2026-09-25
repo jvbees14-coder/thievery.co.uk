@@ -303,5 +303,18 @@
   --mm-c3: #16a34a;
   --mm-c4: #d97706;
   --mm-c5: #7c3aed;
+  --mm-grid: #d7dce4;
+  --mm-shadow: #0f172a;
+  --mm-shadow-alpha: 0.14;
+  --mm-select: #0f172a;
+  --mm-handle: #ffffff;
 }
 :root[data-theme="plain"] .mm-editor { background: #fff; }
+:root[data-theme="plain"] .mm-stage { box-shadow: none; }
+:root[data-theme="plain"] .mm-card { background: #fff; }
+:root[data-theme="plain"] .mm-card:hover,
+:root[data-theme="plain"] .mm-card:focus-within { box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1); }
+:root[data-theme="plain"] .mm-zoom,
+:root[data-theme="plain"] .mm-menu-list { background: #fff; box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12); }
+:root[data-theme="plain"] .mm-clash { background: #fef2f2; border-color: #fca5a5; color: #7f1d1d; }
+:root[data-theme="plain"] .mm-swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--sw); }
