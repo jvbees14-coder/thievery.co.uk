@@ -74,6 +74,10 @@
 .menu-nav-link[aria-current="page"] { color: var(--accent); background: var(--accent-tint); }
 .menu-nav-link.is-shut { opacity: 0.6; }
 .when-narrow { display: none; }
+/* The face and the lens are the phone's; on a wide screen the link itself
+   is the highlight. */
+.menu-nav-face { display: contents; }
+.menu-nav-lens { display: none; }
 
 /* The account button and its menu. */
 .site-who { position: relative; margin-left: auto; }
@@ -124,7 +128,9 @@
     left: max(var(--space-3), env(safe-area-inset-left));
     right: max(var(--space-3), env(safe-area-inset-right));
     bottom: max(var(--space-2), env(safe-area-inset-bottom));
-    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0;
+    /* Equal fifths while they fit, but never narrower than a tab's own word:
+       an even split cut "Flashcards" off on a 6.1" phone. */
+    display: grid; grid-template-columns: repeat(5, minmax(min-content, 1fr)); gap: 0;
     max-width: 30rem; margin: 0 auto;
     padding: 5px;
     border-radius: var(--radius-pill);
@@ -144,27 +150,37 @@
     -webkit-mask-composite: xor;
     mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
   }
-  /* Each tab is a capsule inside the capsule. The bar's padding is the same
-     all round, so the two curves run parallel and the one at either end
-     never presses against the bar's own. */
+  /* A tab fills its fifth of the bar, so the whole fifth is somewhere to
+     tap, and its face sits in the middle as wide as its word. */
   .menu-nav-link {
-    flex-direction: column; justify-content: center; gap: 2px;
-    min-height: 48px; padding: 2px 0;
-    border-radius: var(--radius-pill);
-    font-size: var(--text-caption); font-weight: 500;
+    display: flex; flex-direction: column; align-items: center;
+    min-height: 48px; padding: 0;
+    font-size: var(--text-caption); font-weight: 500; letter-spacing: -0.01em;
     background: none;
+  }
+  .menu-nav-link:hover, .menu-nav-link[aria-current="page"] { background: none; }
+  .menu-nav-face {
+    position: relative; isolation: isolate;
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    min-width: min(3.75rem, 100%); max-width: 100%; padding: 2px min(12px, 2.5vw);
     transition: transform var(--dur-quick) var(--ease-spring);
   }
-  .menu-nav-link:hover { background: none; }
-  .menu-nav-link:active { transform: scale(0.92); }
-  /* The current room is a lens of its own: brighter glass, tinted gold,
-     with its own lit edge and a lift off the bar. */
-  .menu-nav-link[aria-current="page"] {
+  .menu-nav-link:active .menu-nav-face { transform: scale(0.92); }
+  /* The current room's lens: brighter glass, tinted gold, with its own lit
+     edge and a lift off the bar. It is a capsule inside the capsule, and
+     the bar's padding is the same all round, so its curve runs parallel to
+     the bar's and never presses against it. It is as wide as the face, so
+     it changes size from tab to tab, and on a move between rooms it
+     stretches from the old tab into the new one (see the end of this file). */
+  .menu-nav-lens {
+    display: block; position: absolute; inset: 0; z-index: -1;
+    border-radius: var(--radius-pill);
     background: var(--glass-sheen), var(--accent-tint);
     box-shadow: inset 0 1px 0 var(--glass-rim), inset 0 0 0 1px var(--glass-edge), 0 2px 8px var(--shadow-color);
+    view-transition-name: tab-lens;
   }
   .menu-nav-link .icon { width: 24px; height: 24px; }
-  .menu-nav-link span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .menu-nav-face > span:not(.menu-nav-lens) { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
   .when-wide { display: none; }
   .when-narrow { display: inline; }
   /* The links have gone to the bottom, so the account button goes right. */
@@ -177,7 +193,7 @@
 /* Too narrow, or text too large, for a word under every icon: the words are
    still there for a screen reader, and the icons carry them on screen. */
 @media (max-width: 359px) {
-  .menu-nav-link span {
+  .menu-nav-face > span:not(.menu-nav-lens) {
     position: absolute; width: 1px; height: 1px; overflow: hidden;
     clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
   }
@@ -211,9 +227,27 @@ body:has(> .site-foot) > main { flex: 1 0 auto; width: 100%; }
 
 @media (prefers-reduced-motion: reduce) {
   .site-bar::after { transition: none; }
-  .menu-nav-link { transition: none; }
-  .menu-nav-link:active { transform: none; }
+  .menu-nav-face { transition: none; }
+  .menu-nav-link:active .menu-nav-face { transform: none; }
 }
+
+/* Moving between rooms on a phone, the lens stretches out of the tab you
+   left and into the one you tapped. It is a view transition across the two
+   pages: each names its lens, and the browser glides one into the other.
+   Nothing else is part of it, so the page itself changes as it always has.
+   A browser without cross-page transitions just loads the next page. */
+@media (max-width: 900px) and (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+}
+::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+::view-transition-group(tab-lens) {
+  animation-duration: var(--dur-slow);
+  animation-timing-function: var(--ease-spring);
+}
+/* The site's own still setting stops it too. */
+html[data-motion="still"]::view-transition-group(tab-lens),
+html[data-motion="still"]::view-transition-old(tab-lens),
+html[data-motion="still"]::view-transition-new(tab-lens) { animation: none; }
 
 /* Between a tablet and a wide screen, the links keep their words and lose
    their icons, so five of them and the account button still fit one line. */

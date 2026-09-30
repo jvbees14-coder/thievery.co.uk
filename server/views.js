@@ -90,7 +90,12 @@ export function bar(current = '', { signedIn = true } = {}) {
       r.name === r.short
         ? `<span>${r.name}</span>`
         : `<span class="when-wide">${r.name}</span><span class="when-narrow">${r.short}</span>`;
-    return `<a class="menu-nav-link" id="nav-${r.id}" href="${r.href}"${here}>${icon(r.id)}${label}</a>`;
+    // On a phone the face is what the current tab's lens hugs, so the lens is
+    // as wide as the word under it rather than a fifth of the bar. The lens
+    // is an element of its own so it can glide to the next tab without
+    // stretching the icon and the word along with it.
+    const lens = here ? '<span class="menu-nav-lens" aria-hidden="true"></span>' : '';
+    return `<a class="menu-nav-link" id="nav-${r.id}" href="${r.href}"${here}><span class="menu-nav-face">${lens}${icon(r.id)}${label}</span></a>`;
   }).join('\n      ');
   const skip = '<a class="skip-link" href="#main">Skip to content</a>';
   const mark = '<a class="site-mark wordmark" href="/">Thievery<em>.co.uk</em></a>';
