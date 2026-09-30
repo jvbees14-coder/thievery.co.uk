@@ -43,6 +43,7 @@ import * as Daily from './daily.js';
 import * as Decks from './decks.js';
 import { send, fail, originOk, currentUser, requireUser } from './plumbing.js';
 import { readView, render } from './views.js';
+import * as Tools from './tools.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
@@ -57,6 +58,14 @@ const views = {
   closed: readView('menu-closed.html'),
   about: readView('about.html'),
   privacy: readView('privacy.html'),
+  tools: Tools.indexPage(),
+  styleguide: readView('styleguide.html'),
+};
+const PLAIN_PAGES = {
+  '/about': views.about,
+  '/privacy': views.privacy,
+  '/tools': views.tools,
+  '/styleguide': views.styleguide,
 };
 
 // --- the card table --------------------------------------------------------
@@ -212,17 +221,21 @@ export function handle(req, res, url) {
   // the same on both sides, so the whole of it is handed straight over and
   // the block below decides whether it was a room code.
   const wasGame = pathname === '/logic' || pathname.startsWith('/logic/');
-  // About and Privacy are plain pages that need nothing from the ledger, so
-  // they are answered before anything that does, and stay up in an outage.
-  if (pathname === '/about' || pathname === '/privacy') {
+  // About, Privacy, the tools and the style guide are plain pages that need
+  // nothing from the ledger, so they are answered before anything that does,
+  // and stay up in an outage. The style guide is for whoever maintains the
+  // site: it is not linked, and asks not to be indexed.
+  const plain = PLAIN_PAGES[pathname] || (pathname.startsWith('/tools/') && Tools.toolPage(pathname.slice(7)));
+  if (plain) {
     res.writeHead(200, {
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 'no-cache',
       'Referrer-Policy': 'same-origin',
       'X-Content-Type-Options': 'nosniff',
       'Content-Security-Policy': "frame-ancestors 'none'",
+      ...(pathname === '/styleguide' ? { 'X-Robots-Tag': 'noindex, nofollow' } : {}),
     });
-    res.end(pathname === '/about' ? views.about : views.privacy);
+    res.end(plain);
     return true;
   }
   if (!isApi && !isHall && !isGame && !wasGame) return false;

@@ -58,6 +58,46 @@
     setTimeout(() => button.classList.remove('spun'), 560);
   });
 
+  // --- checking as you go ------------------------------------------------------
+
+  // The server has the last word on all of this; these only say, next to the
+  // field and in time to fix it, what the server would say afterwards. A name
+  // is checked as it is typed, because a rule about characters is easiest to
+  // follow while you are typing them. A password is checked when you leave
+  // the field, because being told it is too short after two letters helps
+  // nobody.
+  function checker(input, test, message, when) {
+    if (!input) return () => true;
+    const note = document.createElement('p');
+    note.className = 'field-error';
+    note.id = `${input.id}-error`;
+    note.hidden = true;
+    input.closest('.field').appendChild(note);
+    const hint = input.closest('.field').querySelector('.hint');
+    if (hint && !hint.id) hint.id = `${input.id}-hint`;
+    const describe = (bad) =>
+      input.setAttribute('aria-describedby', [hint && hint.id, bad && note.id].filter(Boolean).join(' '));
+    const run = (force) => {
+      const bad = (force || input.value !== '') && !test(input.value);
+      note.textContent = bad ? message : '';
+      note.hidden = !bad;
+      if (hint) hint.hidden = bad;
+      input.setAttribute('aria-invalid', String(bad));
+      describe(bad);
+      return !bad;
+    };
+    input.addEventListener(when, () => run(false));
+    describe(false);
+    return run;
+  }
+  const userOk = checker(
+    $('#jo-user'),
+    (v) => /^[a-z0-9](?:[a-z0-9_.-]{1,18})[a-z0-9]$/i.test(v.trim()),
+    'Use 3 to 20 letters, numbers, dots, dashes or underscores, starting and ending with a letter or number.',
+    'input'
+  );
+  const passOk = checker($('#jo-pass'), (v) => v.length >= 10, 'Use at least 10 characters.', 'blur');
+
   // --- submitting ------------------------------------------------------------
 
   async function post(where, body, button) {
@@ -93,6 +133,12 @@
 
   $('#join').addEventListener('submit', (ev) => {
     ev.preventDefault();
+    const okUser = userOk(true);
+    const okPass = passOk(true);
+    if (!okUser || !okPass) {
+      (okUser ? $('#jo-pass') : $('#jo-user')).focus();
+      return;
+    }
     post(
       'register',
       {

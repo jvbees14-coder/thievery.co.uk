@@ -89,6 +89,64 @@
     });
   }
 
+  // --- sheets -----------------------------------------------------------------
+
+  // A <dialog class="sheet"> is opened by whoever owns it, with showModal().
+  // What every sheet shares is how it goes away: its close button (anything
+  // marked data-close-sheet), a press on the veil outside it, Escape (the
+  // browser's own), and on a phone a drag down from the grip. Each of those
+  // goes through requestClose(), so a sheet holding unsaved work can refuse by
+  // cancelling the 'sheet:close' event and ask first.
+  function requestClose(dialog) {
+    var ev = new CustomEvent('sheet:close', { cancelable: true });
+    if (dialog.dispatchEvent(ev)) dialog.close();
+  }
+  window.thieveryCloseSheet = requestClose;
+
+  document.addEventListener('click', function (ev) {
+    var closer = ev.target.closest && ev.target.closest('[data-close-sheet]');
+    if (closer) {
+      var d = closer.closest('dialog');
+      if (d) requestClose(d);
+      return;
+    }
+    var t = ev.target;
+    if (t && t.tagName === 'DIALOG' && t.classList.contains('sheet') && t.open) {
+      var r = t.getBoundingClientRect();
+      var outside = ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom;
+      if (outside) requestClose(t);
+    }
+  });
+  document.addEventListener('cancel', function (ev) {
+    var t = ev.target;
+    if (t && t.tagName === 'DIALOG' && t.classList.contains('sheet')) {
+      ev.preventDefault();
+      requestClose(t);
+    }
+  }, true);
+
+  var drag = null;
+  document.addEventListener('pointerdown', function (ev) {
+    var grip = ev.target.closest && ev.target.closest('.sheet-grip');
+    if (!grip) return;
+    var d = grip.closest('dialog');
+    drag = { d: d, y: ev.clientY, dy: 0 };
+    grip.setPointerCapture(ev.pointerId);
+  });
+  document.addEventListener('pointermove', function (ev) {
+    if (!drag) return;
+    drag.dy = Math.max(0, ev.clientY - drag.y);
+    drag.d.style.transform = 'translateY(' + drag.dy + 'px)';
+  });
+  document.addEventListener('pointerup', function () {
+    if (!drag) return;
+    var d = drag.d;
+    var far = drag.dy > 90;
+    drag = null;
+    d.style.transform = '';
+    if (far) requestClose(d);
+  });
+
   // --- toasts -----------------------------------------------------------------
 
   var shelf = null;

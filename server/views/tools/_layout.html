@@ -1,0 +1,78 @@
+<!doctype html>
+<!--
+  The layout every tool page is built on. Copy this file to
+  server/views/tools/<slug>.html, fill in the marked parts, and list the
+  tool in server/tools.js with `view: '<slug>.html'`. docs/ADDING_A_TOOL.md
+  has the whole walk-through.
+
+  The shape, top to bottom:
+    1. The title, and one line under it. The line may be a joke.
+    2. The tool itself, above the fold on a phone. Its labels are plain:
+       the twist belongs in what it tells you, not in its buttons.
+    3. The result, in a live region so a screen reader hears it.
+    4. "How it works", folded away for anybody who wants it.
+-->
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  {{head:tools}}
+  <title>TOOL NAME · Thievery</title>
+  <meta name="description" content="TOOL NAME on Thievery: ONE PLAIN SENTENCE ABOUT WHAT IT DOES." />
+  <link rel="canonical" href="https://thievery.co.uk/tools/SLUG" />
+  <meta property="og:title" content="TOOL NAME · Thievery" />
+  <meta property="og:description" content="ONE PLAIN SENTENCE ABOUT WHAT IT DOES." />
+  <meta property="og:url" content="https://thievery.co.uk/tools/SLUG" />
+  <meta property="og:image" content="https://thievery.co.uk/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "TOOL NAME",
+    "url": "https://thievery.co.uk/tools/SLUG",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Any browser",
+    "isAccessibleForFree": true,
+    "inLanguage": "en-GB",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "GBP" }
+  }
+  </script>
+</head>
+<body>
+  {{bar:public}}
+
+  <main id="main" class="tool-page">
+    <header class="tool-head">
+      <p class="tool-back"><a href="/tools">Tools</a></p>
+      <h1 class="tool-title display">TOOL NAME</h1>
+      <p class="tool-quip">THE ONE-LINE JOKE, OR A PLAIN SUBTITLE.</p>
+    </header>
+
+    <section class="tool-body panel" aria-label="TOOL NAME">
+      <!-- The controls. A visible label on every field. -->
+      <form class="tool-form" id="tool-form">
+        <div class="field">
+          <label for="tool-input">LABEL</label>
+          <input id="tool-input" name="input" />
+        </div>
+        <button class="btn primary" type="submit">VERB</button>
+      </form>
+
+      <!-- The result. The joke, if any, goes here. -->
+      <div class="tool-result" id="tool-result" role="status" aria-live="polite">
+        <p class="tool-empty">WHAT THE EMPTY STATE SAYS.</p>
+      </div>
+    </section>
+
+    <details class="tool-how">
+      <summary>How it works</summary>
+      <p>TWO OR THREE PLAIN SENTENCES.</p>
+    </details>
+  </main>
+
+  {{foot}}
+
+  <script src="/tools/SLUG.js" defer></script>
+</body>
+</html>

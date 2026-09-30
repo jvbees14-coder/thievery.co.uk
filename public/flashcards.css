@@ -47,12 +47,12 @@ textarea:focus, select:focus, input:focus {
 .door-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--brass-faint); }
 .door-tab {
   appearance: none; background: none; border: 0; border-bottom: 2px solid transparent;
-  padding: 10px 14px 9px; margin-bottom: -1px; cursor: pointer;
-  font-family: var(--caps); font-size: var(--text-caption); font-weight: 700; color: var(--text-faint);
+  min-height: var(--hit); padding: 0 14px; margin-bottom: -1px; cursor: pointer;
+  font-size: var(--text-subhead); font-weight: 600; color: var(--label-secondary);
   transition: color 0.15s, border-color 0.15s;
 }
-.door-tab:hover { color: var(--text-dim); }
-.door-tab.is-on { color: var(--brass); border-bottom-color: var(--brass); }
+.door-tab:hover { color: var(--label); }
+.door-tab.is-on { color: var(--label); border-bottom-color: var(--accent); }
 .door-pane { display: flex; flex-direction: column; gap: 16px; }
 .door-error {
   margin: 0; padding: 10px 14px; border-radius: 3px; font-size: 14px;

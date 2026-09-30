@@ -21,18 +21,57 @@
   <meta name="twitter:description" content="A free deduction card game for 2 to 12 players. Share a room code and play, no sign-up needed." />
   <meta name="twitter:image" content="https://thievery.co.uk/og-image.png" />
 
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Thievery",
+    "alternateName": "Thievery.co.uk",
+    "url": "https://thievery.co.uk/",
+    "description": "Thievery, a free online multiplayer deduction card game, plus flashcards, quizzes and mind maps.",
+    "inLanguage": "en-GB"
+  }
+  </script>
+
 </head>
 <body>
   <div id="toast" class="toast" hidden></div>
 
   {{bar:public}}
 
-  <main id="main" class="screen home">
-    <div class="home-card door-card" data-api="/api/site" data-next="/">
-      <h1 class="logo wordmark">Thievery<em>.co.uk</em></h1>
+  <!-- The front door for a visitor, and the page a search engine reads at
+       the root of the site. So it leads with the game, which needs no
+       account, says in plain text what the site is, and only then offers a
+       way in for the rooms that do need one. -->
+  <main id="main" class="landing">
+    <section class="landing-hero" aria-labelledby="landing-title">
+      <p class="landing-kicker">A free card game for 2 to 12 players</p>
+      <h1 id="landing-title" class="landing-title display">Steal their cards before they steal yours.</h1>
+      <p class="landing-lede">
+        Thievery is a deduction card game you play in the browser. Everyone
+        arranges a hand face down, in order. On your turn you point at
+        somebody else&rsquo;s hidden card and name it. Get it right and it
+        flips. Flip all of theirs before they flip all of yours.
+      </p>
+      <div class="landing-actions">
+        <a class="btn primary landing-play" href="/cards">{{icon:cards}}Play Thievery</a>
+        <span class="landing-note">No sign-up. Share a room code, or fill the table with bots.</span>
+      </div>
+
+      <h2 class="landing-h2">Also here</h2>
+      <ul class="landing-rooms">
+        <li>{{icon:flashcards}}<span><b>Flashcards.</b> Write your own, get a rarity for each, and trade them.</span></li>
+        <li>{{icon:battle}}<span><b>Battle.</b> Quiz yourself or your friends, on your cards or ours.</span></li>
+        <li>{{icon:switchhead}}<span><b>Switchhead.</b> A shedding game where the hands swap without warning.</span></li>
+        <li>{{icon:mindmaps}}<span><b>Mind maps.</b> One idea in the middle, and everything branching off it.</span></li>
+      </ul>
+    </section>
+
+    <section class="home-card door-card landing-door" data-api="/api/site" data-next="/" aria-labelledby="door-title">
+      <h2 id="door-title" class="landing-door-title">Sign in for the rest</h2>
       <p class="tagline">
-        Sign in to keep a record of every game you play, make and trade
-        flashcards, and quiz your friends.
+        An account keeps your stats and opens Flashcards, Battle, Switchhead
+        and Mind maps.
       </p>
 
       <div class="door-tabs" role="tablist">
@@ -73,17 +112,9 @@
         <button class="btn primary" type="submit">Open an account</button>
       </form>
 
-      <p id="door-error" class="door-error" hidden></p>
+      <p id="door-error" class="door-error" role="alert" hidden></p>
 
-      <div class="door-open">
-        <h2>Just want to play?</h2>
-        <p>
-          Thievery, the card game, doesn&rsquo;t need an account. Your games
-          just won&rsquo;t be counted.
-        </p>
-        <p><a class="btn" href="/cards">Play Thievery</a></p>
-      </div>
-    </div>
+    </section>
   </main>
 
   {{foot}}

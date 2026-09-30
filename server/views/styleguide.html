@@ -1,0 +1,229 @@
+<!doctype html>
+<!--
+  The style guide: every token and every shared component on one page, drawn
+  by the same stylesheets as the rest of the site, so it cannot drift from
+  them. It is not linked from anywhere, not in the sitemap and not indexed.
+  Look at it with the device in light mode and in dark, and with contrast and
+  motion turned up and down; the page follows all four.
+-->
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  {{head:tools}}
+  <title>Style guide · Thievery</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <style>
+    .sg { max-width: 1040px; margin: 0 auto; padding: var(--space-6) var(--space-4) var(--space-8); }
+    .sg h1 { font-family: var(--font-display); font-weight: 400; font-size: var(--text-large-title); margin: 0 0 var(--space-2); }
+    .sg > p { color: var(--label-secondary); margin: 0 0 var(--space-6); }
+    .sg section { margin: 0 0 var(--space-7); }
+    .sg h2 { font-size: var(--text-title-2); font-weight: 600; margin: 0 0 var(--space-4); padding-bottom: var(--space-2); border-bottom: 1px solid var(--separator); }
+    .sg h3 { font-size: var(--text-headline); font-weight: 600; margin: var(--space-5) 0 var(--space-3); }
+    .sg-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-3); list-style: none; margin: 0; padding: 0; }
+    .sg-swatch { border: 1px solid var(--separator); border-radius: var(--radius-m); overflow: hidden; background: var(--bg-elevated); }
+    .sg-chip { height: 56px; border-bottom: 1px solid var(--separator); }
+    .sg-swatch code { display: block; padding: var(--space-2); font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-secondary); }
+    .sg-row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+    .sg-type > * { margin: 0 0 var(--space-2); }
+    .sg-type span { display: inline-block; min-width: 9rem; font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-tertiary); }
+    .sg-space { display: grid; gap: var(--space-2); }
+    .sg-space div { display: flex; align-items: center; gap: var(--space-3); font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-secondary); }
+    .sg-space i { display: block; height: 12px; background: var(--accent); border-radius: 2px; }
+    .sg-grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--space-4); }
+    .sg-focus { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+    .sg-glass { position: relative; height: 140px; border-radius: var(--radius-l); overflow: hidden; background: repeating-linear-gradient(45deg, var(--accent-tint) 0 12px, transparent 12px 24px), var(--bg-grouped); }
+    .sg-glass div { position: absolute; left: var(--space-4); right: var(--space-4); bottom: var(--space-4); padding: var(--space-3) var(--space-4); border-radius: var(--radius-l); background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-edge); }
+  </style>
+</head>
+<body>
+  {{bar:public}}
+
+  <main id="main" class="sg">
+    <h1>Style guide</h1>
+    <p>Every token and shared component, drawn by the live stylesheets. Follows the device&rsquo;s light or dark setting, contrast and motion.</p>
+
+    <section aria-labelledby="sg-colour">
+      <h2 id="sg-colour">Colour</h2>
+      <ul class="sg-swatches" id="sg-swatches"></ul>
+    </section>
+
+    <section aria-labelledby="sg-type">
+      <h2 id="sg-type">Type</h2>
+      <div class="sg-type">
+        <p style="font-family: var(--font-display); font-size: var(--text-large-title)"><span>Display 34</span>Steal the show</p>
+        <p style="font-size: var(--text-large-title); font-weight: 700"><span>Large title 34</span>Large title</p>
+        <p style="font-size: var(--text-title-1); font-weight: 700"><span>Title 1 · 28</span>Title one</p>
+        <p style="font-size: var(--text-title-2); font-weight: 600"><span>Title 2 · 22</span>Title two</p>
+        <p style="font-size: var(--text-title-3); font-weight: 600"><span>Title 3 · 20</span>Title three</p>
+        <p style="font-size: var(--text-headline); font-weight: 600"><span>Headline 17</span>Headline, semibold</p>
+        <p style="font-size: var(--text-body)"><span>Body 17</span>The quick brown fox pockets the lazy dog&rsquo;s wallet.</p>
+        <p style="font-size: var(--text-callout)"><span>Callout 16</span>Callout text for asides.</p>
+        <p style="font-size: var(--text-subhead)"><span>Subhead 15</span>Subhead text for secondary lines.</p>
+        <p style="font-size: var(--text-footnote)"><span>Footnote 13</span>Footnote text for small print.</p>
+        <p style="font-size: var(--text-caption)"><span>Caption 12</span>Caption: the smallest anything is set.</p>
+        <p style="font-family: var(--font-mono)"><span>Mono</span>ROOM CODE K7QX</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="sg-space">
+      <h2 id="sg-space">Space</h2>
+      <div class="sg-space">
+        <div><i style="width: var(--space-1)"></i>--space-1 · 4</div>
+        <div><i style="width: var(--space-2)"></i>--space-2 · 8</div>
+        <div><i style="width: var(--space-3)"></i>--space-3 · 12</div>
+        <div><i style="width: var(--space-4)"></i>--space-4 · 16</div>
+        <div><i style="width: var(--space-5)"></i>--space-5 · 24</div>
+        <div><i style="width: var(--space-6)"></i>--space-6 · 32</div>
+        <div><i style="width: var(--space-7)"></i>--space-7 · 48</div>
+        <div><i style="width: var(--space-8)"></i>--space-8 · 64</div>
+      </div>
+    </section>
+
+    <section aria-labelledby="sg-buttons">
+      <h2 id="sg-buttons">Buttons</h2>
+      <p class="muted">Hover, press and Tab to see the other states. The ring below is the focus ring as drawn.</p>
+      <h3>Default</h3>
+      <div class="sg-row">
+        <button class="btn primary" type="button">Deal</button>
+        <button class="btn" type="button">Add a bot</button>
+        <button class="btn ghost" type="button">Cancel</button>
+        <button class="btn danger" type="button">Delete</button>
+        <button class="btn small" type="button">Small</button>
+        <button class="btn icon-only" type="button" aria-label="Share" title="Share">{{icon:share}}</button>
+      </div>
+      <h3>Focused</h3>
+      <div class="sg-row">
+        <button class="btn primary sg-focus" type="button" tabindex="-1">Deal</button>
+        <button class="btn sg-focus" type="button" tabindex="-1">Add a bot</button>
+      </div>
+      <h3>Disabled</h3>
+      <div class="sg-row">
+        <button class="btn primary" type="button" disabled>Deal</button>
+        <button class="btn" type="button" disabled>Add a bot</button>
+        <button class="btn danger" type="button" disabled>Delete</button>
+      </div>
+      <h3>Pills</h3>
+      <div class="sg-row">
+        <span class="pill">Waiting</span>
+        <span class="pill accent">Your turn</span>
+        <span class="pill good">Accepted</span>
+        <span class="pill bad">Declined</span>
+        <span class="pill bot">Bot</span>
+        <span class="pill team-0">Team A</span>
+        <span class="pill team-1">Team B</span>
+        <span class="pill next">Next</span>
+      </div>
+    </section>
+
+    <section aria-labelledby="sg-forms">
+      <h2 id="sg-forms">Fields</h2>
+      <div class="sg-grid2">
+        <div class="field">
+          <label for="sg-a">Name</label>
+          <input id="sg-a" placeholder="What other players see" />
+          <p class="hint">1 to 20 letters or numbers.</p>
+        </div>
+        <div class="field">
+          <label for="sg-b">Username</label>
+          <input id="sg-b" value="no spaces please" aria-invalid="true" aria-describedby="sg-b-e" />
+          <p class="field-error" id="sg-b-e">Use 3 to 20 letters, numbers, dots, dashes or underscores.</p>
+        </div>
+        <div class="field">
+          <label for="sg-c">Room code</label>
+          <input id="sg-c" value="K7QX" disabled />
+        </div>
+        <div class="field">
+          <label for="sg-d">Back of the card</label>
+          <textarea id="sg-d" rows="3">What the other side says.</textarea>
+        </div>
+      </div>
+      <details class="disclose">
+        <summary>Advanced settings</summary>
+        <p class="muted">Anything most people never need goes behind one of these.</p>
+      </details>
+    </section>
+
+    <section aria-labelledby="sg-surfaces">
+      <h2 id="sg-surfaces">Surfaces</h2>
+      <div class="sg-grid2">
+        <div class="panel" style="padding: var(--space-5)">
+          <h3 style="margin-top: 0">A panel</h3>
+          <p class="muted" style="margin: 0">Solid, in the content layer, with the Vault&rsquo;s corner marks.</p>
+        </div>
+        <div class="sg-glass"><div>Glass: for controls that float over the page, and nothing else.</div></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="sg-feedback">
+      <h2 id="sg-feedback">Feedback</h2>
+      <div class="sg-row">
+        <button class="btn" type="button" id="sg-toast">Show a toast</button>
+        <button class="btn" type="button" id="sg-undo">Show an undo toast</button>
+        <button class="btn" type="button" id="sg-sheet-open">Open a sheet</button>
+      </div>
+      <h3>Empty</h3>
+      <div class="empty-state">
+        {{icon:flashcards}}
+        <h3>Your vault is empty.</h3>
+        <p>Nothing to steal yet. Make your first card and it&rsquo;s yours to keep or trade.</p>
+        <button class="btn primary" type="button">New card</button>
+      </div>
+      <h3>Loading</h3>
+      <div class="sg-grid2">
+        <div style="display: grid; gap: var(--space-2)">
+          <span class="skeleton" style="height: 20px; width: 60%"></span>
+          <span class="skeleton" style="height: 14px"></span>
+          <span class="skeleton" style="height: 14px; width: 80%"></span>
+        </div>
+        <div class="sg-row"><span class="spinner" role="img" aria-label="Loading"></span><span class="muted">Waking the getaway driver&hellip;</span></div>
+        <div>
+          <p class="muted" style="margin: 0 0 var(--space-2)">Third in the queue</p>
+          <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="66" aria-label="Queue"><span style="width: 66%"></span></div>
+        </div>
+      </div>
+    </section>
+
+    <dialog class="sheet" id="sg-sheet" aria-labelledby="sg-sheet-title">
+      <div class="sheet-grip" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <h2 id="sg-sheet-title">New card</h2>
+        <button class="sheet-close" type="button" data-close-sheet aria-label="Close" title="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <div class="sheet-body">
+        <div class="field">
+          <label for="sg-e">Front</label>
+          <input id="sg-e" />
+        </div>
+      </div>
+      <div class="sheet-foot">
+        <button class="btn ghost" type="button" data-close-sheet>Cancel</button>
+        <button class="btn primary" type="button" data-close-sheet>Done</button>
+      </div>
+    </dialog>
+  </main>
+
+  {{foot}}
+
+  <script>
+    (function () {
+      var names = ['bg', 'bg-grouped', 'bg-elevated', 'bg-elevated-2', 'label', 'label-secondary', 'label-tertiary',
+        'separator', 'separator-strong', 'fill', 'accent', 'accent-contrast', 'accent-tint', 'ornament',
+        'success', 'warning', 'danger', 'focus-ring', 'team-a', 'team-b', 'watcher',
+        'r-common', 'r-uncommon', 'r-rare', 'r-epic', 'r-legendary', 'r-mythic'];
+      var list = document.getElementById('sg-swatches');
+      names.forEach(function (n) {
+        var li = document.createElement('li');
+        li.className = 'sg-swatch';
+        li.innerHTML = '<div class="sg-chip" style="background: var(--' + n + ')"></div><code>--' + n + '</code>';
+        list.appendChild(li);
+      });
+      document.getElementById('sg-toast').onclick = function () { window.thieveryToast({ text: 'Trade sent.', tone: 'good' }); };
+      document.getElementById('sg-undo').onclick = function () {
+        window.thieveryToast({ text: 'Card deleted.', action: 'Undo', onAction: function () { window.thieveryToast({ text: 'Card put back.' }); } });
+      };
+      document.getElementById('sg-sheet-open').onclick = function () { document.getElementById('sg-sheet').showModal(); };
+    })();
+  </script>
+</body>
+</html>

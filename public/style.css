@@ -191,6 +191,7 @@ input[type="checkbox"], input[type="radio"] { min-height: 0; width: 20px; height
 input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button { appearance: none; -webkit-appearance: none; margin: 0; }
+.hint { margin: 0; font-size: var(--text-footnote); color: var(--label-secondary); }
 .field-error { margin: 0; font-size: var(--text-footnote); color: var(--danger); display: flex; gap: var(--space-1); align-items: baseline; }
 .field-error::before { content: "!"; font-weight: 700; }
 
@@ -1166,3 +1167,95 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 :root[data-motion="still"] .motion-state::after { content: "off"; }
 .motion-state { color: var(--accent); }
 .motion-btn { margin-left: 4px; }
+
+/* --- sheets --------------------------------------------------------------------
+   A <dialog class="sheet">, opened with showModal() so the browser traps
+   focus in it, closes it on Escape and hands focus back afterwards. One at a
+   time, always with a close button in the corner, and a click on the veil
+   outside it closes it too (sheets.js). On a phone it rises from the bottom
+   edge and can be dragged back down. */
+dialog.sheet {
+  width: min(calc(100vw - 2 * var(--space-4)), 560px);
+  max-height: min(86vh, 860px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-l);
+  background: var(--bg-elevated);
+  color: var(--label);
+  box-shadow: var(--shadow-3);
+  overflow: hidden;
+}
+dialog.sheet[open] { display: flex; flex-direction: column; animation: sheetin var(--dur-slow) var(--ease-out); }
+dialog.sheet::backdrop { background: var(--scrim); }
+.sheet-head {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--separator);
+}
+.sheet-head h2 { flex: 1; margin: 0; font-size: var(--text-headline); font-weight: 600; }
+.sheet-body { padding: var(--space-5); overflow-y: auto; overscroll-behavior: contain; }
+.sheet-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3); padding: var(--space-3) var(--space-5) var(--space-4); border-top: 1px solid var(--separator); }
+.sheet-close {
+  appearance: none; border: 0; background: var(--fill); color: var(--label-secondary); cursor: pointer;
+  width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; flex: none;
+}
+.sheet-close::after { content: ""; position: absolute; width: var(--hit); height: var(--hit); }
+.sheet-close { position: relative; }
+.sheet-close:hover { color: var(--label); background: var(--fill-strong); }
+.sheet-close svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.25; stroke-linecap: round; }
+.sheet-grip { display: none; }
+@keyframes sheetin { from { opacity: 0; transform: translateY(16px) scale(0.98); } to { opacity: 1; transform: none; } }
+@media (max-width: 600px) {
+  dialog.sheet {
+    width: 100%; max-width: none; max-height: 92vh;
+    margin: auto 0 0; border-radius: var(--radius-l) var(--radius-l) 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  dialog.sheet[open] { animation-name: sheetup; }
+  .sheet-grip { display: block; width: 40px; height: 5px; border-radius: 3px; background: var(--separator-strong); margin: var(--space-2) auto 0; touch-action: none; }
+  @keyframes sheetup { from { transform: translateY(40%); opacity: 0.4; } to { transform: none; opacity: 1; } }
+}
+
+/* --- empty, loading ------------------------------------------------------------ */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-3);
+  padding: var(--space-7) var(--space-4);
+  border: 1px dashed var(--separator-strong); border-radius: var(--radius-l);
+}
+.empty-state .icon { width: 40px; height: 40px; color: var(--label-tertiary); stroke-width: 1.5; }
+.empty-state h2, .empty-state h3 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: var(--text-title-2); color: var(--label); }
+.empty-state p { margin: 0; max-width: 40ch; color: var(--label-secondary); }
+
+.skeleton {
+  display: block; border-radius: var(--radius-m);
+  background: linear-gradient(90deg, var(--fill) 0%, var(--fill-strong) 50%, var(--fill) 100%) 0 0 / 200% 100%;
+  animation: shimmerbar 1.4s linear infinite;
+}
+@keyframes shimmerbar { to { background-position: -200% 0; } }
+.spinner {
+  width: 22px; height: 22px; flex: none; border-radius: 50%;
+  border: 2.5px solid var(--separator); border-top-color: var(--accent);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.progress { height: 6px; border-radius: 3px; background: var(--fill-strong); overflow: hidden; }
+.progress > span { display: block; height: 100%; background: var(--accent); border-radius: inherit; transition: width var(--dur-slow) var(--ease-out); }
+
+/* A disclosure that looks like part of the page rather than a browser triangle. */
+.disclose > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: var(--space-2); min-height: var(--hit); font-weight: 600; color: var(--label); }
+.disclose > summary::-webkit-details-marker { display: none; }
+.disclose > summary::before { content: ""; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform var(--dur-quick); margin-right: 2px; }
+.disclose[open] > summary::before { transform: rotate(45deg); }
+
+/* --- the device asked for less ---------------------------------------------------
+   Movement becomes a fade or nothing, and nothing loops. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; }
+  dialog.sheet[open], .toast-item, .toast { animation: fadein var(--dur-quick) linear; }
+  .skeleton, .spinner { animation: none; }
+  .spinner { border-top-color: var(--accent); }
+  .btn:active { transform: none; }
+  .fc-pane, .fc-reveal, .fc-modal, .fc-confirm { animation: none; }
+}
+@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  {{head:tools}}
+  <title>Tools · Thievery</title>
+  <meta name="description" content="Small free tools on Thievery.co.uk: flashcards, a quiz that marks what you type, and mind maps. Each does one job." />
+  <link rel="canonical" href="https://thievery.co.uk/tools" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Thievery.co.uk" />
+  <meta property="og:title" content="Tools · Thievery" />
+  <meta property="og:description" content="Small free tools: flashcards, a quiz that marks what you type, and mind maps." />
+  <meta property="og:url" content="https://thievery.co.uk/tools" />
+  <meta property="og:image" content="https://thievery.co.uk/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+</head>
+<body>
+  {{bar:public}}
+
+  <!-- The cards are written by server/tools.js from its TOOLS list. -->
+  <main id="main" class="page-main tools-main">
+    <h1 class="tools-title display">Tools</h1>
+    <p class="tools-lede">Small things that each do one job. Take what you need.</p>
+    <ul class="tool-grid">
+      {{tools}}
+    </ul>
+  </main>
+
+  {{foot}}
+</body>
+</html>
