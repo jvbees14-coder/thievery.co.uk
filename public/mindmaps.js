@@ -190,9 +190,18 @@
     // remembered for this visit only
   }
 
+  // Maps deleted but still inside their Undo. Leaving the page sends them.
+  const pendingDelete = new Set();
+  addEventListener('pagehide', () => {
+    for (const id of pendingDelete) {
+      fetch('/api/mindmaps/maps/' + encodeURIComponent(id), { method: 'DELETE', credentials: 'same-origin', keepalive: true });
+    }
+    pendingDelete.clear();
+  });
+
   async function loadList() {
     const got = await api('maps');
-    maps = got.maps;
+    maps = got.maps.filter((m) => !pendingDelete.has(m.id));
     limits = got.limits || limits;
     if (got.you) {
       $('#who').textContent = got.you.name;
@@ -1845,11 +1854,34 @@
         await fetch('/api/site/logout', { method: 'POST', credentials: 'same-origin' });
         location.href = '/';
       } else if (act === 'delete-map') {
-        const m = maps.find((x) => x.id === button.dataset.id);
-        if (!m || !confirm(`Delete “${m.title}”? This can’t be undone.`)) return;
-        const got = await api(`maps/${encodeURIComponent(m.id)}`, { method: 'DELETE' });
-        maps = got.maps;
+        // Gone from the list at once, with a way back; the room is told only
+        // once the offer of Undo has passed.
+        const at = maps.findIndex((x) => x.id === button.dataset.id);
+        if (at < 0) return;
+        const m = maps[at];
+        maps.splice(at, 1);
+        pendingDelete.add(m.id);
         drawList();
+        window.thieveryToast({
+          text: `Deleted “${m.title}”.`,
+          action: 'Undo',
+          onAction: () => {
+            maps.splice(Math.min(at, maps.length), 0, m);
+            drawList();
+          },
+          onClose: async (undone) => {
+            if (!pendingDelete.delete(m.id)) return;
+            if (undone) return;
+            try {
+              const got = await api(`maps/${encodeURIComponent(m.id)}`, { method: 'DELETE' });
+              maps = got.maps;
+            } catch (err) {
+              maps.splice(Math.min(at, maps.length), 0, m);
+              toast(err.message);
+            }
+            drawList();
+          },
+        });
       } else if (act === 'copy-map') {
         await api('maps', { method: 'POST', body: { from: button.dataset.id } });
         await loadList();

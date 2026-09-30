@@ -26,6 +26,12 @@
   {{bar:flashcards}}
 
   <main id="main" class="fc-main">
+    <!-- The room's one job, top and left: its name and the button to make a
+         card, on every tab. -->
+    <div class="fc-pagehead">
+      <h1 class="fc-pagetitle display">Flashcards</h1>
+      <button class="btn primary" data-goto="make" type="button">New card</button>
+    </div>
     <nav class="fc-tabs" role="tablist">
       <button class="fc-tab is-on" data-tab="collection" role="tab">Collection</button>
       <button class="fc-tab" data-tab="decks" role="tab">Decks</button>
@@ -58,9 +64,7 @@
       </div>
 
       <div id="cards" class="fc-grid"></div>
-      <p id="cards-empty" class="fc-empty" hidden>
-        Nothing in the collection yet. <button class="linkish" data-goto="make" type="button">Make a card</button>.
-      </p>
+      <div id="cards-empty" hidden></div>
     </section>
 
     <!-- ------------------------------------------------------------ decks -->
@@ -126,6 +130,7 @@
             <button id="make-clear" class="btn ghost" type="button">Clear</button>
           </div>
           <p id="edit-note" class="fc-editing" hidden></p>
+          <p id="draft-note" class="hint" hidden>Picked up where you left off. Clear the form to start again.</p>
         </form>
 
         <aside class="fc-appraisal">

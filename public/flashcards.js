@@ -38,8 +38,46 @@
       if (res.status === 401) location.href = '/flashcards';
       throw new Error(payload.error || 'Something went wrong. Try again.');
     }
+    return withoutPending(payload);
+  }
+
+  // --- deleting, with a way back ---------------------------------------------
+  //
+  // Deleting a card is common and easy to regret, so it is not asked about.
+  // The card goes from the page at once, a toast offers it back, and the room
+  // is only told once the toast has gone. Until then it is held here, and every
+  // answer from the room is read as if it were already gone. Leaving the page
+  // while one is held sends it on the way out.
+  const pendingBurn = new Map(); // card id -> the card, as it was
+  function withoutPending(payload) {
+    if (pendingBurn.size && payload && Array.isArray(payload.cards)) {
+      payload.cards = payload.cards.filter((c) => !pendingBurn.has(c.id));
+    }
     return payload;
   }
+  function burnNow(id) {
+    if (!pendingBurn.has(id)) return Promise.resolve();
+    return api('cards/' + encodeURIComponent(id), { method: 'DELETE' })
+      .then((result) => {
+        pendingBurn.delete(id);
+        state = result;
+        drawAll();
+      })
+      .catch((err) => {
+        // The room refused: the card is still there, so it comes back.
+        const card = pendingBurn.get(id);
+        pendingBurn.delete(id);
+        if (card && !state.cards.some((c) => c.id === id)) state.cards.unshift(card);
+        drawAll();
+        toast(err.message, 'error');
+      });
+  }
+  addEventListener('pagehide', () => {
+    for (const id of pendingBurn.keys()) {
+      fetch('/api/flashcards/cards/' + encodeURIComponent(id), { method: 'DELETE', credentials: 'same-origin', keepalive: true });
+    }
+    pendingBurn.clear();
+  });
 
   let toastTimer = 0;
   function toast(message, kind = 'info') {
@@ -158,7 +196,8 @@
     const operations = ops
       ? `<div class="fc-ops">
            ${card.pooled
-             ? `<button class="fc-op on" data-act="withdraw" data-id="${card.id}">On offer: withdraw</button>`
+             ? `<span class="fc-state is-offered"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>On offer, waiting for a match</span>
+                <button class="fc-op" data-act="withdraw" data-id="${card.id}">Withdraw</button>`
              : `<button class="fc-op" data-act="offer" data-id="${card.id}">Offer</button>
                 <button class="fc-op" data-act="edit" data-id="${card.id}">Edit</button>
                 <button class="fc-op danger" data-act="burn" data-id="${card.id}">Delete</button>`}
@@ -249,10 +288,15 @@
     $('#cards').innerHTML = list.map((c) => cardHtml(c)).join('');
     $('#cards-empty').hidden = list.length > 0;
     if (!state.cards.length) {
-      $('#cards-empty').innerHTML =
-        'Nothing in the collection yet. <button class="linkish" data-goto="make" type="button">Make a card</button>.';
+      $('#cards-empty').className = 'empty-state';
+      $('#cards-empty').innerHTML = `
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="15" height="11" rx="1.5"/><path d="M6 4.5h13.5A1.5 1.5 0 0 1 21 6v9"/><path d="M6 11h9M6 14h6"/></svg>
+        <h2>Your vault is empty.</h2>
+        <p>Nothing to steal yet. Make your first card and it gets a rarity the moment it&rsquo;s struck.</p>
+        <button class="btn primary" data-goto="make" type="button">New card</button>`;
     } else if (!list.length) {
-      $('#cards-empty').textContent = 'Nothing matches that.';
+      $('#cards-empty').className = 'fc-empty';
+      $('#cards-empty').textContent = 'Nothing matches that search.';
     }
   }
 
@@ -312,16 +356,49 @@
     $('#c-back').textContent = `${$('#f-back').value.length}/${state.limits.back}`;
   }
 
+  // --- the draft ------------------------------------------------------------
+  //
+  // A new card half-written is kept in this browser as it is typed, and put
+  // back the next time the room opens, so leaving the tab or the page loses
+  // nothing. An edit to an existing card is not a draft: the card itself is.
+  const DRAFT_KEY = 'thievery-card-draft';
+  const DRAFT_FIELDS = ['f-front', 'f-back', 'f-hint', 'f-category', 'f-tags'];
+  function saveDraft() {
+    if (editing) return;
+    const draft = Object.fromEntries(DRAFT_FIELDS.map((id) => [id, $('#' + id).value]));
+    try {
+      if (Object.values(draft).some((v) => v.trim())) localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+      else localStorage.removeItem(DRAFT_KEY);
+    } catch { /* no storage: the draft lasts as long as the page */ }
+  }
+  function restoreDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || typeof draft !== 'object') return;
+    for (const id of DRAFT_FIELDS) if (typeof draft[id] === 'string') $('#' + id).value = draft[id];
+    $('#draft-note').hidden = false;
+  }
+  function dropDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* nothing kept */ }
+    $('#draft-note').hidden = true;
+  }
+
   function clearForm() {
+    // Finishing or abandoning an edit puts back whatever new card was being
+    // drafted before it; finishing or clearing a new card throws its draft away.
+    const wasEditing = editing;
+    if (!wasEditing) dropDraft();
     for (const id of ['f-front', 'f-back', 'f-hint', 'f-category', 'f-tags']) $('#' + id).value = '';
     editing = null;
     $('#edit-note').hidden = true;
     $('#mint').textContent = 'Create card';
+    if (wasEditing) restoreDraft();
     countUp();
     scheduleAppraisal();
   }
 
   function loadForEdit(card) {
+    $('#draft-note').hidden = true;
     $('#f-front').value = card.front;
     $('#f-back').value = card.back;
     $('#f-hint').value = card.hint || '';
@@ -475,7 +552,7 @@
   function tradeHtml(trade) {
     const line = (kind, list) => `
       <div class="fc-trade-line ${kind}">
-        <em>${kind === 'gave' ? 'Gave' : 'Got'}</em>
+        <em>${kind === 'gave' ? '<span aria-hidden="true">↑</span> Gave' : '<span aria-hidden="true">↓</span> Got'}</em>
         <ul>${list.map((c) => `<li>${esc(c.front)} <span class="fc-offer-worth">${c.value}</span></li>`).join('')}</ul>
       </div>`;
     return `
@@ -1105,16 +1182,22 @@
       return loadForEdit(state.cards.find((c) => c.id === id));
     }
     if (act === 'burn') {
-      const card = state.cards.find((c) => c.id === id);
-      const sure = await ask(
-        'Delete this card?',
-        `${snip(card.front)} (value ${card.value}). This can’t be undone.`,
-        'Delete',
-      );
-      if (!sure) return;
-      state = await api('cards/' + encodeURIComponent(id), { method: 'DELETE' });
+      const at = state.cards.findIndex((c) => c.id === id);
+      if (at < 0) return;
+      const card = state.cards[at];
+      pendingBurn.set(id, card);
+      state.cards.splice(at, 1);
       drawAll();
-      banner('burnt', 'Deleted', snip(card.front));
+      window.thieveryToast({
+        text: `Deleted “${snip(card.front)}”.`,
+        action: 'Undo',
+        onAction: () => {
+          pendingBurn.delete(id);
+          state.cards.splice(Math.min(at, state.cards.length), 0, card);
+          drawAll();
+        },
+        onClose: (undone) => { if (!undone) burnNow(id); },
+      });
       return;
     }
     if (act === 'acct') return adminAccountModal(id);
@@ -1148,7 +1231,7 @@
 
   // The make form.
   for (const id of ['f-front', 'f-back', 'f-hint', 'f-category', 'f-tags']) {
-    $('#' + id).addEventListener('input', () => { countUp(); scheduleAppraisal(); });
+    $('#' + id).addEventListener('input', () => { countUp(); scheduleAppraisal(); saveDraft(); });
   }
   $('#make-clear').addEventListener('click', clearForm);
   $('#make').addEventListener('submit', guard(async (ev) => {
@@ -1234,6 +1317,7 @@
       return;
     }
     drawAll();
+    restoreDraft();
     countUp();
     scheduleAppraisal();
     announceMissedTrades(seenTrade);

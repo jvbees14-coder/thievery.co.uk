@@ -570,3 +570,21 @@ textarea:focus, select:focus, input:focus {
   .fc-deck-new, .fc-sub-new { flex-direction: column; }
   .fc-deck-acts { margin-left: 0; }
 }
+
+/* --- the room's head, and the revamp's additions ------------------------------ */
+
+.fc-pagehead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; margin: 0 0 var(--space-4); }
+.fc-pagetitle { margin: 0; font-size: clamp(var(--text-title-1), 5vw, 2.5rem); }
+.fc-tab { min-height: var(--hit); font-size: var(--text-subhead); font-weight: 600; color: var(--label-secondary); }
+.fc-tab.is-on { color: var(--label); border-color: var(--accent-edge); background: var(--accent-tint); }
+
+/* The buttons under a card: small, but never too small to hit. */
+.fc-op { min-height: 32px; padding: 4px 12px; font-size: var(--text-footnote); font-weight: 600; border-radius: var(--radius-m); border-color: var(--separator-strong); }
+.fc-op.danger { color: var(--danger); }
+
+/* Where a card is in a trade, in words, with an icon, as well as a colour. */
+.fc-state { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-footnote); color: var(--success); flex: 1 1 100%; }
+.fc-state .icon { width: 16px; height: 16px; }
+.fc-trade-line em { flex: 0 0 4.2rem; font-size: var(--text-caption); }
+
+#cards-empty.empty-state { margin-top: var(--space-2); }
