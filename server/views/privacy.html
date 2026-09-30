@@ -36,7 +36,8 @@
         <li>your username and display name;</li>
         <li>your password, as a salted scrypt hash (never the password itself);</li>
         <li>when you opened the account and when you were last seen;</li>
-        <li>the flashcards you make, and trades you take part in;</li>
+        <li>the flashcards and decks you make, and trades you take part in;</li>
+        <li>the mind maps you make;</li>
         <li>your game results, used for your stats page and the daily Battle board.</li>
       </ul>
       <p>
@@ -56,11 +57,31 @@
         any other cookies.
       </p>
       <p>
-        Your browser also remembers a few things on your own device: the name
-        you last played under, your notes during a game (which are never sent
-        to us), whether banner animations are on, and which trades you&rsquo;ve
-        already seen.
+        Your browser also keeps a few things on your own device. None of them
+        is ever sent to us, and clearing your browser&rsquo;s site data removes
+        them all.
       </p>
+      <table>
+        <thead><tr><th scope="col">Name</th><th scope="col">What it holds</th><th scope="col">How long</th></tr></thead>
+        <tbody>
+          <tr><td><code>thievery:name</code></td><td>The name you last played the card game under</td><td>Until you clear it</td></tr>
+          <tr><td><code>thievery:session</code></td><td>The room you&rsquo;re in, so a refresh puts you back in your seat</td><td>Until the tab is closed</td></tr>
+          <tr><td><code>thievery:notes:&hellip;</code></td><td>Your private notes on the cards in a round</td><td>Until the tab is closed</td></tr>
+          <tr><td><code>thievery-tips</code></td><td>Which game tips you&rsquo;ve already seen</td><td>Until you clear it</td></tr>
+          <tr><td><code>thievery-motion</code>, <code>thievery-cards</code>, <code>thievery-haptics</code></td><td>Your choices for banner animations, card size and vibration</td><td>Until you clear it</td></tr>
+          <tr><td><code>thievery-card-draft</code></td><td>A flashcard you started but didn&rsquo;t finish</td><td>Until you make or clear it</td></tr>
+          <tr><td><code>thievery:fc:lastTrade</code></td><td>The last trade you were told about</td><td>Until you clear it</td></tr>
+          <tr><td><code>thievery-mm-sort</code></td><td>How you like your mind maps sorted</td><td>Until you clear it</td></tr>
+        </tbody>
+      </table>
+
+      <h2>How long we keep things</h2>
+      <ul>
+        <li>Game rooms: in memory only, gone an hour after the last person leaves.</li>
+        <li>Your sign-in: 30 days, or until you sign out.</li>
+        <li>The daily Battle board: two weeks.</li>
+        <li>Your account, cards, decks, maps and stats: until you ask us to delete them.</li>
+      </ul>
 
       <h2>Your IP address</h2>
       <p>

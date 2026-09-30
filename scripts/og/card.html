@@ -1,0 +1,81 @@
+<!doctype html>
+<!--
+  The share image, drawn once per page by scripts/og-images.mjs and saved as
+  public/og/<page>.jpg. It is 1200 by 630, the size every link preview asks
+  for. The page's words come from the address: ?page=cards and so on.
+-->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8" />
+<style>
+  @font-face { font-family: 'Limelight'; src: url(../../public/fonts/limelight-400-latin.woff2) format('woff2'); }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    position: relative; background: #0a0c14; color: #f1ead9;
+    font-family: system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  .burst {
+    position: absolute; inset: -40%;
+    background:
+      radial-gradient(900px 600px at 70% 45%, #1b2032 0%, transparent 62%),
+      repeating-conic-gradient(from 0deg at 72% 48%, rgba(212, 175, 90, 0.07) 0deg 2.4deg, transparent 2.4deg 9deg);
+  }
+  .frame { position: absolute; inset: 28px; border: 1px solid rgba(212, 175, 90, 0.35); border-radius: 18px; }
+  .frame::before, .frame::after { content: ""; position: absolute; width: 34px; height: 34px; border: 0 solid #d9b563; }
+  .frame::before { top: 12px; left: 12px; border-top-width: 2px; border-left-width: 2px; border-top-left-radius: 10px; }
+  .frame::after { bottom: 12px; right: 12px; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 10px; }
+  .words { position: absolute; left: 88px; top: 84px; width: 620px; }
+  .mark { font-family: 'Limelight', Georgia, serif; font-size: 40px; color: #f1ead9; }
+  .mark em { font-style: normal; font-family: system-ui, sans-serif; font-size: 18px; letter-spacing: 0.14em; color: #b8b09e; margin-left: 6px; }
+  h1 { margin-top: 44px; font-family: 'Limelight', Georgia, serif; font-weight: 400; font-size: 76px; line-height: 1.02; letter-spacing: -0.01em; }
+  p { margin-top: 22px; font-size: 30px; line-height: 1.35; color: #cfc7b4; max-width: 560px; }
+  .tag { position: absolute; left: 88px; bottom: 66px; font-size: 24px; color: #d9b563; font-weight: 600; }
+  .cards { position: absolute; right: 90px; top: 150px; width: 380px; height: 340px; }
+  .c { position: absolute; width: 150px; height: 214px; border-radius: 12px; box-shadow: 0 24px 50px rgba(0,0,0,0.55); }
+  .down { background: #1c2130; border: 2px solid #3a4157; }
+  .down::after { content: ""; position: absolute; inset: 10px; border-radius: 6px; border: 1px solid rgba(212,175,90,0.5);
+    background: repeating-linear-gradient(45deg, rgba(212,175,90,0.18) 0 1px, transparent 1px 9px), repeating-linear-gradient(-45deg, rgba(212,175,90,0.18) 0 1px, transparent 1px 9px); }
+  .red.down { background: #3a1119; border-color: #7a2634; }
+  .up { background: linear-gradient(180deg, #fbf5e6, #f4ecd8); border: 2px solid #c9bfa5; display: grid; place-items: center;
+    font-family: system-ui, sans-serif; font-weight: 700; font-size: 70px; color: #111420; }
+  .up.red { color: #9a2231; }
+  .c1 { left: 0; top: 60px; transform: rotate(-12deg); }
+  .c2 { left: 115px; top: 20px; transform: rotate(-2deg); }
+  .c3 { left: 230px; top: 50px; transform: rotate(10deg); }
+</style>
+</head>
+<body>
+  <div class="burst"></div>
+  <div class="frame"></div>
+  <div class="words">
+    <div class="mark">Thievery<em>.CO.UK</em></div>
+    <h1 id="h"></h1>
+    <p id="p"></p>
+  </div>
+  <div class="tag" id="t"></div>
+  <div class="cards">
+    <div class="c down c1"></div>
+    <div class="c up red c2" id="rank">7</div>
+    <div class="c down red c3"></div>
+  </div>
+  <script>
+    var PAGES = {
+      home: ['Steal their cards before they steal yours.', 'A free deduction card game for 2 to 12 players, and a few other things.', 'Free. No sign-up to play.', 'Q'],
+      cards: ['Thievery', 'Work out everyone else’s hidden cards before they work out yours.', '2 to 12 players · bots for empty seats', '7'],
+      flashcards: ['Flashcards', 'Write them, collect them, trade them. Every card gets a rarity.', 'Free with an account', 'A'],
+      battle: ['Battle', 'See the front, type the back, get a mark out of 100.', 'Quiz yourself or your friends', '10'],
+      switchhead: ['Switchhead', 'Get rid of your cards first. Unless the hands swap first.', 'A shedding game with a twist', 'K'],
+      mindmaps: ['Mind maps', 'One idea in the middle, and everything branching off it.', 'Export as a picture', 'J'],
+      tools: ['Tools', 'Small things that each do one job.', 'thievery.co.uk/tools', '2'],
+    };
+    var page = new URLSearchParams(location.search).get('page') || 'home';
+    var d = PAGES[page] || PAGES.home;
+    document.getElementById('h').textContent = d[0];
+    document.getElementById('p').textContent = d[1];
+    document.getElementById('t').textContent = d[2];
+    document.getElementById('rank').textContent = d[3];
+    if (d[0].length > 24) document.getElementById('h').style.fontSize = '64px';
+  </script>
+</body>
+</html>

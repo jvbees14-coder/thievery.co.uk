@@ -1,16 +1,31 @@
 {
-  "name": "Thievery.co.uk",
+  "name": "Thievery",
   "short_name": "Thievery",
-  "description": "Cards, a free online deduction card game for 1 to 12 players, and a members' room for flashcards and a lifetime record of every round won.",
-  "start_url": "/",
+  "description": "Thievery, a free online deduction card game for 1 to 12 players, plus flashcards, quizzes and mind maps.",
+  "start_url": "/cards",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#0a0c14",
   "theme_color": "#0a0c14",
-  "categories": ["games"],
+  "categories": [
+    "games"
+  ],
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
   ]
 }
