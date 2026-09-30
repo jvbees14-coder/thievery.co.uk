@@ -99,6 +99,12 @@
   --glass-solid: #10131d;
   --glass-edge: rgba(212, 175, 90, 0.18);
   --glass-blur: blur(18px) saturate(1.4);
+  /* Liquid glass, for the bar and the phone's floating tab bar: clearer than the plain
+     glass, blurred harder, with a sheen down its face and a lit rim. */
+  --glass-clear: rgba(12, 14, 22, 0.55);
+  --glass-liquid-blur: blur(24px) saturate(1.8) brightness(1.05);
+  --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.01));
+  --glass-rim: rgba(255, 255, 255, 0.16);
 
   /* The mind-map sheet, read by the script and written onto the bubbles so
      an exported copy looks like the screen. */
@@ -194,6 +200,9 @@
     --glass: rgba(255, 252, 245, 0.72);
     --glass-solid: #fffcf5;
     --glass-edge: rgba(90, 70, 30, 0.14);
+    --glass-clear: rgba(255, 252, 245, 0.55);
+    --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.08));
+    --glass-rim: rgba(255, 255, 255, 0.85);
 
     --mm-paper: #fffcf5;
     --mm-root: #6f510e;
@@ -228,6 +237,8 @@
     --danger: #ffb0b4;
     --success: #b5e3cf;
     --glass: #0a0c14;
+    --glass-clear: #0a0c14;
+    --glass-sheen: none;
   }
 }
 @media (prefers-contrast: more) and (prefers-color-scheme: light) {
@@ -242,6 +253,8 @@
     --danger: #7d1810;
     --success: #1b4a38;
     --glass: #fffcf5;
+    --glass-clear: #fffcf5;
+    --glass-sheen: none;
   }
 }
 
@@ -297,7 +310,11 @@
 
 /* No glass where the device has asked for none. */
 @media (prefers-reduced-transparency: reduce) {
-  :root { --glass: var(--glass-solid); --glass-blur: none; }
+  /* Named twice so it outranks the light block, which is more specific. */
+  :root, :root:not([data-scheme="dark"]) {
+    --glass: var(--glass-solid); --glass-blur: none;
+    --glass-clear: var(--glass-solid); --glass-liquid-blur: none; --glass-sheen: none;
+  }
 }
 
 /* --- 3. the Vault's old names ------------------------------------------------- */

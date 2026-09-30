@@ -38,9 +38,10 @@
    the bar instead of to the bottom of the screen. */
 .site-bar::before {
   content: ""; position: absolute; inset: 0; z-index: -1;
-  background: var(--glass);
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
+  background: var(--glass-sheen), var(--glass-clear);
+  -webkit-backdrop-filter: var(--glass-liquid-blur);
+  backdrop-filter: var(--glass-liquid-blur);
+  box-shadow: inset 0 -1px 0 var(--glass-rim);
 }
 /* The edge where the page scrolls under the bar: a soft shadow that only
    appears once there is something under it, rather than a hard rule that is
@@ -112,23 +113,39 @@
 @media (max-width: 900px) {
   .site-bar { gap: var(--space-3); }
   .site-mark { font-size: 1.25rem; }
+  /* The tab bar floats as a pill of liquid glass: clear enough to show the
+     page moving underneath, brighter blur and saturation than the top bar,
+     a bright rim along the top edge where light would catch, and a soft
+     shadow to lift it. Under reduced transparency the tokens turn the glass
+     solid and the blur off, and what is left is a plain floating pill. */
   .menu-nav {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
+    position: fixed; z-index: 45;
+    left: max(var(--space-3), env(safe-area-inset-left));
+    right: max(var(--space-3), env(safe-area-inset-right));
+    bottom: max(var(--space-2), env(safe-area-inset-bottom));
     display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0;
-    padding: var(--space-1) max(var(--space-1), env(safe-area-inset-right)) max(var(--space-1), env(safe-area-inset-bottom)) max(var(--space-1), env(safe-area-inset-left));
-    background: var(--glass);
-    -webkit-backdrop-filter: var(--glass-blur);
-    backdrop-filter: var(--glass-blur);
-    border-top: 1px solid var(--glass-edge);
+    max-width: 30rem; margin: 0 auto;
+    padding: var(--space-1);
+    border-radius: 28px;
+    background: var(--glass-sheen), var(--glass-clear);
+    -webkit-backdrop-filter: var(--glass-liquid-blur);
+    backdrop-filter: var(--glass-liquid-blur);
+    border: 1px solid var(--glass-edge);
+    box-shadow: inset 0 1px 0 var(--glass-rim), 0 8px 28px var(--shadow-color);
   }
   .menu-nav-link {
     flex-direction: column; justify-content: center; gap: 2px;
     min-height: 52px; padding: var(--space-1) 0;
+    border-radius: 22px;
     font-size: var(--text-caption); font-weight: 500;
     background: none;
   }
   .menu-nav-link:hover { background: none; }
-  .menu-nav-link[aria-current="page"] { background: none; }
+  /* The current room is a lens of its own on the glass. */
+  .menu-nav-link[aria-current="page"] {
+    background: var(--accent-tint);
+    box-shadow: inset 0 1px 0 var(--glass-rim), inset 0 0 0 1px var(--glass-edge);
+  }
   .menu-nav-link .icon { width: 24px; height: 24px; }
   .menu-nav-link span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
   .when-wide { display: none; }
@@ -136,9 +153,9 @@
   /* The links have gone to the bottom, so the account button goes right. */
   .menu-nav + .site-who { margin-left: auto; }
   /* Room at the bottom of every page for the bar that sits over it. */
-  body:has(.menu-nav) { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); }
+  body:has(.menu-nav) { padding-bottom: calc(var(--tabbar-h) + var(--space-2) + env(safe-area-inset-bottom)); }
   /* Anything else pinned to the bottom of the screen sits above the tab bar. */
-  body:has(.menu-nav) .toaster { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + var(--space-3)); }
+  body:has(.menu-nav) .toaster { bottom: calc(var(--tabbar-h) + var(--space-2) + env(safe-area-inset-bottom) + var(--space-3)); }
 }
 /* Too narrow, or text too large, for a word under every icon: the words are
    still there for a screen reader, and the icons carry them on screen. */
