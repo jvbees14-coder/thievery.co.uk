@@ -151,7 +151,7 @@
     if (!rooms.mindmaps) $('#tile-mindmaps-figure').textContent = 'Unavailable right now';
 
     // --- the admin's door
-    for (const id of ['#tile-members', '#nav-members', '#who-members']) $(id).hidden = !user.admin;
+    for (const id of ['#tile-members', '#who-members']) $(id).hidden = !user.admin;
 
     // --- the record
     $('#stats-lede').textContent = play.rounds

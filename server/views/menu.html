@@ -1,30 +1,18 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="dark" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  {{head:flashcards,menu}}
   <title>Home · Thievery</title>
   <meta name="robots" content="noindex, nofollow" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c14'/%3E%3Cpath d='M16 4l10 12-10 12L6 16z' fill='none' stroke='%23d4af5a' stroke-width='2'/%3E%3Cpath d='M16 10l5 6-5 6-5-6z' fill='%23d4af5a'/%3E%3C/svg%3E" />
-  <link rel="manifest" href="/site.webmanifest" />
-  <link rel="apple-touch-icon" href="/icons/icon-180.png" />
-  <meta name="theme-color" content="#0a0c14" />
-  <link rel="preload" href="/fonts/limelight-400-latin.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="preload" href="/fonts/eb-garamond-400-latin.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="stylesheet" href="/fonts.css" />
-  <link rel="stylesheet" href="/style.css" />
-  <link rel="stylesheet" href="/flashcards.css" />
-  <link rel="stylesheet" href="/menu.css" />
-  <link rel="stylesheet" href="/plain.css" />
-  <script src="/prefs.js"></script>
 </head>
 <body class="menu-page">
   <div id="toast" class="toast" hidden></div>
 
   {{bar:home}}
 
-  <main class="menu-main">
+  <main id="main" class="menu-main">
     <h1 class="menu-hello"><span id="greeting">Hello</span>, <span id="hello">&hellip;</span></h1>
 
     <!-- The tiles. Thievery is the one the site was built for, so it is
@@ -214,17 +202,16 @@
            table reads it too, and nobody has to sign in there. -->
       <div class="menu-form">
         <h3 class="menu-form-head">Display</h3>
-        <fieldset class="menu-scheme">
-          <legend>Colour scheme</legend>
-          <label class="fc-check"><input type="radio" name="scheme" value="vault" data-theme-choice checked /> Dark: navy and brass</label>
-          <label class="fc-check"><input type="radio" name="scheme" value="plain" data-theme-choice /> Light: white and blue</label>
-        </fieldset>
         <label class="fc-check"><input type="checkbox" data-motion-check checked /> Animate banners</label>
         <p class="hint">
           Banners are the full-screen announcements for a steal, a miss or a
-          win. With animation off they still appear, just without the sweep,
-          the screen shake or the confetti. Both settings are saved in this
-          browser. The card game always uses the dark scheme.
+          win. Off, they still appear, without the sweep, the shake or the
+          confetti. If your device is set to reduce motion, they start off.
+        </p>
+        <label class="fc-check"><input type="checkbox" data-pref-check="cards" /> Larger cards at the table</label>
+        <label class="fc-check"><input type="checkbox" data-pref-check="haptics" /> Vibrate when a card of yours is taken</label>
+        <p class="hint">
+          Saved in this browser. Light or dark follows your device.
         </p>
       </div>
 

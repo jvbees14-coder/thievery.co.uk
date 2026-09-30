@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="dark" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  {{head:flashcards,menu}}
   <title>Thievery: steal their cards before they steal yours</title>
   <meta name="description" content="Thievery is a free deduction card game for 2 to 12 players in your browser. Share a room code and play, no sign-up needed. Make an account to keep your stats, write and trade flashcards, and quiz your friends." />
   <link rel="canonical" href="https://thievery.co.uk/" />
@@ -21,23 +21,13 @@
   <meta name="twitter:description" content="A free deduction card game for 2 to 12 players. Share a room code and play, no sign-up needed." />
   <meta name="twitter:image" content="https://thievery.co.uk/og-image.png" />
 
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c14'/%3E%3Cpath d='M16 4l10 12-10 12L6 16z' fill='none' stroke='%23d4af5a' stroke-width='2'/%3E%3Cpath d='M16 10l5 6-5 6-5-6z' fill='%23d4af5a'/%3E%3C/svg%3E" />
-  <link rel="manifest" href="/site.webmanifest" />
-  <link rel="apple-touch-icon" href="/icons/icon-180.png" />
-  <meta name="theme-color" content="#0a0c14" />
-  <link rel="preload" href="/fonts/limelight-400-latin.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="preload" href="/fonts/eb-garamond-400-latin.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="stylesheet" href="/fonts.css" />
-  <link rel="stylesheet" href="/style.css" />
-  <link rel="stylesheet" href="/flashcards.css" />
-  <link rel="stylesheet" href="/menu.css" />
-  <link rel="stylesheet" href="/plain.css" />
-  <script src="/prefs.js"></script>
 </head>
 <body>
   <div id="toast" class="toast" hidden></div>
 
-  <section class="screen home">
+  {{bar:public}}
+
+  <main id="main" class="screen home">
     <div class="home-card door-card" data-api="/api/site" data-next="/">
       <h1 class="logo wordmark">Thievery<em>.co.uk</em></h1>
       <p class="tagline">
@@ -94,9 +84,9 @@
         <p><a class="btn" href="/cards">Play Thievery</a></p>
       </div>
     </div>
+  </main>
 
-    {{foot}}
-  </section>
+  {{foot}}
 
   <script src="/door.js"></script>
 </body>

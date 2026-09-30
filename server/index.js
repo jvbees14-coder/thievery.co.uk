@@ -158,20 +158,28 @@ function serve(req, res) {
       }
       return notFound(res);
     }
-    // Everything here is still revalidated on every visit — a room code in the
-    // address bar has to reach today's markup rather than last week's — but a
-    // browser that already holds the file is told to keep it instead of being
-    // sent the whole stylesheet again for nothing.
+    // A file asked for with a ?v= came from a page that views.js put
+    // together, and the v is a hash of what is in it: if the file changes, so
+    // does the address. So that request can be kept for a year without
+    // asking again. Only in production, because a server started with
+    // --watch reads its views once and would otherwise hand out an address
+    // for a stylesheet that has since been edited.
+    //
+    // Everything else is still revalidated on every visit, but a browser that
+    // already holds the file is told to keep it instead of being sent the
+    // whole stylesheet again for nothing.
+    const pinned = url.searchParams.has('v') && process.env.NODE_ENV === 'production';
+    const caching = pinned ? 'public, max-age=31536000, immutable' : 'no-cache';
     const modified = stat.mtime.toUTCString();
     if (req.headers['if-modified-since'] === modified) {
-      res.writeHead(304, { 'Last-Modified': modified, 'Cache-Control': 'no-cache' });
+      res.writeHead(304, { 'Last-Modified': modified, 'Cache-Control': caching });
       return res.end();
     }
     fs.readFile(abs, (err, data) => {
       if (err) return notFound(res);
       res.writeHead(200, {
         'Content-Type': MIME[path.extname(abs)] || 'application/octet-stream',
-        'Cache-Control': 'no-cache',
+        'Cache-Control': caching,
         'Last-Modified': modified,
         ...SAFE_HEADERS,
       });

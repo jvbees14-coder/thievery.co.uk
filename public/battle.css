@@ -22,8 +22,6 @@
   font-family: var(--caps);
   font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   color: var(--ivory);
 }
 
@@ -59,8 +57,6 @@
   text-align: center;
   font-family: var(--caps);
   font-size: 18px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
 }
 
 /* --- the lobby ------------------------------------------------------------ */
@@ -106,15 +102,12 @@
 .btl-code-say {
   margin: 0;
   font-size: 12px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
   color: var(--text-dim);
 }
 .btl-code {
   margin: 4px 0 12px;
   font-family: var(--caps);
   font-size: clamp(34px, 7vw, 48px);
-  letter-spacing: 0.18em;
   color: var(--brass);
 }
 .btl-copy { width: 100%; margin-bottom: 16px; }
@@ -131,9 +124,7 @@
 .btl-player.is-away { opacity: 0.5; }
 .btl-player-name { flex: 1; }
 .btl-tag {
-  font-size: 10.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: var(--text-caption);
   padding: 2px 7px;
   border-radius: 999px;
   border: 1px solid var(--brass-dim);
@@ -148,8 +139,6 @@
   justify-content: space-between;
   align-items: baseline;
   font-size: 12.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--text-dim);
   margin-bottom: 6px;
 }
@@ -175,8 +164,6 @@
 .btl-card-owner {
   margin: 0 0 8px;
   font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--text-dim);
 }
 .btl-front {
@@ -232,9 +219,9 @@
 
 .btl-mark-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .btl-mark-who { font-weight: 600; color: var(--ivory); }
-.btl-mark-who i { font-style: normal; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brass); }
+.btl-mark-who i { font-style: normal; font-size: var(--text-caption); color: var(--brass); }
 .btl-mark-score { font-family: var(--caps); font-size: 22px; color: var(--ivory); }
-.btl-mark-score small { font-size: 11px; color: var(--text-dim); }
+.btl-mark-score small { font-size: var(--text-caption); color: var(--text-dim); }
 .btl-mark-said { margin: 6px 0 4px; line-height: 1.45; }
 .btl-mark-said i { color: var(--text-dim); }
 .btl-mark-band { margin: 0; font-size: 12.5px; color: var(--text-dim); }
@@ -339,9 +326,7 @@
 .btl-choice-text { flex: 1; }
 .btl-choice-tag {
   flex: none;
-  font-size: 10.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: var(--text-caption);
   color: var(--text-dim);
 }
 .btl-choice-opt.is-right .btl-choice-tag { color: var(--jade-bright); }
@@ -368,7 +353,7 @@
 }
 .btl-board-row:last-child { border-bottom: 0; }
 .btl-board-place { font-family: var(--caps); font-size: 12px; color: var(--text-dim); }
-.btl-board-name i { font-style: normal; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brass); }
+.btl-board-name i { font-style: normal; font-size: var(--text-caption); color: var(--brass); }
 .btl-board-row b { font-family: var(--caps); color: var(--ivory); }
 .btl-board-row.is-yours { background: var(--brass-ghost); }
 
@@ -399,7 +384,7 @@
 .btl-bank-tools { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr); gap: 10px; margin: 16px 0 6px; }
 .btl-bank-tools select, .btl-bank-tools input { width: 100%; }
 .btl-bank-list { list-style: none; margin: 10px 0 16px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.btl-q { padding: 14px 16px; border: 1px solid var(--brass-faint); border-radius: var(--radius); background: rgba(0, 0, 0, 0.18); }
+.btl-q { padding: 14px 16px; border: 1px solid var(--brass-faint); border-radius: var(--radius); background: var(--fill); }
 .btl-q-front { margin: 0 0 8px; color: var(--ivory); }
 .btl-q-options { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 3px; color: var(--text-dim); font-size: 15px; }
 .btl-q-options b { display: inline-block; width: 1.4em; color: var(--brass-dim); font-family: var(--caps); }

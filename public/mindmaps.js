@@ -1738,53 +1738,9 @@
     setTimeout(() => URL.revokeObjectURL(url), 10_000);
   }
 
-  // The body face, read into the file, because an SVG that is drawn onto a
-  // canvas (which is how the PNG is made) cannot fetch anything at all. The
-  // plain design sets the sheet in the system's own sans-serif, which every
-  // machine has, so there is nothing to carry.
-  const FONT_FILES = {
-    latin: '/fonts/eb-garamond-400-latin.woff2',
-    ext: '/fonts/eb-garamond-400-latin-ext.woff2',
-  };
-  const fontCache = new Map();
-  function asDataUrl(blob) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  }
-  async function fontData(which) {
-    if (!fontCache.has(which)) {
-      fontCache.set(
-        which,
-        fetch(FONT_FILES[which])
-          .then((r) => (r.ok ? r.blob() : Promise.reject(new Error('font'))))
-          .then(asDataUrl)
-      );
-    }
-    return fontCache.get(which);
-  }
-
-  function beyondLatin1(text) {
-    for (let i = 0; i < text.length; i++) if (text.charCodeAt(i) > 255) return true;
-    return false;
-  }
-
-  async function fontCss(face) {
-    if (!/EB Garamond/i.test(face)) return '';
-    const all = wire().map((n) => n.text).join(' ');
-    const wanted = ['latin', ...(beyondLatin1(all) ? ['ext'] : [])];
-    try {
-      const urls = await Promise.all(wanted.map(fontData));
-      return urls
-        .map((u) => `@font-face { font-family: 'EB Garamond'; font-style: normal; font-weight: 400; src: url(${u}) format('woff2'); }`)
-        .join('\n');
-    } catch {
-      return '';
-    }
-  }
+  // The sheet is set in the device's own typeface, which every machine that
+  // opens the file already has, so an export carries no font with it. (It
+  // used to embed EB Garamond, the site's old body face.)
 
   /** The sheet as a file of its own: the map and nothing else, on its paper. */
   async function exportSvg() {
@@ -1801,12 +1757,6 @@
       width: box.w,
       height: box.h,
     });
-    const css = await fontCss(c.face);
-    if (css) {
-      const style = el('style');
-      style.textContent = css;
-      out.appendChild(style);
-    }
     out.appendChild($('#defs').cloneNode(true));
     out.appendChild(el('rect', { x: box.x, y: box.y, width: box.w, height: box.h, fill: c.paper }));
     const branches = $('#branches').cloneNode(true);

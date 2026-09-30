@@ -38,14 +38,14 @@
   padding: 24px 22px 20px;
   border: 1px solid var(--brass-faint);
   border-radius: var(--radius);
-  background: linear-gradient(180deg, var(--ink-3), var(--ink-2));
+  background: var(--bg-elevated);
   color: inherit;
   text-decoration: none;
   transition: border-color 0.18s ease, background 0.18s ease;
 }
 .menu-tile:hover, .menu-tile:focus-visible {
   border-color: var(--brass-dim);
-  background: linear-gradient(180deg, var(--ink-4), var(--ink-3));
+  background: var(--bg-elevated-2);
 }
 
 .menu-tile-icon {
@@ -126,7 +126,7 @@
   padding: 16px 14px;
   border: 1px solid var(--brass-ghost);
   border-radius: var(--radius);
-  background: rgba(0, 0, 0, 0.22);
+  background: var(--fill);
   text-align: center;
 }
 .menu-figure b {
@@ -141,9 +141,7 @@
   display: block;
   margin-top: 6px;
   font-family: var(--caps);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: var(--text-caption);
   color: var(--text-dim);
 }
 .menu-figure i { display: block; margin-top: 2px; font-style: normal; font-size: 12px; color: var(--text-faint); }
@@ -164,8 +162,8 @@
 
 /* The admin's own tile is edged in the same rose the panel marks the admin's
    account with, so it reads as the house's door rather than one more room. */
-.menu-tile-house { border-color: rgba(233, 162, 184, 0.3); }
-.menu-tile-house .menu-tile-icon { stroke: rgba(233, 162, 184, 0.75); }
+.menu-tile-house { border-color: var(--team-b-edge); }
+.menu-tile-house .menu-tile-icon { stroke: var(--team-b-edge); }
 
 .menu-members { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
 /* The flashcards panel draws a row as a button; here it is a link, because
@@ -179,8 +177,8 @@
 .menu-member-head h3 { margin: 0; font-family: var(--display); font-size: 22px; font-weight: 400; color: var(--ivory); }
 .menu-member-facts { margin: 0 0 6px; font-size: 14px; color: var(--text-dim); }
 .menu-member .fc-actions { flex-wrap: wrap; }
-.menu-member .btn.danger { border-color: rgba(229, 100, 107, 0.55); color: #f6c9cc; }
-.menu-member .btn.danger:hover { background: rgba(142, 31, 46, 0.22); border-color: var(--bad); }
+.menu-member .btn.danger { border-color: var(--danger-edge); color: var(--danger); }
+.menu-member .btn.danger:hover { background: var(--danger-tint); border-color: var(--bad); }
 
 /* --- the door's word about the open table -------------------------------- */
 
@@ -195,8 +193,6 @@
   font-family: var(--caps);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
   color: var(--brass);
 }
 .door-open p { margin: 0 0 12px; color: var(--text-dim); font-size: 14px; }
@@ -214,8 +210,6 @@
   font-family: var(--caps);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   color: var(--ivory);
 }
 
@@ -227,10 +221,8 @@
 .menu-modes th, .menu-modes td { padding: 9px 8px; border-bottom: 1px solid var(--brass-ghost); }
 .menu-modes thead th {
   font-family: var(--caps);
-  font-size: 10px;
+  font-size: var(--text-caption);
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
   color: var(--text-faint);
   text-align: right;
 }
@@ -255,5 +247,3 @@
 }
 
 .menu-form-head { margin: 0 0 10px; font-family: var(--caps); font-size: 13px; font-weight: 600; color: var(--ivory); }
-.menu-scheme { border: 0; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.menu-scheme legend { margin: 0 0 6px; padding: 0; font-size: 15px; color: var(--text); }

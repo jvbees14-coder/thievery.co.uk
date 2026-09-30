@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// The four typefaces, fetched once and kept.
+// The display face, fetched once and kept.
 //
 //   npm run fonts
 //
@@ -10,9 +10,10 @@
 // no internet — which the README explicitly offers as a way to play, everyone
 // on the same Wi-Fi — it never stops being Georgia.
 //
-// So they live here instead. All four are under the SIL Open Font License,
-// which permits exactly this; see public/fonts/OFL.txt for the terms and the
-// copyright lines.
+// So it lives here instead. Everything else on the site is set in the
+// device's own typeface, which needs no file at all. Limelight is under the
+// SIL Open Font License, which permits exactly this; see public/fonts/OFL.txt
+// for the terms and the copyright lines.
 //
 // This writes public/fonts/*.woff2 and public/fonts.css. Both are committed,
 // so this only needs running to add a face or take one away.
@@ -26,15 +27,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
 const FONT_DIR = path.join(ROOT, 'public', 'fonts');
 
-// Exactly the faces the stylesheets ask for, and no others. Google serves a
-// variable file for the families that have one, so several weights often come
-// back as a single download.
-const FAMILIES = [
-  'Limelight',
-  'Cinzel:wght@400;600;700',
-  'EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400',
-  'Cutive+Mono',
-];
+// Exactly the faces the stylesheets ask for, and no others. There is one, and
+// the design allows no more than one: see docs/DESIGN.md.
+const FAMILIES = ['Limelight'];
 
 // A browser's user agent, because the answer depends on it: anything else is
 // offered ttf rather than the woff2 every browser this site supports can read.
@@ -92,10 +87,11 @@ async function run() {
   }
 
   const header =
-    '/* The four faces the site is set in, served from here rather than from\n' +
-    ' * Google. Written by scripts/fetch-fonts.js — edit that, not this.\n' +
+    '/* The one webfont on the site, for the wordmark and the headlines, served\n' +
+    ' * from here rather than from Google. Written by scripts/fetch-fonts.js,\n' +
+    ' * so edit that, not this.\n' +
     ' *\n' +
-    ' * All four are under the SIL Open Font License; see fonts/OFL.txt.\n' +
+    ' * Limelight is under the SIL Open Font License; see fonts/OFL.txt.\n' +
     ' */\n\n';
   fs.writeFileSync(path.join(ROOT, 'public', 'fonts.css'), header + out.join('\n\n') + '\n', 'utf8');
 

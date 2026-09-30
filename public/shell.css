@@ -1,0 +1,178 @@
+/* Thievery.co.uk — the shell.
+ *
+ * What every page has around it: the skip link, the bar along the top, the
+ * tab bar that the bar's links turn into on a phone, the account menu, and
+ * the foot. The markup is written once, in server/views.js; this is the only
+ * stylesheet that dresses it.
+ *
+ * The bar and the tab bar are controls, so they float on glass above the
+ * page. Nothing in the content layer does: cards, panels and prose sit on
+ * solid surfaces (style.css).
+ */
+
+/* --- the skip link ------------------------------------------------------------ */
+
+.skip-link {
+  position: absolute; left: var(--space-3); top: var(--space-3); z-index: 200;
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius-m);
+  background: var(--accent); color: var(--accent-contrast);
+  font-weight: 600; text-decoration: none;
+  transform: translateY(-200%);
+}
+.skip-link:focus-visible { transform: none; }
+
+/* --- the bar ----------------------------------------------------------------------- */
+
+.site-bar {
+  position: sticky; top: 0; z-index: 40;
+  display: flex; align-items: center; gap: var(--space-4);
+  min-height: var(--bar-h);
+  padding: var(--space-2) max(var(--space-4), env(safe-area-inset-right)) var(--space-2) max(var(--space-4), env(safe-area-inset-left));
+  padding-top: max(var(--space-2), env(safe-area-inset-top));
+  border-bottom: 1px solid var(--glass-edge);
+  isolation: isolate;
+}
+/* The glass is on a layer of its own rather than on the bar. A backdrop
+   filter on the bar would make it the frame that anything fixed inside it is
+   measured against, and the tab bar, which is inside it, would be pinned to
+   the bar instead of to the bottom of the screen. */
+.site-bar::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+/* The edge where the page scrolls under the bar: a soft shadow that only
+   appears once there is something under it, rather than a hard rule that is
+   always there. shell.js sets the class. */
+.site-bar::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 14px;
+  background: linear-gradient(var(--shadow-color), transparent);
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+.site-bar.is-scrolled::after { opacity: 0.5; }
+
+.site-mark {
+  font-size: 1.375rem; text-decoration: none; white-space: nowrap;
+  min-height: var(--hit); display: inline-flex; align-items: center;
+  border-radius: var(--radius-s);
+}
+
+/* The wide-screen nav: a row of links in the middle of the bar. */
+.menu-nav { display: flex; gap: var(--space-1); flex: 1; justify-content: center; }
+.menu-nav-link {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  min-height: var(--hit); padding: 0 var(--space-3);
+  border-radius: var(--radius-m);
+  color: var(--label-secondary); text-decoration: none;
+  font-size: var(--text-subhead); font-weight: 500; white-space: nowrap;
+}
+.menu-nav-link .icon { width: 18px; height: 18px; flex: none; }
+.menu-nav-link:hover { color: var(--label); background: var(--fill); }
+.menu-nav-link[aria-current="page"] { color: var(--accent); background: var(--accent-tint); }
+.menu-nav-link.is-shut { opacity: 0.6; }
+.when-narrow { display: none; }
+
+/* The account button and its menu. */
+.site-who { position: relative; margin-left: auto; }
+.menu-nav + .site-who { margin-left: 0; }
+.site-who-btn {
+  appearance: none; cursor: pointer;
+  min-height: var(--hit); max-width: 14rem; padding: 0 var(--space-4);
+  border: 1px solid var(--separator-strong); border-radius: var(--radius-pill);
+  background: var(--bg-elevated); color: var(--label);
+  font: inherit; font-size: var(--text-subhead); font-weight: 500;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.site-who-btn:hover { background: var(--bg-elevated-2); }
+.site-who-btn:empty::before { content: "Account"; color: var(--label-secondary); }
+.site-menu {
+  position: absolute; right: 0; top: calc(100% + var(--space-2)); z-index: 50;
+  min-width: 14rem; padding: var(--space-1);
+  display: flex; flex-direction: column;
+  background: var(--bg-elevated); border: 1px solid var(--separator); border-radius: var(--radius-l);
+  box-shadow: var(--shadow-3);
+}
+.site-menu a, .site-menu button {
+  appearance: none; background: none; border: 0; cursor: pointer; text-align: left;
+  display: flex; align-items: center; gap: var(--space-2);
+  min-height: var(--hit); padding: 0 var(--space-3); border-radius: var(--radius-m);
+  color: var(--label); font: inherit; font-size: var(--text-subhead); text-decoration: none;
+}
+.site-menu a:hover, .site-menu button:hover { background: var(--fill); }
+.site-menu hr { border: 0; border-top: 1px solid var(--separator); margin: var(--space-1) var(--space-2); }
+.site-menu .motion-state { margin-left: auto; }
+
+/* --- the tab bar ------------------------------------------------------------------ */
+
+/* On a phone the bar keeps the wordmark and the account button at the top,
+   and its links move to the bottom of the screen, in reach of a thumb:
+   always there, five of them, an icon and one word each. */
+@media (max-width: 760px) {
+  .site-bar { gap: var(--space-3); }
+  .site-mark { font-size: 1.25rem; }
+  .menu-nav {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
+    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0;
+    padding: var(--space-1) max(var(--space-1), env(safe-area-inset-right)) max(var(--space-1), env(safe-area-inset-bottom)) max(var(--space-1), env(safe-area-inset-left));
+    background: var(--glass);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border-top: 1px solid var(--glass-edge);
+  }
+  .menu-nav-link {
+    flex-direction: column; justify-content: center; gap: 2px;
+    min-height: 52px; padding: var(--space-1) 0;
+    font-size: var(--text-caption); font-weight: 500;
+    background: none;
+  }
+  .menu-nav-link:hover { background: none; }
+  .menu-nav-link[aria-current="page"] { background: none; }
+  .menu-nav-link .icon { width: 24px; height: 24px; }
+  .menu-nav-link span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .when-wide { display: none; }
+  .when-narrow { display: inline; }
+  /* Room at the bottom of every page for the bar that sits over it. */
+  body:has(.menu-nav) { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); }
+  /* Anything else pinned to the bottom of the screen sits above the tab bar. */
+  body:has(.menu-nav) .toaster { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + var(--space-3)); }
+}
+/* Too narrow, or text too large, for a word under every icon: the words are
+   still there for a screen reader, and the icons carry them on screen. */
+@media (max-width: 359px) {
+  .menu-nav-link span {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+}
+
+/* --- the foot ----------------------------------------------------------------------- */
+
+.site-foot {
+  display: grid; gap: var(--space-2);
+  width: 100%; max-width: 1180px; margin: 0 auto;
+  padding: var(--space-6) max(var(--space-4), env(safe-area-inset-right)) var(--space-6) max(var(--space-4), env(safe-area-inset-left));
+  border-top: 1px solid var(--separator);
+  font-size: var(--text-footnote); color: var(--label-secondary);
+}
+.site-foot p { margin: 0; }
+.site-foot-line { color: var(--label-secondary); }
+.site-foot nav { display: flex; flex-wrap: wrap; gap: 0 var(--space-4); }
+.site-foot a {
+  display: inline-flex; align-items: center; min-height: var(--hit);
+  color: var(--label); text-decoration: none;
+}
+.site-foot a:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.site-foot-aside { font-style: italic; }
+.site-foot-small { color: var(--label-tertiary); }
+
+/* A short page still keeps its foot at the bottom of the window. */
+body:has(> .site-foot) { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
+body:has(> .site-foot) > main { flex: 1 0 auto; width: 100%; }
+
+/* --- motion ---------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .site-bar::after { transition: none; }
+}

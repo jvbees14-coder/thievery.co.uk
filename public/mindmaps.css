@@ -1,29 +1,10 @@
 /* Thievery.co.uk — mind maps.
  *
- * The sheet is drawn from the --mm-* tokens below, which the page reads and
- * writes onto every bubble and branch as attributes. That is so an exported
- * copy looks like what is on screen; it also means a colour changed here has
- * to be changed as a token, or the export will not follow it. plain.css has
- * its own set for the plain design. */
-
-:root {
-  --mm-paper: #10131d;
-  --mm-root: #d4af5a;
-  --mm-root-ink: #0a0c14;
-  --mm-bubble: #171b28;
-  --mm-ink: #ece5d4;
-  --mm-c0: #d4af5a;
-  --mm-c1: #7fd3cc;
-  --mm-c2: #e9a2b8;
-  --mm-c3: #9ecdb7;
-  --mm-c4: #e5946b;
-  --mm-c5: #a9b4f0;
-  --mm-grid: rgba(212, 175, 90, 0.16);
-  --mm-shadow: #000000;
-  --mm-shadow-alpha: 0.45;
-  --mm-select: #f4ecd8;
-  --mm-handle: #171b28;
-}
+ * The sheet is drawn from the --mm-* tokens in tokens.css, which the page
+ * reads and writes onto every bubble and branch as attributes. That is so an
+ * exported copy looks like what is on screen; it also means a colour changed
+ * for the sheet has to be changed as a token, or the export will not follow
+ * it. */
 
 .mm-main {
   padding: clamp(14px, 3vw, 32px);
@@ -45,7 +26,7 @@
 .mm-new .input-row { display: flex; gap: 10px; flex-wrap: wrap; }
 .mm-new input { flex: 1 1 240px; min-width: 0; }
 .mm-list-head { display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; margin: 0 0 12px; }
-.mm-subhead { font-family: var(--caps); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); margin: 0; }
+.mm-subhead { font-family: var(--caps); font-size: 13px; color: var(--text-faint); margin: 0; }
 .mm-count { color: var(--text-faint); font-family: var(--body); letter-spacing: 0; text-transform: none; font-size: 13px; }
 .mm-list-tools { display: flex; gap: 8px; flex: 1 1 280px; justify-content: flex-end; }
 .mm-list-tools[hidden] { display: none; }
@@ -64,7 +45,7 @@
   overflow: hidden;
   transition: border-color 0.15s, transform 0.18s, box-shadow 0.18s;
 }
-.mm-card:hover, .mm-card:focus-within { border-color: var(--brass-dim); transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35); }
+.mm-card:hover, .mm-card:focus-within { border-color: var(--brass-dim); transform: translateY(-2px); box-shadow: 0 10px 24px var(--shadow-color); }
 .mm-card-link { display: flex; flex-direction: column; gap: 3px; padding: 0 0 10px; color: inherit; text-decoration: none; flex: 1; }
 .mm-card-link:focus-visible { outline: none; }
 .mm-thumb {
@@ -125,7 +106,7 @@
   border-radius: var(--radius);
   background: var(--mm-paper);
   overflow: hidden;
-  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 0 80px var(--shadow-color);
 }
 .mm-stage:focus { outline: none; }
 /* The clash bar takes its room from the sheet rather than from below the page. */
@@ -183,7 +164,7 @@
 .mm-swatch {
   width: 24px; height: 24px; padding: 0; border-radius: 50%;
   background: var(--sw); border: 2px solid transparent; cursor: pointer;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3) inset;
+  box-shadow: 0 0 0 1px var(--shadow-color) inset;
 }
 .mm-swatch.is-auto {
   width: auto; padding: 0 9px; border-radius: 12px;
@@ -197,7 +178,7 @@
   position: absolute; right: 10px; bottom: 10px; z-index: 4;
   display: flex; align-items: center; gap: 4px;
   padding: 4px; background: var(--ink-3); border: 1px solid var(--brass-faint); border-radius: var(--radius);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6px 18px var(--shadow-color);
 }
 .mm-zoom .btn { min-width: 30px; }
 .mm-zoom-level { min-width: 44px; text-align: center; font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums; }

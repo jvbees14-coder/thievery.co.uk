@@ -28,16 +28,16 @@
   height: var(--h);
   flex: 0 0 auto;
   padding: 5px 6px;
-  border: 1px solid #c9c1ad;
+  border: 1px solid var(--stock-edge);
   border-radius: 7px;
-  background: #fbf7ee;
-  color: #1c1c22;
+  background: var(--stock);
+  color: var(--stock-ink);
   font-family: var(--body);
   line-height: 1;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 2px 6px var(--shadow-color);
   user-select: none;
 }
-.sh-card.is-red { color: #b3202f; }
+.sh-card.is-red { color: var(--stock-red); }
 .sh-rank { font-size: 19px; font-weight: 700; text-align: left; }
 .sh-suit { font-size: 24px; text-align: right; }
 
@@ -62,7 +62,7 @@ button.sh-card:hover { border-color: var(--brass); }
 button.sh-card:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 .sh-card.is-on {
   border-color: var(--brass);
-  box-shadow: 0 0 0 2px var(--brass), 0 6px 14px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 0 0 2px var(--brass), 0 6px 14px var(--shadow-color);
   transform: translateY(-8px);
 }
 .sh-card.is-dim { opacity: 0.45; }
@@ -145,7 +145,7 @@ button.sh-card:focus-visible { outline: 2px solid var(--brass); outline-offset: 
 .sh-row-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .sh-row-head .btl-head { margin-bottom: 8px; }
 .sh-turn { font-size: 14px; color: var(--brass); }
-.sh-row-label { margin: 10px 0 6px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); }
+.sh-row-label { margin: 10px 0 6px; font-size: 12px; color: var(--text-dim); }
 .sh-row { display: flex; flex-wrap: wrap; gap: 8px; min-height: 30px; padding-top: 8px; }
 .sh-row.is-small { gap: 5px; padding-top: 0; min-height: 0; }
 .sh-acts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
@@ -188,10 +188,10 @@ button.sh-special:disabled { cursor: default; }
   flex: 0 0 auto;
   width: 38px;
   height: 52px;
-  border: 1px solid #c9c1ad;
+  border: 1px solid var(--stock-edge);
   border-radius: 5px;
-  background: #fbf7ee;
-  color: #1c1c22;
+  background: var(--stock);
+  color: var(--stock-ink);
   font-family: var(--body);
   font-size: 17px;
   font-weight: 700;
@@ -200,7 +200,7 @@ button.sh-special:disabled { cursor: default; }
 .sh-special-words { display: flex; flex-direction: column; gap: 3px; }
 .sh-special-words b { color: var(--ivory); font-size: 15px; }
 .sh-special-words span { font-size: 13px; line-height: 1.4; }
-.sh-special-words i { font-size: 11.5px; font-style: normal; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brass); }
+.sh-special-words i { font-size: var(--text-caption); font-style: normal; color: var(--brass); }
 .sh-special:not(.is-on) .sh-special-words i { color: var(--text-faint); }
 .sh-lock { position: absolute; top: 8px; right: 10px; font-size: 13px; opacity: 0.7; }
 

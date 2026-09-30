@@ -1,0 +1,333 @@
+/* Thievery.co.uk — the tokens.
+ *
+ * The one place a colour, a size, a gap or a duration is written down. Every
+ * other stylesheet on the site asks for these by name, so the whole site
+ * changes when one of them does.
+ *
+ * The design is the Vault: ink navy and brass after dark, ivory paper and
+ * darker brass by day. Which of the two a visitor sees is their device's
+ * choice (prefers-color-scheme), not the site's. The card table is the one
+ * exception: it sets data-scheme="dark" on <html> and stays in the Vault by
+ * night whatever the device says, because the felt, the card backs and the
+ * banners are the game's artwork rather than a skin over it.
+ *
+ * Contrast for every pair of text and background is worked out in
+ * docs/DESIGN.md. Change a colour here and run the table there again.
+ *
+ * Three layers, top to bottom:
+ *
+ *   1. The semantic tokens (--bg, --label, --accent and so on). New code uses
+ *      these and nothing else.
+ *   2. The scales: space, type, radius, motion, materials.
+ *   3. The Vault's old names (--ink, --brass, --text-dim...), kept as aliases
+ *      of the semantic tokens so the rooms written against them follow the
+ *      theme without being rewritten line by line. Do not add to them.
+ */
+
+/* --- 1. colour: the Vault by night (the default) ---------------------------- */
+
+:root {
+  color-scheme: dark;
+
+  --bg: #0a0c14;
+  --bg-grouped: #10131d;
+  --bg-elevated: #171b28;
+  --bg-elevated-2: #202536;
+
+  --label: #f1ead9;
+  --label-secondary: #b8b09e;
+  --label-tertiary: #968f7f;
+
+  /* Hairlines. The plain one rules things off; the strong one is the edge of
+     anything you type into or press, and is held to 3:1 because a field whose
+     edge cannot be seen is a field nobody finds. */
+  --separator: rgba(212, 175, 90, 0.2);
+  --separator-strong: #7a6e58;
+
+  /* A recessed well: the inside of a field, a list row, a code. */
+  --fill: rgba(0, 0, 0, 0.32);
+  --fill-strong: rgba(0, 0, 0, 0.45);
+
+  /* The accent is for three things only: the primary action, what is
+     selected, and a badge. Brass anywhere else is --ornament, which is
+     decoration and never something to press. */
+  --accent: #d9b563;
+  --accent-strong: #f1d382;
+  --accent-contrast: #1c1506;
+  --accent-tint: rgba(212, 175, 90, 0.1);
+  --accent-edge: rgba(212, 175, 90, 0.5);
+  --ornament: rgba(212, 175, 90, 0.55);
+
+  --success: #8fc9b2;
+  --success-tint: rgba(95, 154, 132, 0.14);
+  --success-edge: rgba(95, 154, 132, 0.55);
+  --warning: #e8b25a;
+  --warning-tint: rgba(232, 178, 90, 0.12);
+  --danger: #f08a8f;
+  --danger-strong: #b3303d;
+  --danger-contrast: #fff6f6;
+  --danger-tint: rgba(142, 31, 46, 0.2);
+  --danger-edge: rgba(229, 100, 107, 0.5);
+
+  --focus-ring: #8ab4ff;
+
+  /* Veils and shadows. */
+  --scrim: rgba(6, 8, 14, 0.8);
+  --shadow-color: rgba(0, 0, 0, 0.55);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 10px 26px rgba(0, 0, 0, 0.4);
+  --shadow-3: 0 18px 40px rgba(0, 0, 0, 0.55);
+
+  /* Two teams, and the people watching. Never the only cue: every one of them
+     comes with a word or a mark beside it. */
+  --team-a: #7fd3cc;
+  --team-b: #e9a2b8;
+  --team-a-edge: rgba(127, 211, 204, 0.4);
+  --team-b-edge: rgba(233, 162, 184, 0.4);
+  --watcher: #c3a9eb;
+
+  /* A flashcard's rarity, written in its own ink. */
+  --r-common: #b8b09e;
+  --r-uncommon: #8fc9b2;
+  --r-rare: #7fd3cc;
+  --r-epic: #c3a9eb;
+  --r-legendary: #d9b563;
+  --r-mythic: #e9a2b8;
+
+  /* Materials: the glass that controls float on. */
+  --glass: rgba(12, 14, 22, 0.72);
+  --glass-solid: #10131d;
+  --glass-edge: rgba(212, 175, 90, 0.18);
+  --glass-blur: blur(18px) saturate(1.4);
+
+  /* The mind-map sheet, read by the script and written onto the bubbles so
+     an exported copy looks like the screen. */
+  --mm-paper: #10131d;
+  --mm-root: #d4af5a;
+  --mm-root-ink: #0a0c14;
+  --mm-bubble: #171b28;
+  --mm-ink: #ece5d4;
+  --mm-c0: #d4af5a;
+  --mm-c1: #7fd3cc;
+  --mm-c2: #e9a2b8;
+  --mm-c3: #9ecdb7;
+  --mm-c4: #e5946b;
+  --mm-c5: #a9b4f0;
+  --mm-grid: rgba(212, 175, 90, 0.16);
+  --mm-shadow: #000000;
+  --mm-shadow-alpha: 0.35;
+  --mm-select: #f4ecd8;
+  --mm-handle: #171b28;
+
+  /* Card stock and card backs: the artwork of the two card games. */
+  --stock: #f7f0de;
+  --stock-edge: #c9bfa5;
+  --stock-ink: #111420;
+  --stock-red: #9a2231;
+  --back: #1c2130;
+  --back-edge: #3a4157;
+  --back-red: #3a1119;
+  --back-red-edge: #7a2634;
+  --back-red-ink: #f0b3b9;
+}
+
+/* --- ...and by day ----------------------------------------------------------- */
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-scheme="dark"]) {
+    color-scheme: light;
+
+    --bg: #f5efe2;
+    --bg-grouped: #ece4d3;
+    --bg-elevated: #fffcf5;
+    --bg-elevated-2: #f8f2e6;
+
+    --label: #1b1812;
+    --label-secondary: #463f33;
+    --label-tertiary: #5f5747;
+
+    --separator: rgba(90, 70, 30, 0.18);
+    --separator-strong: #8f8471;
+
+    --fill: rgba(90, 70, 30, 0.06);
+    --fill-strong: rgba(90, 70, 30, 0.1);
+
+    --accent: #6f510e;
+    --accent-strong: #5a410a;
+    --accent-contrast: #fffcf5;
+    --accent-tint: rgba(111, 81, 14, 0.09);
+    --accent-edge: rgba(111, 81, 14, 0.45);
+    --ornament: rgba(140, 104, 30, 0.55);
+
+    --success: #2c6650;
+    --success-tint: rgba(44, 102, 80, 0.09);
+    --success-edge: rgba(44, 102, 80, 0.4);
+    --warning: #835500;
+    --warning-tint: rgba(131, 85, 0, 0.08);
+    --danger: #a82a22;
+    --danger-strong: #a82a22;
+    --danger-contrast: #fffcf5;
+    --danger-tint: rgba(168, 42, 34, 0.07);
+    --danger-edge: rgba(168, 42, 34, 0.4);
+
+    --focus-ring: #1f55c7;
+
+    --scrim: rgba(27, 24, 18, 0.42);
+    --shadow-color: rgba(60, 45, 20, 0.16);
+    --shadow-1: 0 1px 2px rgba(60, 45, 20, 0.08);
+    --shadow-2: 0 1px 2px rgba(60, 45, 20, 0.06), 0 6px 18px rgba(60, 45, 20, 0.08);
+    --shadow-3: 0 2px 4px rgba(60, 45, 20, 0.06), 0 16px 36px rgba(60, 45, 20, 0.14);
+
+    --team-a: #0e6770;
+    --team-b: #a3264f;
+    --team-a-edge: rgba(14, 103, 112, 0.4);
+    --team-b-edge: rgba(163, 38, 79, 0.4);
+    --watcher: #6a3fb0;
+
+    --r-common: #5f5747;
+    --r-uncommon: #2c6650;
+    --r-rare: #0e6770;
+    --r-epic: #6a3fb0;
+    --r-legendary: #7a5a0c;
+    --r-mythic: #a3264f;
+
+    --glass: rgba(255, 252, 245, 0.72);
+    --glass-solid: #fffcf5;
+    --glass-edge: rgba(90, 70, 30, 0.14);
+
+    --mm-paper: #fffcf5;
+    --mm-root: #6f510e;
+    --mm-root-ink: #fffcf5;
+    --mm-bubble: #fffcf5;
+    --mm-ink: #1b1812;
+    --mm-c0: #8a6612;
+    --mm-c1: #0e6770;
+    --mm-c2: #a3264f;
+    --mm-c3: #2c6650;
+    --mm-c4: #b0501c;
+    --mm-c5: #4b55b0;
+    --mm-grid: rgba(90, 70, 30, 0.14);
+    --mm-shadow: #3c2d14;
+    --mm-shadow-alpha: 0.14;
+    --mm-select: #1b1812;
+    --mm-handle: #fffcf5;
+  }
+}
+
+/* --- more contrast, when the device asks for it ----------------------------- */
+
+@media (prefers-contrast: more) {
+  :root {
+    --label: #ffffff;
+    --label-secondary: #e2dbca;
+    --label-tertiary: #cbc3b1;
+    --separator: rgba(241, 211, 130, 0.5);
+    --separator-strong: #c9bb98;
+    --accent: #f1d382;
+    --accent-edge: #f1d382;
+    --danger: #ffb0b4;
+    --success: #b5e3cf;
+    --glass: #0a0c14;
+  }
+}
+@media (prefers-contrast: more) and (prefers-color-scheme: light) {
+  :root:not([data-scheme="dark"]) {
+    --label: #000000;
+    --label-secondary: #2a251c;
+    --label-tertiary: #3b3428;
+    --separator: rgba(40, 30, 10, 0.5);
+    --separator-strong: #4a4232;
+    --accent: #4a3507;
+    --accent-edge: #4a3507;
+    --danger: #7d1810;
+    --success: #1b4a38;
+    --glass: #fffcf5;
+  }
+}
+
+/* --- 2. the scales ------------------------------------------------------------ */
+
+:root {
+  /* Space, on a 4px grid. */
+  --space-1: 0.25rem;  /*  4 */
+  --space-2: 0.5rem;   /*  8 */
+  --space-3: 0.75rem;  /* 12 */
+  --space-4: 1rem;     /* 16 */
+  --space-5: 1.5rem;   /* 24 */
+  --space-6: 2rem;     /* 32 */
+  --space-7: 3rem;     /* 48 */
+  --space-8: 4rem;     /* 64 */
+
+  /* Type, in rem so it grows with the reader's own setting. Named after the
+     text styles they follow; nothing is set smaller than a caption. */
+  --text-large-title: 2.125rem; /* 34 */
+  --text-title-1: 1.75rem;      /* 28 */
+  --text-title-2: 1.375rem;     /* 22 */
+  --text-title-3: 1.25rem;      /* 20 */
+  --text-headline: 1.0625rem;   /* 17, semibold */
+  --text-body: 1.0625rem;       /* 17 */
+  --text-callout: 1rem;         /* 16 */
+  --text-subhead: 0.9375rem;    /* 15 */
+  --text-footnote: 0.8125rem;   /* 13 */
+  --text-caption: 0.75rem;      /* 12, and never smaller */
+
+  /* Two typefaces: the device's own for everything read, and Limelight for
+     the wordmark and the headlines that are the site's voice. */
+  --font-text: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Limelight", Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+
+  --radius-s: 4px;
+  --radius-m: 8px;
+  --radius-l: 14px;
+  --radius-pill: 999px;
+
+  /* The smallest thing a thumb can be trusted to hit. */
+  --hit: 44px;
+
+  --dur-quick: 150ms;
+  --dur-base: 220ms;
+  --dur-slow: 300ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  --bar-h: 60px;
+  --tabbar-h: 60px;
+}
+
+/* No glass where the device has asked for none. */
+@media (prefers-reduced-transparency: reduce) {
+  :root { --glass: var(--glass-solid); --glass-blur: none; }
+}
+
+/* --- 3. the Vault's old names ------------------------------------------------- */
+
+:root {
+  --ink: var(--bg);
+  --ink-2: var(--bg-grouped);
+  --ink-3: var(--bg-elevated);
+  --ink-4: var(--bg-elevated-2);
+  --brass: var(--accent);
+  --brass-bright: var(--accent-strong);
+  --brass-dim: var(--separator-strong);
+  --brass-faint: var(--separator);
+  --brass-ghost: var(--accent-tint);
+  --ivory: var(--label);
+  --ivory-dim: var(--label-secondary);
+  --text: var(--label);
+  --text-dim: var(--label-secondary);
+  --text-faint: var(--label-tertiary);
+  --jade: var(--success);
+  --jade-bright: var(--success);
+  --jade-pale: var(--success);
+  --bad: var(--danger);
+  --burgundy: var(--stock-red);
+  --burgundy-deep: var(--back-red);
+  --radius: var(--radius-s);
+  --shadow: var(--shadow-3);
+  --display: var(--font-display);
+  --caps: var(--font-text);
+  --body: var(--font-text);
+  --mono: var(--font-mono);
+  --bounce: var(--ease-spring);
+}
