@@ -656,3 +656,38 @@ from every side at once: create a game with the display name **Test67** and the
 room fills with four players and starts straight away, with a bar at the top of
 the page to switch between the seats so you can play every hand yourself. A dot
 marks whose turn it is.
+
+## Getting found
+
+Searching "thievery" should find the site. What is in place for that: a
+unique title and description on every page, a canonical address, Open Graph
+and Twitter tags with a 1200×630 picture per page (`public/og/`), structured
+data (`WebSite` on the front page, `VideoGame` for the card game and
+Switchhead, `WebApplication` for flashcards, Battle and mind maps),
+`public/sitemap.xml` and `public/robots.txt`. The front page a visitor sees
+at `/` is plain crawlable text about the game.
+
+Two free steps that only the owner of the domain can do, once:
+
+1. **Google Search Console.** Go to <https://search.google.com/search-console>,
+   add a *Domain* property for `thievery.co.uk`, and verify it with the TXT
+   record it gives you, added in Cloudflare's DNS. Then open *Sitemaps* and
+   submit `https://thievery.co.uk/sitemap.xml`.
+2. **Bing Webmaster Tools.** Go to <https://www.bing.com/webmasters>, choose
+   *Import from Google Search Console* (quickest), or add the site and verify
+   with its own DNS record. Then submit the same sitemap. Bing also feeds
+   DuckDuckGo and others.
+
+After that, *URL inspection* in Search Console can ask Google to look at a
+page again after it changes. Update the `<lastmod>` dates in the sitemap when
+a page changes meaningfully.
+
+## How it looks
+
+The design (tokens, type, colour and contrast, components, motion) is in
+[`docs/DESIGN.md`](docs/DESIGN.md), the voice of the copy in
+[`docs/VOICE.md`](docs/VOICE.md), and how to add a small tool at `/tools` in
+[`docs/ADDING_A_TOOL.md`](docs/ADDING_A_TOOL.md). A live sheet of every token
+and component is at `/styleguide`.
+
+Light or dark follows your device. The card table stays dark.

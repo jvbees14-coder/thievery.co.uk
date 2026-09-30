@@ -19,7 +19,9 @@ npm run test:mindmaps  # the mind maps over HTTP: the tree check, the revisions,
 npm run test:r2        # the storage layer, against a stub S3 client
 npm run r2:check       # are the four R2_* variables real? needs them in the environment
 npm run icons          # redraw public/icons/*.png from the mark in the script
-npm run fonts          # refetch public/fonts/*.woff2 and public/fonts.css
+npm run fonts          # refetch public/fonts/*.woff2 and public/fonts.css (Limelight only)
+node scripts/contrast.mjs   # the contrast table for docs/DESIGN.md, from tokens.css
+npx -y -p playwright node scripts/og-images.mjs   # redraw public/og/*.jpg, the share pictures
 ```
 
 There is no build step, no linter and no test framework — the suites are plain
@@ -58,6 +60,8 @@ One server, a hall and five rooms off it:
 | `/switchhead`, `/switchhead/ABCD` | `server/switchhead.js` | required |
 | `/mindmaps` | `server/mindmaps.js` | required |
 | `/about`, `/privacy` | `server/site.js` — plain pages, up even in an outage | never |
+| `/tools`, `/tools/<slug>` | `server/site.js` and `server/tools.js` — the tools index and any tool pages | never |
+| `/styleguide` | `server/site.js` — every token and component; not linked, `noindex` | never |
 | `/api/site/…` | the door, the menu's figures, the members panel | mostly |
 | `/api/flashcards/…` | the collection, the post, the panel | yes |
 | `/api/mindmaps/…` | a member's maps | yes |
@@ -681,12 +685,12 @@ thumbnails, and `POST /api/mindmaps/maps` with `from` copies a map.
 - **Only a new branch is placed.** Nothing else moves when one is added, so
   a dragged bubble stays put. Tidy lays out the whole map, either side of
   the middle, and is undoable rather than asking first.
-- **Colours are written on the elements**, read from the `--mm-*` tokens
-  (redefined in `plain.css`), so an exported copy looks like the screen. The
-  shadow filter and the middle's gradient are in `#defs`, which the export
-  copies; the dots, the selection and the + buttons are not exported. The
-  export also embeds the EB Garamond file, because an SVG drawn into a
-  canvas for the PNG cannot fetch anything.
+- **Colours are written on the elements**, read from the `--mm-*` tokens in
+  `tokens.css` (light and dark), so an exported copy looks like the screen.
+  The shadow filter and the middle's gradient are in `#defs`, which the
+  export copies; the dots, the selection and the + buttons are not exported.
+  The sheet is set in the device's own typeface, so the export carries no
+  font (it used to embed EB Garamond, which is gone).
 - **Printing** points the sheet at the map's own bounds on `beforeprint`.
   `flashcards.css`, loaded for the bar, hides everything but its own card
   sheet in print, and `mindmaps.css` has to put `<main>` back.
@@ -696,41 +700,84 @@ thumbnails, and `POST /api/mindmaps/maps` with `from` copies a map.
 ## The pages
 
 Every page is read through `server/views.js` (`readView`, or `render` for
-`public/cards.html`), which does two things:
+`public/cards.html`), which does three things:
 
-- **Puts in the shared pieces.** `{{bar:<room>}}` is the one site bar, with
-  every room on it and the current one marked; `{{bar:public}}` is the same
-  without the account menu; `{{foot}}` is the footer; `{{contact}}` is
-  the contact address as a link (admin@thievery.co.uk, or `THIEVERY_CONTACT_EMAIL`). The bar used to be copied into each
-  view and drifted until every room linked to a different set of the others.
-  Change it in `views.js`, never in a view.
+- **Puts in the shared pieces.** `{{head:<sheets>}}` is the shared `<head>`:
+  icons, the one webfont, `tokens.css`, `style.css`, `shell.css`, then the
+  room's own sheets named after the colon, then `prefs.js` and `shell.js`.
+  `{{bar:<room>}}` is the one site bar, with every room on it and the current
+  one marked, and on a phone its links are the tab bar; `{{bar:public}}` is
+  the same without the account menu (`{{bar:public:cards}}` marks a room);
+  `{{foot}}` is the footer; `{{contact}}` is the contact address as a link
+  (admin@thievery.co.uk, or `THIEVERY_CONTACT_EMAIL`); `{{icon:name}}` is
+  one of the icons in `ICONS`. The bar used to be copied into each view and
+  drifted until every room linked to a different set of the others. Change
+  it in `views.js`, never in a view.
 - **Takes the HTML comments out.** The views are annotated for whoever
   maintains them, and a visitor can read anything that reaches the browser.
   `test/site.test.js` fails if any page is served with `<!--` or `{{` in it.
   Comments in `public/*.js` and `*.css` still reach the browser; there is no
   build step to strip them.
+- **Versions every local asset.** Each `href`/`src` to a file in `public/`
+  gets `?v=` and a hash of the file's contents. The static block in
+  `index.js` sends a request with a `v` as `immutable` for a year, in
+  production only, because the views are read once at boot and a server
+  started with `--watch` would hand out a stale address.
 
 `/cards.html` is redirected to `/cards` so the game page is never served raw.
 
-`public/prefs.js` is loaded in every `<head>`, after the stylesheets, and
-holds the two per-browser choices, both set in the hall's **Account** panel
-(`/#account`, which the account menu links to from every room):
+**The design** is written up in `docs/DESIGN.md`, and every token and
+shared component is drawn on `/styleguide` (not linked, not indexed). What
+matters when changing it:
 
-- **The colour scheme**: the Vault, or the plain design in `plain.css`,
-  which does nothing unless `<html>` has `data-theme="plain"`. prefs.js only
-  sets that on a page that links `plain.css`, which every view does and
-  `public/cards.html` deliberately does not: the card table keeps the Vault.
-  Radios carry `[data-theme-choice]`. The key, `thievery-theme`, is the one
-  the old corner switch used.
+- `public/tokens.css` is the one place a colour, size, gap or duration is
+  written. Light or dark is the **device's** choice (`prefers-color-scheme`);
+  there is no switch. `public/cards.html` sets `data-scheme="dark"` on
+  `<html>` and the light block skips it: the card table stays dark. More
+  contrast and less transparency are handled there too.
+- The Vault's old names (`--ink`, `--brass`, `--text-dim`...) are aliases of
+  the semantic tokens, kept so the rooms written against them follow the
+  scheme. New code uses the semantic names; do not add to the aliases.
+- The accent is for the primary action, what is selected, and badges.
+  Decorative brass is `--ornament`. A literal colour needs a reason; the ones
+  left are artwork. `node scripts/contrast.mjs` prints the contrast table for
+  `docs/DESIGN.md`.
+- Two typefaces: the device's own and Limelight (headlines only). Nothing is
+  set under 12px.
+- `shell.js` owns what every page shares: the bar's scroll edge, the account
+  menu's keys, sheets (`<dialog class="sheet">`, closed through the
+  cancellable `sheet:close` event) and `window.thieveryToast()`, the toast
+  that can carry an Undo. Deleting a flashcard or a map is undone rather than
+  confirmed: the page holds the delete until the toast goes, and sends it on
+  `pagehide` if you leave first.
+
+`public/prefs.js` is loaded in every `<head>`, after the stylesheets, and
+holds the per-browser choices, set in the hall's **Account** panel and in the
+card table's menu:
+
 - **Banner animations**: `data-motion="still"` on `<html>`, under which
   `style.css` stills the banners and the shake, and `app.js` asks
-  `window.thieveryStill()` before the confetti. Controls are
-  `[data-motion-check]` checkboxes and `[data-motion-toggle]` buttons (the
-  card table's top bar; the on/off word is drawn by CSS from `.motion-state`).
+  `window.thieveryStill()` before the confetti. Until somebody chooses, it
+  follows `prefers-reduced-motion`. Controls are `[data-motion-check]`
+  checkboxes and `[data-motion-toggle]` buttons (the on/off word is drawn by
+  CSS from `.motion-state`).
+- **Larger cards** (`data-cards="large"`) and **vibration**
+  (`window.thieveryPref('haptics')`), both `[data-pref-check]` checkboxes.
 
-Both live in localStorage because the card table has no account to keep them
-against. A new element styled with a literal colour rather than a token
-needs a rule in `plain.css` too.
+They live in localStorage because the card table has no account to keep them
+against. Every key the browser keeps is listed on `/privacy`; add a new one
+there.
+
+**The card table's page** has the site bar only on its landing card; in a room
+`body.in-room` hides the bar, tab bar and foot, and the table's own top bar
+has the room, Invite, Full screen and a Menu (a static `<dialog>` in
+`cards.html`, outside `#app`, because `#app` is redrawn on every move).
+The keyboard map, the tips, the rejoin placeholder and the announcer for
+screen readers are all in `app.js`; none of them sends anything new over
+the socket.
+
+**Tools** are pages at `/tools/<slug>` listed in `server/tools.js`, built on
+`server/views/tools/_layout.html`. `docs/ADDING_A_TOOL.md` is the walk-through.
 
 New accounts start with an empty collection. They used to be dealt three
 cards about the rules; `Cards.sweepWelcome()` runs on every boot and deletes
@@ -767,8 +814,11 @@ British spelling throughout, in code comments and user-facing copy alike. In
 comments, the domain vocabulary is a card table: hands, the house, striking a
 card, the trading post, laying a card down.
 
-**User-facing copy is a different voice, and much plainer.** It was rewritten
-because it read as generated. The rules for it:
+**User-facing copy is a different voice**, and `docs/VOICE.md` is the whole
+of it: a charming rogue whose jokes live only in moments (win and lose
+screens, empty states, the 404, the footer's last line), and who is plain
+and direct everywhere else. It was once rewritten because it read as
+generated; the rules that came out of that still hold:
 
 - Say what the player needs and stop. Never explain *why* a thing is built
   the way it is ("lives in memory only", "an empty ledger must never be saved
@@ -779,13 +829,14 @@ because it read as generated. The rules for it:
   or the marker. They are Home, bots, Admin and "we".
 - Em-dashes are rare: at most one on a page. Use a full stop, a colon or
   brackets.
-- Small capitals are for primary buttons and field labels only; other
-  buttons are set in the body face.
+- Sentence case for every heading, button, label and tab. Spaced capitals
+  are left only in the game's banners.
 - No stock examples (photosynthesis) and no promises about features that do
   not exist.
 
 Dependencies are `ws` and `@aws-sdk/client-s3`, there are no dev dependencies,
-and that is meant to stay true. The fonts and the icons are served out of
+and that is meant to stay true. Playwright, axe and Lighthouse are used to
+check the pages, but run with `npx` and never added to `package.json`. The fonts and the icons are served out of
 `public/` rather than fetched from anywhere at runtime, so the site makes no
 third-party request at all.
 
