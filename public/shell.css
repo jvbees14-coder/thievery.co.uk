@@ -134,12 +134,19 @@
     max-width: 30rem; margin: 0 auto;
     padding: 5px;
     border-radius: var(--radius-pill);
-    background: var(--glass-sheen), var(--glass-clear);
+    /* shell.js keeps --glint-x over the lens, so the brightest light on
+       the bar is always where the lens is. */
+    background:
+      radial-gradient(64px 36px at var(--glint-x, 30%) 0, var(--glass-glint), transparent),
+      var(--glass-sheen), var(--glass-caustic), var(--glass-clear);
     -webkit-backdrop-filter: var(--glass-liquid-blur);
     backdrop-filter: var(--glass-liquid-blur);
     border: 1px solid var(--glass-edge);
     box-shadow: inset 0 0 14px var(--glass-glow), 0 10px 30px var(--shadow-color), 0 1px 3px var(--shadow-color);
+    touch-action: pan-y;
+    -webkit-user-select: none; user-select: none;
   }
+  .menu-nav-link { -webkit-touch-callout: none; }
   /* The rim: a gradient border drawn over the plain one, cut out of a
      filled box by a mask so only a one-pixel ring of it is left. */
   .menu-nav::before {
@@ -150,6 +157,18 @@
     -webkit-mask-composite: xor;
     mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
   }
+  /* The prism: the same ring again, a little wider and softened, in the
+     colours an edge of glass splits light into, strongest at the corners. */
+  .menu-nav::after, .menu-nav-lens::after {
+    content: ""; position: absolute; inset: -1px; pointer-events: none;
+    border-radius: inherit; padding: 2px;
+    background: var(--glass-prism);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    filter: blur(0.6px); opacity: 0.8;
+  }
+  .menu-nav-lens::after { inset: 0; padding: 1.5px; opacity: 0.9; }
   /* A tab fills its fifth of the bar, so the whole fifth is somewhere to
      tap, and its face sits in the middle as wide as its word. */
   .menu-nav-link {
@@ -175,10 +194,30 @@
   .menu-nav-lens {
     display: block; position: absolute; inset: 0; z-index: -1;
     border-radius: var(--radius-pill);
-    background: var(--glass-sheen), var(--accent-tint);
+    background: var(--glass-sheen), var(--glass-focus), var(--accent-tint);
     box-shadow: inset 0 1px 0 var(--glass-rim), inset 0 0 0 1px var(--glass-edge), 0 2px 8px var(--shadow-color);
     view-transition-name: tab-lens;
   }
+  /* Picked up, the lens leaves its tab for the bar itself (shell.js sets
+     where) and swells into clearer glass under the finger. It follows the
+     finger exactly, changes width to fit whichever tab it is over, and on
+     letting go springs into place. The bar is its frame, and it sits behind
+     the tabs' icons and words the way it did inside its own tab. */
+  .menu-nav > .menu-nav-lens {
+    inset: auto;
+    transition:
+      left var(--dur-base) var(--ease-spring), width var(--dur-base) var(--ease-spring),
+      transform var(--dur-base) var(--ease-spring), background-color var(--dur-base) var(--ease-out);
+  }
+  .menu-nav.is-sliding > .menu-nav-lens {
+    transition: width var(--dur-quick) var(--ease-out), transform var(--dur-base) var(--ease-spring);
+    transform: scale(1.14);
+    background: var(--glass-sheen), var(--glass-focus), var(--glass-caustic), var(--fill);
+    box-shadow: inset 0 1px 0 var(--glass-rim), inset 0 0 0 1px var(--glass-edge), inset 0 0 10px var(--glass-glow), 0 6px 18px var(--shadow-color);
+  }
+  .menu-nav.is-sliding .menu-nav-face { transform: none; }
+  .menu-nav.is-sliding .menu-nav-link[aria-current="page"] { color: var(--label-secondary); }
+  .menu-nav.is-sliding .menu-nav-link.is-over { color: var(--accent); }
   .menu-nav-link .icon { width: 24px; height: 24px; }
   .menu-nav-face > span:not(.menu-nav-lens) { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
   .when-wide { display: none; }
@@ -229,6 +268,7 @@ body:has(> .site-foot) > main { flex: 1 0 auto; width: 100%; }
   .site-bar::after { transition: none; }
   .menu-nav-face { transition: none; }
   .menu-nav-link:active .menu-nav-face { transform: none; }
+  .menu-nav > .menu-nav-lens, .menu-nav.is-sliding > .menu-nav-lens { transition: none; transform: none; }
 }
 
 /* Moving between rooms on a phone, the lens stretches out of the tab you
@@ -244,7 +284,8 @@ body:has(> .site-foot) > main { flex: 1 0 auto; width: 100%; }
   animation-duration: var(--dur-slow);
   animation-timing-function: var(--ease-spring);
 }
-/* The site's own still setting stops it too. */
+/* The site's own still setting stops it too, and the lens's spring. */
+html[data-motion="still"] .menu-nav > .menu-nav-lens { transition: none; }
 html[data-motion="still"]::view-transition-group(tab-lens),
 html[data-motion="still"]::view-transition-old(tab-lens),
 html[data-motion="still"]::view-transition-new(tab-lens) { animation: none; }

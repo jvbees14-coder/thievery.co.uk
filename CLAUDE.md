@@ -745,7 +745,9 @@ matters when changing it:
 - Two typefaces: the device's own and Limelight (headlines only). Nothing is
   set under 12px.
 - `shell.js` owns what every page shares: the bar's scroll edge, the account
-  menu's keys, sheets (`<dialog class="sheet">`, closed through the
+  menu's keys, the tab bar's lens on a phone (it can be slid along the bar
+  and let go on a room; the lens is its own element in `views.js`, and a
+  cross-page view transition carries it into the next page), sheets (`<dialog class="sheet">`, closed through the
   cancellable `sheet:close` event) and `window.thieveryToast()`, the toast
   that can carry an Undo. Deleting a flashcard or a map is undone rather than
   confirmed: the page holds the delete until the toast goes, and sends it on

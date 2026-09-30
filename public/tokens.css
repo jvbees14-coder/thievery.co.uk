@@ -107,6 +107,13 @@
   --glass-rim: rgba(255, 255, 255, 0.16);
   --glass-glow: rgba(255, 255, 255, 0.05);
   --glass-specular: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.06) 30%, rgba(255, 255, 255, 0.03) 70%, rgba(255, 255, 255, 0.3));
+  /* The light inside the glass: pools where it gathers at opposite corners,
+     a spot focused under the lens, a glint that follows the lens, and the
+     colours an edge splits it into. */
+  --glass-caustic: radial-gradient(120% 90% at 18% 0%, rgba(255, 255, 255, 0.14), transparent 45%), radial-gradient(90% 80% at 85% 110%, rgba(255, 255, 255, 0.08), transparent 50%);
+  --glass-focus: radial-gradient(70% 60% at 50% 115%, rgba(255, 255, 255, 0.22), transparent 70%);
+  --glass-glint: rgba(255, 255, 255, 0.2);
+  --glass-prism: conic-gradient(from 210deg, rgba(255, 255, 255, 0) 0deg, rgba(255, 110, 140, 0.5) 30deg, rgba(255, 210, 110, 0.5) 55deg, rgba(120, 255, 190, 0.45) 80deg, rgba(110, 170, 255, 0.5) 105deg, rgba(200, 130, 255, 0.45) 130deg, rgba(255, 255, 255, 0) 160deg, rgba(255, 255, 255, 0) 200deg, rgba(110, 170, 255, 0.4) 230deg, rgba(120, 255, 190, 0.35) 255deg, rgba(255, 210, 110, 0.4) 280deg, rgba(255, 110, 140, 0.4) 305deg, rgba(255, 255, 255, 0) 335deg);
 
   /* The mind-map sheet, read by the script and written onto the bubbles so
      an exported copy looks like the screen. */
@@ -207,6 +214,9 @@
     --glass-rim: rgba(255, 255, 255, 0.85);
     --glass-glow: rgba(255, 255, 255, 0.45);
     --glass-specular: linear-gradient(135deg, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.3) 30%, rgba(90, 70, 30, 0.08) 70%, rgba(255, 255, 255, 0.9));
+    --glass-caustic: radial-gradient(120% 90% at 18% 0%, rgba(255, 255, 255, 0.6), transparent 45%), radial-gradient(90% 80% at 85% 110%, rgba(255, 255, 255, 0.35), transparent 50%);
+    --glass-focus: radial-gradient(70% 60% at 50% 115%, rgba(255, 255, 255, 0.6), transparent 70%);
+    --glass-glint: rgba(255, 255, 255, 0.7);
 
     --mm-paper: #fffcf5;
     --mm-root: #6f510e;
@@ -245,6 +255,7 @@
     --glass-sheen: none;
     --glass-specular: none;
     --glass-glow: transparent;
+    --glass-caustic: none; --glass-focus: none; --glass-prism: none; --glass-glint: transparent;
   }
 }
 @media (prefers-contrast: more) and (prefers-color-scheme: light) {
@@ -263,6 +274,7 @@
     --glass-sheen: none;
     --glass-specular: none;
     --glass-glow: transparent;
+    --glass-caustic: none; --glass-focus: none; --glass-prism: none; --glass-glint: transparent;
   }
 }
 
@@ -323,6 +335,7 @@
     --glass: var(--glass-solid); --glass-blur: none;
     --glass-clear: var(--glass-solid); --glass-liquid-blur: none; --glass-sheen: none;
     --glass-specular: none; --glass-glow: transparent;
+    --glass-caustic: none; --glass-focus: none; --glass-prism: none; --glass-glint: transparent;
   }
 }
 
