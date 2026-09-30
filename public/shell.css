@@ -113,11 +113,12 @@
 @media (max-width: 900px) {
   .site-bar { gap: var(--space-3); }
   .site-mark { font-size: 1.25rem; }
-  /* The tab bar floats as a pill of liquid glass: clear enough to show the
-     page moving underneath, brighter blur and saturation than the top bar,
-     a bright rim along the top edge where light would catch, and a soft
-     shadow to lift it. Under reduced transparency the tokens turn the glass
-     solid and the blur off, and what is left is a plain floating pill. */
+  /* The tab bar floats as a capsule of liquid glass: clear enough to show
+     the page moving underneath, a sheen down its face, a glow just inside
+     the edge, and a rim that catches the light at the top left and the
+     bottom right and fades between. Under reduced transparency the tokens
+     turn the glass solid and the blur, sheen and rim off, and what is left
+     is a plain floating capsule with an ordinary edge. */
   .menu-nav {
     position: fixed; z-index: 45;
     left: max(var(--space-3), env(safe-area-inset-left));
@@ -125,26 +126,42 @@
     bottom: max(var(--space-2), env(safe-area-inset-bottom));
     display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0;
     max-width: 30rem; margin: 0 auto;
-    padding: var(--space-1);
-    border-radius: 28px;
+    padding: 5px;
+    border-radius: var(--radius-pill);
     background: var(--glass-sheen), var(--glass-clear);
     -webkit-backdrop-filter: var(--glass-liquid-blur);
     backdrop-filter: var(--glass-liquid-blur);
     border: 1px solid var(--glass-edge);
-    box-shadow: inset 0 1px 0 var(--glass-rim), 0 8px 28px var(--shadow-color);
+    box-shadow: inset 0 0 14px var(--glass-glow), 0 10px 30px var(--shadow-color), 0 1px 3px var(--shadow-color);
   }
+  /* The rim: a gradient border drawn over the plain one, cut out of a
+     filled box by a mask so only a one-pixel ring of it is left. */
+  .menu-nav::before {
+    content: ""; position: absolute; inset: -1px; pointer-events: none;
+    border-radius: inherit; padding: 1px;
+    background: var(--glass-specular);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  }
+  /* Each tab is a capsule inside the capsule. The bar's padding is the same
+     all round, so the two curves run parallel and the one at either end
+     never presses against the bar's own. */
   .menu-nav-link {
     flex-direction: column; justify-content: center; gap: 2px;
-    min-height: 52px; padding: var(--space-1) 0;
-    border-radius: 22px;
+    min-height: 48px; padding: 2px 0;
+    border-radius: var(--radius-pill);
     font-size: var(--text-caption); font-weight: 500;
     background: none;
+    transition: transform var(--dur-quick) var(--ease-spring);
   }
   .menu-nav-link:hover { background: none; }
-  /* The current room is a lens of its own on the glass. */
+  .menu-nav-link:active { transform: scale(0.92); }
+  /* The current room is a lens of its own: brighter glass, tinted gold,
+     with its own lit edge and a lift off the bar. */
   .menu-nav-link[aria-current="page"] {
-    background: var(--accent-tint);
-    box-shadow: inset 0 1px 0 var(--glass-rim), inset 0 0 0 1px var(--glass-edge);
+    background: var(--glass-sheen), var(--accent-tint);
+    box-shadow: inset 0 1px 0 var(--glass-rim), inset 0 0 0 1px var(--glass-edge), 0 2px 8px var(--shadow-color);
   }
   .menu-nav-link .icon { width: 24px; height: 24px; }
   .menu-nav-link span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
@@ -194,6 +211,8 @@ body:has(> .site-foot) > main { flex: 1 0 auto; width: 100%; }
 
 @media (prefers-reduced-motion: reduce) {
   .site-bar::after { transition: none; }
+  .menu-nav-link { transition: none; }
+  .menu-nav-link:active { transform: none; }
 }
 
 /* Between a tablet and a wide screen, the links keep their words and lose

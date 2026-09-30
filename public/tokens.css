@@ -101,10 +101,12 @@
   --glass-blur: blur(18px) saturate(1.4);
   /* Liquid glass, for the bar and the phone's floating tab bar: clearer than the plain
      glass, blurred harder, with a sheen down its face and a lit rim. */
-  --glass-clear: rgba(12, 14, 22, 0.55);
-  --glass-liquid-blur: blur(24px) saturate(1.8) brightness(1.05);
+  --glass-clear: rgba(12, 14, 22, 0.42);
+  --glass-liquid-blur: blur(16px) saturate(2) brightness(1.08);
   --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.01));
   --glass-rim: rgba(255, 255, 255, 0.16);
+  --glass-glow: rgba(255, 255, 255, 0.05);
+  --glass-specular: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.06) 30%, rgba(255, 255, 255, 0.03) 70%, rgba(255, 255, 255, 0.3));
 
   /* The mind-map sheet, read by the script and written onto the bubbles so
      an exported copy looks like the screen. */
@@ -200,9 +202,11 @@
     --glass: rgba(255, 252, 245, 0.72);
     --glass-solid: #fffcf5;
     --glass-edge: rgba(90, 70, 30, 0.14);
-    --glass-clear: rgba(255, 252, 245, 0.55);
+    --glass-clear: rgba(255, 252, 245, 0.5);
     --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.08));
     --glass-rim: rgba(255, 255, 255, 0.85);
+    --glass-glow: rgba(255, 255, 255, 0.45);
+    --glass-specular: linear-gradient(135deg, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.3) 30%, rgba(90, 70, 30, 0.08) 70%, rgba(255, 255, 255, 0.9));
 
     --mm-paper: #fffcf5;
     --mm-root: #6f510e;
@@ -239,6 +243,8 @@
     --glass: #0a0c14;
     --glass-clear: #0a0c14;
     --glass-sheen: none;
+    --glass-specular: none;
+    --glass-glow: transparent;
   }
 }
 @media (prefers-contrast: more) and (prefers-color-scheme: light) {
@@ -255,6 +261,8 @@
     --glass: #fffcf5;
     --glass-clear: #fffcf5;
     --glass-sheen: none;
+    --glass-specular: none;
+    --glass-glow: transparent;
   }
 }
 
@@ -314,6 +322,7 @@
   :root, :root:not([data-scheme="dark"]) {
     --glass: var(--glass-solid); --glass-blur: none;
     --glass-clear: var(--glass-solid); --glass-liquid-blur: none; --glass-sheen: none;
+    --glass-specular: none; --glass-glow: transparent;
   }
 }
 
