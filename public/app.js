@@ -63,9 +63,8 @@
   let retry = 0;
   let renderedRound = null;
   let renderedSeat = null;
-  const ui = { target: null, note: null, arrange: null, swapPick: null, openMenu: null, leaveArmed: false, pu: null };
+  const ui = { target: null, note: null, arrange: null, swapPick: null, openMenu: null, pu: null };
   let catalog = null; // the power-up catalog, sent once when the socket opens
-  let leaveArmTimer = 0;
 
   // A refresh or a dropped connection puts you straight back in your seat.
   // Each tab is its own player, though; and if the browser is closed entirely,
@@ -92,6 +91,7 @@
     ws = new WebSocket(`${proto}://${location.host}`);
     ws.onopen = () => {
       retry = 0;
+      clearInterval(connTimer);
       $('#conn').hidden = true;
       if (pendingJoin) {
         ws.send(JSON.stringify(pendingJoin));
@@ -112,16 +112,39 @@
     ws.onclose = () => {
       ws = null;
       if (halted) return;
-      if (session || pendingJoin) $('#conn').hidden = false;
       const delay = Math.min(8000, 400 * 2 ** retry++);
+      if (session || pendingJoin) sayConnection(delay);
       setTimeout(connect, delay);
     };
     ws.onerror = () => {};
   }
 
+  // What the pill at the bottom says while the socket is down. Plain about
+  // what happened and what is being done about it, with a count to the next
+  // try. A few failures in a row usually means the server itself went to
+  // sleep or is being restarted, which on the free host takes up to a
+  // minute, so after that it says so rather than just trying again quietly.
+  let connTimer = 0;
+  function sayConnection(delay) {
+    const el = $('#conn');
+    clearInterval(connTimer);
+    const due = performance.now() + delay;
+    const draw = () => {
+      const secs = Math.max(0, Math.ceil((due - performance.now()) / 1000));
+      const when = secs > 0 ? `Retrying in ${secs}s` : `Retrying${DOTS}`;
+      el.innerHTML =
+        retry > 3
+          ? `The game server is starting up again. That can take up to a minute. ${when}`
+          : `Lost the connection to the game server. ${when}`;
+    };
+    draw();
+    el.hidden = false;
+    connTimer = setInterval(draw, 1000);
+  }
+
   function send(msg) {
     if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
-    else toast('Not connected. Trying to reconnect…');
+    else toast('Not connected to the game server. Reconnecting.');
   }
 
   function joinWith(msg) {
@@ -201,12 +224,16 @@
     if (firstLook || fresh <= 0) return;
     const me = msg.you.seat;
     const who = (s) => g.names[s];
+    // Everything the table just did, read out to anybody using a screen
+    // reader, in the words the log already uses. Only the newest few, so a
+    // burst of bot moves is not a paragraph.
+    announce(g.log.slice(-Math.min(fresh, 3)).map((e) => e.text));
     for (const entry of g.log.slice(-fresh)) {
       const ev = entry.event;
       if (!ev) continue;
       if (ev.type === 'result') {
-        if (ev.winners.includes(me)) banner('win', 'Heist complete', entry.text);
-        else if (ev.losers.includes(me)) banner('lose', 'Busted', entry.text);
+        if (ev.winners.includes(me)) banner('win', pickOne(WIN_TITLES), `${entry.text} ${pickOne(WIN_LINES)}`);
+        else if (ev.losers.includes(me)) banner('lose', pickOne(LOSE_TITLES), `${entry.text} ${pickOne(LOSE_LINES)}`);
         continue;
       }
       if (ev.type !== 'guess') continue;
@@ -220,11 +247,38 @@
         }
       } else if (ev.correct && ev.target.seat === me) {
         banner('exposed', 'Exposed', `${who(ev.by)} took your ${nth} card: ${ev.card}.`);
+        // A short buzz, on a phone that can, for somebody who asked for it.
+        if (window.thieveryPref?.('haptics') && navigator.vibrate) navigator.vibrate([60, 40, 60]);
         document.body.classList.remove('shake');
         void document.body.offsetWidth;
         document.body.classList.add('shake');
       }
     }
+  }
+
+  // The end of a round is the moment the whole game builds to, so it is the
+  // one place the table allows itself a joke. The facts come first, from the
+  // log; the line after them is picked at random.
+  const WIN_TITLES = ['Heist complete', 'Clean getaway', 'Nothing to see here'];
+  const WIN_LINES = [
+    'Act natural.',
+    'Wipe your prints off the table.',
+    'The loot is yours. Try to look surprised.',
+    'Nobody saw a thing.',
+  ];
+  const LOSE_TITLES = ['Busted', 'Caught red-handed', 'Rumbled'];
+  const LOSE_LINES = [
+    'Your alibi needs work.',
+    'Empty your pockets on the way out.',
+    'Next time, wear gloves.',
+    'The getaway driver left without you.',
+  ];
+
+  // Said, not shown: the table's moves for a screen reader.
+  function announce(lines) {
+    const el = $('#announce');
+    if (!el || !lines.length) return;
+    el.textContent = lines.join(' ');
   }
 
   const bannerQueue = [];
@@ -276,7 +330,7 @@
     el.style.setProperty('--banner-life', `${BANNER_MS}ms`);
     el.innerHTML =
       `<div class="banner-inner"><div class="banner-title">${esc(b.title)}</div><div class="banner-sub">${esc(b.sub)}</div></div>` +
-      (isResult(b) ? '<div class="banner-hint">Press any key</div>' : '');
+      (isResult(b) ? `<div class="banner-hint">${matchMedia('(hover: none)').matches ? 'Tap to carry on' : 'Press any key'}</div>` : '');
     void el.offsetWidth; // restart the CSS animation
     el.hidden = false;
     if (b.kind === 'win') confetti();
@@ -551,6 +605,210 @@
       .catch(() => {}); // cancelling a share sheet is not an error worth saying
   }
 
+  // The same icons as the rest of the site (server/views.js), for the few
+  // buttons the table draws for itself.
+  const ICONS = {
+    share: '<path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12"/>',
+    expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+  };
+  const icon = (name) => `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICONS[name]}</svg>`;
+
+  // --- full screen and the menu ------------------------------------------------
+
+  // An iPhone has no full screen for a page, only for a video, so the button
+  // is only drawn where it will do something.
+  const CAN_FULLSCREEN = !!(document.documentElement.requestFullscreen && document.fullscreenEnabled);
+  function toggleFullscreen() {
+    if (!CAN_FULLSCREEN) return;
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    else document.documentElement.requestFullscreen().catch(() => toast('Full screen isn’t available here.'));
+  }
+  document.addEventListener('fullscreenchange', () => {
+    if (state) render();
+    const b = $('#menu-fullscreen span');
+    if (b) b.textContent = document.fullscreenElement ? 'Leave full screen' : 'Full screen';
+  });
+
+  const menu = $('#table-menu');
+  const leaveBox = $('#leave-confirm');
+  function openMenu() {
+    if (!menu || menu.open) return;
+    // The rules live on the front page; the menu shows the same ones.
+    const body = $('#menu-rules-body');
+    if (body && !body.childElementCount) body.innerHTML = $('#rules .rules-body').innerHTML.replace(/\sid="[^"]*"/g, '');
+    $('#menu-fullscreen').hidden = !CAN_FULLSCREEN;
+    $('#menu-share').hidden = !state;
+    $('#menu-haptics').hidden = !navigator.vibrate;
+    menu.querySelector('[data-menu="leave"]').hidden = !state;
+    menu.showModal();
+  }
+  function askLeave() {
+    // Between rounds, or in the lobby, nothing is lost by going: no question.
+    const playing = state && state.game && state.game.phase !== 'ended';
+    if (!playing) return leaveRoom();
+    if (menu.open) menu.close();
+    leaveBox.showModal();
+  }
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-menu]');
+    if (!el) return;
+    const what = el.dataset.menu;
+    if (what === 'fullscreen') return toggleFullscreen();
+    if (what === 'share') return state && shareRoom();
+    if (what === 'leave') return askLeave();
+    if (what === 'leave-now') {
+      leaveBox.close();
+      return leaveRoom();
+    }
+  });
+
+  // --- keys ----------------------------------------------------------------------
+  //
+  // Everything at the table can be done from the keyboard: Tab and the arrow
+  // keys walk the cards, Enter or Space picks one, and a rank is named by its
+  // own key. Nothing here fires while you are typing into a field.
+  const RANK_KEYS = { a: 1, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 0: 10, t: 10, j: 11, q: 12, k: 13 };
+  document.addEventListener('keydown', (e) => {
+    if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.target.closest && e.target.closest('input, textarea, select, [contenteditable]')) return;
+    if (document.querySelector('dialog[open]')) return;
+    if (awaitingKey) return; // the end-of-round banner takes the next key
+    const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+
+    if (key === 'f' && state) { e.preventDefault(); return toggleFullscreen(); }
+    if (key === '?') {
+      e.preventDefault();
+      openMenu();
+      const keys = menu.querySelector('.disclose');
+      if (keys) keys.open = true;
+      return;
+    }
+    if (key === 'Escape' && state) {
+      if (ui.openMenu) return; // the lobby's dropdown closes itself
+      if (ui.pu || ui.target || ui.note) {
+        ui.pu = null;
+        ui.target = null;
+        ui.note = null;
+        return render();
+      }
+      // Taken here, or the same key press reaches the menu as it opens and
+      // closes it again.
+      e.preventDefault();
+      return openMenu();
+    }
+    if (!state || !state.game) return;
+    const g = state.game;
+    if (key === 'l' && g.phase === 'arrange' && !g.seats[state.you.seat].locked) {
+      e.preventDefault();
+      return act('lock', {});
+    }
+    if (key === 'n' && g.phase === 'play') {
+      const card = e.target.closest && e.target.closest('.card[data-seat]');
+      if (card && Number(card.dataset.seat) !== state.you.seat) {
+        e.preventDefault();
+        return act('note-open', card.dataset);
+      }
+    }
+    // A rank key names a rank, but only while a row of ranks is on screen.
+    if (key in RANK_KEYS && $('#app .ranks')) {
+      const btn = $(`#app .ranks button[data-rank="${RANK_KEYS[key]}"]`);
+      if (btn) {
+        e.preventDefault();
+        btn.click();
+      }
+      return;
+    }
+    // While arranging, left and right carry the card in focus along your own
+    // row, a step at a time, stepping over any place the rules forbid, just
+    // as a drag would.
+    if ((key === 'ArrowLeft' || key === 'ArrowRight') && g.phase === 'arrange') {
+      const card = e.target.closest && e.target.closest('.card.draggable');
+      if (!card || !ui.arrange) return;
+      e.preventDefault();
+      const byId = new Map(g.seats[state.you.seat].cards.map((c) => [c.id, c]));
+      const from = ui.arrange.indexOf(card.dataset.id);
+      const step = key === 'ArrowLeft' ? -1 : 1;
+      for (let to = from + step; to >= 0 && to < ui.arrange.length; to += step) {
+        const next = ui.arrange.filter((id) => id !== card.dataset.id);
+        next.splice(to, 0, card.dataset.id);
+        if (legalOrder(next, byId)) {
+          ui.arrange = next;
+          render();
+          const again = $(`#app .card.draggable[data-id="${card.dataset.id}"]`);
+          if (again) again.focus();
+          announce([`Moved to position ${to + 1}.`]);
+          return;
+        }
+      }
+      announce(['It can’t go any further that way.']);
+      return;
+    }
+    // The arrows walk from card to card: along a row, and up and down between
+    // rows to whichever card is nearest.
+    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) {
+      const from = e.target.closest && e.target.closest('.card[tabindex]');
+      if (!from) return;
+      const cards = [...document.querySelectorAll('#app .card[tabindex]')];
+      const r0 = from.getBoundingClientRect();
+      const cx = r0.left + r0.width / 2;
+      const cy = r0.top + r0.height / 2;
+      let best = null;
+      let bestD = Infinity;
+      for (const c of cards) {
+        if (c === from) continue;
+        const r = c.getBoundingClientRect();
+        const dx = r.left + r.width / 2 - cx;
+        const dy = r.top + r.height / 2 - cy;
+        const ok =
+          key === 'ArrowLeft' ? dx < -4 && Math.abs(dy) < r0.height :
+          key === 'ArrowRight' ? dx > 4 && Math.abs(dy) < r0.height :
+          key === 'ArrowUp' ? dy < -r0.height / 2 : dy > r0.height / 2;
+        if (!ok) continue;
+        const d = key === 'ArrowLeft' || key === 'ArrowRight' ? Math.abs(dx) : Math.abs(dy) * 4 + Math.abs(dx);
+        if (d < bestD) { bestD = d; best = c; }
+      }
+      if (best) {
+        e.preventDefault();
+        best.focus();
+      }
+    }
+  });
+
+  // After a redraw the card that had focus is a new element. Focus is put
+  // back on its replacement, so a keyboard player does not start again from
+  // the top of the page after every move.
+  function keepFocus(fn) {
+    const a = document.activeElement;
+    const card = a && a.closest && a.closest('#app .card[data-seat]');
+    const action = a && a.closest && !card && a.closest('#app [data-action]');
+    const where = card ? `.card[data-seat="${card.dataset.seat}"][data-idx="${card.dataset.idx}"]`
+      : action ? `[data-action="${action.dataset.action}"]${action.dataset.rank ? `[data-rank="${action.dataset.rank}"]` : ''}` : null;
+    fn();
+    if (!where) return;
+    const again = $(`#app ${where}`);
+    if (again && again.tabIndex >= 0) again.focus({ preventScroll: true });
+  }
+
+  // --- tips, once each -------------------------------------------------------------
+  //
+  // The first time somebody sees a part of the game, one line on what to do
+  // with it, and a button to say they have got it. Never twice.
+  const TIPS = {
+    arrange: 'Drag a card to move it, or pick it with Tab and move it with the arrow keys. Lowest on the left, then lock in.',
+    guess: 'Pick a card in someone else’s row, then name its rank. Tap any card on the table to keep private notes on it.',
+    watch: 'Not your turn yet. Tap any hidden card to jot down what you think it is.',
+  };
+  let tipsSeen = {};
+  try { tipsSeen = JSON.parse(localStorage.getItem('thievery-tips') || '{}') || {}; } catch { tipsSeen = {}; }
+  function tip(name) {
+    if (tipsSeen[name] || !TIPS[name]) return '';
+    return `<div class="tip" role="note"><p>${esc(TIPS[name])}</p><button class="btn small ghost" type="button" data-action="tip-done" data-tip="${name}">Got it</button></div>`;
+  }
+  function tipDone(name) {
+    tipsSeen[name] = 1;
+    try { localStorage.setItem('thievery-tips', JSON.stringify(tipsSeen)); } catch {}
+  }
+
   // --- the table is waiting on you -----------------------------------------
   //
   // A tab at the back of the pile has no way of knowing its turn has come
@@ -588,7 +846,6 @@
     saveSession(null);
     state = null;
     ui.openMenu = null;
-    ui.leaveArmed = false;
     dismissBanner();
     history.replaceState(null, '', '/cards');
     render();
@@ -598,7 +855,17 @@
   function render() {
     const home = $('#home');
     const app = $('#app');
+    // In a room the page is the table and nothing else: the site's bar, its
+    // tabs and its foot step aside (the table's own menu has the way out).
+    document.body.classList.toggle('in-room', !!state || rejoining());
     if (!state) {
+      if (rejoining()) {
+        // On the way back to a room after a refresh or a link: the table's
+        // outline straight away, rather than the front page flashing past.
+        home.hidden = true;
+        app.innerHTML = renderRejoining();
+        return;
+      }
       home.hidden = false;
       app.innerHTML = '';
       syncPopups(); // nothing follows you out of a room
@@ -606,6 +873,7 @@
       return;
     }
     home.hidden = true;
+    noteFlips();
     // The notebook belongs to this room and this round, and is picked up again
     // after a refresh; a new deal opens a fresh page.
     loadNotes();
@@ -620,13 +888,59 @@
       ui.arrange = null;
       ui.openMenu = null;
     }
-    app.innerHTML = state.game ? renderGame() : renderLobby();
+    keepFocus(() => {
+      app.innerHTML = state.game ? renderGame() : renderLobby();
+    });
     settleSwitches();
     syncPopups();
     if (state.game && dealStart && performance.now() - dealStart < 26 * DEAL_STEP + DEAL_FLIGHT) animateDeal();
     syncTitle();
     const log = $('#log');
     if (log) log.scrollTop = log.scrollHeight;
+  }
+
+  // Heading back into a room we were in, before the room has answered.
+  const rejoining = () => !state && !halted && !!(session && session.code);
+
+  function renderRejoining() {
+    const row = (n) => `<div class="seat-row ghost-row"><div class="seat-head"><span class="skeleton" style="width:${6 + n}rem;height:1rem"></span></div>
+        <div class="cards">${'<span class="card back-ghost"></span>'.repeat(5 + (n % 2))}</div></div>`;
+    return `
+      <div class="rejoin" role="status">
+        <div class="rejoin-head">
+          <span class="spinner" aria-hidden="true"></span>
+          <p>Taking you back to room <b class="code">${esc(session.code)}</b>${DOTS}</p>
+          <button class="btn small ghost" type="button" data-action="rejoin-cancel">Cancel</button>
+        </div>
+        <div class="table">${row(1)}${row(2)}${row(3)}</div>
+      </div>`;
+  }
+
+  // Which cards have turned over, and where a guess has just missed, since the
+  // table was last drawn. Somebody else's move arrives as a new snapshot with
+  // no movement in it; these let the cards it touched move for a moment, so
+  // the eye is taken to where it happened.
+  let seenUp = null;
+  let seenMisses = 0;
+  let flipKeys = new Set();
+  let missKey = '';
+  function noteFlips() {
+    const g = state.game;
+    if (!g || g.phase === 'arrange') {
+      seenUp = null;
+      seenMisses = 0;
+      flipKeys = new Set();
+      missKey = '';
+      return;
+    }
+    const had = seenUp !== null;
+    const up = new Set();
+    g.seats.forEach((s, si) => s.cards.forEach((c, ci) => c.faceUp && up.add(`${si}:${ci}`)));
+    flipKeys = had ? new Set([...up].filter((k) => !seenUp.has(k))) : new Set();
+    seenUp = up;
+    const misses = g.misses || [];
+    missKey = had && misses.length > seenMisses ? `${misses[misses.length - 1][0]}:${misses[misses.length - 1][1]}` : '';
+    seenMisses = misses.length;
   }
 
   // A switch. The brass tile slides to whichever option is on; the slide is
@@ -684,21 +998,24 @@
 
   function topbar(extra = '') {
     const code = state.room.code;
+    // Things you do now and then live up here, out of the way of the cards:
+    // the room, the invite, full screen and the menu. What you do every turn
+    // is in the panel at the bottom, in reach of a thumb.
     return `
       <div class="topbar">
         <div class="brand">
-          <button type="button" class="logo-btn ${ui.leaveArmed ? 'armed' : ''}" data-action="logo-leave" title="Leave this room">
+          <button type="button" class="logo-btn" data-action="logo-leave" title="Leave this room">
             <span class="wordmark">Thievery<em>.co.uk</em></span>
           </button>
           <small>Round ${state.room.round || '–'}</small>
-          <a class="top-link" href="/">Home</a>
         </div>
         <div class="codebox">
           <span class="muted">Room</span>
           <span class="code">${esc(code)}</span>
-          <button class="btn small" data-action="copy-link">${CAN_SHARE ? 'Share invite' : 'Copy invite link'}</button>
+          <button class="btn small" data-action="copy-link">${icon('share')}${CAN_SHARE ? 'Invite' : 'Copy link'}</button>
           ${extra}
-          <button class="btn small ghost motion-btn" data-motion-toggle type="button" title="Banner animations">Animations <span class="motion-state"></span></button>
+          ${CAN_FULLSCREEN ? `<button class="btn small icon-only" data-action="fullscreen" type="button" aria-label="${document.fullscreenElement ? 'Leave full screen' : 'Full screen'}" title="${document.fullscreenElement ? 'Leave full screen' : 'Full screen'} (F)">${icon('expand')}</button>` : ''}
+          <button class="btn small" data-action="menu" type="button" aria-haspopup="dialog" title="Menu (Esc)">Menu</button>
         </div>
       </div>
       ${testBar()}`;
@@ -1044,6 +1361,9 @@
     const down = s.cards.filter((c) => !c.faceUp).length;
 
     const badges = [];
+    // Whose turn it is, said three ways: the row is lit, this word is on it,
+    // and the word carries an arrow. Colour alone would say it to fewer people.
+    if (active) badges.push(`<span class="pill accent turn-pill"><span aria-hidden="true">▶</span> ${mine ? 'Your turn' : 'Their turn'}</span>`);
     if (mine) badges.push('<span class="pill">You</span>');
     // At five and six hands the order of play is worth stating rather than
     // counting: a row outlined as active says whose turn it is and nothing
@@ -1227,7 +1547,13 @@
     if (opts.target) cls.push('target');
     if (opts.notable) cls.push('notable');
     if (opts.noting) cls.push('noting');
+    if (flipKeys.has(`${si}:${ci}`)) cls.push('flipped-in');
+    if (missKey === `${si}:${ci}`) cls.push('missed-at');
     const rank = c.rank ? RANKS[c.rank - 1] : '';
+    // Red and black are also told apart by shape, for anybody who cannot tell
+    // them apart by colour: a red card lies on its side, and each carries its
+    // own mark in the corner, a diamond for red and a spade for black.
+    const suit = c.color === 'red' ? '♦' : c.color === 'black' ? '♠' : '';
     const ruled = opts.ruled && opts.ruled.length
       ? `<span class="ruled" title="Ruled out already: ${esc(opts.ruled.join(', '))}">${opts.ruled.length}</span>`
       : '';
@@ -1259,10 +1585,10 @@
       ? `${rank} of ${c.color}, face up`
       : `${opts.mine || c.shown ? `${rank}, ` : ''}${c.color || 'unknown'} card, position ${ci + 1}${
           opts.ruled && opts.ruled.length ? `, ruled out: ${opts.ruled.join(', ')}` : ''
-        }${noteSay ? `, your note: ${noteSay}` : ''}`;
+        }${noteSay ? `, your note: ${noteSay}` : ''}${opts.selected ? ', picked' : opts.selectable ? ', can be picked' : ''}`;
     return `<div class="${cls.join(' ')}" data-action="card" data-seat="${si}" data-idx="${ci}" ${opts.draggable ? `data-id="${c.id}"` : ''}
       ${reachable ? 'role="button" tabindex="0"' : ''} aria-label="${esc(label)}" title="${esc(title)}">
-      <span class="rank">${rank}</span><i class="gloss"></i>${ruled}${noted}${opts.index ? `<span class="idx">${ci + 1}</span>` : ''}
+      <span class="rank">${rank}</span>${suit ? `<span class="suit" aria-hidden="true">${suit}</span>` : ''}<i class="gloss"></i>${ruled}${noted}${opts.index ? `<span class="idx">${ci + 1}</span>` : ''}
     </div>`;
   }
 
@@ -1620,6 +1946,7 @@
         return `<p class="prompt">Locked in.</p><p class="sub">Waiting for ${esc(waiting.join(', '))}${DOTS}</p>${shared}`;
       }
       return `
+        ${tip('arrange')}
         <p class="prompt">Arrange your cards</p>
         <p class="sub">Drag your cards into ascending order. Two cards of the same rank can go either way round, and an ace may sit anywhere; the row refuses any position the rules do not allow. Everyone will see your colours, never your ranks.</p>
         ${shared}
@@ -1643,10 +1970,10 @@
         ${
           isHost
             ? `<div class="actions-row">
-                <button class="btn primary" data-action="new-round">New round</button>
+                <button class="btn primary" data-action="new-round">Play again</button>
                 <button class="btn" data-action="to-lobby">Back to lobby</button>
               </div>`
-            : `<p class="sub" style="text-align:center;margin-top:10px">Waiting for the host to start a new round${DOTS}</p>`
+            : `<p class="sub" style="text-align:center;margin-top:10px">Waiting for the host to deal again${DOTS}</p>`
         }`;
     }
 
@@ -1712,13 +2039,14 @@
             ? `<p class="sub accent">${plural(pu.spare, 'wrong guess')} will not end your turn.</p>`
             : '';
           body = `
+            ${tip('guess')}
             <p class="prompt">Your turn: guess a card</p>
             <p class="sub">Click one of ${g.teams ? "your opponents'" : "the other hands'"} face-down cards, then name a rank. Get it right and you go again; get it wrong and the turn simply passes.</p>
             ${sent}${spare}${shared}`;
         }
       } else {
         const house = playersAt(state.room, g.turn).some((p) => p.bot);
-        body = `<p class="prompt">${n(g.turn)} ${isAre(g.turn)} ${house ? 'thinking' : 'guessing'}${DOTS}</p>`;
+        body = `${tip('watch')}<p class="prompt">${n(g.turn)} ${isAre(g.turn)} ${house ? 'thinking' : 'guessing'}${DOTS}</p>`;
       }
     }
 
@@ -1770,24 +2098,24 @@
         return shareRoom();
       case 'leave':
         return leaveRoom();
-      case 'logo-leave': {
-        // Walking out mid-round is worth asking about twice; in a lobby or
-        // between rounds the wordmark is simply the way out.
-        const playing = state.game && state.game.phase !== 'ended';
-        if (playing && !ui.leaveArmed) {
-          ui.leaveArmed = true;
-          clearTimeout(leaveArmTimer);
-          leaveArmTimer = setTimeout(() => {
-            ui.leaveArmed = false;
-            render();
-          }, 4000);
-          toast('You’re in the middle of a round. Click the logo again to leave.', 'info');
-          return render();
-        }
-        clearTimeout(leaveArmTimer);
-        ui.leaveArmed = false;
-        return leaveRoom();
-      }
+      case 'logo-leave':
+        // Walking out mid-round is asked about; in a lobby or between rounds
+        // the wordmark is simply the way out.
+        return askLeave();
+      case 'menu':
+        return openMenu();
+      case 'fullscreen':
+        return toggleFullscreen();
+      case 'tip-done':
+        tipDone(d.tip);
+        return render();
+      case 'rejoin-cancel':
+        // If the room answers after all, it is told straight away that we went.
+        if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'leave' }));
+        saveSession(null);
+        halted = false;
+        history.replaceState(null, '', '/cards');
+        return render();
       case 'dd-toggle':
         ui.openMenu = ui.openMenu === d.dd ? null : d.dd;
         return render();
@@ -1922,7 +2250,7 @@
 
   $('#app').addEventListener('click', (e) => {
     const el = e.target.closest('[data-action]');
-    if (!el || !state) return;
+    if (!el || (!state && el.dataset.action !== 'rejoin-cancel')) return;
     // Buttons nested inside a clickable <li> (kick inside pick-swap) win.
     e.stopPropagation();
     act(el.dataset.action, el.dataset);
@@ -1962,7 +2290,13 @@
   const urlCode =
     new URLSearchParams(location.search).get('code') ||
     location.pathname.replace(/^\/(?:(?:cards|logic)\/?)?/, '');
-  if (urlCode && /^[A-Za-z0-9]{4}$/.test(urlCode)) codeInput.value = urlCode.toUpperCase();
+  if (urlCode && /^[A-Za-z0-9]{4}$/.test(urlCode)) {
+    codeInput.value = urlCode.toUpperCase();
+    // Somebody followed an invite: joining it is the one thing they came to
+    // do, so that is the button that gets the accent.
+    $('#join').classList.add('primary');
+    $('#create').classList.remove('primary');
+  }
 
   function getName() {
     const name = nameInput.value.trim();

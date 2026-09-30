@@ -390,7 +390,7 @@ main.screen.home { min-height: 0; }
 @keyframes unfold { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 
 /* --- layout ---------------------------------------------------------------- */
-main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; position: relative; }
+/* The table itself (#app) is sized in "the table: its shell" further down. */
 .topbar {
   display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
   padding: 6px 0 18px; margin-bottom: 18px;
@@ -471,12 +471,11 @@ main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; position: rel
 /* The tail of a panel heading, and the small print underneath a panel. Both
    are set here rather than inline so a narrow screen can give them room. */
 .panel-sub {
-  font-family: var(--mono); font-weight: 400; font-size: 13px; color: var(--text-faint);
-  letter-spacing: 0; text-transform: none;
+  font-weight: 400; font-size: var(--text-footnote); color: var(--label-secondary);
 }
 .panel-sub::before { content: "\00b7"; margin: 0 6px 0 8px; }
 .panel-note {
-  margin: 10px 0 0; font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--text-faint);
+  margin: 10px 0 0; font-size: var(--text-footnote); line-height: 1.55; color: var(--label-secondary);
 }
 .panel-note + .panel-note { margin-top: 6px; }
 .panel-note.lead { font-family: inherit; font-size: 13px; line-height: 1.55; color: var(--text-dim); }
@@ -1013,7 +1012,7 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 
 @media (max-width: 900px) {
   .lobby { grid-template-columns: 1fr; }
-  main { padding: 14px 12px 40px; }
+  #app { padding-left: max(var(--space-3), env(safe-area-inset-left)); padding-right: max(var(--space-3), env(safe-area-inset-right)); }
   .logo { font-size: 38px; }
   .screen.home::after { width: 640px; height: 640px; }
 
@@ -1259,3 +1258,116 @@ dialog.sheet::backdrop { background: var(--scrim); }
   .fc-pane, .fc-reveal, .fc-modal, .fc-confirm { animation: none; }
 }
 @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+
+/* --- the table: its shell ----------------------------------------------------------
+   In a room, the page is the table. The site's bar, tabs and foot step aside;
+   the table's own top bar has the room, the invite, full screen and a menu,
+   and the panel at the bottom has whatever this turn needs. */
+body.in-room .site-bar, body.in-room .site-foot { display: none; }
+body.in-room { padding-bottom: 0 !important; }
+#app main, #app > .topbar { margin: 0; }
+#app { max-width: 1180px; margin: 0 auto; padding: max(var(--space-4), env(safe-area-inset-top)) max(var(--space-4), env(safe-area-inset-right)) var(--space-7) max(var(--space-4), env(safe-area-inset-left)); position: relative; }
+#app:empty { display: none; }
+.topbar small { color: var(--label-secondary); font-size: var(--text-footnote); }
+.codebox .btn.icon-only { width: 32px; min-height: 32px; }
+.codebox .btn .icon { width: 16px; height: 16px; }
+
+/* The way back into a room, drawn before the room has answered. */
+.rejoin-head { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; margin: var(--space-3) 0 var(--space-5); }
+.rejoin-head p { margin: 0; flex: 1; min-width: 12rem; }
+.rejoin .table { opacity: 0.6; }
+.ghost-row .seat-head { min-height: 1.5rem; }
+.card.back-ghost { width: var(--card-w); height: var(--card-h); border: 1px dashed var(--separator-strong); background: var(--fill); box-shadow: none; }
+
+/* Whose turn: lit row, a word, an arrow. */
+.turn-pill span { font-size: 0.8em; }
+.seat-row.active { border-color: var(--accent); }
+
+/* Red and black, told apart by more than colour: a mark in the corner. */
+.card .suit {
+  position: absolute; left: 4px; bottom: 2px; z-index: 1;
+  font-size: var(--text-caption); line-height: 1; font-family: var(--font-text);
+  opacity: 0.8; pointer-events: none;
+}
+.card.down .suit { color: var(--accent); opacity: 0.55; }
+.card.red.down .suit { color: var(--back-red-ink); }
+
+/* Somebody else's move, shown where it landed: a card turning over, and a
+   card a guess has just bounced off. Short, and only transform and opacity. */
+.card.flipped-in { animation: flipin 420ms var(--ease-out) both; }
+@keyframes flipin {
+  0% { transform: perspective(500px) rotateY(90deg); opacity: 0.4; }
+  100% { transform: none; opacity: 1; }
+}
+.card.missed-at { animation: missed 380ms ease-out; }
+@keyframes missed {
+  0%, 100% { transform: none; }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
+
+/* The one-time tips. */
+.tip {
+  display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
+  margin: 0 0 var(--space-3); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+  border-radius: var(--radius-m); background: var(--accent-tint); border: 1px solid var(--accent-edge);
+  font-size: var(--text-subhead); color: var(--label);
+}
+.tip p { margin: 0; flex: 1; min-width: 12rem; }
+.tip::before { content: "Tip"; font-weight: 700; font-size: var(--text-caption); color: var(--accent); }
+
+/* The table's menu. */
+.table-menu { display: grid; gap: var(--space-3); }
+.table-menu-row { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.table-menu-row .btn { flex: 1 1 10rem; }
+.table-menu-h { margin: var(--space-3) 0 0; font-size: var(--text-subhead); font-weight: 600; color: var(--label-secondary); }
+.table-menu .fc-check { display: flex; align-items: center; gap: var(--space-3); min-height: var(--hit); cursor: pointer; }
+.table-menu .disclose > summary .icon { width: 18px; height: 18px; }
+.keys { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-2) var(--space-4); margin: var(--space-2) 0 var(--space-3); font-size: var(--text-subhead); }
+.keys dt { color: var(--label); white-space: nowrap; }
+.keys dd { margin: 0; color: var(--label-secondary); }
+kbd {
+  display: inline-block; min-width: 1.6em; padding: 1px 6px; text-align: center;
+  font-family: var(--font-mono); font-size: 0.85em; color: var(--label);
+  background: var(--fill); border: 1px solid var(--separator-strong); border-bottom-width: 2px; border-radius: var(--radius-s);
+}
+@media (max-width: 420px) { .keys { grid-template-columns: 1fr; } .keys dd { margin-bottom: var(--space-2); } }
+
+/* An alert is a small sheet with a question and two answers, in the middle
+   of the screen on any size. */
+dialog.sheet.alert { width: min(calc(100vw - 2 * var(--space-4)), 400px); margin: auto; border-radius: var(--radius-l); }
+dialog.sheet.alert .sheet-body h2 { margin: 0 0 var(--space-2); font-size: var(--text-title-3); font-weight: 600; }
+dialog.sheet.alert .sheet-body p { margin: 0; }
+dialog.sheet.alert .sheet-foot { border-top: 0; padding-top: 0; }
+@media (max-width: 600px) { dialog.sheet.alert { margin: auto; } }
+
+/* Larger cards, for anybody who asked (the table's menu, or Account). */
+:root[data-cards="large"] .game .table { --card-w: 56px; --card-h: 80px; --card-rank: 22px; }
+@media (min-width: 1100px) { :root[data-cards="large"] .game .table { --card-w: 70px; --card-h: 98px; --card-rank: 26px; } }
+
+/* The panel at the bottom of a phone clears the home indicator. */
+@media (max-width: 900px) {
+  .panel.action { bottom: max(var(--space-2), env(safe-area-inset-bottom)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card.flipped-in { animation: fadein var(--dur-base) linear both; }
+  .card.missed-at { animation: none; outline: 2px solid var(--danger); outline-offset: 2px; }
+  .card.target { animation: none; }
+  .result.win .headline, .panel.celebrate, .seat-row.winner { animation: none; }
+}
+:root[data-motion="still"] .card.flipped-in { animation: fadein var(--dur-base) linear both; }
+@media (max-width: 900px) {
+  #app { padding-left: max(var(--space-3), env(safe-area-inset-left)); padding-right: max(var(--space-3), env(safe-area-inset-right)); }
+}
+
+/* The table's top bar on a phone: the wordmark and the round on one line,
+   the room and its buttons on the next, all in one row that wraps. */
+@media (max-width: 600px) {
+  .codebox { display: flex; flex-wrap: wrap; width: 100%; gap: var(--space-2); align-items: center; }
+  .codebox > .muted { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .codebox .code { font-size: var(--text-callout); padding: 4px 6px 4px 10px; }
+  .codebox .btn:nth-child(3):last-child { grid-column: auto; }
+  .codebox [data-action="menu"] { margin-left: auto; }
+}

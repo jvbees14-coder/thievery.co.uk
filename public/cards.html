@@ -51,8 +51,14 @@
   <!-- Where the unsolicited offers pile up. Empty unless somebody at the
        table signed their name with a mark. -->
   <div id="popups" class="popups"></div>
-  <div id="conn" class="conn" hidden>Reconnecting<span class="dots"><i>.</i><i>.</i><i>.</i></span></div>
+  <div id="conn" class="conn" role="status" aria-live="polite" hidden></div>
+  <!-- What a screen reader hears as the table moves: every guess, every
+       flip, whose turn it is. Filled by app.js, never seen. -->
+  <div id="announce" class="visually-hidden" aria-live="polite" aria-atomic="false"></div>
 
+  {{bar:public:cards}}
+
+  <main id="main">
   <section id="home" class="screen home">
     <div class="home-card">
       <h1 class="logo wordmark">Thievery<em>.co.uk</em></h1>
@@ -61,21 +67,26 @@
       <div class="field">
         <label for="name">Your name</label>
         <div class="input-row">
-          <input id="name" maxlength="20" placeholder="e.g. LuckyHorse" autocomplete="nickname" />
+          <input id="name" maxlength="20" placeholder="e.g. LuckyHorse" autocomplete="nickname" aria-describedby="name-hint" />
           <button id="reroll" class="icon-btn" type="button" title="Pick a random name" aria-label="Pick a random name"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M15.5 7.5A6 6 0 1 0 16 12" /><path d="M16 3.5v4h-4" /></svg></button>
         </div>
+        <p class="hint" id="name-hint">What the table calls you. Up to 20 characters.</p>
       </div>
 
+      <!-- Create comes first, unless the link that brought you here carries a
+           room code: then Join is the one-tap button and Create steps back
+           (app.js swaps them at boot). -->
       <div class="home-actions">
-        <button id="create" class="btn primary">Create game</button>
+        <button id="create" class="btn primary" type="button">Create game</button>
         <div class="or">or join with a code</div>
         <div class="join-row">
-          <input id="code" maxlength="4" placeholder="CODE" autocapitalize="characters" autocomplete="off" spellcheck="false" />
-          <button id="join" class="btn">Join</button>
+          <label class="visually-hidden" for="code">Room code</label>
+          <input id="code" maxlength="4" placeholder="CODE" autocapitalize="characters" autocomplete="off" spellcheck="false" inputmode="text" />
+          <button id="join" class="btn" type="button">Join game</button>
         </div>
       </div>
 
-      <details class="rules">
+      <details class="rules" id="rules">
         <summary><h2>How to play</h2></summary>
         <div class="rules-body">
           <ol class="rules-steps">
@@ -213,15 +224,73 @@
       <p class="home-foot">
         <a href="/">Your account and stats</a>
         <span aria-hidden="true">&middot;</span>
-        <button class="linkish" data-motion-toggle type="button">Banner animations <span class="motion-state"></span></button>
+        <button data-motion-toggle type="button">Banner animations <span class="motion-state"></span></button>
       </p>
     </div>
-
-    {{foot}}
   </section>
 
-  <!-- Lobby + game are rendered here -->
-  <main id="app"></main>
+  <!-- Lobby and game are rendered here. -->
+  <div id="app"></div>
+  </main>
+
+  {{foot}}
+
+  <!-- The table's menu. Static, outside #app, because the table redraws on
+       every move and a sheet inside it would be torn down while open. -->
+  <dialog class="sheet" id="table-menu" aria-labelledby="table-menu-title">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <div class="sheet-head">
+      <h2 id="table-menu-title">Menu</h2>
+      <button class="sheet-close" type="button" data-close-sheet aria-label="Close" title="Close (Esc)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="sheet-body table-menu">
+      <div class="table-menu-row">
+        <button class="btn" type="button" data-menu="fullscreen" id="menu-fullscreen">{{icon:expand}}<span>Full screen</span></button>
+        <button class="btn" type="button" data-menu="share" id="menu-share">{{icon:share}}<span>Invite</span></button>
+      </div>
+
+      <h3 class="table-menu-h">Settings</h3>
+      <label class="fc-check"><input type="checkbox" data-motion-check /> Animate banners</label>
+      <label class="fc-check"><input type="checkbox" data-pref-check="cards" /> Larger cards</label>
+      <label class="fc-check" id="menu-haptics"><input type="checkbox" data-pref-check="haptics" /> Vibrate when a card of yours is taken</label>
+      <p class="hint">Saved in this browser. The game has no sound.</p>
+
+      <details class="disclose">
+        <summary>{{icon:keyboard}} Keyboard shortcuts</summary>
+        <dl class="keys">
+          <dt><kbd>Tab</kbd> / arrows</dt><dd>Move between cards</dd>
+          <dt><kbd>Enter</kbd> or <kbd>Space</kbd></dt><dd>Pick the card or press the button in focus</dd>
+          <dt><kbd>A</kbd> <kbd>2</kbd>&ndash;<kbd>9</kbd> <kbd>0</kbd> <kbd>J</kbd> <kbd>Q</kbd> <kbd>K</kbd></dt><dd>Name a rank (<kbd>0</kbd> is 10)</dd>
+          <dt><kbd>L</kbd></dt><dd>Lock in your arrangement</dd>
+          <dt><kbd>N</kbd></dt><dd>Open your note on the card in focus</dd>
+          <dt><kbd>Esc</kbd></dt><dd>Put back what you picked, or open this menu</dd>
+          <dt><kbd>F</kbd></dt><dd>Full screen</dd>
+          <dt><kbd>?</kbd></dt><dd>This list</dd>
+        </dl>
+      </details>
+      <details class="disclose" id="menu-rules">
+        <summary>{{icon:help}} How to play</summary>
+        <div class="rules-body" id="menu-rules-body"></div>
+      </details>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn danger" type="button" data-menu="leave">Leave room</button>
+      <button class="btn primary" type="button" data-close-sheet>Done</button>
+    </div>
+  </dialog>
+
+  <!-- Walking out of a round in progress is the one thing at the table worth
+       a question, and the question says exactly what is at stake. -->
+  <dialog class="sheet alert" id="leave-confirm" aria-labelledby="leave-title" aria-describedby="leave-desc">
+    <div class="sheet-body">
+      <h2 id="leave-title">Leave this game?</h2>
+      <p id="leave-desc" class="muted">The round carries on without you. You can come back with the room code while the room is open.</p>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn" type="button" data-close-sheet autofocus>Cancel</button>
+      <button class="btn danger" type="button" data-menu="leave-now">Leave game</button>
+    </div>
+  </dialog>
 
   <script src="/app.js"></script>
 </body>

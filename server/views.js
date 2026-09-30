@@ -14,7 +14,7 @@
 //                             are in. On a phone its links become the tab bar
 //                             along the bottom of the screen.
 //   {{bar:public}}            the bar without an account menu, for pages
-//                             anybody sees
+//                             anybody sees; {{bar:public:cards}} marks a room
 //   {{foot}}                  the links along the bottom of every page
 //   {{contact}}               the contact address as a mailto link
 //   {{icon:cards}}            one of the room icons, inline
@@ -225,7 +225,7 @@ export function render(html) {
   let out = html.split('{{foot}}').join(foot()).split('{{contact}}').join(contact());
   out = out.replace(/\{\{head(?::([\w,-]*))?\}\}/g, (_, list) => head(list ? list.split(',').filter(Boolean) : []));
   out = out.replace(/\{\{icon:(\w+)\}\}/g, (_, name) => icon(name));
-  out = out.split('{{bar:public}}').join(bar('', { signedIn: false }));
+  out = out.replace(/\{\{bar:public(?::(\w+))?\}\}/g, (_, current) => bar(current || '', { signedIn: false }));
   for (const current of ['', ...ROOMS.map((r) => r.id), 'home']) {
     out = out.split(`{{bar:${current || 'none'}}}`).join(bar(current));
   }
