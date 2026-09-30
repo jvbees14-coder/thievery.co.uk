@@ -588,3 +588,7 @@ textarea:focus, select:focus, input:focus {
 .fc-trade-line em { flex: 0 0 4.2rem; font-size: var(--text-caption); }
 
 #cards-empty.empty-state { margin-top: var(--space-2); }
+/* The strip of numbers arrives a moment after the page. Its room is kept for
+   it, so the collection does not jump down when it lands. */
+.fc-ledger:empty { min-height: calc(2 * 4.75rem + var(--space-2)); }
+@media (min-width: 620px) { .fc-ledger:empty { min-height: 4.75rem; } }

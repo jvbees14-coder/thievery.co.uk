@@ -109,7 +109,7 @@
 /* On a phone the bar keeps the wordmark and the account button at the top,
    and its links move to the bottom of the screen, in reach of a thumb:
    always there, five of them, an icon and one word each. */
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .site-bar { gap: var(--space-3); }
   .site-mark { font-size: 1.25rem; }
   .menu-nav {
@@ -133,6 +133,8 @@
   .menu-nav-link span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
   .when-wide { display: none; }
   .when-narrow { display: inline; }
+  /* The links have gone to the bottom, so the account button goes right. */
+  .menu-nav + .site-who { margin-left: auto; }
   /* Room at the bottom of every page for the bar that sits over it. */
   body:has(.menu-nav) { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); }
   /* Anything else pinned to the bottom of the screen sits above the tab bar. */
@@ -175,4 +177,11 @@ body:has(> .site-foot) > main { flex: 1 0 auto; width: 100%; }
 
 @media (prefers-reduced-motion: reduce) {
   .site-bar::after { transition: none; }
+}
+
+/* Between a tablet and a wide screen, the links keep their words and lose
+   their icons, so five of them and the account button still fit one line. */
+@media (min-width: 901px) and (max-width: 1100px) {
+  .menu-nav-link .icon { display: none; }
+  .menu-nav-link { padding: 0 var(--space-2); }
 }

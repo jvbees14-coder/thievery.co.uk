@@ -1371,3 +1371,14 @@ dialog.sheet.alert .sheet-foot { border-top: 0; padding-top: 0; }
   .codebox .btn:nth-child(3):last-child { grid-column: auto; }
   .codebox [data-action="menu"] { margin-left: auto; }
 }
+
+/* A table in prose, on a phone, becomes a list of rows: each cell on its own
+   line, and the long names allowed to break. */
+.prose code { overflow-wrap: anywhere; }
+@media (max-width: 560px) {
+  .prose table, .prose tbody, .prose tr, .prose td { display: block; }
+  .prose thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .prose tr { padding: var(--space-2) 0; border-bottom: 1px solid var(--separator); }
+  .prose td { border: 0; padding: 2px 0; }
+  .prose td:first-child { font-weight: 600; }
+}
