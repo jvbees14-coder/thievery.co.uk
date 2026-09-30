@@ -149,4 +149,12 @@
       ev.target.querySelector('button')
     );
   });
+
+  // Arrived here straight from closing an account: say it was done.
+  if (new URLSearchParams(location.search).has('closed')) {
+    history.replaceState(null, '', location.pathname);
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.thieveryToast) window.thieveryToast({ text: 'Your account is closed, and everything in it is deleted.', ms: 8000 });
+    });
+  }
 })();

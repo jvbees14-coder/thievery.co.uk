@@ -324,6 +324,7 @@ export function handle(req, res, url) {
       if (head === 'login' && method === 'POST') return Door.login(req, res, snapshot);
       if (head === 'logout' && method === 'POST') return Door.logout(req, res);
       if (head === 'account' && method === 'POST') return Door.account(req, res, snapshot);
+      if (head === 'account' && method === 'DELETE') return Flashcards.deleteOwnAccount(req, res);
       if (head === 'me' && method === 'GET') return send(res, 200, snapshot(requireUser(req)));
 
       // The members panel. Accounts belong to the whole site rather than to

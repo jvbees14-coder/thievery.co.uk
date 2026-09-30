@@ -464,6 +464,12 @@
       lines: ['Applicants must bring own tie, sunglasses and fur coat.'],
     },
   ];
+  // Switched off. The room still works out who would be sent them (the
+  // `prank` flag, and a mark is still taken off the front of a name), and
+  // everything below still draws them; turning this back to true is all it
+  // takes to bring them back. Read the list above against docs/VOICE.md
+  // before you do.
+  const OFFERS_ON = false;
   const POPUP_EVERY_MS = 10000; // the gap between one offer and the next
   const POPUP_MAX = 12; // even a pile-up has its limits
 
@@ -472,7 +478,7 @@
   // Called after every render: starts the offers when the room says they are
   // coming for you, and sweeps them away the moment they are not.
   function syncPopups() {
-    const wanted = !!(state && state.you && state.you.prank);
+    const wanted = OFFERS_ON && !!(state && state.you && state.you.prank);
     if (wanted) {
       if (!popupTimer) queuePopup();
       return;

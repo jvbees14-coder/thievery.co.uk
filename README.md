@@ -282,6 +282,11 @@ the room code as well.
 
 ## Marked names
 
+**Switched off for now.** A mark is still taken off the front of a name, and
+the room still works out who would get the advertisements, but the page does
+not show them. `OFFERS_ON` near the top of the offers in `public/app.js`
+brings them back.
+
 Put a mark in front of your name when you join and the room treats it as an
 instruction rather than part of the name. The mark is stripped off before
 anybody sees it, and nothing any player is sent says who is responsible.

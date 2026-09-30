@@ -387,6 +387,19 @@ async function run() {
     assert.ok((await away.page('/')).html.includes('Open an account'), 'the door should be back');
   });
 
+  await check('a member can close their own account, and only with proof', async () => {
+    const leaving = visitor();
+    ok(await leaving.call('register', { method: 'POST', body: { username: 'leaving', password: 'a-long-enough-password' } }), 'register');
+    const wrongName = await leaving.call('account', { method: 'DELETE', body: { confirm: 'someone', currentPassword: 'a-long-enough-password' } });
+    assert.equal(wrongName.status, 400, 'a username typed wrong should be refused');
+    const wrongPass = await leaving.call('account', { method: 'DELETE', body: { confirm: 'leaving', currentPassword: 'not-it' } });
+    assert.equal(wrongPass.status, 403, 'a wrong password should be refused, and not as a dead session');
+    ok(await leaving.call('account', { method: 'DELETE', body: { confirm: 'Leaving', currentPassword: 'a-long-enough-password' } }), 'close');
+    assert.equal((await leaving.call('me')).status, 401, 'the session should go with the account');
+    const again = await visitor().call('login', { method: 'POST', body: { username: 'leaving', password: 'a-long-enough-password' } });
+    assert.ok(again.status >= 400, 'a closed account should not sign in');
+  });
+
   for (const [who, name] of [[bob, 'bob'], [carol, 'carol']]) {
     ok(await who.call('register', { method: 'POST', body: { username: name, password: 'a-long-enough-password' } }), `register ${name}`);
   }
@@ -395,6 +408,12 @@ async function run() {
 
   const house = visitor();
   ok(await house.call('login', { method: 'POST', body: { username: 'house', password: 'the-house-always-wins' } }), 'admin login');
+
+  await check('the admin account cannot close itself', async () => {
+    const res = await house.call('account', { method: 'DELETE', body: { confirm: 'house', currentPassword: 'the-house-always-wins' } });
+    assert.equal(res.status, 400);
+    assert.equal((await house.call('me')).status, 200, 'the admin should still be signed in');
+  });
 
   await check('the members panel does not exist for a member', async () => {
     assert.equal((await bob.call('admin/users')).status, 404);

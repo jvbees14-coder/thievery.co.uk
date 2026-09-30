@@ -132,6 +132,12 @@ export function record(userId, key, { points = 0, cards = 0, spent = 0 } = {}) {
   return true;
 }
 
+/** A closed account comes off every day's board still kept. */
+export function removeAllFor(userId) {
+  const all = boards();
+  for (const day of Object.values(all)) delete day[userId];
+}
+
 /**
  * The day's board, best first. Marks decide it and time breaks a tie, exactly
  * as they do in a duel; the names are looked up now rather than stored, so a

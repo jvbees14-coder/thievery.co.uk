@@ -321,6 +321,26 @@
     })
   );
 
+  // Closing the account. The server checks the password and the typed
+  // username; all this does is send them and, once it is done, go to the
+  // front page, which is the door now.
+  $('#account-close').addEventListener(
+    'submit',
+    guard(async (ev) => {
+      ev.preventDefault();
+      say('');
+      try {
+        await api('account', {
+          method: 'DELETE',
+          body: { confirm: $('#ac-close-user').value, currentPassword: $('#ac-close-pass').value },
+        });
+      } catch (err) {
+        return say(err.message);
+      }
+      location.href = '/?closed=1';
+    })
+  );
+
   $('#account-keys').addEventListener(
     'submit',
     guard(async (ev) => {

@@ -23,13 +23,14 @@ import * as Cards from './cards.js';
 import * as Trading from './trading.js';
 import * as Sections from './sections.js';
 import * as Maps from './maps.js';
+import * as Daily from './daily.js';
 import * as Door from './door.js';
 import * as Stats from './stats.js';
 import { data, touch } from './store.js';
 import * as Store from './store.js';
 import { readView } from './views.js';
 import * as R2 from './r2.js';
-import { send, fail, readBody, cookies, originOk, currentUser, requireUser, requireAdmin } from './plumbing.js';
+import { send, fail, readBody, cookies, originOk, currentUser, requireUser, requireAdmin, clientIp, sessionCookie } from './plumbing.js';
 
 
 // The app's markup is kept out of public/ on purpose: anything in there is
@@ -311,7 +312,15 @@ export function adminDeleteUser(req, res, id) {
   const user = Accounts.byId(id);
   if (!user) throw Object.assign(new Error('No such account.'), { status: 404 });
   if (Accounts.isAdmin(user)) throw Object.assign(new Error('The admin account cannot delete itself.'), { status: 400 });
+  removeAccount(user);
+  adminOverview(req, res);
+}
 
+/**
+ * An account and everything that hangs off it, gone. The one place that
+ * decides what "everything" is, whether the admin asked or the member did.
+ */
+function removeAccount(user) {
   // The cards go with it. Leaving them ownerless would break the trading post
   // and leaving them in the pool would offer cards nobody can be paid for.
   for (const card of Cards.cardsOf(user.id)) Cards.deleteCard(card);
@@ -320,10 +329,35 @@ export function adminDeleteUser(req, res, id) {
   // And so does the record of how they played. An account that is gone must
   // not leave a row behind keyed to an id nothing will ever look up again.
   delete data().stats[user.id];
+  Daily.removeAllFor(user.id);
   Sections.removeAllFor(user.id);
   Maps.removeAllFor(user.id);
   touch();
-  adminOverview(req, res);
+}
+
+/**
+ * A member closing their own account. They prove it is them with their
+ * password, as for any other change that matters, and type their username so
+ * nobody does it by a slip of the thumb. The admin account is refused, for the
+ * same reason the admin cannot delete it from the panel: it is named by the
+ * environment and would only be made again on the next boot.
+ */
+export async function deleteOwnAccount(req, res) {
+  const user = requireUser(req);
+  const body = await readBody(req);
+  if (Accounts.isAdmin(user)) throw Object.assign(new Error('The admin account can’t be closed.'), { status: 400 });
+  if (String(body.confirm || '').trim().toLowerCase() !== user.username) {
+    throw Object.assign(new Error('Type your username exactly to confirm.'), { status: 400 });
+  }
+  try {
+    await Accounts.authenticate({ username: user.username, password: body.currentPassword, ip: clientIp(req) });
+  } catch (err) {
+    // Not a 401: the page would take that for a dead session and leave.
+    if (err.status === 401) throw Object.assign(new Error('That is not your current password.'), { status: 403 });
+    throw err;
+  }
+  removeAccount(user);
+  send(res, 200, { ok: true }, { 'Set-Cookie': sessionCookie(req, '', 0) });
 }
 
 async function adminMythic(req, res) {
@@ -533,6 +567,7 @@ export function handle(req, res, url) {
       if (head === 'login' && method === 'POST') return Door.login(req, res, snapshot);
       if (head === 'logout' && method === 'POST') return Door.logout(req, res);
       if (head === 'account' && method === 'POST') return Door.account(req, res, snapshot);
+      if (head === 'account' && method === 'DELETE') return deleteOwnAccount(req, res);
       if (head === 'me' && method === 'GET') return send(res, 200, snapshot(requireUser(req)));
 
       // --- cards

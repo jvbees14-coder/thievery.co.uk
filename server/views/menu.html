@@ -215,16 +215,29 @@
         </p>
       </div>
 
-      <!-- There is no button for this yet: closing an account deletes its
-           cards and maps for good, and it is done by hand on request. -->
-      <div class="menu-form">
-        <h3 class="menu-form-head">Close your account</h3>
+      <!-- Closing an account cannot be undone, so it is folded away, asks for
+           the password, and asks for the username typed out, the one place
+           on the site a destructive action is confirmed rather than undone.
+           The rules for what goes with it are removeAccount() in
+           flashcards.js, shared with the admin's delete. -->
+      <details class="menu-form menu-close disclose">
+        <summary>Close your account</summary>
         <p class="hint">
-          Write to {{contact}} with your username, and the
-          account is deleted with everything in it: cards, decks, maps and
-          stats. It can&rsquo;t be brought back.
+          This deletes the account and everything in it: cards, decks, maps,
+          stats and your place on the daily board. It can&rsquo;t be undone.
         </p>
-      </div>
+        <form id="account-close" autocomplete="off">
+          <div class="field">
+            <label for="ac-close-user">Type your username to confirm</label>
+            <input id="ac-close-user" autocomplete="off" autocapitalize="none" spellcheck="false" required />
+          </div>
+          <div class="field">
+            <label for="ac-close-pass">Current password</label>
+            <input id="ac-close-pass" type="password" autocomplete="current-password" required />
+          </div>
+          <button class="btn danger" type="submit">Close account</button>
+        </form>
+      </details>
 
       <p id="account-error" class="door-error" hidden></p>
       <p class="menu-panel-foot"><a href="#">&larr; Home</a></p>
