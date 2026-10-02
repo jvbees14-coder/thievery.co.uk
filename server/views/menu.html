@@ -13,7 +13,7 @@
   {{bar:home}}
 
   <main id="main" class="menu-main">
-    <h1 class="menu-hello"><span id="greeting">Hello</span>, <span id="hello">&hellip;</span></h1>
+    <h1 class="menu-hello" data-large-title="Home"><span id="greeting">Hello</span>, <span id="hello">&hellip;</span></h1>
 
     <!-- The tiles. Thievery is the one the site was built for, so it is
          drawn twice the width of the rest. The icons are inline so they take
@@ -201,16 +201,21 @@
       <!-- Kept by prefs.js in this browser, not on the account: the card
            table reads it too, and nobody has to sign in there. -->
       <div class="menu-form">
-        <h3 class="menu-form-head">Display</h3>
-        <label class="fc-check"><input type="checkbox" data-motion-check checked /> Animate banners</label>
-        <p class="hint">
+        <h3 class="list-head">Display</h3>
+        <div class="list-group">
+          <label class="list-row"><span class="list-row-label">Animate banners</span><input type="checkbox" class="switch" role="switch" data-motion-check checked aria-describedby="motion-hint" /></label>
+        </div>
+        <p class="hint list-foot" id="motion-hint">
           Banners are the full-screen announcements for a steal, a miss or a
           win. Off, they still appear, without the sweep, the shake or the
           confetti. If your device is set to reduce motion, they start off.
         </p>
-        <label class="fc-check"><input type="checkbox" data-pref-check="cards" /> Larger cards at the table</label>
-        <label class="fc-check"><input type="checkbox" data-pref-check="haptics" /> Vibrate when a card of yours is taken</label>
-        <p class="hint">
+        <h3 class="list-head">At the table</h3>
+        <div class="list-group">
+          <label class="list-row"><span class="list-row-label">Larger cards</span><input type="checkbox" class="switch" role="switch" data-pref-check="cards" /></label>
+          <label class="list-row"><span class="list-row-label">Vibrate when a card of yours is taken</span><input type="checkbox" class="switch" role="switch" data-pref-check="haptics" /></label>
+        </div>
+        <p class="hint list-foot">
           Saved in this browser. Light or dark follows your device.
         </p>
       </div>
@@ -253,7 +258,7 @@
       <div id="members-all">
         <div class="field">
           <label for="members-search">Find an account</label>
-          <input id="members-search" type="search" autocomplete="off" spellcheck="false" placeholder="Name or username" />
+          <input id="members-search" type="search" data-cancel autocomplete="off" spellcheck="false" placeholder="Name or username" />
         </div>
         <div id="members-list" class="menu-members"></div>
       </div>

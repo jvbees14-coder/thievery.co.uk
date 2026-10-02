@@ -161,6 +161,9 @@ The bar and the tab bar are glass (`--glass`, a translucent fill with
 fixed children are measured against. A soft shadow appears under the bar only
 once the page has scrolled under it. Nothing in the content layer is glass.
 `prefers-reduced-transparency` and more contrast swap the glass for solid.
+In Chromium browsers the phone's tab bar also bends what is under its edges,
+through an SVG displacement map drawn to its size (`shell.js`); Safari and
+Firefox discard a backdrop filter that names one, so they never get it.
 
 ## Motion
 
@@ -201,6 +204,19 @@ All in `public/style.css` and `public/shell.css`, all on `/styleguide`.
   refusal, above everything.
 - **Empty, loading.** `.empty-state` with an icon, a headline, one line and
   the button. `.skeleton`, `.spinner` and `.progress` for loading.
+- **Controls.** `public/controls.css` and `controls.js`, borrowed from an
+  iPhone's settings screens, each built on a real control so a room's script
+  reads and sets it as before. `.switch` is a checkbox with `role="switch"`;
+  `<select data-segmented>` gets a segmented control drawn beside it;
+  `<input type="number" data-stepper>` gets a minus and a plus;
+  `<input type="search" data-cancel>` gets a Cancel on a phone;
+  `<h1 data-large-title>` hands over to a small title in the bar on a phone
+  once it has scrolled away. A `.list-group` of `.list-row`s is the inset
+  grouped list, for settings. `data-actions="<selector>"` gives anything a
+  menu of its own buttons on a long press or a right click, and
+  `data-swipe="<selector>"` lets a row be slid left to uncover them. A sheet
+  marked `data-detents` opens half way up on a phone and its grip pulls it to
+  the top. The card table keeps its own brass `.seg`.
 - **Icons.** One set, drawn on a 24 grid with a 1.75 round stroke, in
   `server/views.js` (`ICONS`) and put in with `{{icon:name}}`. An icon-only
   button always has an `aria-label` and a `title`.

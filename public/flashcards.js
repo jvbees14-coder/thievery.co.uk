@@ -205,7 +205,7 @@
       : '';
 
     return `
-      <article class="fc-card${card.pooled ? ' is-pooled' : ''}" data-rarity="${esc(card.rarity)}" data-id="${card.id}">
+      <article class="fc-card${card.pooled ? ' is-pooled' : ''}" data-rarity="${esc(card.rarity)}" data-id="${card.id}"${ops ? ' data-actions=".fc-ops [data-act]"' : ''}>
         <div class="fc-flip">
           <div class="fc-face fc-front" data-act="turn">
             <div class="fc-cardtop">
@@ -461,7 +461,7 @@
     const test = entry.count
       ? `<a class="fc-op" href="${testLink(deckId, sub ? sub.id : '')}">Test yourself</a>`
       : '<span class="fc-op is-off" title="No cards in it yet">Test yourself</span>';
-    return `<div class="fc-deck-row${sub ? ' is-sub' : ''}">
+    return `<div class="fc-deck-row${sub ? ' is-sub' : ''}" data-actions=".fc-deck-acts > [data-act], .fc-deck-acts > a" data-swipe=".fc-deck-acts > [data-act]">
         <span class="fc-deck-name">${esc(entry.name)}</span>
         <span class="fc-tally">${plural(entry.count, 'card', 'cards')}</span>
         <span class="fc-deck-acts">

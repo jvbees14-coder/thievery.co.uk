@@ -146,6 +146,12 @@
     touch-action: pan-y;
     -webkit-user-select: none; user-select: none;
   }
+  /* Where shell.js has found a browser that can do it, the edges bend what
+     is under them as well, and a little less blur lets the bend be seen. */
+  .menu-nav.has-refraction {
+    -webkit-backdrop-filter: url(#glass-refract) blur(10px) saturate(2) brightness(1.08);
+    backdrop-filter: url(#glass-refract) blur(10px) saturate(2) brightness(1.08);
+  }
   .menu-nav-link { -webkit-touch-callout: none; }
   /* The rim: a gradient border drawn over the plain one, cut out of a
      filled box by a mask so only a one-pixel ring of it is left. */

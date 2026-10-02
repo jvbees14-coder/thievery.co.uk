@@ -144,6 +144,51 @@
       </details>
     </section>
 
+    <section aria-labelledby="sg-controls">
+      <h2 id="sg-controls">Controls</h2>
+      <p class="muted">Each is a real control underneath (controls.js). Long press or right click the rows to open their menu; on a touch screen, slide a row left.</p>
+      <div class="sg-grid2">
+        <div class="field">
+          <label for="sg-seg">Cards</label>
+          <select id="sg-seg" data-segmented>
+            <option value="5">5</option><option value="10" selected>10</option><option value="15">15</option><option value="20">20</option>
+          </select>
+          <p class="hint">A segmented control, from a select.</p>
+        </div>
+        <div class="field">
+          <label for="sg-step">Turns between swaps</label>
+          <input id="sg-step" type="number" inputmode="numeric" min="1" max="50" value="10" data-stepper />
+          <p class="hint">A stepper, from a number field.</p>
+        </div>
+        <div class="field">
+          <label for="sg-search">Search</label>
+          <input id="sg-search" type="search" placeholder="Search cards" data-cancel />
+          <p class="hint">On a phone, Cancel slides in while it has focus.</p>
+        </div>
+      </div>
+      <h3 class="list-head">Grouped list</h3>
+      <div class="list-group">
+        <label class="list-row"><span class="list-row-label">Animate banners</span><input type="checkbox" class="switch" role="switch" checked /></label>
+        <label class="list-row"><span class="list-row-label">Larger cards</span><input type="checkbox" class="switch" role="switch" /></label>
+        <label class="list-row"><span class="list-row-label">Switched off and locked</span><input type="checkbox" class="switch" role="switch" disabled /></label>
+        <a class="list-row" href="#sg-controls"><span class="list-row-label">Display name</span><span class="list-row-value">Jack</span></a>
+      </div>
+      <p class="hint list-foot">A footnote under the group.</p>
+      <h3 class="list-head">Rows with actions</h3>
+      <div class="list-group">
+        <div class="list-row" data-actions="[data-sg-act]" data-swipe="[data-sg-act]">
+          <span class="list-row-label">History</span>
+          <button class="btn small ghost" type="button" data-sg-act="Renamed.">Rename</button>
+          <button class="btn small danger" type="button" data-sg-act="Deleted.">Delete</button>
+        </div>
+        <div class="list-row" data-actions="[data-sg-act]" data-swipe="[data-sg-act]">
+          <span class="list-row-label">Geography</span>
+          <button class="btn small ghost" type="button" data-sg-act="Renamed.">Rename</button>
+          <button class="btn small danger" type="button" data-sg-act="Deleted.">Delete</button>
+        </div>
+      </div>
+    </section>
+
     <section aria-labelledby="sg-surfaces">
       <h2 id="sg-surfaces">Surfaces</h2>
       <div class="sg-grid2">
@@ -184,7 +229,7 @@
       </div>
     </section>
 
-    <dialog class="sheet" id="sg-sheet" aria-labelledby="sg-sheet-title">
+    <dialog class="sheet" id="sg-sheet" aria-labelledby="sg-sheet-title" data-detents>
       <div class="sheet-grip" aria-hidden="true"></div>
       <div class="sheet-head">
         <h2 id="sg-sheet-title">New card</h2>
@@ -222,6 +267,10 @@
       document.getElementById('sg-undo').onclick = function () {
         window.thieveryToast({ text: 'Card deleted.', action: 'Undo', onAction: function () { window.thieveryToast({ text: 'Card put back.' }); } });
       };
+      document.addEventListener('click', function (ev) {
+        var b = ev.target.closest('[data-sg-act]');
+        if (b) window.thieveryToast({ text: b.getAttribute('data-sg-act') });
+      });
       document.getElementById('sg-sheet-open').onclick = function () { document.getElementById('sg-sheet').showModal(); };
     })();
   </script>

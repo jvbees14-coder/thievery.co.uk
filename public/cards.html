@@ -237,7 +237,7 @@
 
   <!-- The table's menu. Static, outside #app, because the table redraws on
        every move and a sheet inside it would be torn down while open. -->
-  <dialog class="sheet" id="table-menu" aria-labelledby="table-menu-title">
+  <dialog class="sheet" id="table-menu" aria-labelledby="table-menu-title" data-detents>
     <div class="sheet-grip" aria-hidden="true"></div>
     <div class="sheet-head">
       <h2 id="table-menu-title">Menu</h2>
@@ -249,11 +249,15 @@
         <button class="btn" type="button" data-menu="share" id="menu-share">{{icon:share}}<span>Invite</span></button>
       </div>
 
-      <h3 class="table-menu-h">Settings</h3>
-      <label class="fc-check"><input type="checkbox" data-motion-check /> Animate banners</label>
-      <label class="fc-check"><input type="checkbox" data-pref-check="cards" /> Larger cards</label>
-      <label class="fc-check" id="menu-haptics"><input type="checkbox" data-pref-check="haptics" /> Vibrate when a card of yours is taken</label>
-      <p class="hint">Saved in this browser. The game has no sound.</p>
+      <div>
+        <h3 class="list-head">Settings</h3>
+        <div class="list-group">
+          <label class="list-row"><span class="list-row-label">Animate banners</span><input type="checkbox" class="switch" role="switch" data-motion-check /></label>
+          <label class="list-row"><span class="list-row-label">Larger cards</span><input type="checkbox" class="switch" role="switch" data-pref-check="cards" /></label>
+          <label class="list-row" id="menu-haptics"><span class="list-row-label">Vibrate when a card of yours is taken</span><input type="checkbox" class="switch" role="switch" data-pref-check="haptics" /></label>
+        </div>
+        <p class="hint list-foot">Saved in this browser. The game has no sound.</p>
+      </div>
 
       <details class="disclose">
         <summary>{{icon:keyboard}} Keyboard shortcuts</summary>

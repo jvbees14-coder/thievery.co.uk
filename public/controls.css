@@ -1,0 +1,294 @@
+/* Thievery.co.uk — the controls.
+ *
+ * The pieces borrowed from the way an iPhone draws a settings screen, for
+ * every page that is not the card table (which has its own brass switch,
+ * .seg in style.css, and keeps it):
+ *
+ *   .switch          a checkbox drawn as an on/off switch
+ *   .segmented       a row of choices with a tile that slides to the one on
+ *   .stepper         a number with a minus and a plus either side
+ *   .list-group      an inset grouped list, rows on one rounded surface
+ *   .ctx-menu        the menu a long press or a right click opens
+ *   .swipe-tray      the buttons a row slid to the left uncovers
+ *   .search-wrap     a search field whose Cancel slides in on a phone
+ *   .site-bar-title  the page's title, in the bar once the big one has gone
+ *
+ * Every one of them is a real form control or a real button underneath, so
+ * a screen reader and a keyboard meet the same thing they always did.
+ * controls.js builds the parts that need building, and its header says how
+ * a page asks for each.
+ */
+
+/* --- the switch -------------------------------------------------------------- */
+
+/* A checkbox with role="switch". The track is the box itself; the knob is a
+   pseudo-element that slides. 51 by 31, as on a phone. */
+input[type="checkbox"].switch {
+  appearance: none; -webkit-appearance: none;
+  position: relative; flex: none; cursor: pointer;
+  width: 51px; height: 31px; margin: 0; padding: 0;
+  border: 0; border-radius: var(--radius-pill);
+  background: var(--fill-strong);
+  box-shadow: inset 0 0 0 1px var(--separator);
+  transition: background-color var(--dur-base) var(--ease-out);
+}
+input[type="checkbox"].switch::before {
+  content: ""; position: absolute; top: 2px; left: 2px;
+  width: 27px; height: 27px; border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 1px 1px rgba(0, 0, 0, 0.16), 0 3px 1px rgba(0, 0, 0, 0.1);
+  transition: transform var(--dur-base) var(--ease-spring-soft), width var(--dur-quick) var(--ease-out);
+}
+input[type="checkbox"].switch:checked { background: var(--success); box-shadow: none; }
+input[type="checkbox"].switch:checked::before { transform: translateX(20px); }
+/* Pressed, the knob stretches towards where it is going, as on a phone. */
+input[type="checkbox"].switch:active:not(:disabled)::before { width: 33px; }
+input[type="checkbox"].switch:checked:active:not(:disabled)::before { transform: translateX(14px); }
+input[type="checkbox"].switch:disabled { cursor: default; opacity: 0.5; }
+/* More contrast: the track gets an edge and the knob a ring. */
+@media (prefers-contrast: more) {
+  input[type="checkbox"].switch { box-shadow: inset 0 0 0 1.5px var(--separator-strong); }
+  input[type="checkbox"].switch::before { box-shadow: 0 0 0 1px var(--separator-strong); }
+}
+
+/* --- the segmented control ------------------------------------------------------ */
+
+/* Built by controls.js beside a <select data-segmented>, which stays in the
+   page (hidden) and keeps being the thing the room's script reads and sets.
+   Each option is a radio-like button; the tile is measured off whichever
+   one is on. */
+.segmented {
+  position: relative; isolation: isolate;
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  min-height: 36px; padding: 2px;
+  border-radius: 9px;
+  background: var(--segment-track);
+  -webkit-user-select: none; user-select: none;
+}
+.segmented-tile {
+  position: absolute; z-index: -1; top: 2px; bottom: 2px; left: 0; width: 0;
+  border-radius: 7px;
+  background: var(--segment-tile);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 3px 1px rgba(0, 0, 0, 0.04), inset 0 0 0 0.5px var(--glass-edge);
+  transition: transform var(--dur-slow) var(--ease-spring-soft), width var(--dur-slow) var(--ease-spring-soft);
+}
+.segmented.is-settling .segmented-tile { transition: none; }
+.segmented button {
+  appearance: none; border: 0; background: none; cursor: pointer;
+  min-width: 0; padding: 0 var(--space-3);
+  border-radius: 7px;
+  color: var(--label); font: inherit; font-size: var(--text-footnote); font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: transform var(--dur-quick) var(--ease-out);
+}
+.segmented button { position: relative; }
+/* The short rule between two options that are both off, as on a phone. */
+.segmented button + button::before {
+  content: ""; position: absolute; left: 0; top: 25%; bottom: 25%;
+  border-left: 1px solid var(--separator-strong); opacity: 0.5;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+.segmented button[aria-checked="true"]::before,
+.segmented button[aria-checked="true"] + button::before { opacity: 0; }
+.segmented button[aria-checked="true"] { font-weight: 600; }
+.segmented button:active:not(:disabled) { transform: scale(0.95); }
+.segmented button:disabled { cursor: default; }
+.segmented.is-disabled { opacity: 0.6; }
+
+/* --- the stepper ------------------------------------------------------------ */
+
+/* Built by controls.js round an <input type="number" data-stepper>: the
+   number stays a field you can type in, with a minus and a plus pressed
+   together into one capsule beside it. */
+.stepper { display: inline-flex; align-items: center; gap: var(--space-2); }
+.stepper input[type="number"] { width: 3.5em; text-align: center; -moz-appearance: textfield; }
+.stepper input[type="number"]::-webkit-inner-spin-button,
+.stepper input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.stepper-keys {
+  display: inline-grid; grid-template-columns: 1fr 1fr;
+  height: 32px; border-radius: 8px; overflow: hidden;
+  background: var(--fill-strong);
+}
+.stepper-keys button {
+  appearance: none; border: 0; background: none; cursor: pointer; position: relative;
+  width: 47px; display: grid; place-items: center;
+  color: var(--label);
+}
+/* A key is 32 tall on screen and 44 to a thumb. */
+.stepper-keys button::after { content: ""; position: absolute; inset: -6px 0; }
+.stepper-keys button + button { box-shadow: -0.5px 0 0 0 var(--separator-strong); }
+.stepper-keys button:active:not(:disabled) { background: var(--fill); }
+.stepper-keys button:disabled { color: var(--label-tertiary); cursor: default; }
+.stepper-keys button:focus-visible { outline-offset: -3px; }
+.stepper-keys svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.25; stroke-linecap: round; }
+
+/* --- the inset grouped list ---------------------------------------------------- */
+
+/* Rows on one rounded surface, a hairline between them that stops short of
+   the left edge, a small heading above in capitals' place, and a footnote
+   below. A row is a label and whatever it controls: a switch, a value, or a
+   chevron if it goes somewhere. */
+.list-head {
+  margin: var(--space-5) 0 var(--space-2); padding: 0 var(--space-4);
+  font-size: var(--text-footnote); font-weight: 400; color: var(--label-secondary);
+}
+.list-group {
+  margin: 0; padding: 0; list-style: none;
+  border-radius: 10px; overflow: hidden;
+  background: var(--list-bg);
+  box-shadow: var(--shadow-1);
+}
+.list-row {
+  position: relative;
+  display: flex; align-items: center; gap: var(--space-3);
+  min-height: var(--hit); padding: var(--space-2) var(--space-4);
+  color: var(--label); text-decoration: none;
+  cursor: pointer;
+}
+.list-row + .list-row::before {
+  content: ""; position: absolute; top: 0; right: 0; left: var(--space-4);
+  border-top: 0.5px solid var(--separator-strong); opacity: 0.6;
+}
+.list-row-label { flex: 1; min-width: 0; }
+.list-row-value { color: var(--label-secondary); }
+a.list-row::after {
+  content: ""; flex: none; width: 8px; height: 8px; margin-left: var(--space-1);
+  border-right: 2px solid var(--label-tertiary); border-top: 2px solid var(--label-tertiary);
+  transform: rotate(45deg);
+}
+a.list-row:hover, a.list-row:active { background: var(--fill); }
+.list-foot { margin: var(--space-2) 0 0; padding: 0 var(--space-4); }
+
+/* --- the context menu ------------------------------------------------------------ */
+
+/* What a long press or a right click on something with actions opens: the
+   same buttons the thing already has, in a column of frosted glass beside
+   where the finger is. The page behind dims a little and the menu grows out
+   of the press. */
+.ctx-veil {
+  position: fixed; inset: 0; z-index: 85;
+  background: var(--scrim); opacity: 0.35;
+  animation: ctxveil var(--dur-base) var(--ease-out);
+}
+.ctx-menu {
+  position: fixed; z-index: 86;
+  min-width: 13.5rem; max-width: min(18rem, calc(100vw - 2 * var(--space-4)));
+  padding: var(--space-1) 0;
+  border-radius: 13px;
+  background: var(--glass-sheen), var(--glass);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 0.5px solid var(--glass-edge);
+  box-shadow: var(--shadow-3);
+  transform-origin: var(--ctx-origin, top left);
+  animation: ctxin var(--dur-slow) var(--ease-spring-soft);
+}
+/* The menu itself only holds focus until a key picks an item. */
+.ctx-menu:focus { outline: none !important; }
+.ctx-menu button {
+  appearance: none; border: 0; background: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+  width: 100%; min-height: var(--hit); padding: 0 var(--space-4);
+  color: var(--label); font: inherit; font-size: var(--text-body); text-align: left;
+}
+.ctx-menu button + button { border-top: 0.5px solid var(--separator); }
+.ctx-menu button:hover, .ctx-menu button:focus-visible { background: var(--fill); }
+.ctx-menu button:focus-visible { outline-offset: -3px; }
+.ctx-menu button.is-danger { color: var(--danger); }
+/* The thing pressed lifts a little while its menu is open. */
+.ctx-lifted { position: relative; z-index: 86; transform: scale(1.02); transition: transform var(--dur-base) var(--ease-spring-soft); }
+.ctx-pressing { transform: scale(0.97); transition: transform 450ms var(--ease-out); }
+@keyframes ctxin { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: none; } }
+@keyframes ctxveil { from { opacity: 0; } }
+/* On a touch screen a long press is for the menu, so it does not also start
+   selecting text or offer the browser's own preview of a link. */
+@media (pointer: coarse) {
+  [data-actions] { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+}
+
+/* --- swipe actions ---------------------------------------------------------------- */
+
+/* A row marked data-swipe can be slid left with a finger to uncover its
+   buttons, which wait in a tray hung off its right-hand edge. The row's own
+   buttons stay where they were for everybody else. */
+[data-swipe] { position: relative; touch-action: pan-y; }
+.swipe-track { overflow-x: clip; }
+.swipe-tray {
+  position: absolute; top: 0; bottom: 0; left: 100%;
+  display: flex;
+}
+.swipe-tray button {
+  appearance: none; border: 0; cursor: pointer;
+  min-width: 74px; padding: 0 var(--space-3);
+  background: var(--label-tertiary); color: var(--bg);
+  font: inherit; font-size: var(--text-subhead); font-weight: 600;
+}
+.swipe-tray button.is-danger { background: var(--danger); color: #fff; }
+[data-swipe].is-swiped, [data-swipe].is-swiping { -webkit-user-select: none; user-select: none; }
+[data-swipe].is-settling { transition: transform var(--dur-slow) var(--ease-spring-soft); }
+
+/* --- search with Cancel --------------------------------------------------------------- */
+
+/* On a phone, focusing a search field slides a Cancel in beside it, which
+   empties the field and puts the keyboard away. Wider, nothing changes. */
+.search-wrap { display: flex; align-items: center; gap: 0; min-width: 0; }
+.search-wrap > input { flex: 1; min-width: 0; }
+.search-cancel {
+  appearance: none; border: 0; background: none; cursor: pointer;
+  color: var(--accent); font: inherit; font-size: var(--text-body);
+  max-width: 0; padding: 0; overflow: hidden; opacity: 0; white-space: nowrap;
+  min-height: var(--hit);
+  transition: max-width var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out), padding var(--dur-base) var(--ease-out);
+}
+@media (max-width: 900px) {
+  .search-wrap.is-active .search-cancel { max-width: 6em; padding-left: var(--space-3); opacity: 1; }
+}
+
+/* --- the title in the bar --------------------------------------------------------------- */
+
+/* On a phone, where the bar's middle is empty because the rooms have gone to
+   the bottom, the page's big title hands over to a small one in the bar as it
+   scrolls out of sight, and back again. */
+.site-bar-title { display: none; }
+@media (max-width: 900px) {
+  .site-bar-title {
+    display: block; position: absolute; left: 50%; bottom: 0;
+    max-width: 45vw; height: var(--bar-h); line-height: var(--bar-h);
+    transform: translate(-50%, 6px);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-size: var(--text-headline); font-weight: 600; color: var(--label);
+    opacity: 0; pointer-events: none;
+    transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
+  }
+  .site-bar.has-title .site-bar-title { opacity: 1; transform: translate(-50%, 0); }
+  .site-bar.has-title .site-mark { opacity: 0; pointer-events: none; }
+  .site-mark { transition: opacity var(--dur-base) var(--ease-out); }
+}
+
+/* --- sheets with detents -------------------------------------------------------------- */
+
+/* On a phone a sheet marked data-detents opens half way up, and its grip
+   pulls it to the top or sends it down a step: from the top to half way,
+   from half way to gone. Scrolling what is in it also takes it to the top.
+   It is the height that changes rather than the position, so the buttons at
+   its foot are on the screen at either size. shell.js does the dragging. */
+@media (max-width: 600px) {
+  dialog.sheet[data-detents] {
+    height: 55vh; height: 55dvh;
+    transition: height var(--dur-slow) var(--ease-spring-soft);
+  }
+  dialog.sheet[data-detents].is-large { height: 92vh; height: 92dvh; }
+  dialog.sheet[data-detents].is-dragging { transition: none; }
+}
+
+/* --- the device asked for less ------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  input[type="checkbox"].switch, input[type="checkbox"].switch::before,
+  .segmented-tile, .segmented button, .search-cancel, .site-bar-title, .site-mark,
+  dialog.sheet[data-detents], [data-swipe].is-settling, .ctx-lifted, .ctx-pressing { transition: none; }
+  .ctx-menu, .ctx-veil { animation: fadein var(--dur-quick) linear; }
+  .ctx-lifted, .ctx-pressing { transform: none; }
+}
+html[data-motion="still"] .segmented-tile,
+html[data-motion="still"] dialog.sheet[data-detents] { transition: none; }

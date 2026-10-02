@@ -74,7 +74,7 @@
           <label class="sr-only" for="bank-deck">Subject</label>
           <select id="bank-deck"></select>
           <label class="sr-only" for="bank-query">Search</label>
-          <input id="bank-query" type="search" maxlength="100" placeholder="Search questions and answers" spellcheck="false" />
+          <input id="bank-query" type="search" data-cancel maxlength="100" placeholder="Search questions and answers" spellcheck="false" />
         </form>
         <p class="hint" id="bank-count">&nbsp;</p>
         <ol class="btl-bank-list" id="bank-list"></ol>
@@ -161,7 +161,7 @@
           <div class="btl-dials">
             <div class="field">
               <label for="length">Cards</label>
-              <select id="length" data-set="length"></select>
+              <select id="length" data-set="length" data-segmented></select>
             </div>
             <div class="field">
               <label for="clock">Time limit</label>

@@ -703,8 +703,9 @@ Every page is read through `server/views.js` (`readView`, or `render` for
 `public/cards.html`), which does three things:
 
 - **Puts in the shared pieces.** `{{head:<sheets>}}` is the shared `<head>`:
-  icons, the one webfont, `tokens.css`, `style.css`, `shell.css`, then the
-  room's own sheets named after the colon, then `prefs.js` and `shell.js`.
+  icons, the one webfont, `tokens.css`, `style.css`, `shell.css`,
+  `controls.css`, then the room's own sheets named after the colon, then
+  `prefs.js`, `shell.js` and `controls.js`.
   `{{bar:<room>}}` is the one site bar, with every room on it and the current
   one marked, and on a phone its links are the tab bar; `{{bar:public}}` is
   the same without the account menu (`{{bar:public:cards}}` marks a room);
@@ -752,6 +753,12 @@ matters when changing it:
   that can carry an Undo. Deleting a flashcard or a map is undone rather than
   confirmed: the page holds the delete until the toast goes, and sends it on
   `pagehide` if you leave first.
+- `controls.js` builds the iPhone-style controls (segmented, stepper,
+  search Cancel, the title in the bar, long-press menus, swipe rows) on top
+  of ordinary markup, asked for by `data-` attributes; `docs/DESIGN.md` lists
+  them. Each leaves the real control in the page and fires its own events,
+  so a room's script never needs to know. A select or field it draws over
+  has its `value` property wrapped so a value set from a push redraws it.
 
 `public/prefs.js` is loaded in every `<head>`, after the stylesheets, and
 holds the per-browser choices, set in the hall's **Account** panel and in the

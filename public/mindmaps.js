@@ -261,7 +261,7 @@
     $('#map-nomatch').hidden = !maps.length || shown.length > 0;
     $('#map-list').innerHTML = shown
       .map(
-        (m) => `<li class="mm-card">
+        (m) => `<li class="mm-card" data-actions=".mm-card-acts [data-act]">
           <a class="mm-card-link" href="#${esc(m.id)}">
             ${thumb(m.preview)}
             <span class="mm-card-name">${esc(m.title)}</span>
@@ -269,7 +269,7 @@
           </a>
           <div class="mm-card-acts">
             <button class="btn small ghost" type="button" data-act="copy-map" data-id="${esc(m.id)}">Duplicate</button>
-            <button class="btn small ghost" type="button" data-act="delete-map" data-id="${esc(m.id)}">Delete</button>
+            <button class="btn small ghost" type="button" data-act="delete-map" data-id="${esc(m.id)}" data-menu-danger>Delete</button>
           </div>
         </li>`
       )

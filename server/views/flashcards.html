@@ -30,7 +30,7 @@
     <!-- The room's one job, top and left: its name and the button to make a
          card, on every tab. -->
     <div class="fc-pagehead">
-      <h1 class="fc-pagetitle display">Flashcards</h1>
+      <h1 class="fc-pagetitle display" data-large-title>Flashcards</h1>
       <button class="btn primary" data-goto="make" type="button">New card</button>
     </div>
     <nav class="fc-tabs" role="tablist">
@@ -47,7 +47,7 @@
       <div id="ledger" class="fc-ledger"></div>
 
       <div class="fc-toolbar">
-        <input id="search" class="fc-search" type="search" placeholder="Search fronts, backs, categories&hellip;" />
+        <input id="search" class="fc-search" type="search" data-cancel placeholder="Search fronts, backs, categories&hellip;" />
         <select id="filter-deck" class="fc-select" aria-label="Filter by deck">
           <option value="">Every deck</option>
         </select>
@@ -265,7 +265,7 @@
 
         <div>
           <h3 class="fc-h3">Accounts <span id="acct-count" class="fc-tally"></span></h3>
-          <input id="acct-search" class="fc-search" type="search" placeholder="Search accounts&hellip;" />
+          <input id="acct-search" class="fc-search" type="search" data-cancel placeholder="Search accounts&hellip;" />
           <div id="accounts" class="fc-accounts"></div>
         </div>
       </div>

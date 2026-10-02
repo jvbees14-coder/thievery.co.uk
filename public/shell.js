@@ -10,9 +10,11 @@
  *     in its own script; this adds what a menu is expected to do from the
  *     keyboard: Escape closes it and puts focus back on the button, the arrow
  *     keys move between its items, and opening it moves focus into it.
- *   * Sheets: the ways every one of them can be closed.
+ *   * Sheets: the ways every one of them can be closed, and on a phone the
+ *     two heights of one marked data-detents.
  *   * The tab bar's lens on a phone, which can be slid from room to room,
  *     and the glint on the bar that follows it.
+ *   * The tab bar's refraction, in the browsers that can draw it.
  *   * window.thieveryToast, the one way a page says something passing: a
  *     short line near the bottom of the screen, read out by a screen reader,
  *     and, if it carries an action such as Undo, left up until it is used or
@@ -128,24 +130,61 @@
     }
   }, true);
 
+  // A sheet marked data-detents has two heights on a phone, half way and
+  // nearly the whole screen (controls.css). It opens at half; the grip
+  // drags its height, and letting go settles on whichever is nearer, or
+  // closes it if it was pulled well below half. Scrolling what is in it
+  // takes it to the top, as on a phone.
+  var phone = window.matchMedia('(max-width: 600px)');
+  var detents = function (d) { return d.hasAttribute('data-detents') && phone.matches; };
+  document.addEventListener('close', function (ev) {
+    if (ev.target.hasAttribute && ev.target.hasAttribute('data-detents')) ev.target.classList.remove('is-large');
+  }, true);
+  document.addEventListener('scroll', function (ev) {
+    var body = ev.target.classList && ev.target.classList.contains('sheet-body') ? ev.target : null;
+    var d = body && body.closest('dialog[data-detents]');
+    if (d && detents(d) && body.scrollTop > 0) d.classList.add('is-large');
+  }, true);
+
   var drag = null;
   document.addEventListener('pointerdown', function (ev) {
     var grip = ev.target.closest && ev.target.closest('.sheet-grip');
     if (!grip) return;
     var d = grip.closest('dialog');
-    drag = { d: d, y: ev.clientY, dy: 0 };
+    drag = { d: d, y: ev.clientY, dy: 0, h: d.getBoundingClientRect().height, sized: detents(d) };
+    if (drag.sized) d.classList.add('is-dragging');
     grip.setPointerCapture(ev.pointerId);
   });
   document.addEventListener('pointermove', function (ev) {
     if (!drag) return;
+    if (drag.sized) {
+      drag.dy = ev.clientY - drag.y;
+      var tall = window.innerHeight * 0.92;
+      var h = drag.h - drag.dy;
+      // Above the top it gives a little and no more.
+      if (h > tall) h = tall + (h - tall) / 4;
+      drag.d.style.height = Math.max(0, h) + 'px';
+      return;
+    }
     drag.dy = Math.max(0, ev.clientY - drag.y);
     drag.d.style.transform = 'translateY(' + drag.dy + 'px)';
   });
   document.addEventListener('pointerup', function () {
     if (!drag) return;
     var d = drag.d;
-    var far = drag.dy > 90;
+    var s = drag;
     drag = null;
+    if (s.sized) {
+      var h = s.h - s.dy;
+      var half = window.innerHeight * 0.55;
+      var tall = window.innerHeight * 0.92;
+      d.classList.remove('is-dragging');
+      d.style.height = '';
+      if (h < half - 90) { requestClose(d); return; }
+      d.classList.toggle('is-large', Math.abs(h - tall) < Math.abs(h - half));
+      return;
+    }
+    var far = s.dy > 90;
     d.style.transform = '';
     if (far) requestClose(d);
   });
@@ -311,6 +350,85 @@
       var stray = nav.querySelector(':scope > .menu-nav-lens');
       if (stray) putBack(stray);
     });
+  }
+
+  // --- the tab bar's refraction -------------------------------------------------
+
+  // Real glass bends what is behind it at the edges. A backdrop filter can do
+  // that through an SVG displacement map, but only in Chromium browsers;
+  // Safari and Firefox throw the whole backdrop filter away if it names one,
+  // which would leave the bar with no blur at all. So it is put on only where
+  // the browser says it is Chromium, and only while the device has not asked
+  // for less transparency or more contrast. Everywhere else the bar is the
+  // frosted glass it always was.
+  //
+  // The map is drawn to the bar's own size: flat in the middle, and towards
+  // the rim a push inwards that grows as the edge gets nearer, so the page
+  // under the edge is drawn from a little further in, as a lens would.
+  var chromium = navigator.userAgentData && navigator.userAgentData.brands &&
+    navigator.userAgentData.brands.some(function (b) { return b.brand === 'Chromium'; });
+  var plain = window.matchMedia('(prefers-reduced-transparency: reduce), (prefers-contrast: more)');
+  if (nav && chromium && window.ResizeObserver) {
+    var NS = 'http://www.w3.org/2000/svg';
+    var holder = document.createElementNS(NS, 'svg');
+    holder.setAttribute('width', '0');
+    holder.setAttribute('height', '0');
+    holder.setAttribute('aria-hidden', 'true');
+    holder.style.position = 'absolute';
+    holder.innerHTML = '<filter id="glass-refract" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">' +
+      '<feImage result="map" x="0" y="0" preserveAspectRatio="none"/>' +
+      '<feDisplacementMap in="SourceGraphic" in2="map" scale="28" xChannelSelector="R" yChannelSelector="G"/></filter>';
+    document.body.appendChild(holder);
+    var feImage = holder.querySelector('feImage');
+    var drawn = '';
+
+    var drawMap = function (w, h) {
+      var canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      var img = ctx.createImageData(w, h);
+      var r = h / 2;
+      var edge = Math.min(18, r);
+      var hx = w / 2 - r;
+      for (var y = 0; y < h; y++) {
+        for (var x = 0; x < w; x++) {
+          // Distance in from the capsule's rim, and which way is out.
+          var px = x + 0.5 - w / 2;
+          var py = y + 0.5 - h / 2;
+          var qx = Math.max(Math.abs(px) - hx, 0);
+          var len = Math.sqrt(qx * qx + py * py) || 1;
+          var inside = r - len;
+          var nx = (qx / len) * (px < 0 ? -1 : 1);
+          var ny = py / len;
+          var push = inside < edge ? Math.pow(1 - Math.max(inside, 0) / edge, 2) : 0;
+          var i = (y * w + x) * 4;
+          img.data[i] = 128 - nx * push * 127;
+          img.data[i + 1] = 128 - ny * push * 127;
+          img.data[i + 2] = 128;
+          img.data[i + 3] = 255;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      return canvas.toDataURL();
+    };
+
+    var refract = function () {
+      var on = narrow.matches && !plain.matches;
+      nav.classList.toggle('has-refraction', on);
+      if (!on) return;
+      var w = Math.round(nav.offsetWidth);
+      var h = Math.round(nav.offsetHeight);
+      if (!w || !h || drawn === w + 'x' + h) return;
+      drawn = w + 'x' + h;
+      feImage.setAttribute('width', w);
+      feImage.setAttribute('height', h);
+      feImage.setAttribute('href', drawMap(w, h));
+    };
+    new ResizeObserver(refract).observe(nav);
+    plain.addEventListener('change', refract);
+    narrow.addEventListener('change', refract);
+    refract();
   }
 
   // --- toasts -----------------------------------------------------------------

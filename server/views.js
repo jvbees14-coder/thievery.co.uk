@@ -162,7 +162,7 @@ export function foot() {
 // override it; prefs.js comes last, without defer, so its attributes are on
 // <html> before anything is drawn.
 export function head(rooms = []) {
-  const sheets = ['fonts', 'tokens', 'style', 'shell', ...rooms];
+  const sheets = ['fonts', 'tokens', 'style', 'shell', 'controls', ...rooms];
   return [
     '<meta name="color-scheme" content="dark light" />',
     '<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a0c14" />',
@@ -174,6 +174,7 @@ export function head(rooms = []) {
     ...sheets.map((s) => `<link rel="stylesheet" href="/${s}.css" />`),
     '<script src="/prefs.js"></script>',
     '<script src="/shell.js" defer></script>',
+    '<script src="/controls.js" defer></script>',
   ].join('\n  ');
 }
 
