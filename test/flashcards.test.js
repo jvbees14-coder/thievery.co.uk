@@ -137,7 +137,7 @@ async function run() {
   await check('a short password is refused', async () => {
     const res = await stranger.call('register', { method: 'POST', body: { username: 'shorty', password: 'abc' } });
     assert.equal(res.status, 400);
-    assert.match(res.body.error, /at least 10/);
+    assert.match(res.body.error, /at least 6/);
   });
 
   await check('a reserved username is refused', async () => {

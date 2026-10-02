@@ -455,7 +455,7 @@
           <div class="field">
             <label for="mb-pass">Set a new password <span class="opt">optional</span></label>
             <input id="mb-pass" type="password" maxlength="200" autocomplete="new-password" data-lpignore="true" data-1p-ignore />
-            <p class="hint">At least 10 characters. Setting one signs the account out everywhere.</p>
+            <p class="hint">At least 6 characters. Setting one signs the account out everywhere.</p>
           </div>
           <div class="field">
             <label for="mb-note">Your note <span class="opt">never shown to them</span></label>

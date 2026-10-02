@@ -96,7 +96,7 @@
     'Use 3 to 20 letters, numbers, dots, dashes or underscores, starting and ending with a letter or number.',
     'input'
   );
-  const passOk = checker($('#jo-pass'), (v) => v.length >= 10, 'Use at least 10 characters.', 'blur');
+  const passOk = checker($('#jo-pass'), (v) => v.length >= 6, 'Use at least 6 characters.', 'blur');
 
   // --- submitting ------------------------------------------------------------
 

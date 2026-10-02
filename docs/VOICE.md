@@ -36,7 +36,7 @@ If a line has to be read to get something done, it is not a joke.
 - **Sentence case** for every heading, button, label and tab. Capitals for
   the first word and for names (Thievery, Battle, Switchhead) only.
 - **Errors say what happened and how to fix it**, next to the thing that went
-  wrong, without blame and without "Oops". "Use at least 10 characters." not
+  wrong, without blame and without "Oops". "Use at least 6 characters." not
   "Invalid password". "Lost the connection to the game server. Retrying in
   5s." not "We're having trouble".
 - **"You"** for the reader. **No "we" in an error.** "We" is fine for the

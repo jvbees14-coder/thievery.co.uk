@@ -35,7 +35,7 @@ const SESSION_TTL_MS = 30 * 24 * 60 * 60_000; // a month of not being asked agai
 const SESSION_TOUCH_MS = 60 * 60_000; // how stale "last seen" may get before it is rewritten
 
 export const USERNAME_RE = /^[a-z0-9](?:[a-z0-9_.-]{1,18})[a-z0-9]$/;
-export const PASSWORD_MIN = 10;
+export const PASSWORD_MIN = 6;
 export const PASSWORD_MAX = 200;
 
 // Names that must not become somebody's account, because they would read as
