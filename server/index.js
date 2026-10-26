@@ -139,6 +139,16 @@ function serve(req, res) {
     res.writeHead(301, { Location: '/cards', 'Cache-Control': 'no-store' });
     return res.end();
   }
+  // Gerrymander is a finished static game in public/gerrymander/, built with
+  // relative paths, so it only works from an address that ends in a slash.
+  // Without one it is sent there (keeping any query), and the slash itself is
+  // answered with the folder's index, which the static block below would
+  // otherwise call a miss: it serves files, not folders.
+  if (file === '/gerrymander') {
+    res.writeHead(301, { Location: `/gerrymander/${url.search}`, 'Cache-Control': 'no-store' });
+    return res.end();
+  }
+  if (file === '/gerrymander/') file = '/gerrymander/index.html';
   const abs = path.normalize(path.join(PUBLIC_DIR, file));
   if (!abs.startsWith(PUBLIC_DIR)) {
     res.writeHead(403);

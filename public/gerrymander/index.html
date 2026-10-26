@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Gerrymander</title>
+    <meta name="theme-color" content="#0d1424" />
+    <meta name="description" content="A puzzle about drawing constituency boundaries." />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Gerrymander" />
+    <script type="module" crossorigin src="./assets/index-BDBH1Tih.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BfbJ_4HG.css">
+  </head>
+  <body data-theme="board">
+    <main id="app">
+      <header>
+        <h1><a href="#/" id="home">Gerrymander</a></h1>
+        <a href="#/settings" id="gear" class="iconbtn" aria-label="Settings">Settings</a>
+      </header>
+
+      <section id="select-screen" hidden>
+        <p class="lede">Draw the boundaries. Win the seats. Try to look innocent.</p>
+        <a id="daily" class="daily" href="#/daily"></a>
+        <div id="level-grid"></div>
+        <p id="total-stars"></p>
+        <div class="footer-tools">
+          <button id="unlock-all" type="button"></button>
+          <button id="clear-progress" type="button">Clear saved progress</button>
+        </div>
+      </section>
+
+      <section id="game-screen" hidden>
+        <button id="back" type="button">&larr; Levels</button>
+        <section id="brief"></section>
+        <div id="board-wrap"><svg id="board" role="application" aria-label="Map" tabindex="0"></svg></div>
+        <nav id="palette" aria-label="Districts"></nav>
+        <div id="moves"></div>
+        <div id="status" role="status" aria-live="polite"></div>
+        <section id="result" hidden></section>
+        <div id="tools">
+          <button id="undo" type="button">Undo</button>
+          <button id="redo" type="button">Redo</button>
+          <button id="reset" type="button">Reset</button>
+        </div>
+        <p id="keys" class="keys">Keyboard: click the map, then arrows move, 1&ndash;7 pick a district, Space paints, Shift+arrows paint as you move, Ctrl+Z undoes.</p>
+      </section>
+
+      <section id="settings-screen" hidden>
+        <button id="settings-back" type="button">&larr; Back</button>
+        <h2>Settings</h2>
+        <div id="settings-list"></div>
+        <p class="keys">Your device&rsquo;s own &ldquo;reduce motion&rdquo; setting is always respected. Everything is saved on this device only.</p>
+      </section>
+
+      <section id="card-screen" hidden>
+        <button id="card-back" type="button">&larr; Levels</button>
+        <article id="card"></article>
+      </section>
+    </main>
+  </body>
+</html>
