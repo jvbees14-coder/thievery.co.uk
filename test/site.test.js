@@ -339,9 +339,10 @@ async function run() {
     assert.ok(res.html.includes('Nothing here'), 'expected the not-found page');
   });
 
-  await check('the door links to Gerrymander', async () => {
+  await check('the bar links to Gerrymander, and the door lists it nowhere else', async () => {
     const res = await stranger.page('/');
-    assert.ok(res.html.includes('href="/gerrymander/"'), 'the door does not link to Gerrymander');
+    assert.equal(res.html.split('href="/gerrymander/"').length - 1, 1, 'expected exactly the bar link');
+    assert.ok(res.html.includes('class="menu-nav-link site-extra" href="/gerrymander/"'), 'the bar does not link to Gerrymander');
   });
 
   await check('the game page by its file name is sent to /cards', async () => {

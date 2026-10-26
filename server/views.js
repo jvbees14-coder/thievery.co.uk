@@ -100,9 +100,13 @@ export function bar(current = '', { signedIn = true } = {}) {
   }).join('\n      ');
   const skip = '<a class="skip-link" href="#main">Skip to content</a>';
   const mark = '<a class="site-mark wordmark" href="/">Thievery<em>.co.uk</em></a>';
+  // Gerrymander is not a room (it is a static game with no account), so it is
+  // not one of the five tabs. It is a sixth link outside the nav, shown only
+  // where the bar has room for it, which leaves the phone's tab bar alone.
   const nav = `<nav class="menu-nav" aria-label="Rooms">
       ${links}
-    </nav>`;
+    </nav>
+    <a class="menu-nav-link site-extra" href="/gerrymander/">${icon('gerrymander')}<span>Gerrymander</span></a>`;
   if (!signedIn) {
     return `${skip}
   <header class="site-bar">
