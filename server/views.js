@@ -55,6 +55,7 @@ export const ICONS = {
   account: '<circle cx="12" cy="9" r="3.75"/><path d="M5.5 19.5c1.1-3.75 3.75-5.25 6.5-5.25s5.4 1.5 6.5 5.25"/>',
   members: '<circle cx="9" cy="9" r="3"/><circle cx="16.5" cy="10" r="2.25"/><path d="M3 19c.75-3 3-4.5 6-4.5s5.25 1.5 6 4.5M15 14.25c2.25 0 4.5 1.1 5.25 3.75"/>',
   tools: '<path d="M14.5 5.5a4 4 0 0 0-5 5L4 16l4 4 5.5-5.5a4 4 0 0 0 5-5l-2.5 2.5-2.5-.5-.5-2.5z"/>',
+  gerrymander: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h6v4h10M10 4v6M14 14v6"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
   share: '<path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12"/>',
   undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
