@@ -76,7 +76,11 @@
 .when-narrow { display: none; }
 /* Gerrymander's link: the wide bar only, and only once there is room. */
 .menu-nav-link.site-extra { display: none; }
-@media (min-width: 1101px) { .menu-nav-link.site-extra { display: inline-flex; } }
+/* The link sits straight after the five, so the group is centred as one. */
+@media (min-width: 1101px) {
+  .menu-nav-link.site-extra { display: inline-flex; margin-right: auto; }
+  .menu-nav { flex: none; margin-left: auto; }
+}
 /* The face and the lens are the phone's; on a wide screen the link itself
    is the highlight. */
 .menu-nav-face { display: contents; }
