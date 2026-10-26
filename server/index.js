@@ -30,7 +30,7 @@ import * as Switchhead from './switchhead.js';
 import * as Mindmaps from './mindmaps.js';
 import * as Stats from './stats.js';
 import { currentUser } from './plumbing.js';
-import { readView } from './views.js';
+import { readView, withBar } from './views.js';
 import { shuffle, DEAL_SPLITS, SEAT_COUNTS, MIN_SEATS, MAX_SEATS, MAX_PER_SEAT, usesPowerUps } from './deal.js';
 import * as PowerUps from './powerups.js';
 
@@ -148,7 +148,18 @@ function serve(req, res) {
     res.writeHead(301, { Location: `/gerrymander/${url.search}`, 'Cache-Control': 'no-store' });
     return res.end();
   }
-  if (file === '/gerrymander/') file = '/gerrymander/index.html';
+  // The game's page itself is sent with the site's bar put across the top
+  // (views.js, withBar), so there is a way back to the rest of the site. It
+  // is dressed on every request and never answered with a 304, because the
+  // bar can change while the file does not.
+  if (file === '/gerrymander/' || file === '/gerrymander/index.html') {
+    fs.readFile(path.join(PUBLIC_DIR, 'gerrymander', 'index.html'), 'utf8', (err, html) => {
+      if (err) return notFound(res);
+      res.writeHead(200, { 'Content-Type': MIME['.html'], 'Cache-Control': 'no-cache', ...SAFE_HEADERS });
+      res.end(withBar(html, 'gerrymander', { main: 'app' }));
+    });
+    return;
+  }
   const abs = path.normalize(path.join(PUBLIC_DIR, file));
   if (!abs.startsWith(PUBLIC_DIR)) {
     res.writeHead(403);

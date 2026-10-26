@@ -301,6 +301,25 @@ async function run() {
     assert.ok(res.html.includes('id="app"') && res.html.includes('<title>Gerrymander</title>'), 'expected the game page');
   });
 
+  // The game is built elsewhere, so the bar is put on it as it leaves. It is
+  // the public bar, with Gerrymander marked, a way home and every room, and
+  // its skip link lands on the game's own <main id="app">.
+  await check('/gerrymander/ carries the site bar, with Gerrymander marked', async () => {
+    for (const where of ['/gerrymander/', '/gerrymander/index.html']) {
+      const { html } = await stranger.page(where);
+      assert.ok(html.includes('class="site-bar"'), `${where} has no site bar`);
+      assert.ok(html.includes('class="site-mark wordmark" href="/"'), `${where} has no way home`);
+      for (const room of ['/cards', '/flashcards', '/battle', '/switchhead', '/mindmaps']) {
+        assert.ok(html.includes(`href="${room}"`), `${where} does not link to ${room}`);
+      }
+      assert.ok(html.includes('href="/gerrymander/" aria-current="page"'), `${where} does not mark Gerrymander as here`);
+      assert.ok(html.includes('href="#app"') && html.includes('id="app"'), `${where} has a skip link to nowhere`);
+      assert.ok(/href="\/shell\.css\?v=\w+"/.test(html), `${where} does not load the bar's stylesheet`);
+      assert.ok(!/href="\/style\.css/.test(html), `${where} loads the site's page styles over the game's`);
+      assert.ok(!html.includes('id="who"'), `${where} has an account menu, and the game has no account`);
+    }
+  });
+
   await check('the files of the game come back with the right types', async () => {
     const asset = (res_html) => [...res_html.matchAll(/(?:src|href)="\.\/(assets\/[^"]+)"/g)].map((m) => m[1]);
     const home = await stranger.page('/gerrymander/');

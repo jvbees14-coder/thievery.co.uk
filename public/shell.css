@@ -59,6 +59,17 @@
   min-height: var(--hit); display: inline-flex; align-items: center;
   border-radius: var(--radius-s);
 }
+/* The wordmark and the icons are dressed again here, as style.css dresses
+   them, because the bar is also put across a page that does not load
+   style.css (Gerrymander, which has its own). Same values, so on every other
+   page this changes nothing. */
+.site-mark { font-family: var(--font-display); font-weight: 400; letter-spacing: 0.01em; color: var(--label); }
+.site-mark em {
+  font-style: normal; font-family: var(--font-text); font-weight: 600;
+  font-size: max(0.42em, var(--text-caption)); color: var(--label-secondary);
+  margin-left: 0.25em; vertical-align: 0.15em;
+}
+.site-bar .icon { fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
 
 /* The wide-screen nav: a row of links in the middle of the bar. */
 .menu-nav { display: flex; gap: var(--space-1); flex: 1; justify-content: center; }

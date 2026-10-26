@@ -84,7 +84,7 @@ const ROOMS = [
   { id: 'mindmaps', href: '/mindmaps', name: 'Mind maps', short: 'Maps' },
 ];
 
-export function bar(current = '', { signedIn = true } = {}) {
+export function bar(current = '', { signedIn = true, main = 'main' } = {}) {
   const links = ROOMS.map((r) => {
     const here = r.id === current ? ' aria-current="page"' : '';
     const label =
@@ -98,15 +98,16 @@ export function bar(current = '', { signedIn = true } = {}) {
     const lens = here ? '<span class="menu-nav-lens" aria-hidden="true"></span>' : '';
     return `<a class="menu-nav-link" id="nav-${r.id}" href="${r.href}"${here}><span class="menu-nav-face">${lens}${icon(r.id)}${label}</span></a>`;
   }).join('\n      ');
-  const skip = '<a class="skip-link" href="#main">Skip to content</a>';
+  const skip = `<a class="skip-link" href="#${main}">Skip to content</a>`;
   const mark = '<a class="site-mark wordmark" href="/">Thievery<em>.co.uk</em></a>';
   // Gerrymander is not a room (it is a static game with no account), so it is
   // not one of the five tabs. It is a sixth link outside the nav, shown only
   // where the bar has room for it, which leaves the phone's tab bar alone.
+  const extraHere = current === 'gerrymander' ? ' aria-current="page"' : '';
   const nav = `<nav class="menu-nav" aria-label="Rooms">
       ${links}
     </nav>
-    <a class="menu-nav-link site-extra" href="/gerrymander/">${icon('gerrymander')}<span>Gerrymander</span></a>`;
+    <a class="menu-nav-link site-extra" href="/gerrymander/"${extraHere}>${icon('gerrymander')}<span>Gerrymander</span></a>`;
   if (!signedIn) {
     return `${skip}
   <header class="site-bar">
@@ -241,6 +242,23 @@ export function render(html) {
     out = out.split(`{{bar:${current || 'none'}}}`).join(bar(current));
   }
   return versioned(strip(out));
+}
+
+/**
+ * A page that was not written here, with the site's bar put across the top.
+ *
+ * Gerrymander is built in another project and copied into public/ whole, so
+ * it carries no placeholders and has its own stylesheet, written in a copy of
+ * our tokens. It gets the bar on the way out instead: shell.css, which dresses
+ * the bar without the rest of the site's sheets, and shell.js for its scroll
+ * edge and the phone's tab bar. Not style.css, whose page-wide rules would
+ * fight the game's, and not prefs.js, which would write over the game's own
+ * data-motion on <html>. `main` is the id the skip link should land on.
+ */
+export function withBar(html, current, { main = 'main' } = {}) {
+  const sheet = '<link rel="stylesheet" href="/shell.css" />\n    <script src="/shell.js" defer></script>\n  </head>';
+  const top = bar(current, { signedIn: false, main });
+  return versioned(html.replace('</head>', sheet).replace(/<body([^>]*)>/, (open) => `${open}\n  ${top}`));
 }
 
 export function readView(name) {

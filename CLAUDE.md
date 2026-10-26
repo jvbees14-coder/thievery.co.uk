@@ -97,6 +97,15 @@ exist in `icons/` (the build names `../icons/icon-*.webp`, which do not), and
 the site can be touched by it; the static block serves it `no-cache` so a new
 `VERSION` in it reaches players.
 
+Its page gets the site bar on the way out: `index.js` answers
+`/gerrymander/` (and its `index.html`) with `withBar` from `views.js`, which
+puts in the public bar with Gerrymander marked, `shell.css` and `shell.js`,
+and nothing else of ours. Not `style.css` (its page-wide rules would fight
+the game's) and not `prefs.js` (it would write over the game's own
+`data-motion`). `shell.css` therefore dresses the wordmark and the bar's
+icons itself. The game's source keeps its plain-element rules inside `#app`
+for the same reason, so the bar is never restyled by the game.
+
 **The flashcards room** (`server/flashcards.js`, `cards.js`, `trading.js`;
 `public/flashcards*.{js,css}`) is the opposite: real logins, and a document
 that has to outlive the process.
