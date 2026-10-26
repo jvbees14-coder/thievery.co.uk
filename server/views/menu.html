@@ -13,127 +13,106 @@
   {{bar:home}}
 
   <main id="main" class="menu-main">
-    <h1 class="menu-hello" data-large-title="Home"><span id="greeting">Hello</span>, <span id="hello">&hellip;</span></h1>
+    <!-- The hall: everything here goes when a panel is open (menu.js, show),
+         so the page is one thing at a time. -->
+    <div class="menu-hall">
+      <div class="menu-hello-row">
+        <h1 class="menu-hello display" data-large-title="Home"><span id="greeting">Hello</span>, <span id="hello">&hellip;</span></h1>
+      </div>
 
-    <!-- The tiles. Thievery is the one the site was built for, so it is
-         drawn twice the width of the rest. The icons are inline so they take
-         the tile's colour and cost no request. -->
-    <div class="menu-grid">
-      <a class="menu-tile menu-tile-lead" href="/cards">
-        <svg class="menu-tile-icon" viewBox="0 0 32 32" aria-hidden="true">
-          <rect x="5" y="7" width="13" height="19" rx="2" transform="rotate(-10 11.5 16.5)" />
-          <rect x="14" y="6" width="13" height="19" rx="2" transform="rotate(8 20.5 15.5)" />
-          <path d="M20.5 12.5l2.4 3-2.4 3-2.4-3z" />
-        </svg>
-        <h2>Thievery</h2>
-        <p class="menu-tile-blurb">
-          Work out the hidden cards in everyone else&rsquo;s hand before they
-          work out yours. For 2 to 12 players, or fill the empty seats with bots.
-        </p>
-        <p class="menu-tile-figure" id="tile-table-figure">&nbsp;</p>
-        <span class="btn primary menu-tile-go">Play</span>
-      </a>
+      <div class="menu-top">
+        <!-- Thievery is the one the site was built for, so it leads, and it
+             stays in the Vault by night whatever the device says: it is the
+             card table's doorway, and the table is always dark. -->
+        <section class="menu-table" data-scheme="dark" aria-labelledby="table-title">
+          <div class="menu-table-text">
+            <h2 id="table-title" class="display">Thievery</h2>
+            <p class="menu-table-blurb">
+              Work out the hidden cards in everyone else&rsquo;s hand before they
+              work out yours. For 2 to 12 players, or fill the empty seats with bots.
+            </p>
+            <a class="btn primary menu-table-go" href="/cards">{{icon:cards}}New table</a>
+            <form class="join-code" action="/" method="get">
+              <label for="hall-code">Or join with a room code</label>
+              <span class="join-code-row">
+                <input id="hall-code" name="code" maxlength="4" pattern="[A-Za-z0-9]{4}" placeholder="CODE" autocapitalize="characters" autocomplete="off" spellcheck="false" required />
+                <button class="btn" type="submit">Join</button>
+              </span>
+            </form>
+            <p class="menu-table-figure" id="tile-table-figure">&nbsp;</p>
+          </div>
+          <div class="hand-art menu-table-hand" aria-hidden="true">
+            <div class="hand-fan">
+              <span class="hand-card is-back" style="--turn: -24deg"></span>
+              <span class="hand-card is-face" style="--turn: -8deg"><b>7</b></span>
+              <span class="hand-card is-back-red is-lifted" style="--turn: 8deg"></span>
+              <span class="hand-card is-face is-red" style="--turn: 24deg"><b>J</b></span>
+            </div>
+          </div>
+        </section>
 
-      <a class="menu-tile" id="tile-flashcards" href="/flashcards">
-        <svg class="menu-tile-icon" viewBox="0 0 32 32" aria-hidden="true">
-          <rect x="4" y="9" width="20" height="15" rx="2" />
-          <path d="M8 6h18a2 2 0 0 1 2 2v12" />
-          <path d="M8 14h12M8 18h8" />
-        </svg>
-        <h2>Flashcards</h2>
-        <p class="menu-tile-blurb">
-          Write your own cards. Each one gets a rarity when you make it. Print
-          them, or put them up for trade.
-        </p>
-        <p class="menu-tile-figure" id="tile-flashcards-figure">&nbsp;</p>
-      </a>
+        <!-- Today's ten: the one thing in the hall that changes every day.
+             Hidden until the battle room says there is a deck today. -->
+        <section class="menu-daily" id="menu-daily" aria-labelledby="daily-title" hidden>
+          <h2 id="daily-title" class="display">Today&rsquo;s ten</h2>
+          <p class="menu-daily-deck" id="daily-deck">&nbsp;</p>
+          <p class="menu-daily-note">The same ten questions for everyone today. Your first go goes on the board.</p>
+          <p class="menu-daily-line" id="tile-battle-daily">&nbsp;</p>
+          <a class="btn menu-daily-go" id="daily-go" href="/battle">Play today&rsquo;s ten</a>
+        </section>
+      </div>
 
-      <a class="menu-tile" id="tile-battle" href="/battle">
-        <svg class="menu-tile-icon" viewBox="0 0 32 32" aria-hidden="true">
-          <path d="M6 6l12 12M6 6h5M6 6v5" />
-          <path d="M26 6L14 18M26 6h-5M26 6v5" />
-          <path d="M11 21l-4 4M21 21l4 4M9 19l4 4M23 19l-4 4" />
-        </svg>
-        <h2>Battle</h2>
-        <p class="menu-tile-blurb">
-          See the front of a card, type the back, and get a mark out of 100.
-          Play alone or against friends, on your cards or ours.
-        </p>
-        <p class="menu-tile-daily" id="tile-battle-daily" hidden></p>
-        <p class="menu-tile-figure" id="tile-battle-figure">&nbsp;</p>
-      </a>
+      <section class="menu-rooms" aria-labelledby="rooms-title">
+        <h2 id="rooms-title" class="menu-section-head display">Your rooms</h2>
+        <div class="menu-grid">
+          <a class="menu-tile tile-flashcards" id="tile-flashcards" href="/flashcards">
+            {{icon:flashcards}}
+            <h3>Flashcards</h3>
+            <p class="menu-tile-figure" id="tile-flashcards-figure">&nbsp;</p>
+          </a>
+          <a class="menu-tile tile-battle" id="tile-battle" href="/battle">
+            {{icon:battle}}
+            <h3>Battle</h3>
+            <p class="menu-tile-figure" id="tile-battle-figure">&nbsp;</p>
+          </a>
+          <a class="menu-tile tile-switchhead" id="tile-switchhead" href="/switchhead">
+            {{icon:switchhead}}
+            <h3>Switchhead</h3>
+            <p class="menu-tile-figure" id="tile-switchhead-figure">&nbsp;</p>
+          </a>
+          <a class="menu-tile tile-mindmaps" id="tile-mindmaps" href="/mindmaps">
+            {{icon:mindmaps}}
+            <h3>Mind maps</h3>
+            <p class="menu-tile-figure" id="tile-mindmaps-figure">&nbsp;</p>
+          </a>
+          <a class="menu-tile tile-gerrymander" id="tile-gerrymander" href="/gerrymander/">
+            {{icon:gerrymander}}
+            <h3>Gerrymander</h3>
+            <p class="menu-tile-figure">Nothing to sign in to</p>
+          </a>
+          <a class="menu-tile menu-tile-house" id="tile-members" href="#members" hidden>
+            {{icon:members}}
+            <h3>Members</h3>
+            <p class="menu-tile-figure" id="tile-members-figure">&nbsp;</p>
+          </a>
+        </div>
+      </section>
 
-      <a class="menu-tile" id="tile-switchhead" href="/switchhead">
-        <svg class="menu-tile-icon" viewBox="0 0 32 32" aria-hidden="true">
-          <path d="M6 11h18l-4-4M26 21H8l4 4" />
-        </svg>
-        <h2>Switchhead</h2>
-        <p class="menu-tile-blurb">
-          Get rid of your cards first. Except the hands swap without warning,
-          and sometimes going out first puts you last.
-        </p>
-        <p class="menu-tile-figure" id="tile-switchhead-figure">&nbsp;</p>
-      </a>
-
-      <a class="menu-tile" id="tile-mindmaps" href="/mindmaps">
-        <svg class="menu-tile-icon" viewBox="0 0 32 32" aria-hidden="true">
-          <circle cx="16" cy="16" r="4" />
-          <circle cx="6" cy="8" r="2.5" /><circle cx="26" cy="9" r="2.5" /><circle cx="24" cy="25" r="2.5" />
-          <path d="M12.6 14L8.2 9.4M19.6 14.4l4.2-3.6M18.8 19.2l3.6 3.8" />
-        </svg>
-        <h2>Mind maps</h2>
-        <p class="menu-tile-blurb">
-          Start with one idea in the middle and branch out from it. Download
-          your maps as pictures, or print them.
-        </p>
-        <p class="menu-tile-figure" id="tile-mindmaps-figure">&nbsp;</p>
-      </a>
-
-      <a class="menu-tile" id="tile-gerrymander" href="/gerrymander/">
-        <svg class="menu-tile-icon" viewBox="0 0 32 32" aria-hidden="true">
-          <rect x="5" y="5" width="22" height="22" rx="3" />
-          <path d="M5 13h8v6h14M13 5v8M19 19v8" />
-        </svg>
-        <h2>Gerrymander</h2>
-        <p class="menu-tile-blurb">
-          Draw the boundaries. Win the seats. A dry little puzzle about the
-          oldest trick in politics.
-        </p>
-        <p class="menu-tile-figure">Nothing to sign in to.</p>
-      </a>
-
-      <a class="menu-tile" href="#stats">
-        <svg class="menu-tile-icon" viewBox="0 0 32 32" aria-hidden="true">
-          <path d="M6 26h20M9 26V16M15 26V9M21 26V13" />
-        </svg>
-        <h2>Stats</h2>
-        <p class="menu-tile-blurb">Games played and won, in every room.</p>
-        <p class="menu-tile-figure" id="tile-stats-figure">&nbsp;</p>
-      </a>
-
-      <a class="menu-tile" href="#account">
-        <svg class="menu-tile-icon" viewBox="0 0 32 32" aria-hidden="true">
-          <circle cx="16" cy="12" r="5" />
-          <path d="M7 26c1.5-5 5-7 9-7s7.5 2 9 7" />
-        </svg>
-        <h2>Account</h2>
-        <p class="menu-tile-blurb">Your name, your password, and whether the banners animate.</p>
-        <p class="menu-tile-figure" id="tile-account-figure">&nbsp;</p>
-      </a>
-
-      <a class="menu-tile menu-tile-house" id="tile-members" href="#members" hidden>
-        <svg class="menu-tile-icon" viewBox="0 0 32 32" aria-hidden="true">
-          <circle cx="12" cy="12" r="4" />
-          <circle cx="22" cy="13" r="3" />
-          <path d="M4 25c1-4 4-6 8-6s7 2 8 6M20 19c3 0 6 1.5 7 5" />
-        </svg>
-        <h2>Members</h2>
-        <p class="menu-tile-blurb">Rename, reset, suspend or close accounts.</p>
-        <p class="menu-tile-figure" id="tile-members-figure">&nbsp;</p>
-      </a>
+      <section class="menu-record" aria-labelledby="record-title">
+        <div class="menu-section-row">
+          <h2 id="record-title" class="menu-section-head display">Your record</h2>
+          <a class="menu-section-link" href="#stats">All stats</a>
+          <a class="menu-section-link" href="#account">Account</a>
+        </div>
+        <dl class="menu-record-figures">
+          <div><dt>Rounds played</dt><dd id="rec-rounds">&ndash;</dd></div>
+          <div><dt>Won against people</dt><dd id="rec-people">&ndash;</dd></div>
+          <div><dt>Won against bots</dt><dd id="rec-bots">&ndash;</dd></div>
+          <div><dt>Tables sat at</dt><dd id="rec-tables">&ndash;</dd></div>
+        </dl>
+      </section>
     </div>
 
-    <!-- --------------------------------------------------------- stats -->
     <section id="stats" class="menu-panel panel" hidden>
       <h2 class="menu-panel-head">Your stats</h2>
       <p class="menu-panel-lede" id="stats-lede">&nbsp;</p>

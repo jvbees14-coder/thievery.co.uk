@@ -44,36 +44,112 @@
        account, says in plain text what the site is, and only then offers a
        way in for the rooms that do need one. -->
   <main id="main" class="landing">
+    <!-- The game first: what it is, in words a search engine can read, and
+         the one button. The hand beside it is a picture of a turn, so it is
+         hidden from screen readers; the same turn is told in words below. -->
     <section class="landing-hero" aria-labelledby="landing-title">
-      <p class="landing-kicker">A free card game for 2 to 12 players</p>
-      <h1 id="landing-title" class="landing-title display">Steal their cards before they steal yours.</h1>
-      <p class="landing-lede">
-        Thievery is a deduction card game you play in the browser. Everyone
-        arranges a hand face down, in order. On your turn you point at
-        somebody else&rsquo;s hidden card and name it. Get it right and it
-        flips. Flip all of theirs before they flip all of yours.
-      </p>
-      <div class="landing-actions">
-        <a class="btn primary landing-play" href="/cards">{{icon:cards}}Play Thievery</a>
-        <span class="landing-note">No sign-up. Share a room code, or fill the table with bots.</span>
+      <div class="landing-hero-text">
+        <p class="landing-kicker">A free card game for 2 to 12 players</p>
+        <h1 id="landing-title" class="landing-title display">Steal their cards before they steal yours.</h1>
+        <p class="landing-lede">
+          Thievery is a deduction card game you play in the browser. Everyone
+          keeps a hand face down, in order. On your turn, point at a card in
+          someone else&rsquo;s hand and name it. Get it right and it flips.
+          Flip all of theirs before they flip all of yours.
+        </p>
+        <div class="landing-actions">
+          <a class="btn primary landing-play" href="/cards">{{icon:cards}}Play Thievery</a>
+          <!-- A plain GET to /?code=, which the site already sends on to
+               /cards/CODE, so joining needs no script at all. -->
+          <form class="join-code" action="/" method="get">
+            <label class="visually-hidden" for="landing-code">Room code</label>
+            <input id="landing-code" name="code" maxlength="4" pattern="[A-Za-z0-9]{4}" placeholder="CODE" autocapitalize="characters" autocomplete="off" spellcheck="false" required />
+            <button class="btn" type="submit">Join</button>
+          </form>
+        </div>
+        <p class="landing-note">No sign-up. Share a room code, or fill the empty seats with bots. Have an account? <a href="#door">Sign in</a>.</p>
       </div>
 
-      <h2 class="landing-h2">Also here</h2>
+      <div class="hand-art landing-hand" aria-hidden="true">
+        <div class="hand-fan">
+          <span class="hand-card is-back" style="--turn: -30deg"></span>
+          <span class="hand-card is-back" style="--turn: -15deg"></span>
+          <span class="hand-card is-back-red" style="--turn: 0deg"></span>
+          <span class="hand-card is-face is-red is-lifted" style="--turn: 15deg"><b>Q</b><svg viewBox="0 0 24 24"><path d="M12 2 21 12 12 22 3 12z" /></svg><b>Q</b></span>
+          <span class="hand-card is-back" style="--turn: 30deg"></span>
+        </div>
+        <div class="hand-guess">
+          <span class="hand-guess-who">You point at Sam&rsquo;s fourth card</span>
+          <span class="hand-guess-call">&ldquo;The queen.&rdquo;</span>
+          <span class="pill good">{{icon:check}}Flipped</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-section" aria-labelledby="turn-title">
+      <h2 id="turn-title" class="landing-h2 display">One turn</h2>
+      <ol class="landing-turn">
+        <li><span class="turn-card is-back" aria-hidden="true">1</span><span><b>Point</b> Pick a face-down card in another player&rsquo;s hand.</span></li>
+        <li><span class="turn-card is-back-red" aria-hidden="true">2</span><span><b>Name it</b> Hands are kept in order, so the cards either side narrow it down.</span></li>
+        <li><span class="turn-card is-face" aria-hidden="true">3</span><span><b>Flip it</b> Right, and it turns face up. Turn over a whole hand to win.</span></li>
+      </ol>
+    </section>
+
+    <!-- The other rooms, described rather than linked: four of them need an
+         account, and Gerrymander's one link on this page is the bar's. -->
+    <section class="landing-section" aria-labelledby="rooms-title">
+      <div class="landing-section-head">
+        <h2 id="rooms-title" class="landing-h2 display">Five more rooms</h2>
+        <p>Free, like everything here.</p>
+      </div>
       <ul class="landing-rooms">
-        <li>{{icon:flashcards}}<span><b>Flashcards.</b> Write your own, get a rarity for each, and trade them.</span></li>
-        <li>{{icon:battle}}<span><b>Battle.</b> Quiz yourself or your friends, on your cards or ours.</span></li>
-        <li>{{icon:switchhead}}<span><b>Switchhead.</b> A shedding game where the hands swap without warning.</span></li>
-        <li>{{icon:gerrymander}}<span><b>Gerrymander.</b> Draw the boundaries. Win the seats. A dry little puzzle about the oldest trick in politics. No sign-up.</span></li>
-        <li>{{icon:mindmaps}}<span><b>Mind maps.</b> One idea in the middle, and everything branching off it.</span></li>
+        <li class="room-card">
+          <div class="room-art art-flashcards" aria-hidden="true"><span></span><span></span><span></span></div>
+          <h3>Flashcards</h3>
+          <p>Write your own cards. Each one gets a rarity when you make it. Print them, or put them up for trade.</p>
+          <span class="room-pills" aria-hidden="true"><span class="pill rarity-rare">Rare</span><span class="pill rarity-epic">Epic</span><span class="pill rarity-legendary">Legendary</span></span>
+        </li>
+        <li class="room-card">
+          <div class="room-art art-battle" aria-hidden="true"><span class="art-battle-label">Your answer</span><span class="art-battle-mark"><b>87</b> / 100</span><span class="art-battle-bar"><span></span></span></div>
+          <h3>Battle</h3>
+          <p>See the front of a card, type the back, and get a mark out of 100. Play alone or against friends, on your cards or ours.</p>
+        </li>
+        <li class="room-card">
+          <div class="room-art art-switchhead" aria-hidden="true"><span class="art-hand"><span></span><span></span><span></span></span>{{icon:switchhead}}<span class="art-hand is-red"><span></span><span></span></span></div>
+          <h3>Switchhead</h3>
+          <p>Get rid of your cards first. Except the hands swap without warning, and sometimes going out first puts you last.</p>
+        </li>
+        <li class="room-card">
+          <div class="room-art art-mindmaps" aria-hidden="true">
+            <svg viewBox="0 0 220 132" preserveAspectRatio="xMidYMid meet">
+              <path class="b1" d="M110 66 C80 66 70 34 44 30" /><path class="b2" d="M110 66 C80 66 70 100 40 104" />
+              <path class="b3" d="M110 66 C140 66 150 32 178 28" /><path class="b5" d="M110 66 C140 66 150 102 182 104" />
+              <rect class="b1" x="20" y="20" width="44" height="20" rx="10" /><rect class="b2" x="16" y="94" width="44" height="20" rx="10" />
+              <rect class="b3" x="158" y="18" width="44" height="20" rx="10" /><rect class="b5" x="162" y="94" width="44" height="20" rx="10" />
+              <rect class="root" x="80" y="52" width="60" height="28" rx="14" />
+            </svg>
+          </div>
+          <h3>Mind maps</h3>
+          <p>One idea in the middle, and everything branching off it. Download your maps as pictures, or print them.</p>
+        </li>
+        <li class="room-card">
+          <div class="room-art art-gerrymander" aria-hidden="true"><span class="art-map"><span class="d0"></span><span class="d0"></span><span class="d1"></span><span class="d1"></span><span class="d0"></span><span class="d2"></span><span class="d2"></span><span class="d1"></span><span class="d0"></span><span class="d2"></span><span class="d2"></span><span class="d1"></span><span class="d3"></span><span class="d3"></span><span class="d3"></span><span class="d3"></span></span></div>
+          <h3>Gerrymander</h3>
+          <p>Draw the boundaries. Win the seats. A dry little puzzle about the oldest trick in politics.</p>
+          <span class="room-pills"><span class="pill accent">No sign-up</span></span>
+        </li>
       </ul>
     </section>
 
-    <section class="home-card door-card landing-door" data-api="/api/site" data-next="/" aria-labelledby="door-title">
-      <h2 id="door-title" class="landing-door-title">Sign in for the rest</h2>
-      <p class="tagline">
-        An account keeps your stats and opens Flashcards, Battle, Switchhead
-        and Mind maps.
-      </p>
+    <section id="door" class="landing-door-band" aria-labelledby="door-title">
+      <div class="landing-door-text">
+        <h2 id="door-title" class="landing-door-title display">Pull up a chair.</h2>
+        <p>
+          An account keeps your stats and opens Flashcards, Battle, Switchhead
+          and Mind maps. Thievery and Gerrymander never need one.
+        </p>
+      </div>
+    <div class="home-card door-card landing-door" data-api="/api/site" data-next="/">
 
       <div class="door-tabs" role="tablist">
         <button class="door-tab is-on" data-pane="signin" role="tab" aria-selected="true">Sign in</button>
@@ -115,6 +191,7 @@
 
       <p id="door-error" class="door-error" role="alert" hidden></p>
 
+    </div>
     </section>
   </main>
 

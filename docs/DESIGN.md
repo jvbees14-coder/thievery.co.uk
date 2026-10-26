@@ -44,7 +44,10 @@ Where two pulled against each other:
   ("Create game", "Play again", "New card"), even where a joke would fit.
 - **Immersion over following the device, at the card table.** The table stays
   dark (`data-scheme="dark"` on `/cards`) because the felt, the card backs
-  and the banners are the game's artwork. Everywhere else follows the device.
+  and the banners are the game's artwork. So does its doorway, the hall's
+  Thievery panel: `data-scheme="dark"` works on any element, not only
+  `<html>`, and gives that element the dark tokens. Everywhere else follows
+  the device.
 - **Honesty over reassurance, on connection.** When the socket drops the pill
   says so and counts to the next try, and after a few tries says the server is
   starting up again, rather than a spinner that says nothing.

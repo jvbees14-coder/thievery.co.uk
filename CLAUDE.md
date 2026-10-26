@@ -760,7 +760,9 @@ matters when changing it:
 - `public/tokens.css` is the one place a colour, size, gap or duration is
   written. Light or dark is the **device's** choice (`prefers-color-scheme`);
   there is no switch. `public/cards.html` sets `data-scheme="dark"` on
-  `<html>` and the light block skips it: the card table stays dark. More
+  `<html>` and the light block skips it: the card table stays dark. The dark
+  block also matches `[data-scheme="dark"]` on any element, which is how the
+  hall's Thievery panel stays dark on a light page. More
   contrast and less transparency are handled there too.
 - The Vault's old names (`--ink`, `--brass`, `--text-dim`...) are aliases of
   the semantic tokens, kept so the rooms written against them follow the

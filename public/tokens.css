@@ -26,7 +26,11 @@
 
 /* --- 1. colour: the Vault by night (the default) ---------------------------- */
 
-:root {
+/* Also on anything marked data-scheme="dark", so one piece of a page can stay
+   in the Vault by night while the device has asked for day: the hall's
+   Thievery panel, which is the card table's doorway and keeps its colours. The
+   light block below only ever matches the root, so it cannot reach in. */
+:root, [data-scheme="dark"] {
   color-scheme: dark;
 
   --bg: #0a0c14;

@@ -441,6 +441,20 @@ async function run() {
     assert.ok(!res.html.includes('Open an account'), 'the door was served to a member');
   });
 
+  // The hall leads with the table, kept dark, and a room code typed into it
+  // is a plain GET to /?code=, which the site already sends on to the table.
+  await check('the hall leads with the table and can join a room by code', async () => {
+    const { html } = await alice.page('/');
+    assert.ok(html.includes('class="menu-table" data-scheme="dark"'), 'the Thievery panel is not kept dark');
+    assert.ok(/<form class="join-code" action="\/" method="get">[^]*?name="code"/.test(html), 'the hall has no room-code form');
+    for (const id of ['rec-rounds', 'rec-people', 'rec-bots', 'rec-tables', 'menu-daily']) {
+      assert.ok(html.includes(`id="${id}"`), `the hall has no #${id}`);
+    }
+    const res = await alice.page('/?code=abcd');
+    assert.equal(res.status, 301);
+    assert.equal(res.location, '/cards/ABCD');
+  });
+
   await check('a post from another site is refused', async () => {
     const res = await alice.call('account', { method: 'POST', body: { displayName: 'Mallory' }, origin: 'https://not-thievery.example' });
     assert.equal(res.status, 403);

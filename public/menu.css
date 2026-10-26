@@ -1,103 +1,140 @@
 /* Thievery.co.uk — the front hall.
  *
- * A grid of doors and two panels that stand in for it when one is open. It
- * borrows the bar, the panel and the door-card from the flashcards room's
- * stylesheet rather than restating them, so the two halves of the site keep
- * looking like one place; everything here is only what the hall itself adds. */
+ * The front door for a visitor, and for a member the hall: the table, today's
+ * ten, the rooms and the record, and the panels that stand in for it when one
+ * is open. It borrows the bar, the panel and the door-card from the
+ * flashcards room's stylesheet rather than restating them, so the two halves
+ * of the site keep looking like one place; everything here is only what the
+ * hall itself adds. */
 
 .menu-main {
-  padding: clamp(22px, 4vw, 48px) clamp(14px, 3vw, 32px) 80px;
-  max-width: 1100px;
-  margin: 0 auto;
+  width: 100%; max-width: 1180px; margin: 0 auto; box-sizing: border-box;
+  padding: clamp(var(--space-5), 4vw, var(--space-7)) max(var(--space-4), env(safe-area-inset-right)) var(--space-8) max(var(--space-4), env(safe-area-inset-left));
 }
 
+/* --- the hall ---------------------------------------------------------------
+   The greeting, then the table and today's ten side by side, then the rooms,
+   then the record. menu.js hides the lot while a panel is open. */
 
+.menu-hall { display: flex; flex-direction: column; gap: var(--space-7); }
 .menu-hello {
-  margin: 6px 0 4px;
-  font-family: var(--display);
-  font-size: clamp(28px, 5vw, 44px);
-  font-weight: 400;
-  color: var(--ivory);
-  text-align: center;
+  margin: 0;
+  font-size: clamp(2.125rem, 5vw, 3.5rem); line-height: 1.05;
+  color: var(--label); text-wrap: balance;
 }
-#hello { color: var(--brass); }
-.menu-lede { margin: 0 auto 30px; max-width: 46ch; text-align: center; color: var(--text-dim); }
+
+/* Section heads carry a brass rule out to the right, the Vault's one
+   ornament on a heading. */
+.menu-section-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); }
+.menu-section-head {
+  margin: 0; display: flex; align-items: center; gap: var(--space-4);
+  font-size: var(--text-title-1); line-height: 1.2; color: var(--label);
+}
+.menu-section-head::after { content: ""; flex: 1; min-width: var(--space-6); height: 1px; background: linear-gradient(90deg, var(--ornament), transparent); }
+.menu-section-row .menu-section-head { flex: 1; }
+.menu-section-link {
+  display: inline-flex; align-items: center; min-height: var(--hit);
+  font-size: var(--text-subhead); font-weight: 600; text-decoration: none;
+}
+
+.menu-top { display: flex; flex-wrap: wrap; gap: var(--space-5); }
+
+/* Thievery's panel: the card table's doorway, kept dark (data-scheme on the
+   element; see tokens.css), with a hand of cards beside the way in. */
+.menu-table {
+  flex: 2 1 560px; min-width: 0;
+  position: relative; overflow: hidden;
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-6);
+  padding: var(--space-6);
+  border-radius: 20px;
+  background: radial-gradient(120% 140% at 85% 20%, var(--bg-elevated-2), var(--bg-grouped) 70%);
+  border: 1px solid var(--separator);
+  box-shadow: var(--shadow-2);
+  color: var(--label);
+}
+.menu-table::before, .menu-table::after {
+  content: ""; position: absolute; width: 14px; height: 14px; pointer-events: none;
+  border-color: var(--ornament); border-style: solid; border-width: 0;
+}
+.menu-table::before { top: 10px; left: 10px; border-top-width: 1px; border-left-width: 1px; border-top-left-radius: 6px; }
+.menu-table::after { bottom: 10px; right: 10px; border-bottom-width: 1px; border-right-width: 1px; border-bottom-right-radius: 6px; }
+.menu-table-text { flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: var(--space-4); position: relative; z-index: 1; }
+.menu-table h2 { margin: 0; font-size: 2.25rem; line-height: 1.1; color: var(--label); }
+.menu-table-blurb { margin: 0; max-width: 30em; color: var(--label-secondary); }
+.menu-table-go { align-self: flex-start; min-height: 52px; padding: 0 var(--space-5); font-size: var(--text-headline); }
+.menu-table-go .icon { width: 22px; height: 22px; }
+.menu-table-figure { margin: 0; font-size: var(--text-footnote); color: var(--label-secondary); }
+.menu-table-hand { --card-w: 96px; flex: 0 1 300px; min-width: 240px; height: 240px; }
+
+/* Today's ten. */
+.menu-daily {
+  flex: 1 1 300px; min-width: 0;
+  display: flex; flex-direction: column; gap: var(--space-3);
+  padding: var(--space-5);
+  border-radius: 20px;
+  background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-2);
+}
+.menu-daily h2 { margin: 0; font-size: var(--text-title-2); color: var(--label); }
+.menu-daily-deck { margin: 0; font-family: var(--font-display); font-size: var(--text-title-3); color: var(--label); }
+.menu-daily-note { margin: 0; font-size: var(--text-subhead); color: var(--label-secondary); }
+.menu-daily-line { margin: 0; font-size: var(--text-subhead); font-weight: 600; color: var(--label); }
+.menu-daily-go { align-self: flex-start; margin-top: auto; }
 
 /* --- the doors off the hall ---------------------------------------------- */
 
+.menu-rooms, .menu-record { display: flex; flex-direction: column; gap: var(--space-4); }
 .menu-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: clamp(12px, 2vw, 20px);
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--space-4);
 }
-
 .menu-tile {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  padding: 24px 22px 20px;
-  border: 1px solid var(--brass-faint);
-  border-radius: var(--radius);
-  background: var(--bg-elevated);
-  color: inherit;
-  text-decoration: none;
-  transition: border-color 0.18s ease, background 0.18s ease;
+  display: flex; flex-direction: column; gap: var(--space-2);
+  padding: var(--space-4) var(--space-4) var(--space-5);
+  border-radius: var(--radius-l);
+  background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-2);
+  color: var(--label); text-decoration: none;
+  transition: background var(--dur-quick), border-color var(--dur-quick);
 }
-.menu-tile:hover, .menu-tile:focus-visible {
-  border-color: var(--brass-dim);
-  background: var(--bg-elevated-2);
-}
-
-.menu-tile-icon {
-  width: 30px; height: 30px;
-  fill: none; stroke: var(--brass); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
-}
-.menu-tile h2 {
-  margin: 12px 0 6px;
-  font-family: var(--display);
-  font-size: 24px;
-  font-weight: 400;
-  color: var(--ivory);
-}
-/* Thievery is the game the site is for, so its tile is twice the width of
-   the rest, a size up, and the only one with a button on it. */
-.menu-tile-lead { grid-column: span 2; }
-.menu-tile-lead h2 { font-size: 32px; }
-.menu-tile-lead .menu-tile-blurb { font-size: 17px; max-width: 46ch; }
-.menu-tile-lead .menu-tile-icon { width: 38px; height: 38px; }
-.menu-tile-go { align-self: flex-start; margin-top: 16px; }
-@media (max-width: 620px) {
-  .menu-tile-lead { grid-column: auto; }
-}
-.menu-tile-blurb { margin: 0 0 16px; color: var(--text-dim); font-size: 15px; }
-/* Pushed to the foot so the figure sits on the same line across the row
-   however long the blurb above it runs. */
-.menu-tile-figure {
-  margin: auto 0 0;
-  padding-top: 12px;
-  border-top: 1px solid var(--brass-ghost);
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--text-faint);
-}
-
-/* Today's ten, on the battle tile: a line of its own above the figure, in
-   brass, because it is the one thing on the hall that changes every day. */
-.menu-tile-daily {
-  margin: auto 0 0;
-  padding-top: 12px;
-  font-size: 13.5px;
-  color: var(--brass);
-}
-.menu-tile-daily + .menu-tile-figure { margin-top: 8px; }
-
-/* The battle room's line about your best deck sits between its figures and
-   its table, closer to the figures it is summing up. */
-#battle-best { margin: -10px 0 14px; }
+.menu-tile:hover { background: var(--bg-elevated-2); border-color: var(--separator-strong); color: var(--label); }
+.menu-tile .icon { width: 28px; height: 28px; }
+.menu-tile h3 { margin: var(--space-1) 0 0; font-family: var(--font-display); font-size: var(--text-title-2); font-weight: 400; line-height: 1.2; }
+.menu-tile-figure { margin: 0; font-size: var(--text-footnote); color: var(--label-secondary); }
+/* Each room's icon in its own ink, the same ones its room uses for its own
+   things: rarity for the cards, the mark's green, a team for the hands. */
+.tile-flashcards .icon { color: var(--r-epic); }
+.tile-battle .icon { color: var(--success); }
+.tile-switchhead .icon { color: var(--team-b); }
+.tile-mindmaps .icon { color: var(--mm-c5); }
+.tile-gerrymander .icon { color: var(--mm-c4); }
 
 /* A room that cannot be reached is still drawn, dimmed, and says why in its
    own figure line. Hiding it would leave a hole nobody could account for. */
 .menu-tile.is-shut { opacity: 0.55; }
+
+/* The record: four figures on one grouped strip, ruled by the gap. */
+.menu-record-figures {
+  margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px;
+  border-radius: var(--radius-l); overflow: hidden;
+  background: var(--separator); border: 1px solid var(--separator);
+}
+.menu-record-figures div { padding: var(--space-4) var(--space-5); background: var(--bg-grouped); }
+.menu-record-figures dt { font-size: var(--text-footnote); color: var(--label-secondary); }
+/* The figures are in the text face, bold, not Limelight: its nought is a
+   half-moon, and a new account's record is all noughts. */
+.menu-record-figures dd { margin: var(--space-1) 0 0; font-size: 2rem; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; color: var(--label); }
+
+@media (max-width: 640px) {
+  .menu-table { padding: var(--space-5); }
+  .menu-table h2 { font-size: var(--text-title-1); }
+  .menu-table-blurb { margin-right: 96px; }
+  /* On a phone the hand tucks into the corner beside the title. */
+  .menu-table .menu-table-hand { position: absolute; top: var(--space-3); right: calc(-1 * var(--space-4)); width: 220px; min-width: 0; height: 180px; transform: scale(0.5); transform-origin: top right; }
+  .menu-grid { grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+  .menu-record-figures { grid-template-columns: 1fr 1fr; }
+  .menu-record-figures dd { font-size: var(--text-title-1); }
+  .menu-section-head { font-size: var(--text-title-2); }
+}
 
 /* --- the panels ---------------------------------------------------------- */
 
@@ -163,7 +200,7 @@
 /* The admin's own tile is edged in the same rose the panel marks the admin's
    account with, so it reads as the house's door rather than one more room. */
 .menu-tile-house { border-color: var(--team-b-edge); }
-.menu-tile-house .menu-tile-icon { stroke: var(--team-b-edge); }
+.menu-tile-house .icon { color: var(--team-b); }
 
 .menu-members { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
 /* The flashcards panel draws a row as a button; here it is a link, because
@@ -181,39 +218,196 @@
 .menu-member .btn.danger:hover { background: var(--danger-tint); border-color: var(--bad); }
 
 /* --- the front door, for a visitor ----------------------------------------
-   The game first, in words a search engine can read, then the way in for
-   everything else. Two columns where there is room, one where there is not,
-   and the game always comes first in the reading order. */
+   The game first, in words a search engine can read, with a picture of a
+   turn beside it; then the turn in words; then the other rooms; then the way
+   in for the rooms that need an account. */
 
 .landing {
-  width: 100%; max-width: 1120px; margin: 0 auto;
-  padding: clamp(var(--space-5), 6vw, var(--space-8)) max(var(--space-4), env(safe-area-inset-right)) var(--space-7) max(var(--space-4), env(safe-area-inset-left));
-  display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: clamp(var(--space-5), 5vw, var(--space-8)); align-items: start;
+  width: 100%; max-width: 1180px; margin: 0 auto; box-sizing: border-box;
+  padding: clamp(var(--space-5), 6vw, var(--space-8)) max(var(--space-4), env(safe-area-inset-right)) var(--space-8) max(var(--space-4), env(safe-area-inset-left));
+  display: flex; flex-direction: column; gap: clamp(var(--space-7), 8vw, var(--space-8));
 }
-.landing-kicker { margin: 0 0 var(--space-3); font-size: var(--text-subhead); font-weight: 600; color: var(--label-secondary); }
-.landing-title { margin: 0 0 var(--space-4); font-size: clamp(2.25rem, 6vw, 3.75rem); color: var(--label); text-wrap: balance; }
-.landing-lede { margin: 0 0 var(--space-5); font-size: var(--text-title-3); line-height: 1.5; color: var(--label); max-width: 34em; }
-.landing-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-4); margin-bottom: var(--space-7); }
+.landing-hero { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-7); }
+.landing-hero-text { flex: 1 1 440px; min-width: 0; display: flex; flex-direction: column; gap: var(--space-5); }
+.landing-kicker {
+  margin: 0; align-self: flex-start;
+  padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill);
+  border: 1px solid var(--accent-edge); background: var(--accent-tint); color: var(--accent);
+  font-size: var(--text-caption); font-weight: 600;
+}
+.landing-title { margin: 0; font-size: clamp(2.75rem, 6vw, 4.75rem); line-height: 1.02; color: var(--label); text-wrap: balance; }
+.landing-lede { margin: 0; max-width: 34em; color: var(--label-secondary); }
+.landing-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); }
 .landing-play { min-height: 52px; padding: 0 var(--space-5); font-size: var(--text-headline); }
 .landing-play .icon { width: 22px; height: 22px; }
-.landing-note { color: var(--label-secondary); font-size: var(--text-subhead); }
-.landing-h2 { margin: 0 0 var(--space-3); font-size: var(--text-headline); font-weight: 600; color: var(--label); }
-.landing-rooms { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
-.landing-rooms li { display: flex; gap: var(--space-3); align-items: flex-start; color: var(--label-secondary); max-width: 40em; }
-.landing-rooms .icon { width: 22px; height: 22px; color: var(--label-secondary); margin-top: 2px; }
-.landing-rooms b { color: var(--label); }
-.landing-door { width: 100%; }
-.landing-door-title { margin: 0; font-size: var(--text-title-2); font-weight: 600; color: var(--label); }
-.landing-door .tagline { text-align: left; margin-top: calc(-1 * var(--space-2)); }
+.landing-note { margin: 0; color: var(--label-secondary); font-size: var(--text-footnote); }
+.landing-hand { flex: 1 1 420px; min-width: 280px; height: 420px; }
 
-@media (max-width: 860px) {
-  .landing { grid-template-columns: minmax(0, 1fr); }
-  .landing-actions { margin-bottom: var(--space-6); }
+/* A room code, typed straight in. Shared by the front door and the hall. */
+.join-code { display: flex; flex-direction: column; gap: var(--space-2); }
+.join-code label { font-size: var(--text-subhead); color: var(--label-secondary); }
+.join-code-row, .landing-actions .join-code { display: flex; flex-direction: row; align-items: center; gap: var(--space-2); }
+.join-code input {
+  width: 7.5em; min-height: var(--hit); box-sizing: border-box;
+  padding: 0 var(--space-3); border-radius: var(--radius-m);
+  border: 1px solid var(--separator-strong); background: var(--fill); color: var(--label);
+  font-family: var(--font-mono); font-size: 1.25rem; letter-spacing: 0.3em; text-align: center; text-transform: uppercase;
+}
+.join-code input::placeholder { color: var(--label-tertiary); letter-spacing: 0.3em; }
+
+.landing-section { display: flex; flex-direction: column; gap: var(--space-5); }
+.landing-section-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); }
+.landing-section-head .landing-h2 { flex: 1; }
+.landing-section-head p { margin: 0; font-size: var(--text-subhead); color: var(--label-secondary); }
+.landing-h2 { margin: 0; display: flex; align-items: center; gap: var(--space-4); font-size: var(--text-title-1); line-height: 1.2; color: var(--label); }
+.landing-h2::after { content: ""; flex: 1; min-width: var(--space-6); height: 1px; background: linear-gradient(90deg, var(--ornament), transparent); }
+
+/* One turn, three steps, each on a little card. */
+.landing-turn { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--space-5); }
+.landing-turn li {
+  display: flex; gap: var(--space-4); align-items: flex-start;
+  padding: var(--space-5); border-radius: var(--radius-l);
+  background: var(--bg-grouped); border: 1px solid var(--separator);
+  font-size: var(--text-subhead); color: var(--label-secondary);
+}
+.landing-turn b { display: block; margin-bottom: var(--space-1); font-size: var(--text-headline); color: var(--label); }
+.turn-card {
+  flex: none; width: 44px; height: 62px; box-sizing: border-box; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: var(--text-title-2);
+}
+.turn-card.is-back { color: var(--stock); }
+.turn-card.is-back-red { color: var(--back-red-ink); }
+.turn-card.is-face { color: var(--stock-ink); justify-content: center; padding: 0; }
+
+/* The other rooms, as cards on the table, each with a little picture of
+   itself drawn in the colours its room already uses. */
+.landing-rooms { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--space-5); }
+.room-card {
+  display: flex; flex-direction: column; gap: var(--space-3);
+  padding: var(--space-5); border-radius: var(--radius-l);
+  background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-2);
+}
+.room-card h3 { margin: var(--space-1) 0 0; font-family: var(--font-display); font-size: var(--text-title-2); font-weight: 400; line-height: 1.2; color: var(--label); }
+.room-card p { margin: 0; flex: 1; font-size: var(--text-subhead); color: var(--label-secondary); }
+.room-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill.rarity-rare { color: var(--r-rare); border-color: currentColor; }
+.pill.rarity-epic { color: var(--r-epic); border-color: currentColor; }
+.pill.rarity-legendary { color: var(--r-legendary); border-color: currentColor; }
+
+.room-art { position: relative; height: 132px; border-radius: 10px; background: var(--bg-grouped); overflow: hidden; }
+.art-flashcards span {
+  position: absolute; top: 22px; width: 58px; height: 80px; border-radius: 6px;
+  background: var(--stock); border: 2px solid var(--r-rare); transform: rotate(-12deg);
+}
+.art-flashcards span:nth-child(1) { left: calc(50% - 75px); }
+.art-flashcards span:nth-child(2) { left: calc(50% - 29px); top: 16px; border-color: var(--r-epic); transform: none; }
+.art-flashcards span:nth-child(3) { left: calc(50% + 17px); border-color: var(--r-legendary); transform: rotate(12deg); box-shadow: var(--shadow-2); }
+.art-battle { display: flex; flex-direction: column; justify-content: center; gap: var(--space-2); padding: 0 var(--space-5); }
+.art-battle-label { font-size: var(--text-footnote); color: var(--label-secondary); }
+.art-battle-mark { font-size: var(--text-subhead); color: var(--label-tertiary); }
+.art-battle-mark b { font-family: var(--font-display); font-size: 2.6rem; font-weight: 400; line-height: 1; color: var(--success); }
+.art-battle-bar { height: 6px; border-radius: var(--radius-pill); background: var(--fill-strong); overflow: hidden; }
+.art-battle-bar span { display: block; width: 87%; height: 100%; background: var(--success); }
+.art-switchhead { display: flex; align-items: center; justify-content: center; gap: var(--space-3); }
+.art-switchhead .icon { width: 40px; height: 40px; color: var(--label-secondary); }
+.art-hand { display: flex; }
+.art-hand span {
+  width: 30px; height: 44px; border-radius: 4px; box-sizing: border-box;
+  background: var(--back); border: 1px solid var(--back-edge);
+}
+.art-hand span + span { margin-left: -14px; }
+.art-hand.is-red span { background: var(--back-red); border-color: var(--back-red-edge); }
+.art-mindmaps { background: var(--mm-paper); background-image: radial-gradient(var(--mm-grid) 1px, transparent 1.4px); background-size: 14px 14px; }
+.art-mindmaps svg { display: block; width: 100%; height: 100%; }
+.art-mindmaps path { fill: none; stroke-width: 3; }
+.art-mindmaps rect { fill: var(--mm-bubble); stroke-width: 2; }
+.art-mindmaps .b1 { stroke: var(--mm-c1); }
+.art-mindmaps .b2 { stroke: var(--mm-c2); }
+.art-mindmaps .b3 { stroke: var(--mm-c3); }
+.art-mindmaps .b5 { stroke: var(--mm-c5); }
+.art-mindmaps .root { fill: var(--mm-root); stroke: none; }
+.art-gerrymander { display: flex; align-items: center; justify-content: center; }
+.art-map { display: grid; grid-template-columns: repeat(4, 24px); border: 3px solid var(--label); border-radius: 4px; overflow: hidden; }
+.art-map span { height: 24px; opacity: 0.55; }
+.art-map .d0 { background: var(--team-b); }
+.art-map .d1 { background: var(--mm-c5); }
+.art-map .d2 { background: var(--mm-c3); }
+.art-map .d3 { background: var(--mm-c4); }
+
+/* The way in. A card back lies under the corner of the band; the door card
+   is the flashcards room's, its two tabs drawn as a segmented control. */
+#door { scroll-margin-top: calc(var(--bar-h) + var(--space-4)); }
+.landing-door-band {
+  position: relative; overflow: hidden;
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-6);
+  padding: clamp(var(--space-5), 5vw, var(--space-7));
+  border-radius: 20px; background: var(--bg-grouped); border: 1px solid var(--separator);
+}
+.landing-door-band::after {
+  content: ""; position: absolute; right: -60px; bottom: -80px; width: 260px; height: 360px;
+  border-radius: 22px; transform: rotate(-14deg); opacity: 0.5; pointer-events: none;
+  background-color: var(--back); border: 1px solid var(--back-edge);
+  background-image: repeating-linear-gradient(45deg, var(--back-edge) 0 1px, transparent 1px 12px), repeating-linear-gradient(-45deg, var(--back-edge) 0 1px, transparent 1px 12px);
+}
+.landing-door-text { flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: var(--space-3); position: relative; z-index: 1; }
+.landing-door-title { margin: 0; font-size: 2.5rem; line-height: 1.1; color: var(--label); }
+.landing-door-text p { margin: 0; max-width: 30em; color: var(--label-secondary); }
+.landing-door { flex: 1 1 360px; max-width: 440px; position: relative; z-index: 1; }
+.landing-door .door-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 0; padding: 2px; border: 0; border-radius: 9px; background: var(--segment-track); }
+.landing-door .door-tab { min-height: 36px; margin: 0; border: 0; border-radius: 7px; background: transparent; color: var(--label-secondary); font-size: var(--text-subhead); font-weight: 600; }
+.landing-door .door-tab.is-on { background: var(--segment-tile); color: var(--label); box-shadow: var(--shadow-1); }
+
+@media (max-width: 640px) {
+  .landing-hand { --card-w: 96px; min-width: 0; height: 300px; }
+  .landing-hand .hand-guess { top: 0; right: 0; }
+  .landing-door-title { font-size: var(--text-title-1); }
 }
 
-@media (max-width: 560px) {
-  .menu-tile { padding: 20px 18px 16px; }
+/* --- a hand of cards, drawn ----------------------------------------------
+   The picture beside the front door's headline and in the hall's Thievery
+   panel. Card stock and card backs are artwork, the same in both schemes.
+   Each card says how far it is turned in --turn; one may be lifted. */
+
+.hand-art { --card-w: 128px; position: relative; }
+.hand-fan { position: absolute; left: 50%; bottom: 40px; width: 0; height: 0; }
+.hand-card {
+  position: absolute; bottom: 0; left: calc(var(--card-w) / -2);
+  width: var(--card-w); height: calc(var(--card-w) * 1.44); box-sizing: border-box;
+  border-radius: calc(var(--card-w) / 11);
+  box-shadow: var(--shadow-2);
+  transform-origin: 50% 140%;
+  transform: rotate(var(--turn, 0deg));
 }
+.is-back, .is-back-red {
+  background-color: var(--back); border: 1px solid var(--back-edge);
+  background-image: repeating-linear-gradient(45deg, var(--back-edge) 0 1px, transparent 1px 9px), repeating-linear-gradient(-45deg, var(--back-edge) 0 1px, transparent 1px 9px);
+}
+.is-back-red {
+  background-color: var(--back-red); border-color: var(--back-red-edge);
+  background-image: repeating-linear-gradient(45deg, var(--back-red-edge) 0 1px, transparent 1px 9px), repeating-linear-gradient(-45deg, var(--back-red-edge) 0 1px, transparent 1px 9px);
+}
+.is-face { background: var(--stock); border: 1px solid var(--stock-edge); color: var(--stock-ink); }
+.hand-card.is-face { display: flex; flex-direction: column; justify-content: space-between; padding: calc(var(--card-w) / 13) calc(var(--card-w) / 11); }
+.hand-card.is-face b { font-family: var(--font-display); font-weight: 400; font-size: calc(var(--card-w) * 0.24); line-height: 1; }
+.hand-card.is-face svg { width: 44%; align-self: center; fill: currentColor; }
+.hand-card.is-face svg + b { align-self: flex-end; transform: rotate(180deg); }
+.is-red { color: var(--stock-red); }
+.hand-card.is-lifted { z-index: 1; transform: rotate(var(--turn, 0deg)) translateY(calc(var(--card-w) * -0.42)); box-shadow: var(--shadow-3); animation: lift var(--dur-slow) var(--ease-out) both 0.2s; }
+@keyframes lift { from { transform: rotate(var(--turn, 0deg)); } }
+@media (prefers-reduced-motion: reduce) { .hand-card.is-lifted { animation: none; } }
+html[data-motion="still"] .hand-card.is-lifted { animation: none; }
+
+.hand-guess {
+  position: absolute; right: 2%; top: var(--space-5);
+  display: flex; flex-direction: column; gap: var(--space-2);
+  max-width: 220px; padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-l); background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-3);
+}
+.hand-guess-who { font-size: var(--text-footnote); color: var(--label-secondary); }
+.hand-guess-call { font-family: var(--font-display); font-size: var(--text-title-2); line-height: 1.2; color: var(--label); }
+.hand-guess .pill { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; background: var(--success-tint); }
+.hand-guess .pill .icon { width: 12px; height: 12px; stroke-width: 2.6; }
 
 /* --- the same rounds, by what kind of game they were ---------------------- */
 

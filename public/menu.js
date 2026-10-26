@@ -103,10 +103,14 @@
     $('#tile-flashcards-figure').textContent = collection.count
       ? `${plural(collection.count, 'card', 'cards')} · worth ${collection.worth.toLocaleString('en-GB')}`
       : 'No cards yet. Make your first one.';
-    $('#tile-stats-figure').textContent = play.rounds
-      ? `${percent(play.rate, play.rounds)} of them won · best run of ${play.best}`
-      : 'Play a game to start counting';
-    $('#tile-account-figure').textContent = `Signed in as ${user.username}`;
+    // The record along the foot of the hall: four figures, the rest of it a
+    // tap away under All stats. Against bots is worked out here, as the
+    // stats panel does, from the total less the rounds against people.
+    const botRounds = play.rounds - play.versus;
+    $('#rec-rounds').textContent = play.rounds.toLocaleString('en-GB');
+    $('#rec-people').textContent = percent(play.versusRate, play.versus);
+    $('#rec-bots').textContent = percent(botRounds ? (play.wins - play.versusWins) / botRounds : 0, botRounds);
+    $('#rec-tables').textContent = play.tables.toLocaleString('en-GB');
     // The battle tile says what you have done there rather than what is
     // waiting: a room is four characters somebody has to give you, so there
     // is no board of open matches to count. Somebody who has never played is
@@ -123,14 +127,19 @@
     $('#tile-flashcards').classList.toggle('is-shut', !rooms.flashcards);
     $('#nav-flashcards').classList.toggle('is-shut', !rooms.flashcards);
     if (!rooms.flashcards) $('#tile-flashcards-figure').textContent = 'Unavailable right now';
-    // Today's ten gets its own line: what the deck is, and whether this
-    // account has played it yet.
+    // Today's ten has a panel of its own beside the table: what the deck is,
+    // and whether this account has played it yet. Once it has, the button
+    // says what is left to do there, which is look at the board.
     const daily = battle.daily;
-    $('#tile-battle-daily').hidden = !daily || !daily.deck || !rooms.battle;
+    $('#menu-daily').hidden = !daily || !daily.deck || !rooms.battle;
     if (daily && daily.deck) {
+      $('#daily-deck').textContent = daily.deck.name;
       $('#tile-battle-daily').textContent = daily.yours
-        ? `Today’s ten, ${daily.deck.name}: ${daily.yours.points} points, ${ordinal(daily.yours.place)} of ${daily.entrants}`
-        : `Today’s ten is ${daily.deck.name}. Not played yet.`;
+        ? `${daily.yours.points} points, ${ordinal(daily.yours.place)} of ${daily.entrants}`
+        : daily.entrants
+          ? `Not played yet. ${plural(daily.entrants, 'person has', 'people have')} today.`
+          : 'Not played yet. Nobody has today.';
+      $('#daily-go').textContent = daily.yours ? 'See the board' : 'Play today’s ten';
     }
     // Switchhead's tile says how it has gone for you, and what is left of
     // it is the same shut notice as the others.
@@ -294,8 +303,7 @@
     for (const id of ['stats', 'account', 'members']) $('#' + id).hidden = panel !== id;
     // The tiles are the hall. They go when a panel is open, so the page is
     // one thing at a time rather than a grid with a form under it.
-    $('.menu-grid').hidden = ['stats', 'account', 'members'].includes(panel);
-    $('.menu-hello').hidden = !!panel;
+    $('.menu-hall').hidden = ['stats', 'account', 'members'].includes(panel);
     if (panel === 'members') openMembers(which);
     if (panel) window.scrollTo(0, 0);
   }
