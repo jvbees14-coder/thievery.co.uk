@@ -288,6 +288,62 @@ async function run() {
     assert.ok(res.html.includes('href="/cards"'), 'the not-found page should point at the table');
   });
 
+  // Gerrymander is static files out of public/gerrymander/, with no login.
+  await check('/gerrymander is sent to /gerrymander/, query and all', async () => {
+    const res = await stranger.page('/gerrymander?x=1');
+    assert.equal(res.status, 301);
+    assert.equal(res.location, '/gerrymander/?x=1');
+  });
+
+  await check('/gerrymander/ serves the game to anybody', async () => {
+    const res = await stranger.page('/gerrymander/');
+    assert.equal(res.status, 200);
+    assert.ok(res.html.includes('id="app"') && res.html.includes('<title>Gerrymander</title>'), 'expected the game page');
+  });
+
+  await check('the files of the game come back with the right types', async () => {
+    const asset = (res_html) => [...res_html.matchAll(/(?:src|href)="\.\/(assets\/[^"]+)"/g)].map((m) => m[1]);
+    const home = await stranger.page('/gerrymander/');
+    const [js, css] = [asset(home.html).find((a) => a.endsWith('.js')), asset(home.html).find((a) => a.endsWith('.css'))];
+    assert.ok(js && css, 'the page should name a script and a stylesheet');
+    const want = {
+      '/gerrymander/manifest.webmanifest': 'application/manifest+json',
+      '/gerrymander/sw.js': 'text/javascript',
+      '/gerrymander/favicon.svg': 'image/svg+xml',
+      '/gerrymander/icons/icon-192.png': 'image/png',
+      [`/gerrymander/${js}`]: 'text/javascript',
+      [`/gerrymander/${css}`]: 'text/css',
+    };
+    for (const [where, type] of Object.entries(want)) {
+      const res = await fetch(`http://localhost:${PORT}${where}`);
+      assert.equal(res.status, 200, `${where} should be served`);
+      assert.ok((res.headers.get('content-type') || '').startsWith(type), `${where} came back as ${res.headers.get('content-type')}`);
+      if (where.endsWith('sw.js')) assert.equal(res.headers.get('cache-control'), 'no-cache', 'the worker must be revalidated');
+      await res.arrayBuffer();
+    }
+  });
+
+  await check('the manifest only names icons that exist', async () => {
+    const m = JSON.parse((await stranger.page('/gerrymander/manifest.webmanifest')).html);
+    for (const icon of m.icons) {
+      const res = await fetch(new URL(icon.src, `http://localhost:${PORT}/gerrymander/`));
+      assert.equal(res.status, 200, `${icon.src} is named in the manifest but missing`);
+      assert.equal(res.headers.get('content-type'), icon.type);
+      await res.arrayBuffer();
+    }
+  });
+
+  await check("a miss under /gerrymander/ is the site's own 404", async () => {
+    const res = await stranger.page('/gerrymander/nonexistent');
+    assert.equal(res.status, 404);
+    assert.ok(res.html.includes('Nothing here'), 'expected the not-found page');
+  });
+
+  await check('the door links to Gerrymander', async () => {
+    const res = await stranger.page('/');
+    assert.ok(res.html.includes('href="/gerrymander/"'), 'the door does not link to Gerrymander');
+  });
+
   await check('the game page by its file name is sent to /cards', async () => {
     const res = await stranger.page('/cards.html');
     assert.equal(res.status, 301);
@@ -297,7 +353,7 @@ async function run() {
   // The views and the game page are annotated for whoever maintains them.
   // None of that is for the visitor, so none of it may reach a browser.
   await check('no page is served with its comments or its placeholders in it', async () => {
-    for (const where of ['/', '/cards', '/cards/ABCD', '/flashcards', '/battle', '/switchhead', '/mindmaps', '/about', '/privacy', '/nowhere']) {
+    for (const where of ['/', '/cards', '/cards/ABCD', '/flashcards', '/battle', '/switchhead', '/mindmaps', '/about', '/privacy', '/gerrymander/', '/nowhere']) {
       const { html } = await stranger.page(where);
       assert.ok(!html.includes('<!--'), `${where} was served with a comment in it`);
       assert.ok(!html.includes('{{'), `${where} was served with a placeholder in it`);
@@ -361,6 +417,7 @@ async function run() {
       assert.ok(res.html.includes(`href="${room}"`), `the bar does not link to ${room}`);
     }
     assert.ok(!res.html.includes('<!--') && !res.html.includes('{{'), 'the menu was served unrendered');
+    assert.ok(res.html.includes('href="/gerrymander/"'), 'the menu does not link to Gerrymander');
     assert.ok(!res.html.includes('Open an account'), 'the door was served to a member');
   });
 

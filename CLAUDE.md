@@ -59,6 +59,7 @@ One server, a hall and five rooms off it:
 | `/battle`, `/battle/ABCD` | `server/battle.js` | required |
 | `/switchhead`, `/switchhead/ABCD` | `server/switchhead.js` | required |
 | `/mindmaps` | `server/mindmaps.js` | required |
+| `/gerrymander/` | static files out of `public/gerrymander/`, with a redirect from `/gerrymander` in `server/index.js` | never |
 | `/about`, `/privacy` | `server/site.js` — plain pages, up even in an outage | never |
 | `/tools`, `/tools/<slug>` | `server/site.js` and `server/tools.js` — the tools index and any tool pages | never |
 | `/styleguide` | `server/site.js` — every token and component; not linked, `noindex` | never |
@@ -79,6 +80,22 @@ people paste to friends; putting a door in front of it would break every one
 ever sent and would buy nothing, because the game keeps nothing. Signing in
 changes exactly one thing at the table: the rounds are added up afterwards
 (see "The lifetime record").
+
+**Gerrymander** (`public/gerrymander/`) is a finished puzzle game that is
+only static files: no server code, no login, nothing stored on our side (its
+progress and settings are in the player's own `localStorage`). The folder is
+not written here. It is the production build of the separate project at
+`C:\Dev\Gerrymander` (`npm run build` there, then copy the *contents* of
+`dist/` over this folder, leaving out its `privacy.html`, because the site has
+its own `/privacy`). Its paths are relative, so the address must end in a
+slash: `server/index.js` sends `/gerrymander` to `/gerrymander/` and answers
+the slash with the folder's `index.html`. Two things differ from a raw copy
+and must be redone after a refresh: `manifest.webmanifest` names icons that
+exist in `icons/` (the build names `../icons/icon-*.webp`, which do not), and
+`test/site.test.js` fails if one is missing. Its service worker is
+`/gerrymander/sw.js`, so its scope is `/gerrymander/` only and nothing else on
+the site can be touched by it; the static block serves it `no-cache` so a new
+`VERSION` in it reaches players.
 
 **The flashcards room** (`server/flashcards.js`, `cards.js`, `trading.js`;
 `public/flashcards*.{js,css}`) is the opposite: real logins, and a document
