@@ -50,8 +50,7 @@ Each power-up is `{id, tier, effect, targets, restrictions}`. Tiers set draw wei
 
 | id | tier | effect | targets | restrictions |
 | --- | --- | --- | --- | --- |
-| casing\_the\_joint | common | Reveal the true rank of one face-down card to the caster only. No flip, no guess spent. | Any face-down card not the caster's own | None |
-| loose\_lips | common | Reveal how many cards of one named rank are still face-down, table-wide (count only, no location). | A rank (Ace-King) | None |
+| casing\_the\_joint | common | Tell the caster only that one face-down card is one of two ranks: its true rank and a decoy the caster cannot already rule out. No flip, no guess spent. (It first revealed the rank outright, which made it a two-step vault\_crack.) | Any face-down card not the caster's own | None |
 | tip\_off | common | Privately show one of the caster's own face-down cards to one chosen player. | One other player | Recipient sees it once; not persisted as shared knowledge in game state |
 | second\_story | uncommon | If the caster's current guess is wrong, they get exactly one more guess before the turn passes. | Self, current turn only | Does not stack with itself; a second wrong guess ends the turn normally |
 | pickpocket | uncommon | Take one extra guess against a hand of the caster's choosing, outside normal turn order. | Any other hand | Can only be played at the start of the caster's own turn, before any guess is made — never mid-chain (see Balance rules) |
@@ -68,7 +67,9 @@ Every player draws one random power-up at the start of their own turn (not on ev
 
 **No-duplicate rule:** if a random draw would give a player a power-up they already hold, re-roll once within the same tier; if the whole tier is exhausted for that player, drop to the next tier down. This makes the cap of 3 buy variety rather than three copies of `casing_the_joint`.
 
-**On use:** using a power-up removes it from the holder's hand immediately, whether or not its effect changes the game state (e.g. `loose_lips` still counts as 'used' even though it only returns information).
+**On use:** using a power-up removes it from the holder's hand immediately, whether or not its effect changes the game state (e.g. `casing_the_joint` still counts as 'used' even though it only returns information).
+
+*`loose_lips` (a count of one rank still face down, table-wide) was cut after launch: with exactly two of every rank, the count can always be worked out from the face-up cards and your own row, so it bought nothing.*
 
 ## Server authority notes
 
@@ -76,7 +77,6 @@ The base game's server only ever sends a player their own row's true ranks; ever
 
 - **casing\_the\_joint, vault\_crack** — server must resolve the target card's true rank and push it to exactly one socket (the caster), even though that card belongs to a different hand. This is a genuinely new authorization path: 'reveal hand X's card N to player Y,' scoped per-request, not a standing subscription.
 - **tip\_off** — same shape as above but the caster nominates the recipient. Do not persist this as shared game state (e.g. don't add the recipient to a list of 'players who can see this card') — it should be a one-time push, not a standing leak, or it silently breaks the deduction model for the rest of the round.
-- **loose\_lips** — needs a table-wide count query (cards of rank R still face-down, across all hands) that doesn't exist in the base game today. Cheap to compute server-side; just confirm it's computed fresh each call rather than cached, since the true count changes every time any card flips.
 - **pickpocket, alarm\_trip, misdirection** — these touch turn order and chain state, not card visibility. Implement as modifiers to the existing turn-state machine (whose turn is next, is a chain active) rather than new reveal paths.
 - **stakeout** — needs a per-hand 'protected until' flag checked before any guess is validated against that hand, cleared automatically at the start of that hand's next turn.
 

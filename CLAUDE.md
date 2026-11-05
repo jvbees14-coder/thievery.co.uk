@@ -205,10 +205,13 @@ power-ups", because they are rules.
 
 Three things there are easy to break:
 
-- **A reveal goes through `g.known`,** the same per-viewer list a partner's
-  show uses. That is deliberately the only route by which a rank reaches
-  somebody who does not own it, which is what keeps `test/smoke.test.js`
-  honest: it checks every snapshot for a rank without `shown` on it.
+- **A rank reaches somebody who does not own it only through `g.known`,**
+  the per-viewer list a partner's show uses, which is what keeps
+  `test/smoke.test.js` honest: it checks every snapshot for a rank without
+  `shown` on it. Casing the joint is not a reveal. It gives one hand two
+  ranks (the real one and a decoy it cannot already rule out), kept in
+  `g.cased` and sent as `cased`, never as `rank`. When it told the rank
+  outright it was a vault crack with one more step.
 - **`guessTargets` decides who has won and must not know about stakeouts.**
   `openTargets` is the one that filters them out, and `legalTargets` narrows
   that again to whatever hand an order currently points at. Fold any of them

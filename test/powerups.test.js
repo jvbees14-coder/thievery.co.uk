@@ -135,7 +135,7 @@ check('the house never draws', () => {
 
 check('a hand at the limit draws nothing until it spends something', () => {
   const g = table(6);
-  g.kit[0] = ['stakeout', 'misdirection', 'loose_lips'];
+  g.kit[0] = ['stakeout', 'misdirection', 'second_story'];
   const before = [...g.kit[0]];
   // Round the table back to seat 0.
   for (let i = 0; i < 6 && g.phase === 'play'; i++) {
@@ -148,7 +148,7 @@ check('a hand at the limit draws nothing until it spends something', () => {
 });
 
 check('the draw never deals a second copy of something already held', () => {
-  const held = ['casing_the_joint', 'loose_lips'];
+  const held = ['casing_the_joint', 'second_story'];
   for (let i = 0; i < 4000; i++) {
     const drawn = PowerUps.draw(held);
     assert.ok(drawn, 'a hand of two should always draw something');
@@ -177,54 +177,81 @@ check('the tiers come up about as often as they are meant to', () => {
 
 // --- reading the table ------------------------------------------------------
 
-check('casing the joint tells the caster and nobody else', () => {
+check('casing the joint tells the caster two ranks, and nobody else anything', () => {
   const g = table(6);
   g.kit[0] = ['casing_the_joint'];
   const real = g.seats[1].cards[0].rank;
   Game.playPowerUp(g, 0, 'casing_the_joint', { target: { seat: 1, idx: 0 } });
 
   const mine = Game.viewFor(g, 0).seats[1].cards[0];
-  assert.equal(mine.rank, real, 'the caster learns the rank');
-  assert.equal(mine.shown, true);
-  for (const other of [2, 3, 4, 5]) {
+  assert.equal(mine.rank, null, 'the caster is not told the rank outright');
+  assert.equal(mine.shown, false);
+  assert.equal(mine.cased.length, 2, 'the caster is told two ranks');
+  assert.ok(mine.cased.includes(real), 'one of them is the real one');
+  assert.ok(mine.cased[0] < mine.cased[1], 'in rank order, so the order gives nothing away');
+  assert.match(Game.viewFor(g, 0).log.slice(-1)[0].text, / or /);
+  for (const other of [1, 2, 3, 4, 5]) {
     const theirs = Game.viewFor(g, other).seats[1].cards[0];
-    assert.equal(theirs.rank, null, `seat ${other} was told`);
-    assert.equal(theirs.shown, false);
+    assert.equal(theirs.cased, undefined, `seat ${other} was told`);
+    if (other !== 1) assert.equal(theirs.rank, null, `seat ${other} was told`);
   }
-  // Even the card's owner sees no change: it is still face down.
   assert.equal(g.seats[1].cards[0].faceUp, false, 'the card stayed face down');
   assert.ok(!g.kit[0].includes('casing_the_joint'), 'it was spent');
+
+  // Casing it again would give away the answer, as the rank both pairs share.
+  g.kit[0] = ['casing_the_joint'];
+  assert.match(refused(() => Game.playPowerUp(g, 0, 'casing_the_joint', { target: { seat: 1, idx: 0 } })), /already cased/);
+  assert.deepEqual(g.kit[0], ['casing_the_joint'], 'the refusal cost nothing');
+
+  // Once the card turns over the pair has nothing left to say.
+  g.seats[1].cards[0].faceUp = true;
+  assert.equal(Game.viewFor(g, 0).seats[1].cards[0].cased, undefined);
 });
 
-check('loose lips gives a count and never a place', () => {
+check('the decoy is never a rank the caster can already rule out', () => {
+  // Over many deals: the decoy is not a rank whose card of this colour is in
+  // sight, not one already missed with here, and fits between the readable
+  // cards either side.
+  for (let n = 0; n < 300; n++) {
+    const g = table(6);
+    const ts = 1 + (n % 5);
+    const row = g.seats[ts].cards;
+    const idx = n % row.length;
+    // Turn a neighbour face up now and then, so the order bound gets used.
+    if (idx > 0 && n % 2) row[idx - 1].faceUp = true;
+    if (row[idx].faceUp) continue;
+    g.misses.push([ts, idx, ((row[idx].rank + 3) % 13) + 1]);
+    g.kit[0] = ['casing_the_joint'];
+    Game.playPowerUp(g, 0, 'casing_the_joint', { target: { seat: ts, idx } });
+    const pair = Game.viewFor(g, 0).seats[ts].cards[idx].cased;
+    const decoy = pair.find((r) => r !== row[idx].rank);
+    assert.ok(decoy, 'the pair is two different ranks');
+
+    const sees = (si, ci) => si === 0 || g.seats[si].cards[ci].faceUp;
+    const inSight = g.seats.flatMap((s, si) => s.cards.filter((c, ci) => c !== row[idx] && c.color === row[idx].color && sees(si, ci)).map((c) => c.rank));
+    const missed = g.misses.filter(([s, i]) => s === ts && i === idx).map(([, , r]) => r);
+    const left = row.slice(0, idx).filter((c) => c.faceUp && c.rank !== 1).pop();
+    const right = row.slice(idx + 1).find((c) => c.faceUp && c.rank !== 1);
+    const fits = decoy === 1 || ((!left || decoy >= left.rank) && (!right || decoy <= right.rank));
+    // The fallback is allowed only when no fair decoy exists at all.
+    const anyFair = Array.from({ length: 13 }, (_, i) => i + 1).some((r) =>
+      r !== row[idx].rank && !inSight.includes(r) && !missed.includes(r) &&
+      (r === 1 || ((!left || r >= left.rank) && (!right || r <= right.rank))));
+    if (anyFair) {
+      assert.ok(!inSight.includes(decoy), `decoy ${decoy} is in sight`);
+      assert.ok(!missed.includes(decoy), `decoy ${decoy} was already missed here`);
+      assert.ok(fits, `decoy ${decoy} does not fit the row`);
+    }
+  }
+});
+
+check('loose lips is gone, from the draw and from play', () => {
+  // It told you a count you could already work out: two of every rank.
+  assert.equal(PowerUps.byId('loose_lips'), null);
+  for (let i = 0; i < 2000; i++) assert.notEqual(PowerUps.draw([]).id, 'loose_lips');
   const g = table(6);
   g.kit[0] = ['loose_lips'];
-  // Two of every rank exist, so the answer before anything turns over is two.
-  Game.playPowerUp(g, 0, 'loose_lips', { rank: 7 });
-  const caster = Game.viewFor(g, 0).log.slice(-1)[0];
-  assert.match(caster.text, /2 7s still face down/);
-  assert.equal(caster.priv, true);
-  const table2 = Game.viewFor(g, 3).log.slice(-1)[0];
-  assert.match(table2.text, /listened for loose lips/);
-  assert.ok(!/still face down/.test(table2.text), 'the count leaked to the table');
-});
-
-check('loose lips is counted fresh, not remembered', () => {
-  const g = table(6);
-  // Turn one seven over, then ask again: the answer has to have moved.
-  const seat = g.seats.findIndex((s) => s.cards.some((c) => c.rank === 7));
-  const idx = g.seats[seat].cards.findIndex((c) => c.rank === 7);
-  const asker = seat === 0 ? 1 : 0;
-  g.kit[asker] = ['loose_lips'];
-  g.turn = asker;
-  g.step = 'guess';
-  Game.playPowerUp(g, asker, 'loose_lips', { rank: 7 });
-  assert.match(Game.viewFor(g, asker).log.slice(-1)[0].text, /2 7s/);
-
-  g.seats[seat].cards[idx].faceUp = true;
-  g.kit[asker] = ['loose_lips'];
-  Game.playPowerUp(g, asker, 'loose_lips', { rank: 7 });
-  assert.match(Game.viewFor(g, asker).log.slice(-1)[0].text, /1 7 still face down/);
+  assert.throws(() => Game.playPowerUp(g, 0, 'loose_lips', { rank: 7 }), /No such power-up/);
 });
 
 // --- buying another go ------------------------------------------------------
@@ -447,9 +474,9 @@ check('the vault can take the round', () => {
 check('you see your own power-ups, and only a count of everyone else’s', () => {
   const g = table(6);
   g.kit[0] = ['vault_crack', 'stakeout'];
-  g.kit[1] = ['loose_lips'];
+  g.kit[1] = ['second_story'];
   const v = Game.viewFor(g, 1);
-  assert.deepEqual(v.powerUps.kit, ['loose_lips'], 'your own hand, in full');
+  assert.deepEqual(v.powerUps.kit, ['second_story'], 'your own hand, in full');
   assert.deepEqual(v.powerUps.held, [2, 1, 0, 0, 0, 0], 'everyone else, as a count');
   assert.ok(!JSON.stringify(v.powerUps).includes('vault_crack'), 'somebody else’s holdings leaked');
   assert.equal(v.powerUps.limit, PowerUps.HAND_LIMIT);

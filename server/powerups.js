@@ -8,9 +8,14 @@
 // The first is fencing. The deduction the game runs on is a face-down card
 // boxed in by whatever is showing either side of it, and a short row has
 // fewer neighbours to do the boxing — less to reason about, exactly when
-// there are more people wanting to reason. The commons here exist to hand
-// that depth back: they buy information rather than cards, and both of them
-// buy it for the player alone.
+// there are more people wanting to reason. The common here exists to hand
+// that depth back: it buys information rather than a card, and buys it for
+// the player alone.
+//
+// There used to be a second common, loose_lips, which told you how many of a
+// rank were still face down. It was taken out because it told you nothing:
+// there are exactly two of every rank, and anybody can count the face-up ones
+// and their own, so the answer was always already on the table.
 //
 // The second is the turn cycle. A correct guess already earns another, and at
 // six hands one good run can go through half the table before anybody else
@@ -50,7 +55,6 @@ export const HAND_LIMIT = 3;
  *
  *   none    nothing to choose
  *   card    a face-down card belonging to somebody else
- *   rank    a rank, Ace to King
  *   hand    another hand at the table
  *   player  another player, named by their hand
  *
@@ -61,15 +65,8 @@ export const POWERUPS = [
     id: 'casing_the_joint',
     tier: 'common',
     name: 'Casing the joint',
-    blurb: 'Read one face-down card. You learn its rank; nobody is told, and it stays face down.',
+    blurb: 'Look at one face-down card that is not yours. You are told two ranks, and it is one of them. Nobody else is told, and it stays face down.',
     targets: ['card'],
-  },
-  {
-    id: 'loose_lips',
-    tier: 'common',
-    name: 'Loose lips',
-    blurb: 'Name a rank and hear how many of it are still face down across the whole table. A count, never a place.',
-    targets: ['rank'],
   },
   {
     id: 'second_story',
