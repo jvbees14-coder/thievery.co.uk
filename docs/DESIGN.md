@@ -170,8 +170,14 @@ Firefox discard a backdrop filter that names one, so they never get it.
 
 ## Motion
 
-Short and for a reason: 150 to 300ms, `--ease-out` or a restrained spring.
-Nothing animates on hover beyond a colour. The flourishes are kept for the
+Short and for a reason: `--dur-quick` (120ms), `--dur-base` (200ms) or
+`--dur-slow` (280ms), never more for something you pressed. `--ease-out` is
+`cubic-bezier(0.23, 1, 0.32, 1)`, starting fast and settling, and is the
+default; `--ease-move` is for something travelling across the screen;
+nothing in the interface eases in. A pressed control gives a little
+(`--press-scale`, 0.97). Hover effects sit inside
+`@media (hover: hover) and (pointer: fine)` so a phone never sticks on one.
+Nothing animates on hover beyond a colour and a lift. The flourishes are kept for the
 defining moments: a card dealt, a card flipped by somebody else, a guess that
 misses, the banners, the confetti on a win. Only transform and opacity move.
 
@@ -179,6 +185,43 @@ Under `prefers-reduced-motion`, or the site's own "Animate banners" switch
 (which starts off when the device asks for less motion): slides become fades,
 the shake and the confetti stop, and nothing loops. No animation ever blocks
 input.
+
+## The refinements (November 2026)
+
+The Vault stays. What changed is that every part of it now follows the
+system, rather than only the shell. These are the rules, in order of how
+often they are broken:
+
+1. **Numbers are set in the text face with tabular figures**
+   (`font-variant-numeric: var(--numeric)`): scores, counts, marks, clocks,
+   prices, stats. Never in Limelight, whose nought reads as a half-filled
+   disc.
+2. **Headings balance, paragraphs don't strand a word.** `text-wrap:
+   balance` on every heading (they are all short), `text-wrap: pretty` on
+   body copy. Reading runs to `--measure` (68ch) at most.
+3. **Four radii** (`--radius-s` 4, `-m` 8, `-l` 14, `-pill`). Nested
+   things take the same radius as their container or less.
+4. **Three elevations, all layered.** `--shadow-1` for a resting card,
+   `-2` for something raised, `-3` for something floating. In the dark
+   scheme a raised surface also wears `--edge-light`, the hairline of light
+   along its top edge, because on a page this dark light lifts more than
+   shadow does. No surface has a border, a shadow *and* a different fill
+   unless each says something different.
+5. **Space from the scale.** Padding, margins and gaps are `--space-*`.
+   10, 14 and 18px are not on it.
+6. **Type from the scale.** No half sizes (12.5, 13.5, 14.5px).
+7. **Durations and easings from the tokens**, except the game's moments
+   (the deal, the banners, the confetti), which are artwork.
+8. **Layers from `--z-*`** for anything fixed or floating.
+9. **One component per job.** The room-code field looks the same on the
+   front page, the hall and the card table.
+10. **New code uses the semantic names** (`--accent`, `--font-text`), never
+    the Vault's old aliases (`--brass`, `--caps`). The aliases go as the
+    rooms are converted.
+
+The typefaces and the scheme stay as chosen on 2026-09-30: the device's own
+face for text, Limelight for headlines, light or dark by the device, the card
+table always dark.
 
 ## Components
 
