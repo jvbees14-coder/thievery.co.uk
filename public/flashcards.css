@@ -13,7 +13,7 @@ textarea, select {
   background: var(--fill);
   border: 1px solid var(--separator-strong);
   color: var(--label);
-  padding: 12px 14px;
+  padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-s);
   outline: none;
   transition: border-color var(--dur-quick), box-shadow var(--dur-quick);
@@ -44,21 +44,21 @@ textarea:focus, select:focus, input:focus {
 /* --- the door ------------------------------------------------------------- */
 
 .door-card { width: min(100%, 440px); }
-.door-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--separator); }
+.door-tabs { display: flex; gap: var(--space-1); border-bottom: 1px solid var(--separator); }
 .door-tab {
   appearance: none; background: none; border: 0; border-bottom: 2px solid transparent;
-  min-height: var(--hit); padding: 0 14px; margin-bottom: -1px; cursor: pointer;
+  min-height: var(--hit); padding: 0 var(--space-4); margin-bottom: -1px; cursor: pointer;
   font-size: var(--text-subhead); font-weight: 600; color: var(--label-secondary);
   transition: color var(--dur-quick), border-color var(--dur-quick);
 }
 .door-tab:hover { color: var(--label); }
 .door-tab.is-on { color: var(--label); border-bottom-color: var(--accent); }
-.door-pane { display: flex; flex-direction: column; gap: 16px; }
+.door-pane { display: flex; flex-direction: column; gap: var(--space-4); }
 .door-error {
-  margin: 0; padding: 10px 14px; border-radius: var(--radius-s); font-size: var(--text-subhead);
+  margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius-s); font-size: var(--text-subhead);
   background: var(--danger-tint); border: 1px solid var(--danger-edge); color: var(--danger);
 }
-.door-foot { margin: 4px 0 0; text-align: center; font-size: var(--text-footnote); }
+.door-foot { margin: var(--space-1) 0 0; text-align: center; font-size: var(--text-footnote); }
 .door-foot a { color: var(--label-tertiary); text-decoration: none; }
 .door-foot a:hover { color: var(--accent); }
 
@@ -66,10 +66,10 @@ textarea:focus, select:focus, input:focus {
 
 .fc-app { min-height: 100vh; }
 /* The room's own tabs, at the top of the room rather than in the site's bar. */
-.fc-tabs { display: flex; gap: 2px; flex-wrap: wrap; margin: 0 0 22px; padding-bottom: 10px; border-bottom: 1px solid var(--separator); }
+.fc-tabs { display: flex; gap: 2px; flex-wrap: wrap; margin: 0 0 var(--space-5); padding-bottom: var(--space-3); border-bottom: 1px solid var(--separator); }
 .fc-tab {
   appearance: none; background: none; border: 1px solid transparent; border-radius: var(--radius-s);
-  padding: 9px 13px 7px; cursor: pointer;
+  padding: var(--space-2) var(--space-3) var(--space-2); cursor: pointer;
   font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700; color: var(--label-tertiary);
   transition: color var(--dur-quick), background var(--dur-quick), border-color var(--dur-quick);
 }
@@ -83,13 +83,13 @@ textarea:focus, select:focus, input:focus {
 .fc-pane { animation: fcin 0.3s ease both; }
 @keyframes fcin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-.fc-h { font-family: var(--font-text); font-weight: 600; font-size: var(--text-title-2); color: var(--label); margin: 0 0 8px; }
-.fc-h3 { font-family: var(--font-text); font-weight: 600; font-size: var(--text-footnote); color: var(--accent); margin: 26px 0 12px; display: flex; align-items: baseline; gap: 10px; }
-.fc-h4 { font-family: var(--font-text); font-weight: 600; font-size: var(--text-caption); color: var(--accent); margin: 22px 0 8px; }
-.fc-lede { margin: 0 0 20px; color: var(--label-secondary); max-width: 62ch; }
-.fc-note { margin: 10px 0 0; font-size: var(--text-footnote); color: var(--label-tertiary); line-height: 1.5; }
+.fc-h { font-family: var(--font-text); font-weight: 600; font-size: var(--text-title-2); color: var(--label); margin: 0 0 var(--space-2); }
+.fc-h3 { font-family: var(--font-text); font-weight: 600; font-size: var(--text-footnote); color: var(--accent); margin: var(--space-5) 0 var(--space-3); display: flex; align-items: baseline; gap: var(--space-3); }
+.fc-h4 { font-family: var(--font-text); font-weight: 600; font-size: var(--text-caption); color: var(--accent); margin: var(--space-5) 0 var(--space-2); }
+.fc-lede { margin: 0 0 var(--space-5); color: var(--label-secondary); max-width: 62ch; }
+.fc-note { margin: var(--space-3) 0 0; font-size: var(--text-footnote); color: var(--label-tertiary); line-height: 1.5; }
 .fc-tally { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-tertiary); letter-spacing: 0; text-transform: none; }
-.fc-empty { color: var(--label-tertiary); font-style: italic; padding: 18px 2px; }
+.fc-empty { color: var(--label-tertiary); font-style: italic; padding: var(--space-4) 2px; }
 
 /* --- the strip of numbers ------------------------------------------------- */
 
@@ -97,20 +97,20 @@ textarea:focus, select:focus, input:focus {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: var(--space-2);
   margin-bottom: var(--space-5);
 }
-.fc-stat { background: var(--bg-elevated); border: 1px solid var(--separator); border-radius: var(--radius-m); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+.fc-stat { background: var(--bg-elevated); border: 1px solid var(--separator); border-radius: var(--radius-m); padding: var(--space-4) var(--space-4); display: flex; flex-direction: column; gap: var(--space-1); }
 .fc-stat b { font-family: var(--font-text); font-variant-numeric: var(--numeric); font-size: var(--text-title-1); font-weight: 600; color: var(--label); line-height: 1; }
 .fc-stat span { font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700; color: var(--label-tertiary); }
 .fc-stat[data-rarity] b { color: var(--r-ink, var(--label)); }
 
 /* --- toolbar -------------------------------------------------------------- */
 
-.fc-toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+.fc-toolbar { display: flex; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-4); }
 .fc-search { flex: 1; min-width: 200px; }
 .fc-select { width: auto; min-width: 150px; }
 
 /* --- a card --------------------------------------------------------------- */
 
-.fc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 16px; }
+.fc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: var(--space-4); }
 
 /* The card, and the row of operations under it.
  *
@@ -182,12 +182,12 @@ textarea:focus, select:focus, input:focus {
 .fc-cardfoot .fc-sep { opacity: 0.4; }
 .fc-tag {
   font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700;
-  border: 1px solid var(--separator); border-radius: var(--radius-pill); padding: 2px 7px 1px; color: var(--label-tertiary);
+  border: 1px solid var(--separator); border-radius: var(--radius-pill); padding: 2px var(--space-2) 1px; color: var(--label-tertiary);
 }
-.fc-ops { display: flex; gap: 5px; margin-top: 9px; flex-wrap: wrap; }
+.fc-ops { display: flex; gap: var(--space-1); margin-top: var(--space-2); flex-wrap: wrap; }
 .fc-op {
   appearance: none; background: none; border: 1px solid var(--separator); border-radius: var(--radius-s);
-  padding: 5px 9px 4px; cursor: pointer; color: var(--label-secondary);
+  padding: var(--space-1) var(--space-2) var(--space-1); cursor: pointer; color: var(--label-secondary);
   font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700;
   transition: color var(--dur-quick), border-color var(--dur-quick), background var(--dur-quick);
 }
@@ -198,31 +198,31 @@ textarea:focus, select:focus, input:focus {
 
 /* --- making one ----------------------------------------------------------- */
 
-.fc-make { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(250px, 0.85fr); gap: 28px; align-items: start; }
-.fc-form { display: flex; flex-direction: column; gap: 16px; }
-.fc-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.fc-actions { display: flex; gap: 10px; align-items: center; }
+.fc-make { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(250px, 0.85fr); gap: var(--space-6); align-items: start; }
+.fc-form { display: flex; flex-direction: column; gap: var(--space-4); }
+.fc-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.fc-actions { display: flex; gap: var(--space-3); align-items: center; }
 .fc-editing { margin: 0; font-size: var(--text-footnote); color: var(--success); }
 
 .fc-appraisal {
   position: sticky; top: 84px;
-  padding: 20px 20px 22px; border-radius: var(--radius-s);
+  padding: var(--space-5) var(--space-5) var(--space-5); border-radius: var(--radius-s);
   background: var(--bg-elevated);
   border: 1px solid var(--separator);
 }
-.fc-meter { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.fc-meter { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
 .fc-meter-track { flex: 1; height: 7px; border-radius: var(--radius-pill); background: var(--fill-strong); overflow: hidden; border: 1px solid var(--accent-tint); }
 .fc-meter-fill {
   height: 100%; width: 0%; border-radius: var(--radius-pill);
   background: linear-gradient(90deg, var(--stock-red) 0%, var(--accent) 55%, var(--accent-strong) 100%);
   transition: width 0.4s var(--ease-spring);
 }
-.fc-meter-num { display: flex; align-items: baseline; gap: 5px; }
+.fc-meter-num { display: flex; align-items: baseline; gap: var(--space-1); }
 .fc-meter-num b { font-family: var(--font-text); font-variant-numeric: var(--numeric); font-size: var(--text-title-1); font-weight: 600; color: var(--label); }
 .fc-meter-num span { font-family: var(--font-text); font-size: var(--text-caption); color: var(--label-tertiary); }
 
-.fc-parts, .fc-odds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.fc-parts li, .fc-odds li { display: flex; align-items: center; gap: 9px; font-size: var(--text-footnote); color: var(--label-secondary); }
+.fc-parts, .fc-odds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.fc-parts li, .fc-odds li { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-footnote); color: var(--label-secondary); }
 .fc-parts li span:first-child, .fc-odds li span:first-child { flex: 0 0 96px; font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700; color: var(--label-tertiary); }
 .fc-bar-track { flex: 1; height: 4px; border-radius: var(--radius-pill); background: var(--fill-strong); overflow: hidden; }
 .fc-bar-fill { display: block; height: 100%; background: var(--separator-strong); border-radius: var(--radius-pill); transition: width 0.4s ease; }
@@ -231,10 +231,10 @@ textarea:focus, select:focus, input:focus {
 
 .fc-reveal {
   position: fixed; inset: 0; z-index: var(--z-banner); display: grid; place-items: center;
-  background: var(--scrim); backdrop-filter: blur(6px); padding: 20px;
+  background: var(--scrim); backdrop-filter: blur(6px); padding: var(--space-5);
   animation: fcin 0.3s ease both;
 }
-.fc-reveal-inner { display: flex; flex-direction: column; gap: 18px; align-items: center; width: min(100%, 330px); }
+.fc-reveal-inner { display: flex; flex-direction: column; gap: var(--space-4); align-items: center; width: min(100%, 330px); }
 .fc-reveal-cap { margin: 0; font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700; color: var(--accent); }
 /* A card's two faces are both taken out of the flow so they can sit on top of
    each other, which leaves the card itself nothing to be as wide as. In the
@@ -281,12 +281,12 @@ textarea:focus, select:focus, input:focus {
 
 /* --- the trading post ----------------------------------------------------- */
 
-.fc-trade-cols { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.9fr); gap: 30px; align-items: start; }
-.fc-offers { display: flex; flex-direction: column; gap: 8px; }
+.fc-trade-cols { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.9fr); gap: var(--space-6); align-items: start; }
+.fc-offers { display: flex; flex-direction: column; gap: var(--space-2); }
 .fc-offer {
   --r-ink: var(--label-secondary);
-  display: flex; align-items: center; gap: 12px;
-  padding: 11px 14px; border-radius: var(--radius-s);
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius-s);
   background: var(--bg-grouped); border: 1px solid var(--separator);
   border-left: 3px solid var(--r-ink);
 }
@@ -296,19 +296,19 @@ textarea:focus, select:focus, input:focus {
 .fc-offer[data-rarity="legendary"] { --r-ink: var(--accent); }
 .fc-offer[data-rarity="mythic"]    { --r-ink: var(--team-b); }
 .fc-offer.is-mine { background: var(--success-tint); }
-.fc-offer-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.fc-offer-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
 .fc-offer-front { font-size: var(--text-subhead); color: var(--label); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fc-offer-meta { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-tertiary); }
 .fc-offer-worth { font-family: var(--font-mono); font-size: var(--text-footnote); color: var(--accent); white-space: nowrap; }
 
-.fc-trades { display: flex; flex-direction: column; gap: 10px; }
+.fc-trades { display: flex; flex-direction: column; gap: var(--space-3); }
 .fc-trade {
-  padding: 13px 15px; border-radius: var(--radius-s);
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius-s);
   background: var(--bg-grouped); border: 1px solid var(--separator);
 }
-.fc-trade-when { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-tertiary); margin-bottom: 7px; }
-.fc-trade-line { display: flex; gap: 8px; font-size: var(--text-footnote); color: var(--label-secondary); padding: 2px 0; }
-.fc-trade-line em { font-style: normal; font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700; flex: 0 0 42px; padding-top: 3px; }
+.fc-trade-when { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-tertiary); margin-bottom: var(--space-2); }
+.fc-trade-line { display: flex; gap: var(--space-2); font-size: var(--text-footnote); color: var(--label-secondary); padding: 2px 0; }
+.fc-trade-line em { font-style: normal; font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700; flex: 0 0 42px; padding-top: var(--space-1); }
 .fc-trade-line.gave em { color: var(--danger); }
 .fc-trade-line.got em { color: var(--success); }
 .fc-trade-line ul { list-style: none; margin: 0; padding: 0; flex: 1; }
@@ -321,15 +321,15 @@ textarea:focus, select:focus, input:focus {
   padding: 14px 16px; margin-bottom: 18px; border-radius: 4px;
   background: var(--bg-grouped); border: 1px solid var(--separator);
 }
-.fc-check { display: flex; align-items: center; gap: 7px; font-size: var(--text-footnote); color: var(--label-secondary); cursor: pointer; }
+.fc-check { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-footnote); color: var(--label-secondary); cursor: pointer; }
 .fc-check input { width: auto; accent-color: var(--accent); }
 .fc-print-count { margin-left: auto; font-family: var(--font-mono); font-size: 12px; color: var(--label-tertiary); }
 
-.fc-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.fc-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: var(--space-3); }
 .fc-pick-item {
   --r-ink: var(--label-secondary);
-  display: flex; gap: 11px; align-items: flex-start; cursor: pointer;
-  padding: 11px 13px; border-radius: var(--radius-s);
+  display: flex; gap: var(--space-3); align-items: flex-start; cursor: pointer;
+  padding: var(--space-3) var(--space-3); border-radius: var(--radius-s);
   background: var(--bg-grouped); border: 1px solid var(--separator);
   border-left: 3px solid var(--r-ink);
   transition: border-color var(--dur-quick), background var(--dur-quick);
@@ -341,19 +341,19 @@ textarea:focus, select:focus, input:focus {
 .fc-pick-item[data-rarity="mythic"]    { --r-ink: var(--team-b); }
 .fc-pick-item:hover { border-color: var(--separator-strong); }
 .fc-pick-item.is-on { background: var(--success-tint); border-color: var(--success-edge); }
-.fc-pick-item input { width: auto; margin-top: 3px; accent-color: var(--accent); }
-.fc-pick-body { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.fc-pick-item input { width: auto; margin-top: var(--space-1); accent-color: var(--accent); }
+.fc-pick-body { min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
 .fc-pick-front { font-size: var(--text-subhead); color: var(--label); }
 .fc-pick-meta { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-tertiary); }
 
 /* --- the panel ------------------------------------------------------------ */
 
-.fc-panel-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
-.fc-accounts { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; max-height: 620px; overflow-y: auto; padding-right: 4px; }
+.fc-panel-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-6); align-items: start; }
+.fc-accounts { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-3); max-height: 620px; overflow-y: auto; padding-right: var(--space-1); }
 .fc-acct {
-  display: flex; align-items: center; gap: 12px; text-align: left; width: 100%;
+  display: flex; align-items: center; gap: var(--space-3); text-align: left; width: 100%;
   appearance: none; cursor: pointer;
-  padding: 11px 14px; border-radius: var(--radius-s);
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius-s);
   background: var(--bg-grouped); border: 1px solid var(--separator);
   color: var(--label); font: inherit;
   transition: border-color var(--dur-quick), background var(--dur-quick);
@@ -366,7 +366,7 @@ textarea:focus, select:focus, input:focus {
 .fc-acct-meta { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-tertiary); }
 .fc-acct-worth { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--accent); text-align: right; white-space: nowrap; }
 .fc-mythic-result {
-  margin-top: 16px; padding: 14px 16px; border-radius: var(--radius-s);
+  margin-top: var(--space-4); padding: var(--space-4) var(--space-4); border-radius: var(--radius-s);
   background: var(--bg-grouped); border: 1px solid var(--team-b-edge);
   color: var(--label); font-size: var(--text-subhead);
 }
@@ -375,22 +375,22 @@ textarea:focus, select:focus, input:focus {
 
 .fc-modal {
   position: fixed; inset: 0; z-index: var(--z-modal); display: grid; place-items: center;
-  background: var(--scrim); backdrop-filter: blur(6px); padding: 20px;
+  background: var(--scrim); backdrop-filter: blur(6px); padding: var(--space-5);
   animation: fcin 0.25s ease both;
 }
 .fc-modal-box {
   position: relative; width: min(100%, 560px); max-height: 86vh; overflow-y: auto;
-  padding: 30px 30px 28px; border-radius: var(--radius-s);
+  padding: var(--space-6) var(--space-6) var(--space-6); border-radius: var(--radius-s);
   background: var(--bg-elevated);
   border: 1px solid var(--separator-strong); box-shadow: var(--shadow-3);
 }
 .fc-modal-x {
   position: absolute; right: 12px; top: 10px; appearance: none; background: none; border: 0;
-  color: var(--label-tertiary); font-size: var(--text-title-1); line-height: 1; cursor: pointer; padding: 4px 8px;
+  color: var(--label-tertiary); font-size: var(--text-title-1); line-height: 1; cursor: pointer; padding: var(--space-1) var(--space-2);
 }
 .fc-modal-x:hover { color: var(--label); }
-.fc-modal-box h3 { font-family: var(--font-text); font-weight: 600; font-size: var(--text-body); color: var(--label); margin: 0 0 16px; }
-.fc-danger-zone { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--danger-edge); }
+.fc-modal-box h3 { font-family: var(--font-text); font-weight: 600; font-size: var(--text-body); color: var(--label); margin: 0 0 var(--space-4); }
+.fc-danger-zone { margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px solid var(--danger-edge); }
 
 /* The toast goes over everything, the modal and the question included. The
    table's stylesheet sets it at 50, which is under both, so anything a form in
@@ -403,19 +403,19 @@ textarea:focus, select:focus, input:focus {
    detail underneath it: whatever is about to happen is not coming back. */
 .fc-confirm {
   position: fixed; inset: 0; z-index: var(--z-modal-over); display: grid; place-items: center;
-  background: var(--scrim); backdrop-filter: blur(6px); padding: 20px;
+  background: var(--scrim); backdrop-filter: blur(6px); padding: var(--space-5);
   animation: fcin 0.2s ease both;
 }
 .fc-confirm-box {
-  width: min(100%, 420px); padding: 26px 26px 22px; border-radius: var(--radius-s);
+  width: min(100%, 420px); padding: var(--space-5) var(--space-5) var(--space-5); border-radius: var(--radius-s);
   background: var(--bg-elevated);
   border: 1px solid var(--danger-edge);
   box-shadow: var(--shadow-3);
 }
 .fc-confirm-box h3 {
-  margin: 0 0 10px; font-family: var(--font-text); font-weight: 600; font-size: var(--text-title-3); color: var(--label);
+  margin: 0 0 var(--space-3); font-family: var(--font-text); font-weight: 600; font-size: var(--text-title-3); color: var(--label);
 }
-.fc-confirm-box .fc-actions { margin-top: 20px; }
+.fc-confirm-box .fc-actions { margin-top: var(--space-5); }
 .fc-confirm-box .btn:not(.ghost) { border-color: var(--danger-edge); color: var(--danger); }
 .fc-confirm-box .btn:not(.ghost):hover { background: var(--danger-tint); border-color: var(--danger); }
 
@@ -427,7 +427,7 @@ textarea:focus, select:focus, input:focus {
 .fc-cardshow { width: min(100%, 300px); margin: 18px auto 0; }
 .fc-cardshow .fc-card, .fc-cardshow .fc-flip { width: 100%; min-height: 250px; }
 .fc-backlink {
-  display: inline-block; margin-bottom: 14px;
+  display: inline-block; margin-bottom: var(--space-4);
   font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700;
 }
 
@@ -551,20 +551,20 @@ textarea:focus, select:focus, input:focus {
 
 /* --- decks and sub-decks ------------------------------------------------------- */
 
-.fc-deck-new { display: flex; gap: 10px; margin: 0 0 20px; max-width: 560px; }
+.fc-deck-new { display: flex; gap: var(--space-3); margin: 0 0 var(--space-5); max-width: 560px; }
 .fc-deck-new input { flex: 1; }
-.fc-decks { display: flex; flex-direction: column; gap: 12px; max-width: 760px; }
-.fc-deck { border: 1px solid var(--separator); border-radius: var(--radius-s); padding: 10px 14px 12px; background: rgba(16, 19, 29, 0.6); }
-.fc-deck-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 6px 0; }
-.fc-deck-row.is-sub { padding-left: 22px; border-top: 1px solid var(--accent-tint); }
+.fc-decks { display: flex; flex-direction: column; gap: var(--space-3); max-width: 760px; }
+.fc-deck { border: 1px solid var(--separator); border-radius: var(--radius-s); padding: var(--space-3) var(--space-4) var(--space-3); background: rgba(16, 19, 29, 0.6); }
+.fc-deck-row { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; padding: var(--space-2) 0; }
+.fc-deck-row.is-sub { padding-left: var(--space-5); border-top: 1px solid var(--accent-tint); }
 .fc-deck-row.is-sub .fc-deck-name::before { content: "› "; color: var(--label-tertiary); }
 .fc-deck-name { font-weight: 600; color: var(--label); }
 .fc-deck-row.is-sub .fc-deck-name { font-weight: 400; color: var(--label); }
-.fc-deck-acts { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+.fc-deck-acts { margin-left: auto; display: flex; gap: var(--space-2); flex-wrap: wrap; }
 .fc-deck-acts a.fc-op { text-decoration: none; }
 .fc-op.is-off { opacity: 0.45; cursor: default; }
-.fc-sub-new { display: flex; gap: 8px; margin: 8px 0 0 22px; }
-.fc-sub-new input { flex: 1; max-width: 320px; padding: 7px 10px; }
+.fc-sub-new { display: flex; gap: var(--space-2); margin: var(--space-2) 0 0 var(--space-5); }
+.fc-sub-new input { flex: 1; max-width: 320px; padding: var(--space-2) var(--space-3); }
 .fc-deck-tag { color: var(--accent); }
 @media (max-width: 560px) {
   .fc-deck-new, .fc-sub-new { flex-direction: column; }
@@ -579,11 +579,11 @@ textarea:focus, select:focus, input:focus {
 .fc-tab.is-on { color: var(--label); border-color: var(--accent-edge); background: var(--accent-tint); }
 
 /* The buttons under a card: small, but never too small to hit. */
-.fc-op { min-height: 32px; padding: 4px 12px; font-size: var(--text-footnote); font-weight: 600; border-radius: var(--radius-m); border-color: var(--separator-strong); }
+.fc-op { min-height: 32px; padding: var(--space-1) var(--space-3); font-size: var(--text-footnote); font-weight: 600; border-radius: var(--radius-m); border-color: var(--separator-strong); }
 .fc-op.danger { color: var(--danger); }
 
 /* Where a card is in a trade, in words, with an icon, as well as a colour. */
-.fc-state { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-footnote); color: var(--success); flex: 1 1 100%; }
+.fc-state { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--text-footnote); color: var(--success); flex: 1 1 100%; }
 .fc-state .icon { width: 16px; height: 16px; }
 .fc-trade-line em { flex: 0 0 4.2rem; font-size: var(--text-caption); }
 

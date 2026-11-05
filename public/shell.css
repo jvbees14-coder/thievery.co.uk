@@ -165,7 +165,7 @@
        an even split cut "Flashcards" off on a 6.1" phone. */
     display: grid; grid-template-columns: repeat(5, minmax(min-content, 1fr)); gap: 0;
     max-width: 30rem; margin: 0 auto;
-    padding: 5px;
+    padding: var(--space-1);
     border-radius: var(--radius-pill);
     /* shell.js keeps --glint-x over the lens, so the brightest light on
        the bar is always where the lens is. */
@@ -220,7 +220,7 @@
   .menu-nav-face {
     position: relative; isolation: isolate;
     flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-    min-width: min(3.75rem, 100%); max-width: 100%; padding: 2px min(12px, 2.5vw);
+    min-width: min(3.75rem, 100%); max-width: 100%; padding: 2px min(var(--space-3), 2.5vw);
     transition: transform var(--dur-quick) var(--ease-spring);
   }
   .menu-nav-link:active .menu-nav-face { transform: scale(0.92); }

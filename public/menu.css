@@ -127,10 +127,10 @@
 @media (max-width: 640px) {
   .menu-table { padding: var(--space-5); }
   .menu-table h2 { font-size: var(--text-title-1); }
-  .menu-table-blurb { margin-right: 96px; }
+  .menu-table-blurb { margin-right: var(--space-8); }
   /* On a phone the hand tucks into the corner beside the title. */
   .menu-table .menu-table-hand { position: absolute; top: var(--space-3); right: calc(-1 * var(--space-4)); width: 220px; min-width: 0; height: 180px; transform: scale(0.5); transform-origin: top right; }
-  .menu-grid { grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+  .menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
   .menu-record-figures { grid-template-columns: 1fr 1fr; }
   .menu-record-figures dd { font-size: var(--text-title-1); }
   .menu-section-head { font-size: var(--text-title-2); }
@@ -140,7 +140,7 @@
 
 .menu-panel { margin: 0 auto; max-width: 780px; }
 .menu-panel-head {
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-1);
   font-family: var(--font-display);
   font-size: var(--text-title-1);
   font-weight: 400;
@@ -148,19 +148,19 @@
   text-transform: none;
   color: var(--label);
 }
-.menu-panel-lede { margin: 0 0 22px; color: var(--label-secondary); font-size: var(--text-subhead); }
-.menu-panel-foot { margin: 22px 0 0; font-size: var(--text-footnote); }
+.menu-panel-lede { margin: 0 0 var(--space-5); color: var(--label-secondary); font-size: var(--text-subhead); }
+.menu-panel-foot { margin: var(--space-5) 0 0; font-size: var(--text-footnote); }
 .menu-panel-foot a { color: var(--label-tertiary); text-decoration: none; }
 .menu-panel-foot a:hover { color: var(--accent); }
 
 .menu-figures {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px;
-  margin-bottom: 24px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
 }
 .menu-figure {
-  padding: 16px 14px;
+  padding: var(--space-4) var(--space-4);
   border: 1px solid var(--accent-tint);
   border-radius: var(--radius-s);
   background: var(--fill);
@@ -177,21 +177,21 @@
 }
 .menu-figure span {
   display: block;
-  margin-top: 6px;
+  margin-top: var(--space-2);
   font-family: var(--font-text);
   font-size: var(--text-caption);
   color: var(--label-secondary);
 }
 .menu-figure i { display: block; margin-top: 2px; font-style: normal; font-size: var(--text-caption); color: var(--label-tertiary); }
 
-.menu-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 20px; }
+.menu-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-5); }
 .menu-note { margin: 0; color: var(--label-secondary); font-size: var(--text-subhead); }
 
 .menu-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 18px 0;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
   border-top: 1px solid var(--accent-tint);
 }
 .menu-form:first-of-type { border-top: 0; }
@@ -203,17 +203,17 @@
 .menu-tile-house { border-color: var(--team-b-edge); }
 .menu-tile-house .icon { color: var(--team-b); }
 
-.menu-members { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+.menu-members { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-4); }
 /* The flashcards panel draws a row as a button; here it is a link, because
    an account has an address. */
 .menu-members a.fc-acct { text-decoration: none; box-sizing: border-box; }
-.menu-member-back { margin: 0 0 14px; font-size: var(--text-footnote); }
+.menu-member-back { margin: 0 0 var(--space-4); font-size: var(--text-footnote); }
 .menu-member-back a { color: var(--label-tertiary); text-decoration: none; }
 .menu-member-back a:hover { color: var(--accent); }
 .menu-member .menu-form .fc-h4 { margin: 0; }
-.menu-member-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-bottom: 4px; }
+.menu-member-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); margin-bottom: var(--space-1); }
 .menu-member-head h3 { margin: 0; font-family: var(--font-display); font-size: var(--text-title-2); font-weight: 400; color: var(--label); }
-.menu-member-facts { margin: 0 0 6px; font-size: var(--text-subhead); color: var(--label-secondary); }
+.menu-member-facts { margin: 0 0 var(--space-2); font-size: var(--text-subhead); color: var(--label-secondary); }
 .menu-member .fc-actions { flex-wrap: wrap; }
 .menu-member .btn.danger { border-color: var(--danger-edge); color: var(--danger); }
 .menu-member .btn.danger:hover { background: var(--danger-tint); border-color: var(--danger); }
@@ -228,6 +228,10 @@
   padding: clamp(var(--space-5), 6vw, var(--space-8)) max(var(--space-4), env(safe-area-inset-right)) var(--space-8) max(var(--space-4), env(safe-area-inset-left));
   display: flex; flex-direction: column; gap: clamp(var(--space-7), 8vw, var(--space-8));
 }
+/* The fan of cards leans out past its own box on purpose. On the narrowest
+   screens that would be past the edge of the screen, so the page is clipped
+   sideways at its own edge (clip, not hidden, so nothing becomes a scroller). */
+.landing { overflow-x: clip; }
 .landing-hero { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-7); }
 .landing-hero-text { flex: 1 1 520px; min-width: 0; display: flex; flex-direction: column; gap: var(--space-5); }
 .landing-kicker {
@@ -291,7 +295,7 @@
 }
 .room-card h3 { margin: var(--space-1) 0 0; font-family: var(--font-display); font-size: var(--text-title-2); font-weight: 400; line-height: 1.2; color: var(--label); }
 .room-card p { margin: 0; flex: 1; font-size: var(--text-subhead); color: var(--label-secondary); }
-.room-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.room-pills { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .pill.rarity-rare { color: var(--r-rare); border-color: currentColor; }
 .pill.rarity-epic { color: var(--r-epic); border-color: currentColor; }
 .pill.rarity-legendary { color: var(--r-legendary); border-color: currentColor; }
@@ -413,7 +417,7 @@ html[data-motion="still"] .hand-card.is-lifted { animation: none; }
 /* --- the same rounds, by what kind of game they were ---------------------- */
 
 .menu-modes-head {
-  margin: 26px 0 10px;
+  margin: var(--space-5) 0 var(--space-3);
   font-family: var(--font-text);
   font-size: var(--text-caption);
   font-weight: 700;
@@ -425,7 +429,7 @@ html[data-motion="still"] .hand-card.is-lifted { animation: none; }
   border-collapse: collapse;
   font-size: var(--text-subhead);
 }
-.menu-modes th, .menu-modes td { padding: 9px 8px; border-bottom: 1px solid var(--accent-tint); }
+.menu-modes th, .menu-modes td { padding: var(--space-2) var(--space-2); border-bottom: 1px solid var(--accent-tint); }
 .menu-modes thead th {
   font-family: var(--font-text);
   font-size: var(--text-caption);
@@ -450,7 +454,12 @@ html[data-motion="still"] .hand-card.is-lifted { animation: none; }
 
 @media (max-width: 460px) {
   .menu-modes { font-size: var(--text-subhead); }
-  .menu-modes th, .menu-modes td { padding: 8px 4px; }
+  .menu-modes th, .menu-modes td { padding: var(--space-2) var(--space-1); }
 }
 
-.menu-form-head { margin: 0 0 10px; font-family: var(--font-text); font-size: var(--text-footnote); font-weight: 600; color: var(--label); }
+.menu-form-head { margin: 0 0 var(--space-3); font-family: var(--font-text); font-size: var(--text-footnote); font-weight: 600; color: var(--label); }
+
+/* Two tiles side by side cannot hold a room name in Limelight under 360px. */
+@media (max-width: 359px) {
+  .menu-grid { grid-template-columns: minmax(0, 1fr); }
+}
