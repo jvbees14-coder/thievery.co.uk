@@ -343,6 +343,13 @@
   --measure: 68ch;
   --measure-narrow: 52ch;
 
+  /* How wide a page may grow. The bar, the foot and every full-width room
+     share --page-max, so their edges line up from one room to the next;
+     a page of reading (About, Privacy, a tool) is --page-reading. A room
+     that needs a different width for its own reason says why. */
+  --page-max: 1180px;
+  --page-reading: 760px;
+
   /* Four radii and no others. Something inside something else takes the
      same radius or a smaller one, never larger: a field on a card is
      --radius-m inside --radius-l, a chip inside a field is --radius-s or a

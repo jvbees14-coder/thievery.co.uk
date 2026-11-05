@@ -8,7 +8,7 @@
  * hall itself adds. */
 
 .menu-main {
-  width: 100%; max-width: 1180px; margin: 0 auto; box-sizing: border-box;
+  width: 100%; max-width: var(--page-max); margin: 0 auto; box-sizing: border-box;
   padding: clamp(var(--space-5), 4vw, var(--space-7)) max(var(--space-4), env(safe-area-inset-right)) var(--space-8) max(var(--space-4), env(safe-area-inset-left));
 }
 
@@ -46,7 +46,7 @@
   position: relative; overflow: hidden;
   display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-6);
   padding: var(--space-6);
-  border-radius: 20px;
+  border-radius: var(--radius-l);
   background: radial-gradient(120% 140% at 85% 20%, var(--bg-elevated-2), var(--bg-grouped) 70%);
   border: 1px solid var(--separator);
   box-shadow: var(--shadow-2), var(--edge-light);
@@ -71,7 +71,7 @@
   flex: 1 1 300px; min-width: 0;
   display: flex; flex-direction: column; gap: var(--space-3);
   padding: var(--space-5);
-  border-radius: 20px;
+  border-radius: var(--radius-l);
   background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-2), var(--edge-light);
 }
 .menu-daily h2 { margin: 0; font-size: var(--text-title-2); color: var(--label); }
@@ -224,7 +224,7 @@
    in for the rooms that need an account. */
 
 .landing {
-  width: 100%; max-width: 1180px; margin: 0 auto; box-sizing: border-box;
+  width: 100%; max-width: var(--page-max); margin: 0 auto; box-sizing: border-box;
   padding: clamp(var(--space-5), 6vw, var(--space-8)) max(var(--space-4), env(safe-area-inset-right)) var(--space-8) max(var(--space-4), env(safe-area-inset-left));
   display: flex; flex-direction: column; gap: clamp(var(--space-7), 8vw, var(--space-8));
 }
@@ -343,7 +343,7 @@
   position: relative; overflow: hidden;
   display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-6);
   padding: clamp(var(--space-5), 5vw, var(--space-7));
-  border-radius: 20px; background: var(--bg-grouped); border: 1px solid var(--separator);
+  border-radius: var(--radius-l); background: var(--bg-grouped); border: 1px solid var(--separator);
 }
 .landing-door-band::after {
   content: ""; position: absolute; right: -60px; bottom: -80px; width: 260px; height: 360px;

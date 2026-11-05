@@ -79,7 +79,7 @@ textarea:focus, select:focus, input:focus {
 .fc-tab-admin.is-on { color: var(--team-b); border-color: var(--team-b-edge); }
 
 
-.fc-main { padding: clamp(18px, 3vw, 34px) clamp(14px, 3vw, 32px) 80px; max-width: 1240px; margin: 0 auto; }
+.fc-main { padding: clamp(var(--space-5), 3vw, var(--space-6)) max(var(--space-4), env(safe-area-inset-right)) var(--space-8) max(var(--space-4), env(safe-area-inset-left)); max-width: var(--page-max); margin: 0 auto; }
 .fc-pane { animation: fcin 0.3s ease both; }
 @keyframes fcin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 

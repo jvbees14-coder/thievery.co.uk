@@ -105,10 +105,16 @@ export function bar(current = '', { signedIn = true, main = 'main' } = {}) {
   // not one of the five tabs. It is a sixth link outside the nav, shown only
   // where the bar has room for it, which leaves the phone's tab bar alone.
   const extraHere = current === 'gerrymander' ? ' aria-current="page"' : '';
-  const nav = `<nav class="menu-nav" aria-label="Rooms">
+  // The nav and the extra link are held together so a wide bar can centre
+  // them as one row, on the page rather than in whatever room the account
+  // button leaves. On a phone the holder steps aside (display: contents) and
+  // the nav becomes the tab bar as before.
+  const nav = `<div class="site-links">
+    <nav class="menu-nav" aria-label="Rooms">
       ${links}
     </nav>
-    <a class="menu-nav-link site-extra" href="/gerrymander/"${extraHere}>${icon('gerrymander')}<span>Gerrymander</span></a>`;
+    <a class="menu-nav-link site-extra" href="/gerrymander/"${extraHere}>${icon('gerrymander')}<span>Gerrymander</span></a>
+    </div>`;
   if (!signedIn) {
     return `${skip}
   <header class="site-bar">

@@ -81,16 +81,29 @@
   font-size: var(--text-subhead); font-weight: 500; white-space: nowrap;
 }
 .menu-nav-link .icon { width: 18px; height: 18px; flex: none; }
-.menu-nav-link:hover { color: var(--label); background: var(--fill); }
+@media (hover: hover) and (pointer: fine) {
+  .menu-nav-link:hover { color: var(--label); background: var(--fill); }
+}
 .menu-nav-link[aria-current="page"] { color: var(--accent); background: var(--accent-tint); }
 .menu-nav-link.is-shut { opacity: 0.6; }
 .when-narrow { display: none; }
+
+/* The links and their holder. On a phone the holder is not a box at all, so
+   the nav inside it can become the tab bar. On a wider screen the bar is
+   three columns, the outer two equal, so the links sit in the middle of the
+   page whether or not there is an account button on the right. */
+.site-links { display: contents; }
+@media (min-width: 901px) {
+  .site-bar { display: grid; grid-template-columns: 1fr auto 1fr; }
+  .site-mark { justify-self: start; }
+  .site-links { display: flex; align-items: center; gap: var(--space-1); }
+  .menu-nav { flex: none; }
+  .site-who { justify-self: end; margin-left: 0; }
+}
 /* Gerrymander's link: the wide bar only, and only once there is room. */
 .menu-nav-link.site-extra { display: none; }
-/* The link sits straight after the five, so the group is centred as one. */
 @media (min-width: 1101px) {
-  .menu-nav-link.site-extra { display: inline-flex; margin-right: auto; }
-  .menu-nav { flex: none; margin-left: auto; }
+  .menu-nav-link.site-extra { display: inline-flex; }
 }
 /* The face and the lens are the phone's; on a wide screen the link itself
    is the highlight. */
@@ -108,7 +121,9 @@
   font: inherit; font-size: var(--text-subhead); font-weight: 500;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.site-who-btn:hover { background: var(--bg-elevated-2); }
+@media (hover: hover) and (pointer: fine) {
+  .site-who-btn:hover { background: var(--bg-elevated-2); }
+}
 .site-who-btn:empty::before { content: "Account"; color: var(--label-secondary); }
 .site-menu {
   position: absolute; right: 0; top: calc(100% + var(--space-2)); z-index: 50;
@@ -266,7 +281,7 @@
 
 .site-foot {
   display: grid; gap: var(--space-2);
-  width: 100%; max-width: 1180px; margin: 0 auto;
+  width: 100%; max-width: var(--page-max); margin: 0 auto;
   padding: var(--space-6) max(var(--space-4), env(safe-area-inset-right)) var(--space-6) max(var(--space-4), env(safe-area-inset-left));
   border-top: 1px solid var(--separator);
   font-size: var(--text-footnote); color: var(--label-secondary);
@@ -278,7 +293,9 @@
   display: inline-flex; align-items: center; min-height: var(--hit);
   color: var(--label); text-decoration: none;
 }
-.site-foot a:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+@media (hover: hover) and (pointer: fine) {
+  .site-foot a:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+}
 .site-foot-aside { font-style: italic; }
 .site-foot-small { color: var(--label-tertiary); }
 

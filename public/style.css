@@ -1152,7 +1152,7 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 .rules-full > summary:hover { color: var(--accent-strong); }
 
 /* --- plain pages: about, privacy, tools ------------------------------------- */
-.page-main { max-width: 760px; margin: 0 auto; padding: clamp(var(--space-5), 4vw, var(--space-7)) var(--space-4) var(--space-5); }
+.page-main { max-width: var(--page-reading); margin: 0 auto; padding: clamp(var(--space-5), 4vw, var(--space-7)) var(--space-4) var(--space-5); }
 .prose { padding: clamp(var(--space-5), 4vw, 40px); }
 .prose h1 { margin: 0 0 var(--space-3); font-family: var(--font-display); font-weight: 400; font-size: clamp(var(--text-title-1), 5vw, 2.5rem); line-height: 1.1; letter-spacing: -0.01em; color: var(--label); }
 .prose h2 { margin: var(--space-6) 0 var(--space-2); font-size: var(--text-title-3); font-weight: 600; color: var(--label); }
@@ -1287,7 +1287,7 @@ dialog.sheet::backdrop { background: var(--scrim); }
 body.in-room .site-bar, body.in-room .site-foot { display: none; }
 body.in-room { padding-bottom: 0 !important; }
 #app main, #app > .topbar { margin: 0; }
-#app { max-width: 1180px; margin: 0 auto; padding: max(var(--space-4), env(safe-area-inset-top)) max(var(--space-4), env(safe-area-inset-right)) var(--space-7) max(var(--space-4), env(safe-area-inset-left)); position: relative; }
+#app { max-width: var(--page-max); margin: 0 auto; padding: max(var(--space-4), env(safe-area-inset-top)) max(var(--space-4), env(safe-area-inset-right)) var(--space-7) max(var(--space-4), env(safe-area-inset-left)); position: relative; }
 #app:empty { display: none; }
 .topbar small { color: var(--label-secondary); font-size: var(--text-footnote); }
 .codebox .btn.icon-only { width: 32px; min-height: 32px; }
