@@ -174,7 +174,7 @@
     bannerBusy = true;
     el.hidden = true;
     el.className = `banner fc ${b.kind}`;
-    el.style.setProperty('--r-ink', b.ink || 'var(--brass)');
+    el.style.setProperty('--r-ink', b.ink || 'var(--accent)');
     // The stylesheet times the arrive-hold-leave to the life of the banner
     // rather than guessing at it, so it has to be told what that is.
     el.style.setProperty('--banner-life', `${BANNER_MS}ms`);

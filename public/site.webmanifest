@@ -1,7 +1,7 @@
 {
   "name": "Thievery",
   "short_name": "Thievery",
-  "description": "Thievery, a free online deduction card game for 1 to 12 players, plus flashcards, quizzes and mind maps.",
+  "description": "Thievery, a free online deduction card game for 2 to 12 players, plus flashcards, quizzes and mind maps.",
   "start_url": "/cards",
   "scope": "/",
   "display": "standalone",

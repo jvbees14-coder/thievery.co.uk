@@ -35,7 +35,7 @@
             <form class="join-code" action="/" method="get">
               <label for="hall-code">Or join with a room code</label>
               <span class="join-code-row">
-                <input id="hall-code" name="code" maxlength="4" pattern="[A-Za-z0-9]{4}" placeholder="CODE" autocapitalize="characters" autocomplete="off" spellcheck="false" required />
+                <input id="hall-code" class="code-input" name="code" maxlength="4" pattern="[A-Za-z0-9]{4}" placeholder="CODE" autocapitalize="characters" autocomplete="off" spellcheck="false" required />
                 <button class="btn" type="submit">Join</button>
               </span>
             </form>
@@ -54,9 +54,11 @@
         <!-- Today's ten: the one thing in the hall that changes every day.
              Hidden until the battle room says there is a deck today. -->
         <section class="menu-daily" id="menu-daily" aria-labelledby="daily-title" hidden>
-          <h2 id="daily-title" class="display">Today&rsquo;s ten</h2>
           <p class="menu-daily-deck" id="daily-deck">&nbsp;</p>
+          <h2 id="daily-title" class="display">Today&rsquo;s ten</h2>
           <p class="menu-daily-note">The same ten questions for everyone today. Your first go goes on the board.</p>
+          <!-- Ten cards face down: a picture of the ten, for the eye only. -->
+          <div class="menu-daily-ten" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
           <p class="menu-daily-line" id="tile-battle-daily">&nbsp;</p>
           <a class="btn menu-daily-go" id="daily-go" href="/battle">Play today&rsquo;s ten</a>
         </section>
@@ -88,7 +90,7 @@
           <a class="menu-tile tile-gerrymander" id="tile-gerrymander" href="/gerrymander/">
             {{icon:gerrymander}}
             <h3>Gerrymander</h3>
-            <p class="menu-tile-figure">Nothing to sign in to</p>
+            <p class="menu-tile-figure">Draw the map, win the seats</p>
           </a>
           <a class="menu-tile menu-tile-house" id="tile-members" href="#members" hidden>
             {{icon:members}}

@@ -298,7 +298,7 @@ async function run() {
   await check('/gerrymander/ serves the game to anybody', async () => {
     const res = await stranger.page('/gerrymander/');
     assert.equal(res.status, 200);
-    assert.ok(res.html.includes('id="app"') && res.html.includes('<title>Gerrymander</title>'), 'expected the game page');
+    assert.ok(res.html.includes('id="app"') && res.html.includes('<title>Gerrymander · Thievery</title>'), 'expected the game page');
   });
 
   // The game is built elsewhere, so the bar is put on it as it leaves. It is
@@ -378,6 +378,17 @@ async function run() {
       assert.ok(!html.includes('<!--'), `${where} was served with a comment in it`);
       assert.ok(!html.includes('{{'), `${where} was served with a placeholder in it`);
     }
+  });
+
+  // The page a failed request is answered with has no address of its own, so
+  // it is read the way the server reads it at boot and held to the same rule,
+  // with the bar's way home on it, since a broken page is no place to strand
+  // anybody.
+  await check('the error page renders whole, with a way home', async () => {
+    const { readView } = await import('../server/views.js');
+    const html = readView('error.html');
+    assert.ok(!html.includes('<!--') && !html.includes('{{'), 'the error page was rendered unfinished');
+    assert.ok(html.includes('class="site-bar"') && html.includes('href="/cards"'), 'the error page has no way out');
   });
 
   await check('anything else under /cards goes back to the table', async () => {

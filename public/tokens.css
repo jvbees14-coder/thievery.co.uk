@@ -14,14 +14,15 @@
  * Contrast for every pair of text and background is worked out in
  * docs/DESIGN.md. Change a colour here and run the table there again.
  *
- * Three layers, top to bottom:
+ * Two layers, top to bottom:
  *
  *   1. The semantic tokens (--bg, --label, --accent and so on). New code uses
  *      these and nothing else.
  *   2. The scales: space, type, radius, motion, materials.
- *   3. The Vault's old names (--ink, --brass, --text-dim...), kept as aliases
- *      of the semantic tokens so the rooms written against them follow the
- *      theme without being rewritten line by line. Do not add to them.
+ *
+ * The Vault's old names (--ink, --brass, --text-dim and the rest) were
+ * aliases of the semantic tokens until November 2026, when every room was
+ * converted. They are gone; do not bring them back.
  */
 
 /* --- 1. colour: the Vault by night (the default) ---------------------------- */
@@ -77,10 +78,17 @@
 
   /* Veils and shadows. */
   --scrim: rgba(6, 8, 14, 0.8);
-  --shadow-color: rgba(0, 0, 0, 0.55);
-  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-2: 0 10px 26px rgba(0, 0, 0, 0.4);
-  --shadow-3: 0 18px 40px rgba(0, 0, 0, 0.55);
+  /* Every elevation is two or three layers, a tight contact shadow under a
+     wide soft one, and tinted toward the navy of the page rather than pure
+     black: a single black blur on a near-black page reads as a smudge, not
+     as height. On a page this dark the shadow does less than the light, so
+     --edge-light is the other half of lifting something: a hairline catch of
+     light along the top edge, worn as an inset shadow beside the elevation. */
+  --shadow-color: rgba(2, 3, 9, 0.6);
+  --shadow-1: 0 1px 1px rgba(2, 3, 9, 0.45), 0 2px 4px rgba(2, 3, 9, 0.3);
+  --shadow-2: 0 1px 2px rgba(2, 3, 9, 0.5), 0 4px 10px rgba(2, 3, 9, 0.32), 0 14px 32px rgba(2, 3, 9, 0.36);
+  --shadow-3: 0 2px 4px rgba(2, 3, 9, 0.5), 0 10px 24px rgba(2, 3, 9, 0.4), 0 30px 60px rgba(2, 3, 9, 0.5);
+  --edge-light: inset 0 1px 0 rgba(255, 244, 214, 0.06);
 
   /* Two teams, and the people watching. Never the only cue: every one of them
      comes with a word or a mark beside it. */
@@ -199,9 +207,10 @@
 
     --scrim: rgba(27, 24, 18, 0.42);
     --shadow-color: rgba(60, 45, 20, 0.16);
-    --shadow-1: 0 1px 2px rgba(60, 45, 20, 0.08);
+    --shadow-1: 0 1px 1px rgba(60, 45, 20, 0.06), 0 2px 4px rgba(60, 45, 20, 0.06);
     --shadow-2: 0 1px 2px rgba(60, 45, 20, 0.06), 0 6px 18px rgba(60, 45, 20, 0.08);
     --shadow-3: 0 2px 4px rgba(60, 45, 20, 0.06), 0 16px 36px rgba(60, 45, 20, 0.14);
+    --edge-light: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 
     --team-a: #0e6770;
     --team-b: #a3264f;
@@ -323,6 +332,29 @@
   --font-display: "Limelight", Georgia, serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, "Liberation Mono", monospace;
 
+  /* Figures. Anything somebody compares or watches change (a score, a
+     count, a clock, a mark out of 100) is set in the text face with
+     tabular figures, so the digits keep their width and a changing number
+     does not shuffle what sits beside it. Never in Limelight: its nought is
+     drawn as a half-filled disc, and an empty count reads as a broken icon. */
+  --numeric: tabular-nums lining-nums;
+
+  /* How long a line of reading may run: 50 to 75 characters is the
+     comfortable range, and these sit inside it. */
+  --measure: 68ch;
+  --measure-narrow: 52ch;
+
+  /* How wide a page may grow. The bar, the foot and every full-width room
+     share --page-max, so their edges line up from one room to the next;
+     a page of reading (About, Privacy, a tool) is --page-reading. A room
+     that needs a different width for its own reason says why. */
+  --page-max: 1180px;
+  --page-reading: 760px;
+
+  /* Four radii and no others. Something inside something else takes the
+     same radius or a smaller one, never larger: a field on a card is
+     --radius-m inside --radius-l, a chip inside a field is --radius-s or a
+     pill. */
   --radius-s: 4px;
   --radius-m: 8px;
   --radius-l: 14px;
@@ -331,10 +363,20 @@
   /* The smallest thing a thumb can be trusted to hit. */
   --hit: 44px;
 
-  --dur-quick: 150ms;
-  --dur-base: 220ms;
-  --dur-slow: 300ms;
-  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* Motion. Interface movement stays under 300ms and never eases in: it
+     starts fast and settles, so it answers the hand at once. --ease-out is
+     the default for anything that appears or responds; --ease-move is for
+     something travelling from one place on screen to another. The game's
+     moments (a deal, a banner, the confetti) are artwork and keep their own
+     longer timings, all stilled by data-motion="still" and by the device's
+     reduced-motion setting. */
+  --dur-quick: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 280ms;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-move: cubic-bezier(0.65, 0, 0.35, 1);
+  /* A press: the control gives a little under the finger. */
+  --press-scale: 0.97;
   --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
   /* A softer spring for things that settle rather than bounce: a sheet, a
      switch's knob, a tile sliding to its option. Where the browser can draw
@@ -343,6 +385,28 @@
 
   --bar-h: 60px;
   --tabbar-h: 60px;
+
+  /* Layers, for anything that floats over the page. Inside one component,
+     plain 1 to 6 is fine for stacking its own parts; anything fixed or
+     floating takes one of these, so two rooms cannot fight over the top. */
+  --z-raised: 1;
+  --z-dropdown: 20;
+  --z-bar: 40;
+  --z-tabbar: 45;
+  --z-popover: 50;
+  --z-celebrate: 55;
+  --z-banner: 60;
+  --z-modal: 70;
+  --z-modal-over: 80;
+  --z-menu: 85;
+  --z-toast: 90;
+  --z-flight: 100;
+  --z-skip: 200;
+
+  /* Breakpoints cannot be custom properties inside a media query, so they
+     are written here for reference and as numbers in the stylesheets:
+     600px (a phone), 900px (the tab bar takes over from the bar's links)
+     and 1100px (wide). Nothing new is to use any other width. */
 }
 
 /* A damped spring sampled into linear(), which overshoots by about four per
@@ -360,36 +424,4 @@
     --glass-specular: none; --glass-glow: transparent;
     --glass-caustic: none; --glass-focus: none; --glass-prism: none; --glass-glint: transparent;
   }
-}
-
-/* --- 3. the Vault's old names ------------------------------------------------- */
-
-:root {
-  --ink: var(--bg);
-  --ink-2: var(--bg-grouped);
-  --ink-3: var(--bg-elevated);
-  --ink-4: var(--bg-elevated-2);
-  --brass: var(--accent);
-  --brass-bright: var(--accent-strong);
-  --brass-dim: var(--separator-strong);
-  --brass-faint: var(--separator);
-  --brass-ghost: var(--accent-tint);
-  --ivory: var(--label);
-  --ivory-dim: var(--label-secondary);
-  --text: var(--label);
-  --text-dim: var(--label-secondary);
-  --text-faint: var(--label-tertiary);
-  --jade: var(--success);
-  --jade-bright: var(--success);
-  --jade-pale: var(--success);
-  --bad: var(--danger);
-  --burgundy: var(--stock-red);
-  --burgundy-deep: var(--back-red);
-  --radius: var(--radius-s);
-  --shadow: var(--shadow-3);
-  --display: var(--font-display);
-  --caps: var(--font-text);
-  --body: var(--font-text);
-  --mono: var(--font-mono);
-  --bounce: var(--ease-spring);
 }

@@ -8,7 +8,7 @@
  * hall itself adds. */
 
 .menu-main {
-  width: 100%; max-width: 1180px; margin: 0 auto; box-sizing: border-box;
+  width: 100%; max-width: var(--page-max); margin: 0 auto; box-sizing: border-box;
   padding: clamp(var(--space-5), 4vw, var(--space-7)) max(var(--space-4), env(safe-area-inset-right)) var(--space-8) max(var(--space-4), env(safe-area-inset-left));
 }
 
@@ -46,10 +46,10 @@
   position: relative; overflow: hidden;
   display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-6);
   padding: var(--space-6);
-  border-radius: 20px;
+  border-radius: var(--radius-l);
   background: radial-gradient(120% 140% at 85% 20%, var(--bg-elevated-2), var(--bg-grouped) 70%);
   border: 1px solid var(--separator);
-  box-shadow: var(--shadow-2);
+  box-shadow: var(--shadow-2), var(--edge-light);
   color: var(--label);
 }
 .menu-table::before, .menu-table::after {
@@ -71,11 +71,24 @@
   flex: 1 1 300px; min-width: 0;
   display: flex; flex-direction: column; gap: var(--space-3);
   padding: var(--space-5);
-  border-radius: 20px;
-  background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-2);
+  border-radius: var(--radius-l);
+  background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-2), var(--edge-light);
 }
 .menu-daily h2 { margin: 0; font-size: var(--text-title-2); color: var(--label); }
-.menu-daily-deck { margin: 0; font-family: var(--font-display); font-size: var(--text-title-3); color: var(--label); }
+/* The day's deck is a badge over the heading, not a second heading under it. */
+.menu-daily-deck {
+  margin: 0; align-self: flex-start;
+  padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill);
+  border: 1px solid var(--accent-edge); background: var(--accent-tint); color: var(--accent);
+  font-size: var(--text-caption); font-weight: 600;
+}
+/* Ten card backs in a row, the panel's picture of what is on offer. */
+.menu-daily-ten { display: flex; gap: var(--space-1); margin: var(--space-2) 0; }
+.menu-daily-ten i {
+  flex: 1 1 0; max-width: 28px; aspect-ratio: 5 / 7; border-radius: var(--radius-s);
+  border: 1px solid var(--back-edge);
+  background: repeating-linear-gradient(45deg, var(--separator) 0 1px, transparent 1px 5px), var(--back);
+}
 .menu-daily-note { margin: 0; font-size: var(--text-subhead); color: var(--label-secondary); }
 .menu-daily-line { margin: 0; font-size: var(--text-subhead); font-weight: 600; color: var(--label); }
 .menu-daily-go { align-self: flex-start; margin-top: auto; }
@@ -92,11 +105,14 @@
   display: flex; flex-direction: column; gap: var(--space-2);
   padding: var(--space-4) var(--space-4) var(--space-5);
   border-radius: var(--radius-l);
-  background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-2);
+  background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-2), var(--edge-light);
   color: var(--label); text-decoration: none;
-  transition: background var(--dur-quick), border-color var(--dur-quick);
+  transition: background var(--dur-quick) var(--ease-out), border-color var(--dur-quick) var(--ease-out), transform var(--dur-base) var(--ease-out);
+  position: relative;
 }
-.menu-tile:hover { background: var(--bg-elevated-2); border-color: var(--separator-strong); color: var(--label); }
+@media (hover: hover) and (pointer: fine) {
+  .menu-tile:hover { background: var(--bg-elevated-2); border-color: var(--separator-strong); color: var(--label); }
+}
 .menu-tile .icon { width: 28px; height: 28px; }
 .menu-tile h3 { margin: var(--space-1) 0 0; font-family: var(--font-display); font-size: var(--text-title-2); font-weight: 400; line-height: 1.2; }
 .menu-tile-figure { margin: 0; font-size: var(--text-footnote); color: var(--label-secondary); }
@@ -122,15 +138,15 @@
 .menu-record-figures dt { font-size: var(--text-footnote); color: var(--label-secondary); }
 /* The figures are in the text face, bold, not Limelight: its nought is a
    half-moon, and a new account's record is all noughts. */
-.menu-record-figures dd { margin: var(--space-1) 0 0; font-size: 2rem; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; color: var(--label); }
+.menu-record-figures dd { margin: var(--space-1) 0 0; font-size: 2rem; font-weight: 700; line-height: 1.15; font-variant-numeric: var(--numeric); color: var(--label); }
 
 @media (max-width: 640px) {
   .menu-table { padding: var(--space-5); }
   .menu-table h2 { font-size: var(--text-title-1); }
-  .menu-table-blurb { margin-right: 96px; }
+  .menu-table-blurb { margin-right: var(--space-8); }
   /* On a phone the hand tucks into the corner beside the title. */
   .menu-table .menu-table-hand { position: absolute; top: var(--space-3); right: calc(-1 * var(--space-4)); width: 220px; min-width: 0; height: 180px; transform: scale(0.5); transform-origin: top right; }
-  .menu-grid { grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+  .menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
   .menu-record-figures { grid-template-columns: 1fr 1fr; }
   .menu-record-figures dd { font-size: var(--text-title-1); }
   .menu-section-head { font-size: var(--text-title-2); }
@@ -140,58 +156,59 @@
 
 .menu-panel { margin: 0 auto; max-width: 780px; }
 .menu-panel-head {
-  margin: 0 0 4px;
-  font-family: var(--display);
-  font-size: 26px;
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-display);
+  font-size: var(--text-title-1);
   font-weight: 400;
   letter-spacing: normal;
   text-transform: none;
-  color: var(--ivory);
+  color: var(--label);
 }
-.menu-panel-lede { margin: 0 0 22px; color: var(--text-dim); font-size: 15px; }
-.menu-panel-foot { margin: 22px 0 0; font-size: 13px; }
-.menu-panel-foot a { color: var(--text-faint); text-decoration: none; }
-.menu-panel-foot a:hover { color: var(--brass); }
+.menu-panel-lede { margin: 0 0 var(--space-5); color: var(--label-secondary); font-size: var(--text-subhead); }
+.menu-panel-foot { margin: var(--space-5) 0 0; font-size: var(--text-footnote); }
+.menu-panel-foot a { color: var(--label-tertiary); text-decoration: none; }
+.menu-panel-foot a:hover { color: var(--accent); }
 
 .menu-figures {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px;
-  margin-bottom: 24px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
 }
 .menu-figure {
-  padding: 16px 14px;
-  border: 1px solid var(--brass-ghost);
-  border-radius: var(--radius);
+  padding: var(--space-4) var(--space-4);
+  border: 1px solid var(--accent-tint);
+  border-radius: var(--radius-s);
   background: var(--fill);
   text-align: center;
 }
 .menu-figure b {
   display: block;
-  font-family: var(--display);
-  font-size: 30px;
-  font-weight: 400;
+  font-family: var(--font-text);
+  font-variant-numeric: var(--numeric);
+  font-size: 2rem;
+  font-weight: 700;
   line-height: 1.1;
-  color: var(--brass);
+  color: var(--accent);
 }
 .menu-figure span {
   display: block;
-  margin-top: 6px;
-  font-family: var(--caps);
+  margin-top: var(--space-2);
+  font-family: var(--font-text);
   font-size: var(--text-caption);
-  color: var(--text-dim);
+  color: var(--label-secondary);
 }
-.menu-figure i { display: block; margin-top: 2px; font-style: normal; font-size: 12px; color: var(--text-faint); }
+.menu-figure i { display: block; margin-top: 2px; font-style: normal; font-size: var(--text-caption); color: var(--label-tertiary); }
 
-.menu-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 20px; }
-.menu-note { margin: 0; color: var(--text-dim); font-size: 15px; }
+.menu-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-5); }
+.menu-note { margin: 0; color: var(--label-secondary); font-size: var(--text-subhead); }
 
 .menu-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 18px 0;
-  border-top: 1px solid var(--brass-ghost);
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--accent-tint);
 }
 .menu-form:first-of-type { border-top: 0; }
 
@@ -202,20 +219,20 @@
 .menu-tile-house { border-color: var(--team-b-edge); }
 .menu-tile-house .icon { color: var(--team-b); }
 
-.menu-members { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+.menu-members { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-4); }
 /* The flashcards panel draws a row as a button; here it is a link, because
    an account has an address. */
 .menu-members a.fc-acct { text-decoration: none; box-sizing: border-box; }
-.menu-member-back { margin: 0 0 14px; font-size: 13px; }
-.menu-member-back a { color: var(--text-faint); text-decoration: none; }
-.menu-member-back a:hover { color: var(--brass); }
+.menu-member-back { margin: 0 0 var(--space-4); font-size: var(--text-footnote); }
+.menu-member-back a { color: var(--label-tertiary); text-decoration: none; }
+.menu-member-back a:hover { color: var(--accent); }
 .menu-member .menu-form .fc-h4 { margin: 0; }
-.menu-member-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-bottom: 4px; }
-.menu-member-head h3 { margin: 0; font-family: var(--display); font-size: 22px; font-weight: 400; color: var(--ivory); }
-.menu-member-facts { margin: 0 0 6px; font-size: 14px; color: var(--text-dim); }
+.menu-member-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); margin-bottom: var(--space-1); }
+.menu-member-head h3 { margin: 0; font-family: var(--font-display); font-size: var(--text-title-2); font-weight: 400; color: var(--label); }
+.menu-member-facts { margin: 0 0 var(--space-2); font-size: var(--text-subhead); color: var(--label-secondary); }
 .menu-member .fc-actions { flex-wrap: wrap; }
 .menu-member .btn.danger { border-color: var(--danger-edge); color: var(--danger); }
-.menu-member .btn.danger:hover { background: var(--danger-tint); border-color: var(--bad); }
+.menu-member .btn.danger:hover { background: var(--danger-tint); border-color: var(--danger); }
 
 /* --- the front door, for a visitor ----------------------------------------
    The game first, in words a search engine can read, with a picture of a
@@ -223,25 +240,29 @@
    in for the rooms that need an account. */
 
 .landing {
-  width: 100%; max-width: 1180px; margin: 0 auto; box-sizing: border-box;
+  width: 100%; max-width: var(--page-max); margin: 0 auto; box-sizing: border-box;
   padding: clamp(var(--space-5), 6vw, var(--space-8)) max(var(--space-4), env(safe-area-inset-right)) var(--space-8) max(var(--space-4), env(safe-area-inset-left));
   display: flex; flex-direction: column; gap: clamp(var(--space-7), 8vw, var(--space-8));
 }
+/* The fan of cards leans out past its own box on purpose. On the narrowest
+   screens that would be past the edge of the screen, so the page is clipped
+   sideways at its own edge (clip, not hidden, so nothing becomes a scroller). */
+.landing { overflow-x: clip; }
 .landing-hero { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-7); }
-.landing-hero-text { flex: 1 1 440px; min-width: 0; display: flex; flex-direction: column; gap: var(--space-5); }
+.landing-hero-text { flex: 1 1 520px; min-width: 0; display: flex; flex-direction: column; gap: var(--space-5); }
 .landing-kicker {
   margin: 0; align-self: flex-start;
   padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill);
   border: 1px solid var(--accent-edge); background: var(--accent-tint); color: var(--accent);
   font-size: var(--text-caption); font-weight: 600;
 }
-.landing-title { margin: 0; font-size: clamp(2.75rem, 6vw, 4.75rem); line-height: 1.02; color: var(--label); text-wrap: balance; }
+.landing-title { margin: 0; font-size: clamp(2.75rem, 6vw, 4.25rem); line-height: 1.02; color: var(--label); text-wrap: balance; }
 .landing-lede { margin: 0; max-width: 34em; color: var(--label-secondary); }
 .landing-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); }
 .landing-play { min-height: 52px; padding: 0 var(--space-5); font-size: var(--text-headline); }
 .landing-play .icon { width: 22px; height: 22px; }
 .landing-note { margin: 0; color: var(--label-secondary); font-size: var(--text-footnote); }
-.landing-hand { flex: 1 1 420px; min-width: 280px; height: 420px; }
+.landing-hand { flex: 1 1 360px; min-width: 280px; height: 420px; }
 
 /* A room code, typed straight in. Shared by the front door and the hall. */
 .join-code { display: flex; flex-direction: column; gap: var(--space-2); }
@@ -251,9 +272,7 @@
   width: 7.5em; min-height: var(--hit); box-sizing: border-box;
   padding: 0 var(--space-3); border-radius: var(--radius-m);
   border: 1px solid var(--separator-strong); background: var(--fill); color: var(--label);
-  font-family: var(--font-mono); font-size: 1.25rem; letter-spacing: 0.3em; text-align: center; text-transform: uppercase;
 }
-.join-code input::placeholder { color: var(--label-tertiary); letter-spacing: 0.3em; }
 
 .landing-section { display: flex; flex-direction: column; gap: var(--space-5); }
 .landing-section-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); }
@@ -272,7 +291,7 @@
 }
 .landing-turn b { display: block; margin-bottom: var(--space-1); font-size: var(--text-headline); color: var(--label); }
 .turn-card {
-  flex: none; width: 44px; height: 62px; box-sizing: border-box; border-radius: 6px;
+  flex: none; width: 44px; height: 62px; box-sizing: border-box; border-radius: var(--radius-m);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font-display); font-size: var(--text-title-2);
 }
@@ -286,16 +305,16 @@
 .room-card {
   display: flex; flex-direction: column; gap: var(--space-3);
   padding: var(--space-5); border-radius: var(--radius-l);
-  background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-2);
+  background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-2), var(--edge-light);
 }
 .room-card h3 { margin: var(--space-1) 0 0; font-family: var(--font-display); font-size: var(--text-title-2); font-weight: 400; line-height: 1.2; color: var(--label); }
 .room-card p { margin: 0; flex: 1; font-size: var(--text-subhead); color: var(--label-secondary); }
-.room-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.room-pills { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .pill.rarity-rare { color: var(--r-rare); border-color: currentColor; }
 .pill.rarity-epic { color: var(--r-epic); border-color: currentColor; }
 .pill.rarity-legendary { color: var(--r-legendary); border-color: currentColor; }
 
-.room-art { position: relative; height: 132px; border-radius: 10px; background: var(--bg-grouped); overflow: hidden; }
+.room-art { position: relative; height: 132px; border-radius: var(--radius-m); background: var(--bg-grouped); overflow: hidden; }
 .art-flashcards span {
   position: absolute; top: 22px; width: 58px; height: 80px; border-radius: 6px;
   background: var(--stock); border: 2px solid var(--r-rare); transform: rotate(-12deg);
@@ -306,7 +325,7 @@
 .art-battle { display: flex; flex-direction: column; justify-content: center; gap: var(--space-2); padding: 0 var(--space-5); }
 .art-battle-label { font-size: var(--text-footnote); color: var(--label-secondary); }
 .art-battle-mark { font-size: var(--text-subhead); color: var(--label-tertiary); }
-.art-battle-mark b { font-family: var(--font-display); font-size: 2.6rem; font-weight: 400; line-height: 1; color: var(--success); }
+.art-battle-mark b { font-family: var(--font-text); font-variant-numeric: var(--numeric); font-size: 2.6rem; font-weight: 700; line-height: 1; color: var(--success); }
 .art-battle-bar { height: 6px; border-radius: var(--radius-pill); background: var(--fill-strong); overflow: hidden; }
 .art-battle-bar span { display: block; width: 87%; height: 100%; background: var(--success); }
 .art-switchhead { display: flex; align-items: center; justify-content: center; gap: var(--space-3); }
@@ -342,7 +361,7 @@
   position: relative; overflow: hidden;
   display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-6);
   padding: clamp(var(--space-5), 5vw, var(--space-7));
-  border-radius: 20px; background: var(--bg-grouped); border: 1px solid var(--separator);
+  border-radius: var(--radius-l); background: var(--bg-grouped); border: 1px solid var(--separator);
 }
 .landing-door-band::after {
   content: ""; position: absolute; right: -60px; bottom: -80px; width: 260px; height: 360px;
@@ -354,8 +373,8 @@
 .landing-door-title { margin: 0; font-size: 2.5rem; line-height: 1.1; color: var(--label); }
 .landing-door-text p { margin: 0; max-width: 30em; color: var(--label-secondary); }
 .landing-door { flex: 1 1 360px; max-width: 440px; position: relative; z-index: 1; }
-.landing-door .door-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 0; padding: 2px; border: 0; border-radius: 9px; background: var(--segment-track); }
-.landing-door .door-tab { min-height: 36px; margin: 0; border: 0; border-radius: 7px; background: transparent; color: var(--label-secondary); font-size: var(--text-subhead); font-weight: 600; }
+.landing-door .door-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 0; padding: 2px; border: 0; border-radius: var(--radius-m); background: var(--segment-track); }
+.landing-door .door-tab { min-height: 36px; margin: 0; border: 0; border-radius: var(--radius-m); background: transparent; color: var(--label-secondary); font-size: var(--text-subhead); font-weight: 600; }
 .landing-door .door-tab.is-on { background: var(--segment-tile); color: var(--label); box-shadow: var(--shadow-1); }
 
 @media (max-width: 640px) {
@@ -398,11 +417,45 @@
 @media (prefers-reduced-motion: reduce) { .hand-card.is-lifted { animation: none; } }
 html[data-motion="still"] .hand-card.is-lifted { animation: none; }
 
+/* --- the front page's one moment ------------------------------------------
+   On arrival the words settle in, a beat apart, and the hand fans out from a
+   stack before the queen is lifted from it. The headline is not part of it:
+   it is the page's largest text, and holding it back would only make the
+   page slower to read and slower to measure. Everything here is movement and
+   opacity only, and none of it happens under reduced motion or the site's
+   still setting. */
+@keyframes rise { from { opacity: 0; translate: 0 var(--space-2); } }
+@keyframes fan { from { opacity: 0; transform: rotate(0deg) translateY(var(--space-5)); } }
+@keyframes fan-rest { from { opacity: 0; transform: rotate(0deg) translateY(var(--space-5)); } to { transform: rotate(var(--turn, 0deg)); } }
+/* Both ends written out: with fan-rest underneath it, a lift that left its
+   end to the browser would end where fan-rest does, at rest. */
+@keyframes lift-up { from { transform: rotate(var(--turn, 0deg)); } to { transform: rotate(var(--turn, 0deg)) translateY(calc(var(--card-w) * -0.42)); } }
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-motion="still"]) .landing-kicker,
+  html:not([data-motion="still"]) .landing-lede,
+  html:not([data-motion="still"]) .landing-actions,
+  html:not([data-motion="still"]) .landing-note { animation: rise var(--dur-slow) var(--ease-out) both; }
+  html:not([data-motion="still"]) .landing-lede { animation-delay: 60ms; }
+  html:not([data-motion="still"]) .landing-actions { animation-delay: 120ms; }
+  html:not([data-motion="still"]) .landing-note { animation-delay: 180ms; }
+  html:not([data-motion="still"]) .landing-hand .hand-card { animation: fan var(--dur-slow) var(--ease-out) both; }
+  html:not([data-motion="still"]) .landing-hand .hand-card:nth-child(2) { animation-delay: 40ms; }
+  html:not([data-motion="still"]) .landing-hand .hand-card:nth-child(3) { animation-delay: 80ms; }
+  html:not([data-motion="still"]) .landing-hand .hand-card:nth-child(5) { animation-delay: 160ms; }
+  /* The queen fans to rest with the others, then is lifted: two animations,
+     the second taking over only once its own delay is up. */
+  html:not([data-motion="still"]) .landing-hand .hand-card.is-lifted {
+    animation: fan-rest var(--dur-slow) var(--ease-out) 120ms both, lift-up var(--dur-slow) var(--ease-out) 460ms forwards;
+  }
+  html:not([data-motion="still"]) .landing-hand .hand-guess { animation: rise var(--dur-slow) var(--ease-out) 640ms both; }
+}
+
+
 .hand-guess {
   position: absolute; right: 2%; top: var(--space-5);
   display: flex; flex-direction: column; gap: var(--space-2);
   max-width: 220px; padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-l); background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-3);
+  border-radius: var(--radius-l); background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-3), var(--edge-light);
 }
 .hand-guess-who { font-size: var(--text-footnote); color: var(--label-secondary); }
 .hand-guess-call { font-family: var(--font-display); font-size: var(--text-title-2); line-height: 1.2; color: var(--label); }
@@ -412,44 +465,49 @@ html[data-motion="still"] .hand-card.is-lifted { animation: none; }
 /* --- the same rounds, by what kind of game they were ---------------------- */
 
 .menu-modes-head {
-  margin: 26px 0 10px;
-  font-family: var(--caps);
-  font-size: 12px;
+  margin: var(--space-5) 0 var(--space-3);
+  font-family: var(--font-text);
+  font-size: var(--text-caption);
   font-weight: 700;
-  color: var(--ivory);
+  color: var(--label);
 }
 
 .menu-modes {
   width: 100%;
   border-collapse: collapse;
-  font-size: 15px;
+  font-size: var(--text-subhead);
 }
-.menu-modes th, .menu-modes td { padding: 9px 8px; border-bottom: 1px solid var(--brass-ghost); }
+.menu-modes th, .menu-modes td { padding: var(--space-2) var(--space-2); border-bottom: 1px solid var(--accent-tint); }
 .menu-modes thead th {
-  font-family: var(--caps);
+  font-family: var(--font-text);
   font-size: var(--text-caption);
   font-weight: 700;
-  color: var(--text-faint);
+  color: var(--label-tertiary);
   text-align: right;
 }
 .menu-modes thead th:first-child { text-align: left; }
 .menu-modes tbody th {
   font-weight: 400;
   text-align: left;
-  color: var(--text);
+  color: var(--label);
 }
 /* The what-it-is line under each name, so the column can stay one word wide
    and still say which sizes a row covers. */
-.menu-modes tbody th span { display: block; font-size: 12px; color: var(--text-faint); }
-.menu-modes td { text-align: right; font-family: var(--mono); font-size: 13px; color: var(--text-dim); }
-.menu-modes td:last-child { color: var(--brass); }
+.menu-modes tbody th span { display: block; font-size: var(--text-caption); color: var(--label-tertiary); }
+.menu-modes td { text-align: right; font-family: var(--font-mono); font-size: var(--text-footnote); color: var(--label-secondary); }
+.menu-modes td:last-child { color: var(--accent); }
 /* Never played is drawn rather than dropped: a table whose rows come and go
    cannot be read twice. */
 .menu-modes .is-empty th, .menu-modes .is-empty td { opacity: 0.45; }
 
 @media (max-width: 460px) {
-  .menu-modes { font-size: 14px; }
-  .menu-modes th, .menu-modes td { padding: 8px 4px; }
+  .menu-modes { font-size: var(--text-subhead); }
+  .menu-modes th, .menu-modes td { padding: var(--space-2) var(--space-1); }
 }
 
-.menu-form-head { margin: 0 0 10px; font-family: var(--caps); font-size: 13px; font-weight: 600; color: var(--ivory); }
+.menu-form-head { margin: 0 0 var(--space-3); font-family: var(--font-text); font-size: var(--text-footnote); font-weight: 600; color: var(--label); }
+
+/* Two tiles side by side cannot hold a room name in Limelight under 360px. */
+@media (max-width: 359px) {
+  .menu-grid { grid-template-columns: minmax(0, 1fr); }
+}

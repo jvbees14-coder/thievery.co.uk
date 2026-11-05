@@ -13,7 +13,7 @@
 /* --- the skip link ------------------------------------------------------------ */
 
 .skip-link {
-  position: absolute; left: var(--space-3); top: var(--space-3); z-index: 200;
+  position: absolute; left: var(--space-3); top: var(--space-3); z-index: var(--z-skip);
   padding: var(--space-3) var(--space-4); border-radius: var(--radius-m);
   background: var(--accent); color: var(--accent-contrast);
   font-weight: 600; text-decoration: none;
@@ -24,7 +24,7 @@
 /* --- the bar ----------------------------------------------------------------------- */
 
 .site-bar {
-  position: sticky; top: 0; z-index: 40;
+  position: sticky; top: 0; z-index: var(--z-bar);
   display: flex; align-items: center; gap: var(--space-4);
   min-height: var(--bar-h);
   padding: var(--space-2) max(var(--space-4), env(safe-area-inset-right)) var(--space-2) max(var(--space-4), env(safe-area-inset-left));
@@ -81,16 +81,29 @@
   font-size: var(--text-subhead); font-weight: 500; white-space: nowrap;
 }
 .menu-nav-link .icon { width: 18px; height: 18px; flex: none; }
-.menu-nav-link:hover { color: var(--label); background: var(--fill); }
+@media (hover: hover) and (pointer: fine) {
+  .menu-nav-link:hover { color: var(--label); background: var(--fill); }
+}
 .menu-nav-link[aria-current="page"] { color: var(--accent); background: var(--accent-tint); }
 .menu-nav-link.is-shut { opacity: 0.6; }
 .when-narrow { display: none; }
+
+/* The links and their holder. On a phone the holder is not a box at all, so
+   the nav inside it can become the tab bar. On a wider screen the bar is
+   three columns, the outer two equal, so the links sit in the middle of the
+   page whether or not there is an account button on the right. */
+.site-links { display: contents; }
+@media (min-width: 901px) {
+  .site-bar { display: grid; grid-template-columns: 1fr auto 1fr; }
+  .site-mark { justify-self: start; }
+  .site-links { display: flex; align-items: center; gap: var(--space-1); }
+  .menu-nav { flex: none; }
+  .site-who { justify-self: end; margin-left: 0; }
+}
 /* Gerrymander's link: the wide bar only, and only once there is room. */
 .menu-nav-link.site-extra { display: none; }
-/* The link sits straight after the five, so the group is centred as one. */
 @media (min-width: 1101px) {
-  .menu-nav-link.site-extra { display: inline-flex; margin-right: auto; }
-  .menu-nav { flex: none; margin-left: auto; }
+  .menu-nav-link.site-extra { display: inline-flex; }
 }
 /* The face and the lens are the phone's; on a wide screen the link itself
    is the highlight. */
@@ -108,14 +121,16 @@
   font: inherit; font-size: var(--text-subhead); font-weight: 500;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.site-who-btn:hover { background: var(--bg-elevated-2); }
+@media (hover: hover) and (pointer: fine) {
+  .site-who-btn:hover { background: var(--bg-elevated-2); }
+}
 .site-who-btn:empty::before { content: "Account"; color: var(--label-secondary); }
 .site-menu {
-  position: absolute; right: 0; top: calc(100% + var(--space-2)); z-index: 50;
+  position: absolute; right: 0; top: calc(100% + var(--space-2)); z-index: var(--z-popover);
   min-width: 14rem; padding: var(--space-1);
   display: flex; flex-direction: column;
   background: var(--bg-elevated); border: 1px solid var(--separator); border-radius: var(--radius-l);
-  box-shadow: var(--shadow-3);
+  box-shadow: var(--shadow-3), var(--edge-light);
 }
 .site-menu a, .site-menu button {
   appearance: none; background: none; border: 0; cursor: pointer; text-align: left;
@@ -142,7 +157,7 @@
      turn the glass solid and the blur, sheen and rim off, and what is left
      is a plain floating capsule with an ordinary edge. */
   .menu-nav {
-    position: fixed; z-index: 45;
+    position: fixed; z-index: var(--z-tabbar);
     left: max(var(--space-3), env(safe-area-inset-left));
     right: max(var(--space-3), env(safe-area-inset-right));
     bottom: max(var(--space-2), env(safe-area-inset-bottom));
@@ -150,7 +165,7 @@
        an even split cut "Flashcards" off on a 6.1" phone. */
     display: grid; grid-template-columns: repeat(5, minmax(min-content, 1fr)); gap: 0;
     max-width: 30rem; margin: 0 auto;
-    padding: 5px;
+    padding: var(--space-1);
     border-radius: var(--radius-pill);
     /* shell.js keeps --glint-x over the lens, so the brightest light on
        the bar is always where the lens is. */
@@ -205,7 +220,7 @@
   .menu-nav-face {
     position: relative; isolation: isolate;
     flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-    min-width: min(3.75rem, 100%); max-width: 100%; padding: 2px min(12px, 2.5vw);
+    min-width: min(3.75rem, 100%); max-width: 100%; padding: 2px min(var(--space-3), 2.5vw);
     transition: transform var(--dur-quick) var(--ease-spring);
   }
   .menu-nav-link:active .menu-nav-face { transform: scale(0.92); }
@@ -266,7 +281,7 @@
 
 .site-foot {
   display: grid; gap: var(--space-2);
-  width: 100%; max-width: 1180px; margin: 0 auto;
+  width: 100%; max-width: var(--page-max); margin: 0 auto;
   padding: var(--space-6) max(var(--space-4), env(safe-area-inset-right)) var(--space-6) max(var(--space-4), env(safe-area-inset-left));
   border-top: 1px solid var(--separator);
   font-size: var(--text-footnote); color: var(--label-secondary);
@@ -278,7 +293,9 @@
   display: inline-flex; align-items: center; min-height: var(--hit);
   color: var(--label); text-decoration: none;
 }
-.site-foot a:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+@media (hover: hover) and (pointer: fine) {
+  .site-foot a:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+}
 .site-foot-aside { font-style: italic; }
 .site-foot-small { color: var(--label-tertiary); }
 

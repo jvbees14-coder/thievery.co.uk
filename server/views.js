@@ -105,10 +105,16 @@ export function bar(current = '', { signedIn = true, main = 'main' } = {}) {
   // not one of the five tabs. It is a sixth link outside the nav, shown only
   // where the bar has room for it, which leaves the phone's tab bar alone.
   const extraHere = current === 'gerrymander' ? ' aria-current="page"' : '';
-  const nav = `<nav class="menu-nav" aria-label="Rooms">
+  // The nav and the extra link are held together so a wide bar can centre
+  // them as one row, on the page rather than in whatever room the account
+  // button leaves. On a phone the holder steps aside (display: contents) and
+  // the nav becomes the tab bar as before.
+  const nav = `<div class="site-links">
+    <nav class="menu-nav" aria-label="Rooms">
       ${links}
     </nav>
-    <a class="menu-nav-link site-extra" href="/gerrymander/"${extraHere}>${icon('gerrymander')}<span>Gerrymander</span></a>`;
+    <a class="menu-nav-link site-extra" href="/gerrymander/"${extraHere}>${icon('gerrymander')}<span>Gerrymander</span></a>
+    </div>`;
   if (!signedIn) {
     return `${skip}
   <header class="site-bar">
@@ -163,6 +169,24 @@ export function foot() {
 
 // --- the head ------------------------------------------------------------------
 
+// The next page, fetched while the pointer is still on its way there. Only
+// fetched, never prerendered: a prerender runs the page's scripts, and the
+// rooms' scripts open the socket and sit people down, which nobody should do
+// by hovering. Moderate eagerness waits for a hover or a press, so a page of
+// links is not a burst of requests. Our own pages only, never the API, and
+// never a link marked data-no-prefetch. A browser without the feature reads
+// a script type it does not know and ignores it.
+const SPECULATION = `<script type="speculationrules">${JSON.stringify({
+  prefetch: [{
+    where: { and: [
+      { href_matches: '/*' },
+      { not: { href_matches: '/api/*' } },
+      { not: { selector_matches: '[data-no-prefetch]' } },
+    ] },
+    eagerness: 'moderate',
+  }],
+})}</script>`;
+
 // Everything a page needs before its first paint, in the order it needs it.
 // The tokens come before every other sheet because every other sheet is
 // written in them; the room's own sheets come after the base, so a room can
@@ -175,6 +199,7 @@ export function head(rooms = []) {
     '<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a0c14" />',
     '<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5efe2" />',
     '<link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />',
+    '<link rel="icon" href="/icons/icon-192.png" sizes="192x192" type="image/png" />',
     '<link rel="apple-touch-icon" href="/icons/icon-180.png" />',
     '<link rel="manifest" href="/site.webmanifest" />',
     '<link rel="preload" href="/fonts/limelight-400-latin.woff2" as="font" type="font/woff2" crossorigin />',
@@ -182,6 +207,7 @@ export function head(rooms = []) {
     '<script src="/prefs.js"></script>',
     '<script src="/shell.js" defer></script>',
     '<script src="/controls.js" defer></script>',
+    SPECULATION,
   ].join('\n  ');
 }
 
@@ -256,10 +282,16 @@ export function render(html) {
  * fight the game's, and not prefs.js, which would write over the game's own
  * data-motion on <html>. `main` is the id the skip link should land on.
  */
-export function withBar(html, current, { main = 'main' } = {}) {
-  const sheet = '<link rel="stylesheet" href="/shell.css" />\n    <script src="/shell.js" defer></script>\n  </head>';
+// A page built elsewhere can also be given the head tags it was built
+// without (`head`: the canonical address, the share tags) and the site's name
+// in its title (`title`), so it is found and shared as one of ours. Its own
+// files are left exactly as the build wrote them.
+export function withBar(html, current, { main = 'main', head = '', title = '' } = {}) {
+  const sheet = `${head}\n    <link rel="stylesheet" href="/shell.css" />\n    <script src="/shell.js" defer></script>\n  </head>`;
   const top = bar(current, { signedIn: false, main });
-  return versioned(html.replace('</head>', sheet).replace(/<body([^>]*)>/, (open) => `${open}\n  ${top}`));
+  let out = html.replace('</head>', sheet).replace(/<body([^>]*)>/, (open) => `${open}\n  ${top}`);
+  if (title) out = out.replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`);
+  return versioned(out);
 }
 
 export function readView(name) {

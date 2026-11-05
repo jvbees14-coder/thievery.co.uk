@@ -61,13 +61,13 @@ input[type="checkbox"].switch:disabled { cursor: default; opacity: 0.5; }
   position: relative; isolation: isolate;
   display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
   min-height: 36px; padding: 2px;
-  border-radius: 9px;
+  border-radius: var(--radius-m);
   background: var(--segment-track);
   -webkit-user-select: none; user-select: none;
 }
 .segmented-tile {
   position: absolute; z-index: -1; top: 2px; bottom: 2px; left: 0; width: 0;
-  border-radius: 7px;
+  border-radius: var(--radius-m);
   background: var(--segment-tile);
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 3px 1px rgba(0, 0, 0, 0.04), inset 0 0 0 0.5px var(--glass-edge);
   transition: transform var(--dur-slow) var(--ease-spring-soft), width var(--dur-slow) var(--ease-spring-soft);
@@ -76,7 +76,7 @@ input[type="checkbox"].switch:disabled { cursor: default; opacity: 0.5; }
 .segmented button {
   appearance: none; border: 0; background: none; cursor: pointer;
   min-width: 0; padding: 0 var(--space-3);
-  border-radius: 7px;
+  border-radius: var(--radius-m);
   color: var(--label); font: inherit; font-size: var(--text-footnote); font-weight: 500;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   transition: transform var(--dur-quick) var(--ease-out);
@@ -106,7 +106,7 @@ input[type="checkbox"].switch:disabled { cursor: default; opacity: 0.5; }
 .stepper input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .stepper-keys {
   display: inline-grid; grid-template-columns: 1fr 1fr;
-  height: 32px; border-radius: 8px; overflow: hidden;
+  height: 32px; border-radius: var(--radius-m); overflow: hidden;
   background: var(--fill-strong);
 }
 .stepper-keys button {
@@ -134,7 +134,7 @@ input[type="checkbox"].switch:disabled { cursor: default; opacity: 0.5; }
 }
 .list-group {
   margin: 0; padding: 0; list-style: none;
-  border-radius: 10px; overflow: hidden;
+  border-radius: var(--radius-m); overflow: hidden;
   background: var(--list-bg);
   box-shadow: var(--shadow-1);
 }
@@ -166,20 +166,20 @@ a.list-row:hover, a.list-row:active { background: var(--fill); }
    where the finger is. The page behind dims a little and the menu grows out
    of the press. */
 .ctx-veil {
-  position: fixed; inset: 0; z-index: 85;
+  position: fixed; inset: 0; z-index: var(--z-menu);
   background: var(--scrim); opacity: 0.35;
   animation: ctxveil var(--dur-base) var(--ease-out);
 }
 .ctx-menu {
-  position: fixed; z-index: 86;
+  position: fixed; z-index: calc(var(--z-menu) + 1);
   min-width: 13.5rem; max-width: min(18rem, calc(100vw - 2 * var(--space-4)));
   padding: var(--space-1) 0;
-  border-radius: 13px;
+  border-radius: var(--radius-l);
   background: var(--glass-sheen), var(--glass);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
   border: 0.5px solid var(--glass-edge);
-  box-shadow: var(--shadow-3);
+  box-shadow: var(--shadow-3), var(--edge-light);
   transform-origin: var(--ctx-origin, top left);
   animation: ctxin var(--dur-slow) var(--ease-spring-soft);
 }
@@ -196,7 +196,7 @@ a.list-row:hover, a.list-row:active { background: var(--fill); }
 .ctx-menu button:focus-visible { outline-offset: -3px; }
 .ctx-menu button.is-danger { color: var(--danger); }
 /* The thing pressed lifts a little while its menu is open. */
-.ctx-lifted { position: relative; z-index: 86; transform: scale(1.02); transition: transform var(--dur-base) var(--ease-spring-soft); }
+.ctx-lifted { position: relative; z-index: calc(var(--z-menu) + 1); transform: scale(1.02); transition: transform var(--dur-base) var(--ease-spring-soft); }
 .ctx-pressing { transform: scale(0.97); transition: transform 450ms var(--ease-out); }
 @keyframes ctxin { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: none; } }
 @keyframes ctxveil { from { opacity: 0; } }

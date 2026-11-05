@@ -242,7 +242,7 @@ function join(ws, msg, account) {
     const code = String(msg.code || '').trim().toUpperCase();
     if (!ROOM_CODE_RE.test(code)) throw new Error('A room code is four letters and numbers.');
     room = rooms.get(code);
-    if (!room) throw new Error(`Room ${code} not found. It may have been forgotten.`);
+    if (!room) throw new Error(`Room ${code} not found. Check the code, or start a new one.`);
   }
 
   if (ws.switchhead) leave(ws);

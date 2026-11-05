@@ -32,6 +32,28 @@
     .sg-space i { display: block; height: 12px; background: var(--accent); border-radius: 2px; }
     .sg-grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--space-4); }
     .sg-focus { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+    .sg-num { font-size: var(--text-title-1); margin: 0; }
+    .sg-num.is-display { font-family: var(--font-display); }
+    .sg-num.is-text { font-family: var(--font-text); font-weight: 600; font-variant-numeric: var(--numeric); }
+    .sg-wrap { font-family: var(--font-display); font-size: var(--text-title-1); line-height: 1.15; margin: 0; max-width: 16ch; padding: var(--space-3); border: 1px dashed var(--separator); border-radius: var(--radius-m); }
+    .sg-wrap.is-balanced { text-wrap: balance; }
+    .sg-radii { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+    .sg-radii div { width: 96px; height: 64px; display: grid; place-items: end start; padding: var(--space-2); background: var(--bg-elevated); border: 1px solid var(--separator-strong); font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-secondary); }
+    .sg-nest { padding: var(--space-4); background: var(--bg-elevated); border-radius: var(--radius-l); box-shadow: var(--shadow-1), var(--edge-light); }
+    .sg-nest > div { padding: var(--space-3); background: var(--fill); border-radius: var(--radius-m); }
+    .sg-nest span { display: inline-block; padding: var(--space-1) var(--space-2); background: var(--accent-tint); border: 1px solid var(--accent-edge); border-radius: var(--radius-s); font-size: var(--text-caption); }
+    .sg-elev { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-6); padding: var(--space-6) var(--space-4); background: var(--bg); border-radius: var(--radius-l); }
+    .sg-elev div { height: 96px; display: grid; place-items: center; background: var(--bg-elevated); border-radius: var(--radius-l); font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-secondary); }
+    .sg-motion { display: grid; gap: var(--space-3); }
+    .sg-track { position: relative; overflow: hidden; height: 32px; background: var(--fill); border-radius: var(--radius-pill); }
+    .sg-track i { position: absolute; left: var(--space-1); top: var(--space-1); width: 24px; height: 24px; border-radius: var(--radius-pill); background: var(--accent); }
+    .sg-track b { position: absolute; right: var(--space-3); top: 50%; transform: translateY(-50%); font: 500 var(--text-caption) var(--font-mono); color: var(--label-secondary); }
+    .sg-motion.is-run .sg-track i { transform: translateX(calc(min(60vw, 480px))); }
+    .sg-press { transition: transform var(--dur-quick) var(--ease-out); }
+    .sg-press:active { transform: scale(var(--press-scale)); }
+    @media (prefers-reduced-motion: reduce) { .sg-track i, .sg-press { transition: none !important; } }
+    .sg-layers { columns: 2 14rem; margin: 0; padding: 0; list-style: none; font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-secondary); }
+    .sg-layers li { padding: var(--space-1) 0; }
     .sg-glass { position: relative; height: 140px; border-radius: var(--radius-l); overflow: hidden; background: repeating-linear-gradient(45deg, var(--accent-tint) 0 12px, transparent 12px 24px), var(--bg-grouped); }
     .sg-glass div { position: absolute; left: var(--space-4); right: var(--space-4); bottom: var(--space-4); padding: var(--space-3) var(--space-4); border-radius: var(--radius-l); background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-edge); }
   </style>
@@ -78,6 +100,70 @@
         <div><i style="width: var(--space-7)"></i>--space-7 · 48</div>
         <div><i style="width: var(--space-8)"></i>--space-8 · 64</div>
       </div>
+    </section>
+
+    <section aria-labelledby="sg-figures">
+      <h2 id="sg-figures">Figures</h2>
+      <p class="muted">Numbers are set in the text face with tabular figures. The first line is Limelight, which is why it is not used for numbers.</p>
+      <div class="sg-grid2">
+        <div><p class="sg-num is-display" aria-hidden="true">0 · 1,108 · 87</p><p class="muted">Limelight: not for figures</p></div>
+        <div><p class="sg-num is-text">0 · 1,108 · 87</p><p class="muted">Text face, <code>--numeric</code></p></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="sg-wrapping">
+      <h2 id="sg-wrapping">Wrapping</h2>
+      <p class="muted">Headings balance their lines. Paragraphs avoid a lone last word and run to <code>--measure</code> (68 characters) at most.</p>
+      <div class="sg-grid2">
+        <div><p class="sg-wrap" aria-hidden="true">Steal their cards before they steal yours.</p><p class="muted">Unbalanced</p></div>
+        <div><p class="sg-wrap is-balanced">Steal their cards before they steal yours.</p><p class="muted">Balanced</p></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="sg-radius">
+      <h2 id="sg-radius">Radius</h2>
+      <p class="muted">Four, and no others. Something inside something else takes the same radius or a smaller one.</p>
+      <div class="sg-grid2">
+        <div class="sg-radii">
+          <div style="border-radius: var(--radius-s)">s · 4</div>
+          <div style="border-radius: var(--radius-m)">m · 8</div>
+          <div style="border-radius: var(--radius-l)">l · 14</div>
+          <div style="border-radius: var(--radius-pill)">pill</div>
+        </div>
+        <div class="sg-nest"><div>A well at <code>m</code> on a card at <code>l</code>, holding a chip at <span>s</span></div></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="sg-elevation">
+      <h2 id="sg-elevation">Elevation</h2>
+      <p class="muted">Every shadow is layered and tinted toward the page. In the dark, a raised surface also catches a line of light along its top edge (<code>--edge-light</code>).</p>
+      <div class="sg-elev">
+        <div style="box-shadow: var(--shadow-1), var(--edge-light)">--shadow-1 · resting</div>
+        <div style="box-shadow: var(--shadow-2), var(--edge-light)">--shadow-2 · raised</div>
+        <div style="box-shadow: var(--shadow-3), var(--edge-light)">--shadow-3 · floating</div>
+      </div>
+    </section>
+
+    <section aria-labelledby="sg-motion">
+      <h2 id="sg-motion">Motion</h2>
+      <p class="muted">Interface movement is 120 to 280ms and never eases in. Press the button to run them; press and hold it to feel the give.</p>
+      <div class="sg-row" style="margin-bottom: var(--space-3)"><button class="btn sg-press" type="button" id="sg-run">Run</button></div>
+      <div class="sg-motion" id="sg-motion-rows">
+        <div class="sg-track"><i style="transition: transform var(--dur-quick) var(--ease-out)"></i><b>quick · 120 · out</b></div>
+        <div class="sg-track"><i style="transition: transform var(--dur-base) var(--ease-out)"></i><b>base · 200 · out</b></div>
+        <div class="sg-track"><i style="transition: transform var(--dur-slow) var(--ease-out)"></i><b>slow · 280 · out</b></div>
+        <div class="sg-track"><i style="transition: transform var(--dur-slow) var(--ease-move)"></i><b>slow · 280 · move</b></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="sg-layers">
+      <h2 id="sg-layers">Layers</h2>
+      <p class="muted">For anything fixed or floating, lowest first.</p>
+      <ol class="sg-layers">
+        <li>--z-raised · 1</li><li>--z-dropdown · 20</li><li>--z-bar · 40</li><li>--z-tabbar · 45</li>
+        <li>--z-popover · 50</li><li>--z-celebrate · 55</li><li>--z-banner · 60</li><li>--z-modal · 70</li>
+        <li>--z-modal-over · 80</li><li>--z-menu · 85</li><li>--z-toast · 90</li><li>--z-flight · 100</li><li>--z-skip · 200</li>
+      </ol>
     </section>
 
     <section aria-labelledby="sg-buttons">
@@ -272,6 +358,7 @@
         if (b) window.thieveryToast({ text: b.getAttribute('data-sg-act') });
       });
       document.getElementById('sg-sheet-open').onclick = function () { document.getElementById('sg-sheet').showModal(); };
+      document.getElementById('sg-run').onclick = function () { document.getElementById('sg-motion-rows').classList.toggle('is-run'); };
     })();
   </script>
 </body>

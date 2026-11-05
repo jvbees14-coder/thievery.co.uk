@@ -22,7 +22,7 @@
     <!-- ============================================== the front door ==== -->
     <section id="screen-door" class="btl-screen" hidden>
       <div class="panel btl-door">
-        <h1 class="btl-door-head">Switchhead</h1>
+        <h2 class="btl-door-head">Switchhead</h2>
         <p class="btl-door-say">
           Get rid of your cards, and don&rsquo;t be the last one holding any.
           But the hands swap when nobody&rsquo;s looking, and sometimes the
@@ -32,9 +32,9 @@
           <button id="open-room" class="btn primary" type="button">Open a room</button>
           <form id="join" class="btl-join" autocomplete="off">
             <label class="sr-only" for="code">Room code</label>
-            <input id="code" name="code" maxlength="4" placeholder="CODE" spellcheck="false"
+            <input id="code" class="code-input" name="code" maxlength="4" placeholder="CODE" spellcheck="false"
                    autocapitalize="characters" inputmode="latin" />
-            <button class="btn ghost" type="submit">Join</button>
+            <button class="btn" type="submit">Join</button>
           </form>
         </div>
         <p class="hint">
