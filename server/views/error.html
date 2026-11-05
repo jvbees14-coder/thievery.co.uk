@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  {{head:flashcards}}
+  <title>Something went wrong · Thievery</title>
+  <meta name="robots" content="noindex" />
+</head>
+<body>
+  {{bar:public}}
+
+  <main id="main" class="screen home">
+    <!-- What a request that failed on our side is answered with. Unlike the
+         404 it is not a joke: something of ours broke, so it says so plainly,
+         says what to do, and says the one thing a player will worry about,
+         which is true: one failed request does not touch a room in play. -->
+    <div class="home-card not-found">
+      <svg class="not-found-card" viewBox="0 0 120 150" aria-hidden="true">
+        <rect x="14" y="10" width="92" height="130" rx="8" />
+        <path d="M60 48v38" />
+        <circle cx="60" cy="101" r="3" />
+      </svg>
+      <h1>Something went wrong.</h1>
+      <p class="tagline">
+        That page didn&rsquo;t load, and the fault is ours. Try again in a
+        moment. Any game you&rsquo;re in carries on.
+      </p>
+      <p><a class="btn primary" href="">Try again</a></p>
+      <ul class="not-found-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/cards">Play Thievery</a></li>
+        <li><a href="/about">About</a></li>
+      </ul>
+    </div>
+  </main>
+
+  {{foot}}
+</body>
+</html>

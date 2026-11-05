@@ -71,6 +71,11 @@ function notFound(res) {
   res.end(NOT_FOUND);
 }
 
+// And what a request that failed on our side is answered with: the same kind
+// of page, saying so plainly. Read at boot like every view, so answering a
+// failure can never itself fail on a missing file.
+const SERVER_ERROR = readView('error.html');
+
 const SAFE_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'same-origin',
@@ -218,8 +223,11 @@ const server = http.createServer((req, res) => {
     serve(req, res);
   } catch (err) {
     console.error(`request failed: ${req.method} ${req.url} —`, err.message);
-    if (!res.headersSent) res.writeHead(500, { 'Content-Type': 'text/plain' });
-    res.end('Something went wrong');
+    // A page only if nothing of the reply has gone yet; once headers are out,
+    // all that can honestly be done is to end what was started.
+    if (res.headersSent) return res.end();
+    res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', ...SAFE_HEADERS });
+    res.end(SERVER_ERROR);
   }
 });
 
@@ -706,7 +714,7 @@ function handleJoin(ws, msg) {
       .trim()
       .toUpperCase();
     room = rooms.get(code);
-    if (!room) throw new Error(`Room ${code || ''} not found`);
+    if (!room) throw new Error(code ? `Room ${code} not found. Check the code, or start a new one.` : 'Type a room code to join.');
   }
 
   if (ws.ctx) {

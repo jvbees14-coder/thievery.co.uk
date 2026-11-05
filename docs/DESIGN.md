@@ -248,8 +248,13 @@ All in `public/style.css` and `public/shell.css`, all on `/styleguide`.
   read out politely. One with an action (Undo) stays at least 8 seconds and
   pauses while pointed at or focused. The older top toast (`.toast`) is for a
   refusal, above everything.
-- **Empty, loading.** `.empty-state` with an icon, a headline, one line and
-  the button. `.skeleton`, `.spinner` and `.progress` for loading.
+- **Empty, loading, failed.** `.empty-state` with an icon, a headline, one
+  line and the button. `.skeleton`, `.spinner` and `.progress` for loading;
+  a placeholder that stands in for content on the first load is
+  `.skeleton.is-delayed`, the same size as what replaces it, and only appears
+  after 200ms so a quick load never flickers. A request that fails on our
+  side gets `views/error.html` (plain, with the bar); an address nobody
+  knows gets the 404 (the one page that is all joke).
 - **Controls.** `public/controls.css` and `controls.js`, borrowed from an
   iPhone's settings screens, each built on a real control so a room's script
   reads and sets it as before. `.switch` is a checkbox with `role="switch"`;

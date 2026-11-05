@@ -380,6 +380,17 @@ async function run() {
     }
   });
 
+  // The page a failed request is answered with has no address of its own, so
+  // it is read the way the server reads it at boot and held to the same rule,
+  // with the bar's way home on it, since a broken page is no place to strand
+  // anybody.
+  await check('the error page renders whole, with a way home', async () => {
+    const { readView } = await import('../server/views.js');
+    const html = readView('error.html');
+    assert.ok(!html.includes('<!--') && !html.includes('{{'), 'the error page was rendered unfinished');
+    assert.ok(html.includes('class="site-bar"') && html.includes('href="/cards"'), 'the error page has no way out');
+  });
+
   await check('anything else under /cards goes back to the table', async () => {
     const res = await stranger.page('/cards/nonsense');
     assert.equal(res.status, 302);

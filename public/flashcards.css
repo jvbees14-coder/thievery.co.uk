@@ -592,3 +592,7 @@ textarea:focus, select:focus, input:focus {
    it, so the collection does not jump down when it lands. */
 .fc-ledger:empty { min-height: calc(2 * 4.75rem + var(--space-2)); }
 @media (min-width: 620px) { .fc-ledger:empty { min-height: 4.75rem; } }
+/* What stands in for the numbers and the cards until they arrive: the same
+   sizes, so nothing moves when the real ones replace them. */
+.fc-skel-stat { height: 4.75rem; }
+.fc-skel-card { min-height: 212px; border-radius: var(--radius-m); }

@@ -358,7 +358,7 @@ main.screen.home { min-height: 0; }
    artwork, so its sizes are its own; its colours are the card tokens. */
 .home-stage { display: none; }
 @media (min-width: 1000px) {
-  .screen.home {
+  .screen.home:has(> .home-stage) {
     grid-template-columns: minmax(0, 460px) minmax(0, 420px);
     justify-content: center; column-gap: var(--space-8);
   }
@@ -408,6 +408,9 @@ main.screen.home { min-height: 0; }
 .logo em { display: block; margin: var(--space-2) 0 0; font-size: var(--text-caption); letter-spacing: 0.3em; }
 .tagline { margin: 0; color: var(--label-secondary); text-align: center; font-size: var(--text-subhead); }
 .home-actions { display: flex; flex-direction: column; gap: var(--space-3); }
+/* A card whose words are centred centres its one button too (the closed
+   rooms, the error page), rather than leaving it hard against the left. */
+.home-card > p:has(> .btn:only-child) { margin: 0; text-align: center; }
 .home-actions .primary { min-height: 52px; font-size: var(--text-headline); }
 .or { text-align: center; color: var(--label-secondary); font-size: var(--text-footnote); display: flex; align-items: center; gap: var(--space-3); }
 .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--separator); }
@@ -1230,7 +1233,8 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 .not-found { text-align: center; align-items: center; }
 .not-found-card { width: 96px; height: auto; margin: 0 auto; display: block; }
 .not-found-card rect { fill: var(--bg-elevated-2); stroke: var(--ornament); stroke-width: 2; stroke-dasharray: 7 6; }
-.not-found-card path { fill: none; stroke: var(--ornament); stroke-width: 2; }
+.not-found-card path { fill: none; stroke: var(--ornament); stroke-width: 2; stroke-linecap: round; }
+.not-found-card circle { fill: var(--ornament); }
 .not-found h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(var(--text-title-1), 7vw, 2.5rem); line-height: 1.1; margin: 0; }
 .not-found-search { display: flex; gap: var(--space-2); width: 100%; }
 .not-found-search input { flex: 1; min-width: 0; }
@@ -1306,10 +1310,16 @@ dialog.sheet::backdrop { background: var(--scrim); }
 
 .skeleton {
   display: block; border-radius: var(--radius-m);
-  background: linear-gradient(90deg, var(--fill) 0%, var(--fill-strong) 50%, var(--fill) 100%) 0 0 / 200% 100%;
+  /* Raised, like the card it stands in for, with a lighter band passing
+     over it; a recessed fill read as a hole in a dark page. */
+  background: linear-gradient(90deg, var(--bg-elevated) 0%, var(--bg-elevated-2) 50%, var(--bg-elevated) 100%) 0 0 / 200% 100%;
   animation: shimmerbar 1.4s linear infinite;
 }
 @keyframes shimmerbar { to { background-position: -200% 0; } }
+/* A placeholder that only appears if the wait is long enough to notice: an
+   answer inside 200ms never shows one, so a quick load does not flicker. */
+.skeleton.is-delayed { opacity: 0; animation: shimmerbar 1.4s linear infinite, skeleton-in var(--dur-base) var(--ease-out) 200ms forwards; }
+@keyframes skeleton-in { to { opacity: 1; } }
 .spinner {
   width: 22px; height: 22px; flex: none; border-radius: 50%;
   border: 2.5px solid var(--separator); border-top-color: var(--accent);
@@ -1331,6 +1341,7 @@ dialog.sheet::backdrop { background: var(--scrim); }
   *, *::before, *::after { scroll-behavior: auto !important; }
   dialog.sheet[open], .toast-item, .toast { animation: fadein var(--dur-quick) linear; }
   .skeleton, .spinner { animation: none; }
+  .skeleton.is-delayed { animation: skeleton-in var(--dur-base) linear 200ms forwards; }
   .spinner { border-top-color: var(--accent); }
   .btn:active { transform: none; }
   .fc-pane, .fc-reveal, .fc-modal, .fc-confirm { animation: none; }
