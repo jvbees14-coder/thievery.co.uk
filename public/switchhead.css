@@ -38,8 +38,8 @@
   user-select: none;
 }
 .sh-card.is-red { color: var(--stock-red); }
-.sh-rank { font-size: 19px; font-weight: 700; text-align: left; }
-.sh-suit { font-size: 24px; text-align: right; }
+.sh-rank { font-size: var(--text-title-3); font-weight: 700; text-align: left; }
+.sh-suit { font-size: var(--text-title-2); text-align: right; }
 
 .sh-card.is-small { --w: 34px; --h: 48px; padding: 3px 4px; border-radius: 5px; }
 .sh-card.is-small .sh-rank { font-size: 13px; }
@@ -68,7 +68,7 @@ button.sh-card:focus-visible { outline: 2px solid var(--accent); outline-offset:
 .sh-card.is-dim { opacity: 0.45; }
 .sh-card.is-back.is-live { border-color: var(--accent); box-shadow: 0 0 0 2px var(--separator-strong); }
 
-.sh-none { font-size: 13px; color: var(--label-tertiary); font-style: italic; align-self: center; }
+.sh-none { font-size: var(--text-footnote); color: var(--label-tertiary); font-style: italic; align-self: center; }
 
 /* --- the goal ------------------------------------------------------------- */
 
@@ -81,7 +81,7 @@ button.sh-card:focus-visible { outline: 2px solid var(--accent); outline-offset:
   padding: 14px 18px;
   border: 1px solid var(--separator-strong);
   border-left-width: 6px;
-  border-radius: 10px;
+  border-radius: var(--radius-m);
   background: var(--bg-grouped);
 }
 .sh-goal-word { font-family: var(--font-display); font-size: clamp(20px, 3.4vw, 28px); color: var(--label); }
@@ -106,7 +106,7 @@ button.sh-card:focus-visible { outline: 2px solid var(--accent); outline-offset:
 .sh-other.is-turn { border-color: var(--accent); }
 .sh-other.is-out { opacity: 0.55; }
 .sh-other-name { margin: 0 0 4px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; color: var(--label); }
-.sh-other-counts { margin: 0 0 8px; font-size: 13px; color: var(--label-secondary); }
+.sh-other-counts { margin: 0 0 8px; font-size: var(--text-footnote); color: var(--label-secondary); }
 
 /* --- the middle of the table ---------------------------------------------- */
 
@@ -118,7 +118,7 @@ button.sh-card:focus-visible { outline: 2px solid var(--accent); outline-offset:
   padding: 18px;
 }
 .sh-stack { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.sh-stack-say { font-size: 12px; color: var(--label-secondary); text-align: center; }
+.sh-stack-say { font-size: var(--text-caption); color: var(--label-secondary); text-align: center; }
 .sh-pile-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .sh-pile { display: flex; min-height: 76px; align-items: center; justify-content: center; }
 /* Fanned, each overlapping the last, so the run on top can be read. */
@@ -131,8 +131,8 @@ button.sh-card:focus-visible { outline: 2px solid var(--accent); outline-offset:
   width: 54px;
   height: 76px;
   border: 1px dashed var(--separator-strong);
-  border-radius: 7px;
-  font-size: 12px;
+  border-radius: var(--radius-m);
+  font-size: var(--text-caption);
   color: var(--label-tertiary);
 }
 
@@ -144,15 +144,15 @@ button.sh-card:focus-visible { outline: 2px solid var(--accent); outline-offset:
 .sh-mine.is-turn { border-color: var(--accent); }
 .sh-row-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .sh-row-head .btl-head { margin-bottom: 8px; }
-.sh-turn { font-size: 14px; color: var(--accent); }
-.sh-row-label { margin: 10px 0 6px; font-size: 12px; color: var(--label-secondary); }
+.sh-turn { font-size: var(--text-subhead); color: var(--accent); }
+.sh-row-label { margin: 10px 0 6px; font-size: var(--text-caption); color: var(--label-secondary); }
 .sh-row { display: flex; flex-wrap: wrap; gap: 8px; min-height: 30px; padding-top: 8px; }
 .sh-row.is-small { gap: 5px; padding-top: 0; min-height: 0; }
 .sh-acts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 
 /* --- the log --------------------------------------------------------------- */
 
-.sh-log { list-style: none; margin: 16px 0 0; padding: 0; font-size: 14px; color: var(--label-secondary); }
+.sh-log { list-style: none; margin: 16px 0 0; padding: 0; font-size: var(--text-subhead); color: var(--label-secondary); }
 .sh-log-row { padding: 4px 0; border-bottom: 1px solid var(--separator); }
 .sh-log-row:first-child { color: var(--label); }
 .sh-log-row.is-goal { color: var(--accent); font-weight: 600; }
@@ -171,7 +171,7 @@ button.sh-card:focus-visible { outline: 2px solid var(--accent); outline-offset:
   padding: 10px 12px;
   text-align: left;
   border: 1px solid var(--separator);
-  border-radius: 10px;
+  border-radius: var(--radius-m);
   background: var(--bg-grouped);
   color: var(--label-secondary);
   font: inherit;
@@ -189,20 +189,20 @@ button.sh-special:disabled { cursor: default; }
   width: 38px;
   height: 52px;
   border: 1px solid var(--stock-edge);
-  border-radius: 5px;
+  border-radius: var(--radius-s);
   background: var(--stock);
   color: var(--stock-ink);
   font-family: var(--font-text);
-  font-size: 17px;
+  font-size: var(--text-body);
   font-weight: 700;
 }
 .sh-special:not(.is-on) .sh-special-face { opacity: 0.4; }
 .sh-special-words { display: flex; flex-direction: column; gap: 3px; }
-.sh-special-words b { color: var(--label); font-size: 15px; }
-.sh-special-words span { font-size: 13px; line-height: 1.4; }
+.sh-special-words b { color: var(--label); font-size: var(--text-subhead); }
+.sh-special-words span { font-size: var(--text-footnote); line-height: 1.4; }
 .sh-special-words i { font-size: var(--text-caption); font-style: normal; color: var(--accent); }
 .sh-special:not(.is-on) .sh-special-words i { color: var(--label-tertiary); }
-.sh-lock { position: absolute; top: 8px; right: 10px; font-size: 13px; opacity: 0.7; }
+.sh-lock { position: absolute; top: 8px; right: 10px; font-size: var(--text-footnote); opacity: 0.7; }
 
 /* --- the rules at the door -------------------------------------------------- */
 
@@ -213,8 +213,8 @@ button.sh-special:disabled { cursor: default; }
 
 @media (max-width: 640px) {
   .sh-card { --w: 44px; --h: 62px; }
-  .sh-rank { font-size: 16px; }
-  .sh-suit { font-size: 19px; }
+  .sh-rank { font-size: var(--text-callout); }
+  .sh-suit { font-size: var(--text-title-3); }
   .sh-fan { margin-left: -26px; }
   .sh-centre { gap: 10px; padding: 14px 10px; }
 }

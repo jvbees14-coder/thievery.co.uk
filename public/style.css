@@ -234,7 +234,7 @@ input[type="number"]::-webkit-inner-spin-button { appearance: none; -webkit-appe
 .toast {
   position: fixed; top: calc(var(--space-4) + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
   background: var(--bg-elevated); border: 1px solid var(--danger-edge); color: var(--label);
-  padding: var(--space-3) var(--space-4); border-radius: var(--radius-m); z-index: 90; box-shadow: var(--shadow-3), var(--edge-light);
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius-m); z-index: var(--z-toast); box-shadow: var(--shadow-3), var(--edge-light);
   max-width: min(calc(100vw - 2 * var(--space-4)), 480px); font-size: var(--text-subhead);
   display: flex; gap: var(--space-2); align-items: baseline;
   animation: toastin var(--dur-base) var(--ease-out) both;
@@ -248,7 +248,7 @@ input[type="number"]::-webkit-inner-spin-button { appearance: none; -webkit-appe
    and anything with an Undo on it stays until it is used or closed. */
 .toaster {
   position: fixed; left: 50%; bottom: calc(var(--space-4) + env(safe-area-inset-bottom)); transform: translateX(-50%);
-  z-index: 95; display: flex; flex-direction: column; gap: var(--space-2); align-items: center;
+  z-index: calc(var(--z-toast) + 5); display: flex; flex-direction: column; gap: var(--space-2); align-items: center;
   width: min(calc(100vw - 2 * var(--space-4)), 480px); pointer-events: none;
 }
 .toast-item {
@@ -262,7 +262,7 @@ input[type="number"]::-webkit-inner-spin-button { appearance: none; -webkit-appe
 }
 .toast-item.is-bad { border-color: var(--danger-edge); }
 .toast-item.is-good { border-color: var(--success-edge); }
-.toast-item.is-leaving { opacity: 0; transition: opacity 200ms; }
+.toast-item.is-leaving { opacity: 0; transition: opacity var(--dur-base); }
 .toast-text { flex: 1; min-width: 0; }
 .toast-action {
   appearance: none; border: 0; background: transparent; cursor: pointer;
@@ -283,7 +283,7 @@ input[type="number"]::-webkit-inner-spin-button { appearance: none; -webkit-appe
 .conn {
   position: fixed; bottom: calc(var(--space-4) + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
   background: var(--bg-elevated); border: 1px solid var(--warning); color: var(--label);
-  padding: var(--space-2) var(--space-4); border-radius: var(--radius-pill); z-index: 50; font-size: var(--text-footnote);
+  padding: var(--space-2) var(--space-4); border-radius: var(--radius-pill); z-index: var(--z-popover); font-size: var(--text-footnote);
   display: flex; align-items: center; gap: var(--space-2); max-width: calc(100vw - 2 * var(--space-4));
 }
 .conn::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--warning); flex: none; }
@@ -421,24 +421,24 @@ main.screen.home { min-height: 0; }
 .top-link {
   color: var(--label-secondary); text-decoration: none; font-family: var(--font-text);
   font-size: var(--text-caption); letter-spacing: 0.12em; text-transform: uppercase;
-  padding: 4px 8px; border-radius: 3px; border: 1px solid transparent;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  padding: 4px 8px; border-radius: var(--radius-s); border: 1px solid transparent;
+  transition: color var(--dur-quick), border-color var(--dur-quick), background var(--dur-quick);
 }
 .top-link:hover { color: var(--accent); border-color: var(--separator-strong); background: var(--accent-tint); }
 .testbar {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   margin: -8px 0 18px; padding: 8px 10px;
-  border: 1px dashed var(--danger-edge); border-radius: 3px; background: var(--danger-edge);
-  font-family: var(--font-text); font-size: 12px;
+  border: 1px dashed var(--danger-edge); border-radius: var(--radius-s); background: var(--danger-edge);
+  font-family: var(--font-text); font-size: var(--text-caption);
 }
 .codebox { display: inline-flex; align-items: center; gap: 10px; }
 .codebox .muted { font-family: var(--font-text); font-size: var(--text-caption); }
 .codebox .code, .code {
-  font-family: var(--font-mono); font-weight: 500; letter-spacing: 0.3em; font-size: 17px; padding: 5px 8px 5px 14px;
-  color: var(--accent-strong); background: var(--fill); border-radius: 3px; border: 1px solid var(--separator-strong);
+  font-family: var(--font-mono); font-weight: 500; letter-spacing: 0.3em; font-size: var(--text-body); padding: 5px 8px 5px 14px;
+  color: var(--accent-strong); background: var(--fill); border-radius: var(--radius-s); border: 1px solid var(--separator-strong);
 }
 .panel { padding: 20px; }
-.panel h2 { margin: 0 0 14px; font-family: var(--font-text); font-size: 14px; font-weight: 700; color: var(--label); }
+.panel h2 { margin: 0 0 14px; font-family: var(--font-text); font-size: var(--text-subhead); font-weight: 700; color: var(--label); }
 .panel h3 {
   margin: 0 0 10px; font-family: var(--font-text); font-size: var(--text-caption); color: var(--accent); font-weight: 700;
   display: flex; align-items: center; gap: 10px;
@@ -449,20 +449,20 @@ main.screen.home { min-height: 0; }
 .lobby { display: grid; grid-template-columns: 1.3fr 1fr; gap: 18px; }
 .lobby .big-code { text-align: center; padding: 30px 18px 26px; }
 .lobby .big-code .code { font-size: 44px; letter-spacing: 0.4em; padding: 10px 14px 10px 28px; display: inline-block; }
-.lobby .big-code p { margin: 14px 0 0; color: var(--label-secondary); font-size: 15px; }
+.lobby .big-code p { margin: 14px 0 0; color: var(--label-secondary); font-size: var(--text-subhead); }
 .players { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .players li {
   display: flex; align-items: center; gap: 10px; padding: 10px 12px;
-  background: var(--fill); border-radius: 3px; border: 1px solid var(--separator);
-  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  background: var(--fill); border-radius: var(--radius-s); border: 1px solid var(--separator);
+  transition: border-color var(--dur-base), box-shadow var(--dur-base), background var(--dur-base);
 }
 .players li.empty { color: var(--label-tertiary); border-style: dashed; border-color: var(--separator); background: transparent; }
 /* One hand to a row; one or two people inside it, stacked. */
 .players .occupants { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.players .occupant { display: flex; align-items: center; gap: 10px; padding: 2px 0; border-radius: 3px; }
+.players .occupant { display: flex; align-items: center; gap: 10px; padding: 2px 0; border-radius: var(--radius-s); }
 .players .occupant.pick { cursor: pointer; }
 .players .occupant.selected { box-shadow: 0 0 0 3px var(--separator); background: var(--accent-tint); }
-.players .occupant.open { color: var(--label-tertiary); font-size: 13px; font-style: italic; padding-left: 18px; gap: 12px; }
+.players .occupant.open { color: var(--label-tertiary); font-size: var(--text-footnote); font-style: italic; padding-left: 18px; gap: 12px; }
 .players .occupant.open span { flex: 1; }
 .players .occupant.open .btn { font-style: normal; flex: none; }
 .players .occupants .occupant + .occupant { border-top: 1px dashed var(--separator); padding-top: 8px; }
@@ -476,7 +476,7 @@ main.screen.home { min-height: 0; }
   background: var(--bg); border: 1px solid var(--separator-strong); border-radius: 2px;
 }
 .players .name { flex: 1; font-weight: 600; }
-.players .hand { width: 62px; padding: 6px 8px; text-align: center; font-family: var(--font-mono); font-size: 14px; }
+.players .hand { width: 62px; padding: 6px 8px; text-align: center; font-family: var(--font-mono); font-size: var(--text-subhead); }
 .players .order { display: inline-flex; gap: 2px; }
 .players .order .btn { padding: 4px 7px 3px; font-size: var(--text-caption); }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); display: inline-block; box-shadow: 0 0 8px var(--success-edge); flex: none; }
@@ -493,11 +493,11 @@ main.screen.home { min-height: 0; }
   margin: 10px 0 0; font-size: var(--text-footnote); line-height: 1.55; color: var(--label-secondary);
 }
 .panel-note + .panel-note { margin-top: 6px; }
-.panel-note.lead { font-family: inherit; font-size: 13px; line-height: 1.55; color: var(--label-secondary); }
+.panel-note.lead { font-family: inherit; font-size: var(--text-footnote); line-height: 1.55; color: var(--label-secondary); }
 .settings { display: flex; flex-direction: column; gap: 16px; }
 .setting { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .setting .label { font-weight: 600; }
-.setting .hint { font-size: 13px; color: var(--label-secondary); margin-top: 2px; }
+.setting .hint { font-size: var(--text-footnote); color: var(--label-secondary); margin-top: 2px; }
 
 /* Switches. The brass tile slides beneath the labels and overshoots a little
    before it settles, the way a well-made lever does.
@@ -510,7 +510,7 @@ main.screen.home { min-height: 0; }
    rather than be clipped, and the others give way. */
 .seg {
   position: relative; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; flex: none;
-  background: var(--fill); border: 1px solid var(--separator-strong); border-radius: 3px; padding: 3px;
+  background: var(--fill); border: 1px solid var(--separator-strong); border-radius: var(--radius-s); padding: 3px;
   --seg-i: 0; --seg-n: 2;
 }
 /* The tile is measured off the button it covers, by settleSwitches(), and the
@@ -525,13 +525,13 @@ main.screen.home { min-height: 0; }
   background: linear-gradient(180deg, var(--accent-strong) 0%, var(--accent) 60%, var(--accent) 100%);
   border-radius: 2px;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 3px 10px var(--accent-edge);
-  transition: left 0.52s var(--ease-spring), width 0.3s ease;
+  transition: left 0.52s var(--ease-spring), width var(--dur-slow) ease;
 }
 .seg button {
   position: relative; z-index: 1; border: 0; background: transparent; color: var(--label-secondary);
-  padding: 7px 14px 5px; border-radius: 2px; cursor: pointer;
-  font-family: var(--font-text); font-size: 12px; font-weight: 700;
-  transition: color 0.28s ease 0.14s, transform 0.4s var(--ease-spring);
+  padding: 7px 14px 5px; border-radius: var(--radius-s); cursor: pointer;
+  font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700;
+  transition: color var(--dur-slow) ease var(--dur-quick), transform 0.4s var(--ease-spring);
 }
 .seg button:hover:not(.on):not(:disabled) { color: var(--label); }
 .seg button:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--separator); }
@@ -547,9 +547,9 @@ main.screen.home { min-height: 0; }
 .dd-btn {
   appearance: none; display: inline-flex; align-items: center; gap: 12px; min-width: 150px;
   background: var(--fill); border: 1px solid var(--separator-strong); color: var(--label);
-  padding: 9px 12px 8px; border-radius: 3px; cursor: pointer; text-align: left;
-  font-family: var(--font-text); font-size: 16px;
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  padding: 9px 12px 8px; border-radius: var(--radius-s); cursor: pointer; text-align: left;
+  font-family: var(--font-text); font-size: var(--text-callout);
+  transition: border-color var(--dur-quick), box-shadow var(--dur-quick), background var(--dur-quick);
 }
 .dd-btn .dd-value { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dd-btn .dd-caret {
@@ -562,23 +562,23 @@ main.screen.home { min-height: 0; }
 .dropdown.open .dd-btn { border-color: var(--accent); box-shadow: 0 0 0 3px var(--separator); }
 .dropdown.open .dd-caret { transform: rotate(225deg) translate(-2px, -2px); }
 .dd-menu {
-  position: absolute; z-index: 20; right: 0; top: calc(100% + 6px); min-width: 100%;
+  position: absolute; z-index: var(--z-dropdown); right: 0; top: calc(100% + 6px); min-width: 100%;
   list-style: none; margin: 0; padding: 4px;
   background: var(--bg-elevated);
-  border: 1px solid var(--separator-strong); border-radius: 3px;
+  border: 1px solid var(--separator-strong); border-radius: var(--radius-s);
   box-shadow: var(--shadow-3);
   animation: ddopen 0.28s var(--ease-spring);
   max-height: 264px; overflow: auto;
 }
 @keyframes ddopen { from { opacity: 0; transform: translateY(-8px) scaleY(0.9); } to { opacity: 1; transform: none; } }
 .dd-opt {
-  padding: 8px 12px 7px; border-radius: 2px; cursor: pointer; white-space: nowrap;
+  padding: 8px 12px 7px; border-radius: var(--radius-s); cursor: pointer; white-space: nowrap;
   display: flex; align-items: center; gap: 10px; color: var(--label);
-  transition: background 0.12s, color 0.12s;
+  transition: background var(--dur-quick), color var(--dur-quick);
 }
 .dd-opt::before {
   content: ""; width: 6px; height: 6px; flex: none; transform: rotate(45deg);
-  border: 1px solid var(--separator-strong); background: transparent; transition: background 0.2s, border-color 0.2s;
+  border: 1px solid var(--separator-strong); background: transparent; transition: background var(--dur-base), border-color var(--dur-base);
 }
 .dd-opt:hover { background: var(--accent-tint); color: var(--label); }
 .dd-opt.on { color: var(--accent-strong); }
@@ -617,13 +617,13 @@ main.screen.home { min-height: 0; }
   animation: deckgone 0.4s ease-in var(--deal-total, 2s) forwards;
 }
 @keyframes deckgone { to { opacity: 0; transform: translate(-50%, -80%) scale(0.8); } }
-.seat-row { padding: 14px 18px 12px; transition: border-color 0.2s, box-shadow 0.2s; }
+.seat-row { padding: 14px 18px 12px; transition: border-color var(--dur-base), box-shadow var(--dur-base); }
 .seat-row.active { border-color: var(--accent); box-shadow: var(--shadow-3), 0 0 28px var(--accent-edge); }
 .seat-row.active::before, .seat-row.active::after { border-color: var(--accent-strong); width: 18px; height: 18px; }
 .seat-row.me { background: var(--bg-elevated); }
 .seat-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-.seat-head .name { font-family: var(--font-text); font-weight: 700; font-size: 16px; color: var(--label); }
-.seat-head .status { color: var(--label-secondary); font-size: 12px; margin-left: auto; font-family: var(--font-text); }
+.seat-head .name { font-family: var(--font-text); font-weight: 700; font-size: var(--text-callout); color: var(--label); }
+.seat-head .status { color: var(--label-secondary); font-size: var(--text-caption); margin-left: auto; font-family: var(--font-text); }
 .seat-row.active .seat-head .status { color: var(--accent); }
 .cards { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-height: calc(var(--card-h) + 2px); perspective: 700px; }
 
@@ -645,7 +645,7 @@ main.screen.home { min-height: 0; }
   padding-top: 2px;
   user-select: none;
   box-shadow: 0 6px 14px var(--shadow-color);
-  transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s, background 0.2s;
+  transition: transform var(--dur-quick), box-shadow var(--dur-quick), border-color var(--dur-quick), background var(--dur-base);
   border: 1px solid var(--back-edge);
   background: var(--back);
   color: var(--label);
@@ -692,7 +692,7 @@ main.screen.home { min-height: 0; }
      with no card left in it, which is a poor thing to be about to bet on.
      Enough to catch the light, not enough to wash the lattice out. */
   background: radial-gradient(circle at var(--gx) var(--gy), rgba(255, 255, 255, 0.24), var(--separator) 34%, transparent 62%);
-  mix-blend-mode: screen; transition: opacity 0.15s;
+  mix-blend-mode: screen; transition: opacity var(--dur-quick);
 }
 
 /* A card you may act on says so without being pointed at. The hover and the
@@ -705,7 +705,7 @@ main.screen.home { min-height: 0; }
 }
 .card.selectable:hover, .card.draggable:hover, .card.selected {
   transform: rotateX(var(--rx)) rotateY(var(--ry)) translateY(-8px) translateZ(24px);
-  transition: transform 0.07s linear, box-shadow 0.15s, border-color 0.15s;
+  transition: transform var(--dur-quick) linear, box-shadow var(--dur-quick), border-color var(--dur-quick);
   border-color: var(--accent);
   box-shadow: 0 18px 28px var(--shadow-color), 0 0 0 2px var(--separator), 0 0 22px var(--accent-edge);
   z-index: 2;
@@ -735,10 +735,10 @@ main.screen.home { min-height: 0; }
 .card.dragging { opacity: 0.3; border-style: dashed; transform: none; box-shadow: none; }
 .card.dragging .gloss { opacity: 0; }
 .drag-clone {
-  position: fixed; z-index: 100; pointer-events: none; margin: 0;
+  position: fixed; z-index: var(--z-flight); pointer-events: none; margin: 0;
   /* Carried in 3D: swings with the pointer's motion, settles when it stops. */
   transform: perspective(700px) rotateX(var(--rx)) rotateY(var(--ry)) translateZ(40px) scale(1.12);
-  transition: transform 0.14s ease-out;
+  transition: transform var(--dur-quick) ease-out;
   box-shadow: 0 30px 50px var(--shadow-color), 0 0 0 3px var(--separator), 0 0 30px var(--accent-edge);
   border-color: var(--accent);
   cursor: grabbing;
@@ -749,7 +749,7 @@ main.screen.home { min-height: 0; }
    The moments worth stopping for: a card stolen, a card lost, a round taken.
    A band slashes across the screen and the words slam onto it. Banners for a
    single guess clear themselves; the one that ends a round waits for you. */
-.banner { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; pointer-events: none; overflow: hidden; }
+.banner { position: fixed; inset: 0; z-index: var(--z-banner); display: grid; place-items: center; pointer-events: none; overflow: hidden; }
 .banner::before {
   content: ""; position: absolute; left: -10%; right: -10%; top: 50%; height: clamp(150px, 26vh, 240px);
   transform: translateY(-50%) rotate(-3deg) scaleX(0);
@@ -796,14 +796,14 @@ main.screen.home { min-height: 0; }
 @keyframes hintin { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 0.9; transform: translate(-50%, 0); } }
 @keyframes hintout { to { opacity: 0; } }
 
-.confetti { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 55; pointer-events: none; }
+.confetti { position: fixed; inset: 0; width: 100%; height: 100%; z-index: var(--z-celebrate); pointer-events: none; }
 
 /* --- unsolicited offers ---------------------------------------------------
    Cheap advertisements in the house colours, dropped at random over the room
    and cleared only by being clicked. The layer itself lets every click
    through; the offers on it do not. They sit below the banners, so the end of
    a round still reads over the top of the pile. */
-.popups { position: fixed; inset: 0; z-index: 45; pointer-events: none; }
+.popups { position: fixed; inset: 0; z-index: var(--z-tabbar); pointer-events: none; }
 .popup {
   position: fixed; width: 264px; pointer-events: auto; cursor: pointer;
   background: linear-gradient(180deg, rgba(26, 31, 47, 0.99), rgba(14, 17, 26, 0.99));
@@ -894,14 +894,14 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 
 /* --- side panel ------------------------------------------------------------ */
 .side { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 16px; }
-.action .prompt { font-family: var(--font-text); font-weight: 700; font-size: 17px; margin: 0 0 12px; color: var(--label); line-height: 1.35; }
+.action .prompt { font-family: var(--font-text); font-weight: 700; font-size: var(--text-body); margin: 0 0 12px; color: var(--label); line-height: 1.35; }
 .action .prompt b { color: var(--accent); }
-.action .sub { color: var(--label-secondary); font-size: 14px; margin: -6px 0 12px; }
+.action .sub { color: var(--label-secondary); font-size: var(--text-subhead); margin: -6px 0 12px; }
 .ranks { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
 .ranks button {
   border: 1px solid var(--separator-strong); background: var(--fill); color: var(--label);
   padding: 10px 0 8px; border-radius: 3px; cursor: pointer; font-family: var(--font-text); font-weight: 700; font-size: 15px;
-  transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.3s var(--ease-spring);
+  transition: background var(--dur-quick), border-color var(--dur-quick), color var(--dur-quick), transform var(--dur-slow) var(--ease-spring);
 }
 .ranks button:hover { border-color: var(--accent); background: var(--accent); color: var(--accent-contrast); transform: translateY(-2px); }
 .ranks button:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--separator); }
@@ -971,10 +971,10 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
   --pu-ink: var(--label-secondary);
   position: relative; display: block; width: 100%; text-align: left;
   appearance: none; cursor: pointer; overflow: hidden;
-  padding: 9px 12px 10px 14px; border-radius: 4px;
+  padding: 9px 12px 10px 14px; border-radius: var(--radius-s);
   background: var(--bg-elevated);
   border: 1px solid var(--separator);
-  transition: border-color 0.15s, transform 0.15s, background 0.15s;
+  transition: border-color var(--dur-quick), transform var(--dur-quick), background var(--dur-quick);
 }
 .pu::before {
   content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px;
@@ -994,7 +994,7 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 .pu-blurb { display: block; font-size: 12.5px; line-height: 1.4; color: var(--label-secondary); margin-top: 4px; }
 .sub.accent { color: var(--accent); }
 .result { text-align: center; padding: 10px 0 6px; }
-.result .headline { font-family: var(--font-display); font-weight: 400; font-size: 30px; margin: 0 0 8px; letter-spacing: 0.02em; }
+.result .headline { font-family: var(--font-display); font-weight: 400; font-size: var(--text-title-1); margin: 0 0 8px; letter-spacing: 0.02em; }
 .result.lose .headline { color: var(--danger); }
 /* The winner's panel: a shimmering brass headline and a slow gold pulse. */
 .result.win { padding: 6px 0 10px; }
@@ -1005,7 +1005,7 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
   animation: shimmer 2.6s linear infinite;
   filter: drop-shadow(0 0 18px var(--accent-edge));
 }
-.result .ornament { margin: 0; color: var(--accent); font-size: 12px; letter-spacing: 0.6em; padding-left: 0.6em; }
+.result .ornament { margin: 0; color: var(--accent); font-size: var(--text-caption); letter-spacing: 0.6em; padding-left: 0.6em; }
 .panel.celebrate { border-color: var(--accent); animation: goldpulse 2.6s ease-in-out infinite; }
 .panel.celebrate::before, .panel.celebrate::after { border-color: var(--accent-strong); width: 22px; height: 22px; }
 @keyframes shimmer { to { background-position: 200% center; } }
@@ -1016,15 +1016,15 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 .seat-row.winner { border-color: var(--accent); background: var(--bg-elevated); animation: goldpulse 2.6s ease-in-out infinite; }
 .seat-row.winner::before, .seat-row.winner::after { border-color: var(--accent-strong); width: 22px; height: 22px; }
 .seat-row.loser { opacity: 0.55; filter: saturate(0.6); }
-.tally { display: flex; flex-direction: column; gap: 6px; font-size: 15px; font-variant-numeric: var(--numeric); }
-.tally div { display: flex; justify-content: space-between; padding: 7px 10px; background: var(--fill); border-radius: 3px; border: 1px solid var(--separator); }
+.tally { display: flex; flex-direction: column; gap: 6px; font-size: var(--text-subhead); font-variant-numeric: var(--numeric); }
+.tally div { display: flex; justify-content: space-between; padding: 7px 10px; background: var(--fill); border-radius: var(--radius-s); border: 1px solid var(--separator); }
 .tally .wins { font-family: var(--font-mono); font-weight: 500; color: var(--accent); }
 
 /* The log reads as a case file: typed, ruled, brass headings, and jade for a
    card successfully taken. */
-.log { max-height: 46vh; overflow: auto; display: flex; flex-direction: column; gap: 3px; font-family: var(--font-mono); font-size: 13px; line-height: 1.45; padding-right: 4px; }
-.log div { padding: 6px 9px; border-radius: 2px; background: var(--fill); color: var(--label-secondary); border-left: 2px solid transparent; }
-.log .turn { background: transparent; color: var(--accent); font-family: var(--font-text); font-size: 12px; font-weight: 700; padding: 12px 0 2px; border-left: 0; }
+.log { max-height: 46vh; overflow: auto; display: flex; flex-direction: column; gap: 3px; font-family: var(--font-mono); font-size: var(--text-footnote); line-height: 1.45; padding-right: 4px; }
+.log div { padding: 6px 9px; border-radius: var(--radius-s); background: var(--fill); color: var(--label-secondary); border-left: 2px solid transparent; }
+.log .turn { background: transparent; color: var(--accent); font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700; padding: 12px 0 2px; border-left: 0; }
 .log .good { color: var(--success); border-left-color: var(--success); background: var(--success-tint); }
 .log .bad { color: var(--danger); border-left-color: var(--danger); }
 .log .flip { color: var(--label); }
@@ -1051,8 +1051,8 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
     box-shadow: 0 -12px 30px var(--shadow-color), var(--shadow-3);
   }
   .side .panel:not(.action) { order: 2; }
-  .action .prompt { font-size: 16px; margin-bottom: 10px; }
-  .action .sub { font-size: 13.5px; }
+  .action .prompt { font-size: var(--text-callout); margin-bottom: 10px; }
+  .action .sub { font-size: var(--text-footnote); }
   .ranks { gap: 5px; }
   .ranks button { padding: 11px 0 9px; }
   .log { max-height: 40vh; }
@@ -1060,7 +1060,7 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 }
 
 @media (max-width: 600px) {
-  body { font-size: 16px; }
+  body { font-size: var(--text-callout); }
   .eyebrow { font-size: var(--text-caption); letter-spacing: 0.12em; }
   .topbar { padding-bottom: 12px; margin-bottom: 14px; }
   .topbar .brand .wordmark { font-size: 22px; }
@@ -1112,7 +1112,7 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
      and the small print under a panel gets room to breathe. */
   .panel-sub { display: block; margin-top: 6px; }
   .panel-sub::before { content: none; }
-  .panel-note { font-size: 12.5px; line-height: 1.65; margin-top: 12px; }
+  .panel-note { font-size: var(--text-caption); line-height: 1.65; margin-top: 12px; }
 
   /* Room for two names in one hand without the pills crowding the arrows. */
   .players li { padding: 10px; gap: 8px; }
@@ -1126,7 +1126,7 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
   .popup-line { font-size: var(--text-caption); }
 
   /* The long rules read as a column of short paragraphs on a phone. */
-  .rules-body { font-size: 14.5px; }
+  .rules-body { font-size: var(--text-subhead); }
   .rules-body h3 { margin-top: 22px; }
 }
 
@@ -1233,7 +1233,7 @@ dialog.sheet::backdrop { background: var(--scrim); }
     padding-bottom: env(safe-area-inset-bottom);
   }
   dialog.sheet[open] { animation-name: sheetup; }
-  .sheet-grip { display: block; width: 40px; height: 5px; border-radius: 3px; background: var(--separator-strong); margin: var(--space-2) auto 0; touch-action: none; }
+  .sheet-grip { display: block; width: 40px; height: 5px; border-radius: var(--radius-s); background: var(--separator-strong); margin: var(--space-2) auto 0; touch-action: none; }
   @keyframes sheetup { from { transform: translateY(40%); opacity: 0.4; } to { transform: none; opacity: 1; } }
 }
 
@@ -1259,7 +1259,7 @@ dialog.sheet::backdrop { background: var(--scrim); }
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.progress { height: 6px; border-radius: 3px; background: var(--fill-strong); overflow: hidden; }
+.progress { height: 6px; border-radius: var(--radius-s); background: var(--fill-strong); overflow: hidden; }
 .progress > span { display: block; height: 100%; background: var(--accent); border-radius: inherit; transition: width var(--dur-slow) var(--ease-out); }
 
 /* A disclosure that looks like part of the page rather than a browser triangle. */

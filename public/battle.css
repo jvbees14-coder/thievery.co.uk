@@ -20,7 +20,7 @@
 .btl-head {
   margin: 0 0 16px;
   font-family: var(--font-text);
-  font-size: 13px;
+  font-size: var(--text-footnote);
   font-weight: 700;
   color: var(--label);
 }
@@ -56,7 +56,7 @@
   width: 7.5ch;
   text-align: center;
   font-family: var(--font-text);
-  font-size: 18px;
+  font-size: var(--text-body);
 }
 
 /* --- the lobby ------------------------------------------------------------ */
@@ -79,14 +79,14 @@
   padding: 12px 14px;
   text-align: left;
   border: 1px solid var(--separator);
-  border-radius: 10px;
+  border-radius: var(--radius-m);
   background: var(--bg-grouped);
   color: var(--label-secondary);
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  transition: border-color var(--dur-quick), background var(--dur-quick), color var(--dur-quick);
 }
-.btl-opt b { font-size: 15px; color: var(--label); }
-.btl-opt span { font-size: 12.5px; line-height: 1.35; }
+.btl-opt b { font-size: var(--text-subhead); color: var(--label); }
+.btl-opt span { font-size: var(--text-caption); line-height: 1.35; }
 .btl-opt:hover:not(:disabled) { border-color: var(--separator-strong); }
 .btl-opt.is-on {
   border-color: var(--accent);
@@ -101,7 +101,7 @@
 .btl-room { text-align: center; }
 .btl-code-say {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--text-caption);
   color: var(--label-secondary);
 }
 .btl-code {
@@ -126,7 +126,7 @@
 .btl-tag {
   font-size: var(--text-caption);
   padding: 2px 7px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 1px solid var(--separator-strong);
   color: var(--accent);
 }
@@ -138,7 +138,7 @@
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-size: 12.5px;
+  font-size: var(--text-caption);
   color: var(--label-secondary);
   margin-bottom: 6px;
 }
@@ -148,7 +148,7 @@
    whole of the warning — there is no number that needs watching. */
 .btl-clock-rail {
   height: 3px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--separator);
   overflow: hidden;
   margin-bottom: 18px;
@@ -157,13 +157,13 @@
   height: 100%;
   width: 0;
   background: var(--accent);
-  transition: width 0.2s linear, background 0.4s;
+  transition: width var(--dur-base) linear, background 0.4s;
 }
 
 .btl-card { padding: clamp(20px, 4vw, 34px); }
 .btl-card-owner {
   margin: 0 0 8px;
-  font-size: 12px;
+  font-size: var(--text-caption);
   color: var(--label-secondary);
 }
 .btl-front {
@@ -186,7 +186,7 @@
   width: 100%;
   resize: vertical;
   min-height: 84px;
-  font-size: 16px; /* anything smaller and a phone zooms in on focus */
+  font-size: var(--text-callout); /* anything smaller and a phone zooms in on focus */
   line-height: 1.45;
 }
 
@@ -197,7 +197,7 @@
 
 .btl-reveal { margin-top: 18px; display: flex; flex-direction: column; gap: 14px; }
 .btl-back { padding: 18px 22px; border-color: var(--separator-strong); }
-.btl-back-text { margin: 6px 0 0; font-size: 17px; line-height: 1.5; color: var(--label); }
+.btl-back-text { margin: 6px 0 0; font-size: var(--text-body); line-height: 1.5; color: var(--label); }
 
 .btl-marks { display: flex; flex-direction: column; gap: 10px; }
 
@@ -208,7 +208,7 @@
   padding: 13px 16px;
   border: 1px solid var(--separator);
   border-left-width: 3px;
-  border-radius: 8px;
+  border-radius: var(--radius-m);
   background: var(--bg-grouped);
 }
 .btl-mark.is-got { border-left-color: var(--success); }
@@ -220,11 +220,11 @@
 .btl-mark-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .btl-mark-who { font-weight: 600; color: var(--label); }
 .btl-mark-who i { font-style: normal; font-size: var(--text-caption); color: var(--accent); }
-.btl-mark-score { font-family: var(--font-text); font-variant-numeric: var(--numeric); font-weight: 600; font-size: 22px; color: var(--label); }
+.btl-mark-score { font-family: var(--font-text); font-variant-numeric: var(--numeric); font-weight: 600; font-size: var(--text-title-2); color: var(--label); }
 .btl-mark-score small { font-size: var(--text-caption); color: var(--label-secondary); }
 .btl-mark-said { margin: 6px 0 4px; line-height: 1.45; }
 .btl-mark-said i { color: var(--label-secondary); }
-.btl-mark-band { margin: 0; font-size: 12.5px; color: var(--label-secondary); }
+.btl-mark-band { margin: 0; font-size: var(--text-caption); color: var(--label-secondary); }
 .btl-mark-band b { color: var(--label); font-weight: 600; }
 
 /* --- the running total ---------------------------------------------------- */
@@ -238,8 +238,8 @@
   flex-wrap: wrap;
   gap: 8px 22px;
 }
-.btl-running li { display: flex; gap: 8px; align-items: baseline; font-size: 13.5px; color: var(--label-secondary); }
-.btl-running b { font-family: var(--font-text); font-size: 16px; color: var(--label); }
+.btl-running li { display: flex; gap: 8px; align-items: baseline; font-size: var(--text-footnote); color: var(--label-secondary); }
+.btl-running b { font-family: var(--font-text); font-size: var(--text-callout); color: var(--label); }
 
 /* --- the scoreboard ------------------------------------------------------- */
 
@@ -253,21 +253,21 @@
   gap: 12px;
   align-items: baseline;
   padding: 11px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-m);
   border: 1px solid transparent;
 }
 .btl-standing.is-won { border-color: var(--separator-strong); background: var(--accent-tint); }
 .btl-standing.is-yours .btl-standing-name { color: var(--label); font-weight: 600; }
 .btl-standing-rank { font-family: var(--font-text); color: var(--label-secondary); }
-.btl-standing-avg { font-size: 12.5px; color: var(--label-secondary); }
-.btl-standing-total { font-family: var(--font-text); font-variant-numeric: var(--numeric); font-weight: 600; font-size: 20px; color: var(--label); }
+.btl-standing-avg { font-size: var(--text-caption); color: var(--label-secondary); }
+.btl-standing-total { font-family: var(--font-text); font-variant-numeric: var(--numeric); font-weight: 600; font-size: var(--text-title-3); color: var(--label); }
 
 .btl-end-acts { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 
 .btl-review { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
 .btl-review-card { padding: 14px 18px; }
-.btl-review-front { margin: 0 0 8px; font-family: var(--font-display); font-size: 17px; }
-.btl-review-back, .btl-review-said { margin: 0 0 4px; font-size: 13.5px; color: var(--label-secondary); line-height: 1.45; }
+.btl-review-front { margin: 0 0 8px; font-family: var(--font-display); font-size: var(--text-body); }
+.btl-review-back, .btl-review-said { margin: 0 0 4px; font-size: var(--text-footnote); color: var(--label-secondary); line-height: 1.45; }
 .btl-review-back b, .btl-review-said b { color: var(--label); }
 
 /* --- narrow ---------------------------------------------------------------- */
@@ -304,11 +304,11 @@
   border: 1px solid var(--separator);
   border-left-width: 3px;
   border-left-color: var(--separator);
-  border-radius: 8px;
+  border-radius: var(--radius-m);
   background: var(--bg-grouped);
   color: var(--label);
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color var(--dur-quick), background var(--dur-quick);
 }
 .btl-choice-opt:hover:not(:disabled):not(.is-shut) {
   border-color: var(--separator-strong);
@@ -349,16 +349,16 @@
   align-items: baseline;
   padding: 7px 4px;
   border-bottom: 1px solid var(--separator);
-  font-size: 14.5px;
+  font-size: var(--text-subhead);
 }
 .btl-board-row:last-child { border-bottom: 0; }
-.btl-board-place { font-family: var(--font-text); font-size: 12px; color: var(--label-secondary); }
+.btl-board-place { font-family: var(--font-text); font-size: var(--text-caption); color: var(--label-secondary); }
 .btl-board-name i { font-style: normal; font-size: var(--text-caption); color: var(--accent); }
 .btl-board-row b { font-family: var(--font-text); color: var(--label); }
 .btl-board-row.is-yours { background: var(--accent-tint); }
 
 .btl-end-daily { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--separator); }
-.btl-end-link { margin: 14px 0 0; font-size: 13.5px; }
+.btl-end-link { margin: 14px 0 0; font-size: var(--text-footnote); }
 
 /* --- watching, and out ------------------------------------------------------ */
 
@@ -377,7 +377,7 @@
 
 /* --- the question list ------------------------------------------------------ */
 
-.btl-door-bank { margin: 14px 0 0; font-size: 15px; }
+.btl-door-bank { margin: 14px 0 0; font-size: var(--text-subhead); }
 .btl-bank { max-width: 820px; margin: 0 auto; padding: clamp(18px, 3vw, 30px); }
 .btl-bank-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .btl-bank-head .btl-door-head { margin: 0; }
@@ -386,9 +386,9 @@
 .btl-bank-list { list-style: none; margin: 10px 0 16px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .btl-q { padding: 14px 16px; border: 1px solid var(--separator); border-radius: var(--radius-s); background: var(--fill); }
 .btl-q-front { margin: 0 0 8px; color: var(--label); }
-.btl-q-options { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 3px; color: var(--label-secondary); font-size: 15px; }
+.btl-q-options { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 3px; color: var(--label-secondary); font-size: var(--text-subhead); }
 .btl-q-options b { display: inline-block; width: 1.4em; color: var(--separator-strong); font-family: var(--font-text); }
-.btl-q-answer summary { cursor: pointer; color: var(--accent); font-size: 14px; }
+.btl-q-answer summary { cursor: pointer; color: var(--accent); font-size: var(--text-subhead); }
 .btl-q-answer p { margin: 6px 0 0; color: var(--success); }
 @media (max-width: 560px) {
   .btl-bank-tools { grid-template-columns: 1fr; }

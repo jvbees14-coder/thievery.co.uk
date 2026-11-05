@@ -14,9 +14,9 @@ textarea, select {
   border: 1px solid var(--separator-strong);
   color: var(--label);
   padding: 12px 14px;
-  border-radius: 3px;
+  border-radius: var(--radius-s);
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color var(--dur-quick), box-shadow var(--dur-quick);
   width: 100%;
 }
 textarea { resize: vertical; line-height: 1.5; }
@@ -33,7 +33,7 @@ textarea:focus, select:focus, input:focus {
   letter-spacing: 0.08em;
   font-weight: 400;
 }
-.hint { margin: 0; font-size: 13px; color: var(--label-secondary); }
+.hint { margin: 0; font-size: var(--text-footnote); color: var(--label-secondary); }
 .linkish {
   appearance: none; background: none; border: 0; padding: 0;
   color: var(--accent); font: inherit; cursor: pointer; text-decoration: underline;
@@ -49,16 +49,16 @@ textarea:focus, select:focus, input:focus {
   appearance: none; background: none; border: 0; border-bottom: 2px solid transparent;
   min-height: var(--hit); padding: 0 14px; margin-bottom: -1px; cursor: pointer;
   font-size: var(--text-subhead); font-weight: 600; color: var(--label-secondary);
-  transition: color 0.15s, border-color 0.15s;
+  transition: color var(--dur-quick), border-color var(--dur-quick);
 }
 .door-tab:hover { color: var(--label); }
 .door-tab.is-on { color: var(--label); border-bottom-color: var(--accent); }
 .door-pane { display: flex; flex-direction: column; gap: 16px; }
 .door-error {
-  margin: 0; padding: 10px 14px; border-radius: 3px; font-size: 14px;
+  margin: 0; padding: 10px 14px; border-radius: var(--radius-s); font-size: var(--text-subhead);
   background: var(--danger-tint); border: 1px solid var(--danger-edge); color: var(--danger);
 }
-.door-foot { margin: 4px 0 0; text-align: center; font-size: 13px; }
+.door-foot { margin: 4px 0 0; text-align: center; font-size: var(--text-footnote); }
 .door-foot a { color: var(--label-tertiary); text-decoration: none; }
 .door-foot a:hover { color: var(--accent); }
 
@@ -68,10 +68,10 @@ textarea:focus, select:focus, input:focus {
 /* The room's own tabs, at the top of the room rather than in the site's bar. */
 .fc-tabs { display: flex; gap: 2px; flex-wrap: wrap; margin: 0 0 22px; padding-bottom: 10px; border-bottom: 1px solid var(--separator); }
 .fc-tab {
-  appearance: none; background: none; border: 1px solid transparent; border-radius: 3px;
+  appearance: none; background: none; border: 1px solid transparent; border-radius: var(--radius-s);
   padding: 9px 13px 7px; cursor: pointer;
   font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700; color: var(--label-tertiary);
-  transition: color 0.15s, background 0.15s, border-color 0.15s;
+  transition: color var(--dur-quick), background var(--dur-quick), border-color var(--dur-quick);
 }
 .fc-tab:hover { color: var(--label); background: var(--accent-tint); }
 .fc-tab.is-on { color: var(--accent); border-color: var(--separator-strong); background: var(--accent-tint); }
@@ -83,12 +83,12 @@ textarea:focus, select:focus, input:focus {
 .fc-pane { animation: fcin 0.3s ease both; }
 @keyframes fcin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-.fc-h { font-family: var(--font-text); font-weight: 600; font-size: 22px; color: var(--label); margin: 0 0 8px; }
-.fc-h3 { font-family: var(--font-text); font-weight: 600; font-size: 13px; color: var(--accent); margin: 26px 0 12px; display: flex; align-items: baseline; gap: 10px; }
+.fc-h { font-family: var(--font-text); font-weight: 600; font-size: var(--text-title-2); color: var(--label); margin: 0 0 8px; }
+.fc-h3 { font-family: var(--font-text); font-weight: 600; font-size: var(--text-footnote); color: var(--accent); margin: 26px 0 12px; display: flex; align-items: baseline; gap: 10px; }
 .fc-h4 { font-family: var(--font-text); font-weight: 600; font-size: var(--text-caption); color: var(--accent); margin: 22px 0 8px; }
 .fc-lede { margin: 0 0 20px; color: var(--label-secondary); max-width: 62ch; }
-.fc-note { margin: 10px 0 0; font-size: 13px; color: var(--label-tertiary); line-height: 1.5; }
-.fc-tally { font-family: var(--font-mono); font-size: 12px; color: var(--label-tertiary); letter-spacing: 0; text-transform: none; }
+.fc-note { margin: 10px 0 0; font-size: var(--text-footnote); color: var(--label-tertiary); line-height: 1.5; }
+.fc-tally { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-tertiary); letter-spacing: 0; text-transform: none; }
 .fc-empty { color: var(--label-tertiary); font-style: italic; padding: 18px 2px; }
 
 /* --- the strip of numbers ------------------------------------------------- */
@@ -154,7 +154,7 @@ textarea:focus, select:focus, input:focus {
   background: var(--bg-elevated);
   border: 1px solid var(--separator);
   box-shadow: 0 10px 26px var(--shadow-color);
-  transition: border-color 0.2s, transform 0.2s;
+  transition: border-color var(--dur-base), transform var(--dur-base);
 }
 .fc-face::before {
   /* A hairline in the rarity's colour, down the spine of the card. */
@@ -168,12 +168,12 @@ textarea:focus, select:focus, input:focus {
 .fc-rarity {
   font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700; color: var(--r-ink);
 }
-.fc-worth { font-family: var(--font-mono); font-size: 12px; color: var(--accent); white-space: nowrap; }
-.fc-title { font-family: var(--font-display); font-size: 15px; color: var(--r-ink); margin: 0; }
-.fc-text { margin: 0; font-size: 15.5px; line-height: 1.45; color: var(--label); flex: 1; overflow: hidden; }
-.fc-back .fc-text { color: var(--label-secondary); font-size: 14.5px; }
-.fc-hint { margin: 0; font-size: 12.5px; color: var(--label-tertiary); font-style: italic; }
-.fc-flavour { margin: 0; font-size: 12.5px; color: var(--r-ink); font-style: italic; opacity: 0.85; }
+.fc-worth { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--accent); white-space: nowrap; }
+.fc-title { font-family: var(--font-display); font-size: var(--text-subhead); color: var(--r-ink); margin: 0; }
+.fc-text { margin: 0; font-size: var(--text-callout); line-height: 1.45; color: var(--label); flex: 1; overflow: hidden; }
+.fc-back .fc-text { color: var(--label-secondary); font-size: var(--text-subhead); }
+.fc-hint { margin: 0; font-size: var(--text-caption); color: var(--label-tertiary); font-style: italic; }
+.fc-flavour { margin: 0; font-size: var(--text-caption); color: var(--r-ink); font-style: italic; opacity: 0.85; }
 .fc-cardfoot {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   padding-top: 9px; border-top: 1px solid var(--accent-tint);
@@ -182,14 +182,14 @@ textarea:focus, select:focus, input:focus {
 .fc-cardfoot .fc-sep { opacity: 0.4; }
 .fc-tag {
   font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700;
-  border: 1px solid var(--separator); border-radius: 999px; padding: 2px 7px 1px; color: var(--label-tertiary);
+  border: 1px solid var(--separator); border-radius: var(--radius-pill); padding: 2px 7px 1px; color: var(--label-tertiary);
 }
 .fc-ops { display: flex; gap: 5px; margin-top: 9px; flex-wrap: wrap; }
 .fc-op {
-  appearance: none; background: none; border: 1px solid var(--separator); border-radius: 3px;
+  appearance: none; background: none; border: 1px solid var(--separator); border-radius: var(--radius-s);
   padding: 5px 9px 4px; cursor: pointer; color: var(--label-secondary);
   font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  transition: color var(--dur-quick), border-color var(--dur-quick), background var(--dur-quick);
 }
 .fc-op:hover { color: var(--label); border-color: var(--separator-strong); background: var(--accent-tint); }
 .fc-op.danger:hover { color: var(--danger); border-color: var(--danger-edge); background: var(--danger-tint); }
@@ -202,18 +202,18 @@ textarea:focus, select:focus, input:focus {
 .fc-form { display: flex; flex-direction: column; gap: 16px; }
 .fc-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .fc-actions { display: flex; gap: 10px; align-items: center; }
-.fc-editing { margin: 0; font-size: 13px; color: var(--success); }
+.fc-editing { margin: 0; font-size: var(--text-footnote); color: var(--success); }
 
 .fc-appraisal {
   position: sticky; top: 84px;
-  padding: 20px 20px 22px; border-radius: 5px;
+  padding: 20px 20px 22px; border-radius: var(--radius-s);
   background: var(--bg-elevated);
   border: 1px solid var(--separator);
 }
 .fc-meter { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
-.fc-meter-track { flex: 1; height: 7px; border-radius: 999px; background: var(--fill-strong); overflow: hidden; border: 1px solid var(--accent-tint); }
+.fc-meter-track { flex: 1; height: 7px; border-radius: var(--radius-pill); background: var(--fill-strong); overflow: hidden; border: 1px solid var(--accent-tint); }
 .fc-meter-fill {
-  height: 100%; width: 0%; border-radius: 999px;
+  height: 100%; width: 0%; border-radius: var(--radius-pill);
   background: linear-gradient(90deg, var(--stock-red) 0%, var(--accent) 55%, var(--accent-strong) 100%);
   transition: width 0.4s var(--ease-spring);
 }
@@ -222,15 +222,15 @@ textarea:focus, select:focus, input:focus {
 .fc-meter-num span { font-family: var(--font-text); font-size: var(--text-caption); color: var(--label-tertiary); }
 
 .fc-parts, .fc-odds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.fc-parts li, .fc-odds li { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--label-secondary); }
+.fc-parts li, .fc-odds li { display: flex; align-items: center; gap: 9px; font-size: var(--text-footnote); color: var(--label-secondary); }
 .fc-parts li span:first-child, .fc-odds li span:first-child { flex: 0 0 96px; font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700; color: var(--label-tertiary); }
-.fc-bar-track { flex: 1; height: 4px; border-radius: 999px; background: var(--fill-strong); overflow: hidden; }
-.fc-bar-fill { display: block; height: 100%; background: var(--separator-strong); border-radius: 999px; transition: width 0.4s ease; }
+.fc-bar-track { flex: 1; height: 4px; border-radius: var(--radius-pill); background: var(--fill-strong); overflow: hidden; }
+.fc-bar-fill { display: block; height: 100%; background: var(--separator-strong); border-radius: var(--radius-pill); transition: width 0.4s ease; }
 .fc-odds .fc-bar-fill { background: var(--r-ink, var(--separator-strong)); }
 .fc-parts li b, .fc-odds li b { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-secondary); min-width: 46px; text-align: right; }
 
 .fc-reveal {
-  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center;
+  position: fixed; inset: 0; z-index: var(--z-banner); display: grid; place-items: center;
   background: var(--scrim); backdrop-filter: blur(6px); padding: 20px;
   animation: fcin 0.3s ease both;
 }
@@ -258,7 +258,7 @@ textarea:focus, select:focus, input:focus {
    printed in — the band has told you what you got before you have read a word
    of it. Every rarity's ink is a light tone, so the words go on in near-black
    exactly as they do on the table's brass band. */
-.banner.fc { --r-ink: var(--accent); z-index: 70; }
+.banner.fc { --r-ink: var(--accent); z-index: var(--z-modal); }
 .banner.fc::before {
   background:
     linear-gradient(90deg, rgba(255, 255, 255, 0) 32%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0) 68%),
@@ -286,7 +286,7 @@ textarea:focus, select:focus, input:focus {
 .fc-offer {
   --r-ink: var(--label-secondary);
   display: flex; align-items: center; gap: 12px;
-  padding: 11px 14px; border-radius: 4px;
+  padding: 11px 14px; border-radius: var(--radius-s);
   background: var(--bg-grouped); border: 1px solid var(--separator);
   border-left: 3px solid var(--r-ink);
 }
@@ -297,17 +297,17 @@ textarea:focus, select:focus, input:focus {
 .fc-offer[data-rarity="mythic"]    { --r-ink: var(--team-b); }
 .fc-offer.is-mine { background: var(--success-tint); }
 .fc-offer-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.fc-offer-front { font-size: 14.5px; color: var(--label); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fc-offer-front { font-size: var(--text-subhead); color: var(--label); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fc-offer-meta { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-tertiary); }
-.fc-offer-worth { font-family: var(--font-mono); font-size: 13px; color: var(--accent); white-space: nowrap; }
+.fc-offer-worth { font-family: var(--font-mono); font-size: var(--text-footnote); color: var(--accent); white-space: nowrap; }
 
 .fc-trades { display: flex; flex-direction: column; gap: 10px; }
 .fc-trade {
-  padding: 13px 15px; border-radius: 4px;
+  padding: 13px 15px; border-radius: var(--radius-s);
   background: var(--bg-grouped); border: 1px solid var(--separator);
 }
 .fc-trade-when { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-tertiary); margin-bottom: 7px; }
-.fc-trade-line { display: flex; gap: 8px; font-size: 13.5px; color: var(--label-secondary); padding: 2px 0; }
+.fc-trade-line { display: flex; gap: 8px; font-size: var(--text-footnote); color: var(--label-secondary); padding: 2px 0; }
 .fc-trade-line em { font-style: normal; font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700; flex: 0 0 42px; padding-top: 3px; }
 .fc-trade-line.gave em { color: var(--danger); }
 .fc-trade-line.got em { color: var(--success); }
@@ -321,7 +321,7 @@ textarea:focus, select:focus, input:focus {
   padding: 14px 16px; margin-bottom: 18px; border-radius: 4px;
   background: var(--bg-grouped); border: 1px solid var(--separator);
 }
-.fc-check { display: flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--label-secondary); cursor: pointer; }
+.fc-check { display: flex; align-items: center; gap: 7px; font-size: var(--text-footnote); color: var(--label-secondary); cursor: pointer; }
 .fc-check input { width: auto; accent-color: var(--accent); }
 .fc-print-count { margin-left: auto; font-family: var(--font-mono); font-size: 12px; color: var(--label-tertiary); }
 
@@ -329,10 +329,10 @@ textarea:focus, select:focus, input:focus {
 .fc-pick-item {
   --r-ink: var(--label-secondary);
   display: flex; gap: 11px; align-items: flex-start; cursor: pointer;
-  padding: 11px 13px; border-radius: 4px;
+  padding: 11px 13px; border-radius: var(--radius-s);
   background: var(--bg-grouped); border: 1px solid var(--separator);
   border-left: 3px solid var(--r-ink);
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color var(--dur-quick), background var(--dur-quick);
 }
 .fc-pick-item[data-rarity="uncommon"]  { --r-ink: var(--success); }
 .fc-pick-item[data-rarity="rare"]      { --r-ink: var(--team-a); }
@@ -343,7 +343,7 @@ textarea:focus, select:focus, input:focus {
 .fc-pick-item.is-on { background: var(--success-tint); border-color: var(--success-edge); }
 .fc-pick-item input { width: auto; margin-top: 3px; accent-color: var(--accent); }
 .fc-pick-body { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.fc-pick-front { font-size: 14px; color: var(--label); }
+.fc-pick-front { font-size: var(--text-subhead); color: var(--label); }
 .fc-pick-meta { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-tertiary); }
 
 /* --- the panel ------------------------------------------------------------ */
@@ -353,67 +353,67 @@ textarea:focus, select:focus, input:focus {
 .fc-acct {
   display: flex; align-items: center; gap: 12px; text-align: left; width: 100%;
   appearance: none; cursor: pointer;
-  padding: 11px 14px; border-radius: 4px;
+  padding: 11px 14px; border-radius: var(--radius-s);
   background: var(--bg-grouped); border: 1px solid var(--separator);
   color: var(--label); font: inherit;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color var(--dur-quick), background var(--dur-quick);
 }
 .fc-acct:hover { border-color: var(--separator-strong); background: var(--accent-tint); }
 .fc-acct.is-admin { border-color: var(--team-b-edge); }
 .fc-acct.is-off { opacity: 0.5; }
 .fc-acct-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.fc-acct-name { font-size: 14.5px; color: var(--label); }
+.fc-acct-name { font-size: var(--text-subhead); color: var(--label); }
 .fc-acct-meta { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-tertiary); }
-.fc-acct-worth { font-family: var(--font-mono); font-size: 12px; color: var(--accent); text-align: right; white-space: nowrap; }
+.fc-acct-worth { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--accent); text-align: right; white-space: nowrap; }
 .fc-mythic-result {
-  margin-top: 16px; padding: 14px 16px; border-radius: 4px;
+  margin-top: 16px; padding: 14px 16px; border-radius: var(--radius-s);
   background: var(--bg-grouped); border: 1px solid var(--team-b-edge);
-  color: var(--label); font-size: 14px;
+  color: var(--label); font-size: var(--text-subhead);
 }
 
 /* --- the modal ------------------------------------------------------------ */
 
 .fc-modal {
-  position: fixed; inset: 0; z-index: 70; display: grid; place-items: center;
+  position: fixed; inset: 0; z-index: var(--z-modal); display: grid; place-items: center;
   background: var(--scrim); backdrop-filter: blur(6px); padding: 20px;
   animation: fcin 0.25s ease both;
 }
 .fc-modal-box {
   position: relative; width: min(100%, 560px); max-height: 86vh; overflow-y: auto;
-  padding: 30px 30px 28px; border-radius: 5px;
+  padding: 30px 30px 28px; border-radius: var(--radius-s);
   background: var(--bg-elevated);
   border: 1px solid var(--separator-strong); box-shadow: var(--shadow-3);
 }
 .fc-modal-x {
   position: absolute; right: 12px; top: 10px; appearance: none; background: none; border: 0;
-  color: var(--label-tertiary); font-size: 26px; line-height: 1; cursor: pointer; padding: 4px 8px;
+  color: var(--label-tertiary); font-size: var(--text-title-1); line-height: 1; cursor: pointer; padding: 4px 8px;
 }
 .fc-modal-x:hover { color: var(--label); }
-.fc-modal-box h3 { font-family: var(--font-text); font-weight: 600; font-size: 18px; color: var(--label); margin: 0 0 16px; }
+.fc-modal-box h3 { font-family: var(--font-text); font-weight: 600; font-size: var(--text-body); color: var(--label); margin: 0 0 16px; }
 .fc-danger-zone { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--danger-edge); }
 
 /* The toast goes over everything, the modal and the question included. The
    table's stylesheet sets it at 50, which is under both, so anything a form in
    a modal refused was said behind the modal where nobody could read it — and
    a Save that fails in silence looks exactly like a Save that does nothing. */
-.toast { z-index: 90; }
+.toast { z-index: var(--z-toast); }
 
 /* The room asking whether you meant it. Sits above the modal, because that is
    usually where it is asked from, and the question is set larger than the
    detail underneath it: whatever is about to happen is not coming back. */
 .fc-confirm {
-  position: fixed; inset: 0; z-index: 80; display: grid; place-items: center;
+  position: fixed; inset: 0; z-index: var(--z-modal-over); display: grid; place-items: center;
   background: var(--scrim); backdrop-filter: blur(6px); padding: 20px;
   animation: fcin 0.2s ease both;
 }
 .fc-confirm-box {
-  width: min(100%, 420px); padding: 26px 26px 22px; border-radius: 5px;
+  width: min(100%, 420px); padding: 26px 26px 22px; border-radius: var(--radius-s);
   background: var(--bg-elevated);
   border: 1px solid var(--danger-edge);
   box-shadow: var(--shadow-3);
 }
 .fc-confirm-box h3 {
-  margin: 0 0 10px; font-family: var(--font-text); font-weight: 600; font-size: 19px; color: var(--label);
+  margin: 0 0 10px; font-family: var(--font-text); font-weight: 600; font-size: var(--text-title-3); color: var(--label);
 }
 .fc-confirm-box .fc-actions { margin-top: 20px; }
 .fc-confirm-box .btn:not(.ghost) { border-color: var(--danger-edge); color: var(--danger); }

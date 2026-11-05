@@ -142,14 +142,14 @@
 .menu-panel-head {
   margin: 0 0 4px;
   font-family: var(--font-display);
-  font-size: 26px;
+  font-size: var(--text-title-1);
   font-weight: 400;
   letter-spacing: normal;
   text-transform: none;
   color: var(--label);
 }
-.menu-panel-lede { margin: 0 0 22px; color: var(--label-secondary); font-size: 15px; }
-.menu-panel-foot { margin: 22px 0 0; font-size: 13px; }
+.menu-panel-lede { margin: 0 0 22px; color: var(--label-secondary); font-size: var(--text-subhead); }
+.menu-panel-foot { margin: 22px 0 0; font-size: var(--text-footnote); }
 .menu-panel-foot a { color: var(--label-tertiary); text-decoration: none; }
 .menu-panel-foot a:hover { color: var(--accent); }
 
@@ -182,10 +182,10 @@
   font-size: var(--text-caption);
   color: var(--label-secondary);
 }
-.menu-figure i { display: block; margin-top: 2px; font-style: normal; font-size: 12px; color: var(--label-tertiary); }
+.menu-figure i { display: block; margin-top: 2px; font-style: normal; font-size: var(--text-caption); color: var(--label-tertiary); }
 
 .menu-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 20px; }
-.menu-note { margin: 0; color: var(--label-secondary); font-size: 15px; }
+.menu-note { margin: 0; color: var(--label-secondary); font-size: var(--text-subhead); }
 
 .menu-form {
   display: flex;
@@ -207,13 +207,13 @@
 /* The flashcards panel draws a row as a button; here it is a link, because
    an account has an address. */
 .menu-members a.fc-acct { text-decoration: none; box-sizing: border-box; }
-.menu-member-back { margin: 0 0 14px; font-size: 13px; }
+.menu-member-back { margin: 0 0 14px; font-size: var(--text-footnote); }
 .menu-member-back a { color: var(--label-tertiary); text-decoration: none; }
 .menu-member-back a:hover { color: var(--accent); }
 .menu-member .menu-form .fc-h4 { margin: 0; }
 .menu-member-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-bottom: 4px; }
-.menu-member-head h3 { margin: 0; font-family: var(--font-display); font-size: 22px; font-weight: 400; color: var(--label); }
-.menu-member-facts { margin: 0 0 6px; font-size: 14px; color: var(--label-secondary); }
+.menu-member-head h3 { margin: 0; font-family: var(--font-display); font-size: var(--text-title-2); font-weight: 400; color: var(--label); }
+.menu-member-facts { margin: 0 0 6px; font-size: var(--text-subhead); color: var(--label-secondary); }
 .menu-member .fc-actions { flex-wrap: wrap; }
 .menu-member .btn.danger { border-color: var(--danger-edge); color: var(--danger); }
 .menu-member .btn.danger:hover { background: var(--danger-tint); border-color: var(--danger); }
@@ -273,7 +273,7 @@
 }
 .landing-turn b { display: block; margin-bottom: var(--space-1); font-size: var(--text-headline); color: var(--label); }
 .turn-card {
-  flex: none; width: 44px; height: 62px; box-sizing: border-box; border-radius: 6px;
+  flex: none; width: 44px; height: 62px; box-sizing: border-box; border-radius: var(--radius-m);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font-display); font-size: var(--text-title-2);
 }
@@ -296,7 +296,7 @@
 .pill.rarity-epic { color: var(--r-epic); border-color: currentColor; }
 .pill.rarity-legendary { color: var(--r-legendary); border-color: currentColor; }
 
-.room-art { position: relative; height: 132px; border-radius: 10px; background: var(--bg-grouped); overflow: hidden; }
+.room-art { position: relative; height: 132px; border-radius: var(--radius-m); background: var(--bg-grouped); overflow: hidden; }
 .art-flashcards span {
   position: absolute; top: 22px; width: 58px; height: 80px; border-radius: 6px;
   background: var(--stock); border: 2px solid var(--r-rare); transform: rotate(-12deg);
@@ -355,8 +355,8 @@
 .landing-door-title { margin: 0; font-size: 2.5rem; line-height: 1.1; color: var(--label); }
 .landing-door-text p { margin: 0; max-width: 30em; color: var(--label-secondary); }
 .landing-door { flex: 1 1 360px; max-width: 440px; position: relative; z-index: 1; }
-.landing-door .door-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 0; padding: 2px; border: 0; border-radius: 9px; background: var(--segment-track); }
-.landing-door .door-tab { min-height: 36px; margin: 0; border: 0; border-radius: 7px; background: transparent; color: var(--label-secondary); font-size: var(--text-subhead); font-weight: 600; }
+.landing-door .door-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 0; padding: 2px; border: 0; border-radius: var(--radius-m); background: var(--segment-track); }
+.landing-door .door-tab { min-height: 36px; margin: 0; border: 0; border-radius: var(--radius-m); background: transparent; color: var(--label-secondary); font-size: var(--text-subhead); font-weight: 600; }
 .landing-door .door-tab.is-on { background: var(--segment-tile); color: var(--label); box-shadow: var(--shadow-1); }
 
 @media (max-width: 640px) {
@@ -415,7 +415,7 @@ html[data-motion="still"] .hand-card.is-lifted { animation: none; }
 .menu-modes-head {
   margin: 26px 0 10px;
   font-family: var(--font-text);
-  font-size: 12px;
+  font-size: var(--text-caption);
   font-weight: 700;
   color: var(--label);
 }
@@ -423,7 +423,7 @@ html[data-motion="still"] .hand-card.is-lifted { animation: none; }
 .menu-modes {
   width: 100%;
   border-collapse: collapse;
-  font-size: 15px;
+  font-size: var(--text-subhead);
 }
 .menu-modes th, .menu-modes td { padding: 9px 8px; border-bottom: 1px solid var(--accent-tint); }
 .menu-modes thead th {
@@ -441,16 +441,16 @@ html[data-motion="still"] .hand-card.is-lifted { animation: none; }
 }
 /* The what-it-is line under each name, so the column can stay one word wide
    and still say which sizes a row covers. */
-.menu-modes tbody th span { display: block; font-size: 12px; color: var(--label-tertiary); }
-.menu-modes td { text-align: right; font-family: var(--font-mono); font-size: 13px; color: var(--label-secondary); }
+.menu-modes tbody th span { display: block; font-size: var(--text-caption); color: var(--label-tertiary); }
+.menu-modes td { text-align: right; font-family: var(--font-mono); font-size: var(--text-footnote); color: var(--label-secondary); }
 .menu-modes td:last-child { color: var(--accent); }
 /* Never played is drawn rather than dropped: a table whose rows come and go
    cannot be read twice. */
 .menu-modes .is-empty th, .menu-modes .is-empty td { opacity: 0.45; }
 
 @media (max-width: 460px) {
-  .menu-modes { font-size: 14px; }
+  .menu-modes { font-size: var(--text-subhead); }
   .menu-modes th, .menu-modes td { padding: 8px 4px; }
 }
 
-.menu-form-head { margin: 0 0 10px; font-family: var(--font-text); font-size: 13px; font-weight: 600; color: var(--label); }
+.menu-form-head { margin: 0 0 10px; font-family: var(--font-text); font-size: var(--text-footnote); font-weight: 600; color: var(--label); }
