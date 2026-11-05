@@ -30,6 +30,17 @@ body {
   overflow-wrap: break-word;
 }
 [hidden] { display: none !important; }
+
+/* Headings are short, so the browser can afford to balance their lines and
+   never leave one word hanging under a full line. Reading copy gets the
+   cheaper version, which only avoids a lone last word. */
+h1, h2, h3, h4, .display { text-wrap: balance; }
+p, li, dd, figcaption, blockquote { text-wrap: pretty; }
+
+/* Figures. Anything compared or watched changing is set in the text face
+   with tabular figures (see --numeric in tokens.css); the rooms' own score
+   and count rules say the same, and .num is for anything new. */
+.num { font-family: var(--font-text); font-variant-numeric: var(--numeric); }
 button, input, select, textarea { font: inherit; }
 b, strong { font-weight: 600; }
 a { color: var(--accent); text-underline-offset: 3px; }
@@ -143,8 +154,15 @@ body::before {
   white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
 }
-.btn:hover { background: var(--bg-elevated-2); border-color: var(--label-tertiary); }
-.btn:active { transform: scale(0.97); background: var(--fill-strong); }
+/* Hovers only where there is a pointer that can hover: on a phone a hover
+   state sticks after the tap and the button looks pressed for good. */
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover { background: var(--bg-elevated-2); border-color: var(--label-tertiary); }
+  .btn.primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+  .btn.ghost:hover { background: var(--fill); border-color: transparent; }
+  .btn.danger:hover { background: var(--danger-tint); border-color: var(--danger); }
+}
+.btn:active { transform: scale(var(--press-scale)); background: var(--fill-strong); }
 .btn:disabled, .btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; transform: none; }
 .btn .icon { width: 18px; height: 18px; }
 .btn.primary {
@@ -153,13 +171,10 @@ body::before {
   color: var(--accent-contrast);
   box-shadow: var(--shadow-1);
 }
-.btn.primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
 .btn.primary:active { background: var(--accent); filter: brightness(0.92); }
 .btn.small { min-height: 32px; padding: var(--space-1) var(--space-3); font-size: var(--text-subhead); }
 .btn.ghost { background: transparent; border-color: transparent; color: var(--accent); }
-.btn.ghost:hover { background: var(--fill); border-color: transparent; }
 .btn.danger { color: var(--danger); border-color: var(--danger-edge); background: transparent; }
-.btn.danger:hover { background: var(--danger-tint); border-color: var(--danger); }
 .btn.danger.solid { background: var(--danger-strong); border-color: var(--danger-strong); color: var(--danger-contrast); }
 .btn.block { width: 100%; }
 
@@ -219,7 +234,7 @@ input[type="number"]::-webkit-inner-spin-button { appearance: none; -webkit-appe
 .toast {
   position: fixed; top: calc(var(--space-4) + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
   background: var(--bg-elevated); border: 1px solid var(--danger-edge); color: var(--label);
-  padding: var(--space-3) var(--space-4); border-radius: var(--radius-m); z-index: 90; box-shadow: var(--shadow-3);
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius-m); z-index: 90; box-shadow: var(--shadow-3), var(--edge-light);
   max-width: min(calc(100vw - 2 * var(--space-4)), 480px); font-size: var(--text-subhead);
   display: flex; gap: var(--space-2); align-items: baseline;
   animation: toastin var(--dur-base) var(--ease-out) both;
@@ -241,7 +256,7 @@ input[type="number"]::-webkit-inner-spin-button { appearance: none; -webkit-appe
   display: flex; align-items: center; gap: var(--space-2);
   padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
   background: var(--bg-elevated-2); color: var(--label);
-  border: 1px solid var(--separator); border-radius: var(--radius-l); box-shadow: var(--shadow-3);
+  border: 1px solid var(--separator); border-radius: var(--radius-l); box-shadow: var(--shadow-3), var(--edge-light);
   font-size: var(--text-subhead);
   animation: toastup var(--dur-base) var(--ease-out) both;
 }
@@ -303,7 +318,7 @@ input[type="number"]::-webkit-inner-spin-button { appearance: none; -webkit-appe
   background: var(--bg-elevated);
   border: 1px solid var(--separator);
   border-radius: var(--radius-l);
-  box-shadow: var(--shadow-2);
+  box-shadow: var(--shadow-2), var(--edge-light);
 }
 .panel::before, .home-card::before, .seat-row::before,
 .panel::after, .home-card::after, .seat-row::after {
@@ -638,7 +653,13 @@ main.screen.home { min-height: 0; }
 .card.black { width: var(--card-w); height: var(--card-h); }
 .card.red { width: var(--card-h); height: var(--card-w); border-color: var(--back-red-edge); background: var(--burgundy-deep); color: var(--back-red-ink); }
 .card.unknown { width: var(--card-w); height: var(--card-h); border-style: dashed; border-color: var(--text-faint); background: transparent; box-shadow: none; }
-.card.down:not(.mine):not(.shown) .rank { display: none; }
+.card.down:not(.mine):not(.shown):not(.cased) .rank { display: none; }
+/* A card you cased: the two ranks it could be, smaller, and in the colour of
+   a guess rather than of something known. */
+.card.down.cased .rank {
+  position: relative; z-index: 1; font-size: 12px; padding: 2px 4px 0; border-radius: 2px;
+  background: var(--glass); color: var(--text); white-space: nowrap;
+}
 .card.down::after {
   content: ""; position: absolute; inset: 4px; border-radius: 2px;
   border: 1px solid var(--brass-dim);
@@ -995,7 +1016,7 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 .seat-row.winner { border-color: var(--brass); background: var(--bg-elevated); animation: goldpulse 2.6s ease-in-out infinite; }
 .seat-row.winner::before, .seat-row.winner::after { border-color: var(--brass-bright); width: 22px; height: 22px; }
 .seat-row.loser { opacity: 0.55; filter: saturate(0.6); }
-.tally { display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+.tally { display: flex; flex-direction: column; gap: 6px; font-size: 15px; font-variant-numeric: var(--numeric); }
 .tally div { display: flex; justify-content: space-between; padding: 7px 10px; background: var(--fill); border-radius: 3px; border: 1px solid var(--separator); }
 .tally .wins { font-family: var(--mono); font-weight: 500; color: var(--brass); }
 
@@ -1182,7 +1203,7 @@ dialog.sheet {
   border-radius: var(--radius-l);
   background: var(--bg-elevated);
   color: var(--label);
-  box-shadow: var(--shadow-3);
+  box-shadow: var(--shadow-3), var(--edge-light);
   overflow: hidden;
 }
 dialog.sheet[open] { display: flex; flex-direction: column; animation: sheetin var(--dur-slow) var(--ease-out); }

@@ -98,7 +98,7 @@ textarea:focus, select:focus, input:focus {
   margin-bottom: var(--space-5);
 }
 .fc-stat { background: var(--bg-elevated); border: 1px solid var(--separator); border-radius: var(--radius-m); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
-.fc-stat b { font-family: var(--display); font-size: 25px; font-weight: 400; color: var(--ivory); line-height: 1; }
+.fc-stat b { font-family: var(--font-text); font-variant-numeric: var(--numeric); font-size: var(--text-title-1); font-weight: 600; color: var(--ivory); line-height: 1; }
 .fc-stat span { font-family: var(--caps); font-size: var(--text-caption); font-weight: 700; color: var(--text-faint); }
 .fc-stat[data-rarity] b { color: var(--r-ink, var(--ivory)); }
 
@@ -218,7 +218,7 @@ textarea:focus, select:focus, input:focus {
   transition: width 0.4s var(--bounce);
 }
 .fc-meter-num { display: flex; align-items: baseline; gap: 5px; }
-.fc-meter-num b { font-family: var(--display); font-size: 27px; font-weight: 400; color: var(--ivory); }
+.fc-meter-num b { font-family: var(--font-text); font-variant-numeric: var(--numeric); font-size: var(--text-title-1); font-weight: 600; color: var(--ivory); }
 .fc-meter-num span { font-family: var(--caps); font-size: var(--text-caption); color: var(--text-faint); }
 
 .fc-parts, .fc-odds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }

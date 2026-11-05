@@ -179,7 +179,7 @@ a.list-row:hover, a.list-row:active { background: var(--fill); }
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
   border: 0.5px solid var(--glass-edge);
-  box-shadow: var(--shadow-3);
+  box-shadow: var(--shadow-3), var(--edge-light);
   transform-origin: var(--ctx-origin, top left);
   animation: ctxin var(--dur-slow) var(--ease-spring-soft);
 }

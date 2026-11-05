@@ -49,7 +49,7 @@
   border-radius: 20px;
   background: radial-gradient(120% 140% at 85% 20%, var(--bg-elevated-2), var(--bg-grouped) 70%);
   border: 1px solid var(--separator);
-  box-shadow: var(--shadow-2);
+  box-shadow: var(--shadow-2), var(--edge-light);
   color: var(--label);
 }
 .menu-table::before, .menu-table::after {
@@ -72,7 +72,7 @@
   display: flex; flex-direction: column; gap: var(--space-3);
   padding: var(--space-5);
   border-radius: 20px;
-  background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-2);
+  background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-2), var(--edge-light);
 }
 .menu-daily h2 { margin: 0; font-size: var(--text-title-2); color: var(--label); }
 .menu-daily-deck { margin: 0; font-family: var(--font-display); font-size: var(--text-title-3); color: var(--label); }
@@ -92,7 +92,7 @@
   display: flex; flex-direction: column; gap: var(--space-2);
   padding: var(--space-4) var(--space-4) var(--space-5);
   border-radius: var(--radius-l);
-  background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-2);
+  background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-2), var(--edge-light);
   color: var(--label); text-decoration: none;
   transition: background var(--dur-quick), border-color var(--dur-quick);
 }
@@ -122,7 +122,7 @@
 .menu-record-figures dt { font-size: var(--text-footnote); color: var(--label-secondary); }
 /* The figures are in the text face, bold, not Limelight: its nought is a
    half-moon, and a new account's record is all noughts. */
-.menu-record-figures dd { margin: var(--space-1) 0 0; font-size: 2rem; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; color: var(--label); }
+.menu-record-figures dd { margin: var(--space-1) 0 0; font-size: 2rem; font-weight: 700; line-height: 1.15; font-variant-numeric: var(--numeric); color: var(--label); }
 
 @media (max-width: 640px) {
   .menu-table { padding: var(--space-5); }
@@ -168,9 +168,10 @@
 }
 .menu-figure b {
   display: block;
-  font-family: var(--display);
-  font-size: 30px;
-  font-weight: 400;
+  font-family: var(--font-text);
+  font-variant-numeric: var(--numeric);
+  font-size: 2rem;
+  font-weight: 700;
   line-height: 1.1;
   color: var(--brass);
 }
@@ -228,20 +229,20 @@
   display: flex; flex-direction: column; gap: clamp(var(--space-7), 8vw, var(--space-8));
 }
 .landing-hero { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-7); }
-.landing-hero-text { flex: 1 1 440px; min-width: 0; display: flex; flex-direction: column; gap: var(--space-5); }
+.landing-hero-text { flex: 1 1 520px; min-width: 0; display: flex; flex-direction: column; gap: var(--space-5); }
 .landing-kicker {
   margin: 0; align-self: flex-start;
   padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill);
   border: 1px solid var(--accent-edge); background: var(--accent-tint); color: var(--accent);
   font-size: var(--text-caption); font-weight: 600;
 }
-.landing-title { margin: 0; font-size: clamp(2.75rem, 6vw, 4.75rem); line-height: 1.02; color: var(--label); text-wrap: balance; }
+.landing-title { margin: 0; font-size: clamp(2.75rem, 6vw, 4.25rem); line-height: 1.02; color: var(--label); text-wrap: balance; }
 .landing-lede { margin: 0; max-width: 34em; color: var(--label-secondary); }
 .landing-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); }
 .landing-play { min-height: 52px; padding: 0 var(--space-5); font-size: var(--text-headline); }
 .landing-play .icon { width: 22px; height: 22px; }
 .landing-note { margin: 0; color: var(--label-secondary); font-size: var(--text-footnote); }
-.landing-hand { flex: 1 1 420px; min-width: 280px; height: 420px; }
+.landing-hand { flex: 1 1 360px; min-width: 280px; height: 420px; }
 
 /* A room code, typed straight in. Shared by the front door and the hall. */
 .join-code { display: flex; flex-direction: column; gap: var(--space-2); }
@@ -286,7 +287,7 @@
 .room-card {
   display: flex; flex-direction: column; gap: var(--space-3);
   padding: var(--space-5); border-radius: var(--radius-l);
-  background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-2);
+  background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-2), var(--edge-light);
 }
 .room-card h3 { margin: var(--space-1) 0 0; font-family: var(--font-display); font-size: var(--text-title-2); font-weight: 400; line-height: 1.2; color: var(--label); }
 .room-card p { margin: 0; flex: 1; font-size: var(--text-subhead); color: var(--label-secondary); }
@@ -306,7 +307,7 @@
 .art-battle { display: flex; flex-direction: column; justify-content: center; gap: var(--space-2); padding: 0 var(--space-5); }
 .art-battle-label { font-size: var(--text-footnote); color: var(--label-secondary); }
 .art-battle-mark { font-size: var(--text-subhead); color: var(--label-tertiary); }
-.art-battle-mark b { font-family: var(--font-display); font-size: 2.6rem; font-weight: 400; line-height: 1; color: var(--success); }
+.art-battle-mark b { font-family: var(--font-text); font-variant-numeric: var(--numeric); font-size: 2.6rem; font-weight: 700; line-height: 1; color: var(--success); }
 .art-battle-bar { height: 6px; border-radius: var(--radius-pill); background: var(--fill-strong); overflow: hidden; }
 .art-battle-bar span { display: block; width: 87%; height: 100%; background: var(--success); }
 .art-switchhead { display: flex; align-items: center; justify-content: center; gap: var(--space-3); }
@@ -402,7 +403,7 @@ html[data-motion="still"] .hand-card.is-lifted { animation: none; }
   position: absolute; right: 2%; top: var(--space-5);
   display: flex; flex-direction: column; gap: var(--space-2);
   max-width: 220px; padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-l); background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-3);
+  border-radius: var(--radius-l); background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-3), var(--edge-light);
 }
 .hand-guess-who { font-size: var(--text-footnote); color: var(--label-secondary); }
 .hand-guess-call { font-family: var(--font-display); font-size: var(--text-title-2); line-height: 1.2; color: var(--label); }

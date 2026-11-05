@@ -181,7 +181,7 @@
   box-shadow: 0 6px 18px var(--shadow-color);
 }
 .mm-zoom .btn { min-width: 30px; }
-.mm-zoom-level { min-width: 44px; text-align: center; font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.mm-zoom-level { min-width: 44px; text-align: center; font-size: 13px; color: var(--text-dim); font-variant-numeric: var(--numeric); }
 
 @media (max-width: 640px) {
   .mm-stage { height: calc(100dvh - 260px); }

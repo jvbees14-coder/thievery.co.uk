@@ -142,7 +142,7 @@
   color: var(--text-dim);
   margin-bottom: 6px;
 }
-.btl-clock { font-family: var(--caps); color: var(--brass); }
+.btl-clock { font-family: var(--font-text); font-variant-numeric: var(--numeric); color: var(--brass); }
 
 /* The rail. It empties left to right and turns as it runs out, which is the
    whole of the warning — there is no number that needs watching. */
@@ -220,7 +220,7 @@
 .btl-mark-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .btl-mark-who { font-weight: 600; color: var(--ivory); }
 .btl-mark-who i { font-style: normal; font-size: var(--text-caption); color: var(--brass); }
-.btl-mark-score { font-family: var(--caps); font-size: 22px; color: var(--ivory); }
+.btl-mark-score { font-family: var(--font-text); font-variant-numeric: var(--numeric); font-weight: 600; font-size: 22px; color: var(--ivory); }
 .btl-mark-score small { font-size: var(--text-caption); color: var(--text-dim); }
 .btl-mark-said { margin: 6px 0 4px; line-height: 1.45; }
 .btl-mark-said i { color: var(--text-dim); }
@@ -260,7 +260,7 @@
 .btl-standing.is-yours .btl-standing-name { color: var(--ivory); font-weight: 600; }
 .btl-standing-rank { font-family: var(--caps); color: var(--text-dim); }
 .btl-standing-avg { font-size: 12.5px; color: var(--text-dim); }
-.btl-standing-total { font-family: var(--caps); font-size: 20px; color: var(--ivory); }
+.btl-standing-total { font-family: var(--font-text); font-variant-numeric: var(--numeric); font-weight: 600; font-size: 20px; color: var(--ivory); }
 
 .btl-end-acts { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 
