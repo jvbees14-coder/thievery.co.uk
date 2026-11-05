@@ -107,9 +107,12 @@
   border-radius: var(--radius-l);
   background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-2), var(--edge-light);
   color: var(--label); text-decoration: none;
-  transition: background var(--dur-quick), border-color var(--dur-quick);
+  transition: background var(--dur-quick) var(--ease-out), border-color var(--dur-quick) var(--ease-out), transform var(--dur-base) var(--ease-out);
+  position: relative;
 }
-.menu-tile:hover { background: var(--bg-elevated-2); border-color: var(--separator-strong); color: var(--label); }
+@media (hover: hover) and (pointer: fine) {
+  .menu-tile:hover { background: var(--bg-elevated-2); border-color: var(--separator-strong); color: var(--label); }
+}
 .menu-tile .icon { width: 28px; height: 28px; }
 .menu-tile h3 { margin: var(--space-1) 0 0; font-family: var(--font-display); font-size: var(--text-title-2); font-weight: 400; line-height: 1.2; }
 .menu-tile-figure { margin: 0; font-size: var(--text-footnote); color: var(--label-secondary); }
@@ -413,6 +416,40 @@
 @keyframes lift { from { transform: rotate(var(--turn, 0deg)); } }
 @media (prefers-reduced-motion: reduce) { .hand-card.is-lifted { animation: none; } }
 html[data-motion="still"] .hand-card.is-lifted { animation: none; }
+
+/* --- the front page's one moment ------------------------------------------
+   On arrival the words settle in, a beat apart, and the hand fans out from a
+   stack before the queen is lifted from it. The headline is not part of it:
+   it is the page's largest text, and holding it back would only make the
+   page slower to read and slower to measure. Everything here is movement and
+   opacity only, and none of it happens under reduced motion or the site's
+   still setting. */
+@keyframes rise { from { opacity: 0; translate: 0 var(--space-2); } }
+@keyframes fan { from { opacity: 0; transform: rotate(0deg) translateY(var(--space-5)); } }
+@keyframes fan-rest { from { opacity: 0; transform: rotate(0deg) translateY(var(--space-5)); } to { transform: rotate(var(--turn, 0deg)); } }
+/* Both ends written out: with fan-rest underneath it, a lift that left its
+   end to the browser would end where fan-rest does, at rest. */
+@keyframes lift-up { from { transform: rotate(var(--turn, 0deg)); } to { transform: rotate(var(--turn, 0deg)) translateY(calc(var(--card-w) * -0.42)); } }
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-motion="still"]) .landing-kicker,
+  html:not([data-motion="still"]) .landing-lede,
+  html:not([data-motion="still"]) .landing-actions,
+  html:not([data-motion="still"]) .landing-note { animation: rise var(--dur-slow) var(--ease-out) both; }
+  html:not([data-motion="still"]) .landing-lede { animation-delay: 60ms; }
+  html:not([data-motion="still"]) .landing-actions { animation-delay: 120ms; }
+  html:not([data-motion="still"]) .landing-note { animation-delay: 180ms; }
+  html:not([data-motion="still"]) .landing-hand .hand-card { animation: fan var(--dur-slow) var(--ease-out) both; }
+  html:not([data-motion="still"]) .landing-hand .hand-card:nth-child(2) { animation-delay: 40ms; }
+  html:not([data-motion="still"]) .landing-hand .hand-card:nth-child(3) { animation-delay: 80ms; }
+  html:not([data-motion="still"]) .landing-hand .hand-card:nth-child(5) { animation-delay: 160ms; }
+  /* The queen fans to rest with the others, then is lifted: two animations,
+     the second taking over only once its own delay is up. */
+  html:not([data-motion="still"]) .landing-hand .hand-card.is-lifted {
+    animation: fan-rest var(--dur-slow) var(--ease-out) 120ms both, lift-up var(--dur-slow) var(--ease-out) 460ms forwards;
+  }
+  html:not([data-motion="still"]) .landing-hand .hand-guess { animation: rise var(--dur-slow) var(--ease-out) 640ms both; }
+}
+
 
 .hand-guess {
   position: absolute; right: 2%; top: var(--space-5);

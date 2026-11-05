@@ -16,7 +16,7 @@ textarea, select {
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-s);
   outline: none;
-  transition: border-color var(--dur-quick), box-shadow var(--dur-quick);
+  transition: border-color var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out);
   width: 100%;
 }
 textarea { resize: vertical; line-height: 1.5; }
@@ -49,7 +49,7 @@ textarea:focus, select:focus, input:focus {
   appearance: none; background: none; border: 0; border-bottom: 2px solid transparent;
   min-height: var(--hit); padding: 0 var(--space-4); margin-bottom: -1px; cursor: pointer;
   font-size: var(--text-subhead); font-weight: 600; color: var(--label-secondary);
-  transition: color var(--dur-quick), border-color var(--dur-quick);
+  transition: color var(--dur-quick) var(--ease-out), border-color var(--dur-quick) var(--ease-out);
 }
 .door-tab:hover { color: var(--label); }
 .door-tab.is-on { color: var(--label); border-bottom-color: var(--accent); }
@@ -71,7 +71,7 @@ textarea:focus, select:focus, input:focus {
   appearance: none; background: none; border: 1px solid transparent; border-radius: var(--radius-s);
   padding: var(--space-2) var(--space-3) var(--space-2); cursor: pointer;
   font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700; color: var(--label-tertiary);
-  transition: color var(--dur-quick), background var(--dur-quick), border-color var(--dur-quick);
+  transition: color var(--dur-quick) var(--ease-out), background var(--dur-quick) var(--ease-out), border-color var(--dur-quick) var(--ease-out);
 }
 .fc-tab:hover { color: var(--label); background: var(--accent-tint); }
 .fc-tab.is-on { color: var(--accent); border-color: var(--separator-strong); background: var(--accent-tint); }
@@ -154,7 +154,7 @@ textarea:focus, select:focus, input:focus {
   background: var(--bg-elevated);
   border: 1px solid var(--separator);
   box-shadow: 0 10px 26px var(--shadow-color);
-  transition: border-color var(--dur-base), transform var(--dur-base);
+  transition: border-color var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
 }
 .fc-face::before {
   /* A hairline in the rarity's colour, down the spine of the card. */
@@ -189,7 +189,7 @@ textarea:focus, select:focus, input:focus {
   appearance: none; background: none; border: 1px solid var(--separator); border-radius: var(--radius-s);
   padding: var(--space-1) var(--space-2) var(--space-1); cursor: pointer; color: var(--label-secondary);
   font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700;
-  transition: color var(--dur-quick), border-color var(--dur-quick), background var(--dur-quick);
+  transition: color var(--dur-quick) var(--ease-out), border-color var(--dur-quick) var(--ease-out), background var(--dur-quick) var(--ease-out);
 }
 .fc-op:hover { color: var(--label); border-color: var(--separator-strong); background: var(--accent-tint); }
 .fc-op.danger:hover { color: var(--danger); border-color: var(--danger-edge); background: var(--danger-tint); }
@@ -332,7 +332,7 @@ textarea:focus, select:focus, input:focus {
   padding: var(--space-3) var(--space-3); border-radius: var(--radius-s);
   background: var(--bg-grouped); border: 1px solid var(--separator);
   border-left: 3px solid var(--r-ink);
-  transition: border-color var(--dur-quick), background var(--dur-quick);
+  transition: border-color var(--dur-quick) var(--ease-out), background var(--dur-quick) var(--ease-out);
 }
 .fc-pick-item[data-rarity="uncommon"]  { --r-ink: var(--success); }
 .fc-pick-item[data-rarity="rare"]      { --r-ink: var(--team-a); }
@@ -356,7 +356,7 @@ textarea:focus, select:focus, input:focus {
   padding: var(--space-3) var(--space-4); border-radius: var(--radius-s);
   background: var(--bg-grouped); border: 1px solid var(--separator);
   color: var(--label); font: inherit;
-  transition: border-color var(--dur-quick), background var(--dur-quick);
+  transition: border-color var(--dur-quick) var(--ease-out), background var(--dur-quick) var(--ease-out);
 }
 .fc-acct:hover { border-color: var(--separator-strong); background: var(--accent-tint); }
 .fc-acct.is-admin { border-color: var(--team-b-edge); }

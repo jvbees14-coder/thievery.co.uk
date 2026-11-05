@@ -103,12 +103,12 @@ body::before {
   appearance: none; background: none; border: 0; padding: 2px 6px; margin: 0 -6px;
   min-height: var(--hit);
   cursor: pointer; border-radius: var(--radius-s); position: relative;
-  transition: background var(--dur-quick), box-shadow var(--dur-quick);
+  transition: background var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out);
 }
 .logo-btn::after {
   content: "Leave"; position: absolute; left: 50%; top: 100%; transform: translate(-50%, -2px);
   font-size: var(--text-caption); font-weight: 600;
-  color: var(--label-secondary); opacity: 0; transition: opacity var(--dur-quick), transform var(--dur-quick); pointer-events: none; white-space: nowrap;
+  color: var(--label-secondary); opacity: 0; transition: opacity var(--dur-quick) var(--ease-out), transform var(--dur-quick) var(--ease-out); pointer-events: none; white-space: nowrap;
 }
 .logo-btn:hover, .logo-btn:focus-visible { background: var(--fill); }
 .logo-btn:hover::after, .logo-btn:focus-visible::after { opacity: 1; transform: translate(-50%, 1px); }
@@ -125,6 +125,24 @@ body::before {
 @keyframes dot1 { 0%, 100% { opacity: 1; } }
 @keyframes dot2 { 0% { opacity: 0; } 33.34% { opacity: 1; } 100% { opacity: 1; } }
 @keyframes dot3 { 0% { opacity: 0; } 66.67% { opacity: 1; } 100% { opacity: 1; } }
+
+/* --- tiles that lift ---------------------------------------------------------
+   A tile that is a link (a room in the hall, a tool) rises a little under a
+   mouse. The deeper shadow is drawn on a layer of its own and faded in, so
+   only movement and opacity ever animate, never the shadow itself. A touch
+   screen gets none of it, so nothing is left hovering after a tap. */
+.menu-tile::after, .tool-card::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: var(--shadow-3); opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .menu-tile:hover, .tool-card:hover { transform: translateY(-2px); }
+  .menu-tile:hover::after, .tool-card:hover::after { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu-tile:hover, .tool-card:hover { transform: none; }
+}
 
 /* --- buttons ----------------------------------------------------------------
    Four kinds, and the kind says how much it matters, not the size:
@@ -150,7 +168,7 @@ body::before {
   background: var(--bg-elevated);
   color: var(--label);
   cursor: pointer;
-  transition: background var(--dur-quick), border-color var(--dur-quick), color var(--dur-quick), transform var(--dur-quick) var(--ease-out);
+  transition: background var(--dur-quick) var(--ease-out), border-color var(--dur-quick) var(--ease-out), color var(--dur-quick) var(--ease-out), transform var(--dur-quick) var(--ease-out);
   white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
 }
@@ -196,7 +214,7 @@ input, textarea, select {
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-m);
   font-size: var(--text-callout);
-  transition: border-color var(--dur-quick), box-shadow var(--dur-quick);
+  transition: border-color var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out);
 }
 input::placeholder, textarea::placeholder { color: var(--label-tertiary); opacity: 1; }
 input:focus, textarea:focus, select:focus { border-color: var(--accent); }
@@ -229,7 +247,7 @@ input[type="number"]::-webkit-inner-spin-button { appearance: none; -webkit-appe
   width: 40px; height: 40px; display: grid; place-items: center;
   appearance: none; background: transparent; border: 0; border-radius: var(--radius-m);
   color: var(--label-secondary); cursor: pointer;
-  transition: color var(--dur-quick), background var(--dur-quick), transform var(--dur-slow) var(--ease-spring);
+  transition: color var(--dur-quick) var(--ease-out), background var(--dur-quick) var(--ease-out), transform var(--dur-slow) var(--ease-spring);
 }
 .icon-btn:hover { color: var(--label); background: var(--fill); }
 .icon-btn.spun { transform: translateY(-50%) rotate(360deg); }
@@ -273,7 +291,7 @@ input[type="number"]::-webkit-inner-spin-button { appearance: none; -webkit-appe
 }
 .toast-item.is-bad { border-color: var(--danger-edge); }
 .toast-item.is-good { border-color: var(--success-edge); }
-.toast-item.is-leaving { opacity: 0; transition: opacity var(--dur-base); }
+.toast-item.is-leaving { opacity: 0; transition: opacity var(--dur-base) var(--ease-out); }
 .toast-text { flex: 1; min-width: 0; }
 .toast-action {
   appearance: none; border: 0; background: transparent; cursor: pointer;
@@ -397,6 +415,15 @@ main.screen.home { min-height: 0; }
 .stage-card:nth-child(2) { transform: rotate(-9deg); }
 .stage-card:nth-child(3) { transform: rotate(9deg); }
 .stage-card:nth-child(4) { transform: rotate(27deg) translateY(-28px); }
+/* The hand fans out from a stack as the page arrives, unless the device or
+   the site's still setting asks for less movement. */
+@keyframes stage-fan { from { opacity: 0; transform: rotate(0deg); } }
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-motion="still"]) .stage-card { animation: stage-fan var(--dur-slow) var(--ease-out) both; }
+  html:not([data-motion="still"]) .stage-card:nth-child(2) { animation-delay: 50ms; }
+  html:not([data-motion="still"]) .stage-card:nth-child(3) { animation-delay: 100ms; }
+  html:not([data-motion="still"]) .stage-card:nth-child(4) { animation-delay: 150ms; }
+}
 
 .eyebrow {
   margin: 0; font-size: var(--text-footnote); font-weight: 600; color: var(--label-secondary);
@@ -482,7 +509,7 @@ main.screen.home { min-height: 0; }
   color: var(--label-secondary); text-decoration: none; font-family: var(--font-text);
   font-size: var(--text-caption); letter-spacing: 0.12em; text-transform: uppercase;
   padding: var(--space-1) var(--space-2); border-radius: var(--radius-s); border: 1px solid transparent;
-  transition: color var(--dur-quick), border-color var(--dur-quick), background var(--dur-quick);
+  transition: color var(--dur-quick) var(--ease-out), border-color var(--dur-quick) var(--ease-out), background var(--dur-quick) var(--ease-out);
 }
 .top-link:hover { color: var(--accent); border-color: var(--separator-strong); background: var(--accent-tint); }
 .testbar {
@@ -514,7 +541,7 @@ main.screen.home { min-height: 0; }
 .players li {
   display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-3);
   background: var(--fill); border-radius: var(--radius-s); border: 1px solid var(--separator);
-  transition: border-color var(--dur-base), box-shadow var(--dur-base), background var(--dur-base);
+  transition: border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out);
 }
 .players li.empty { color: var(--label-tertiary); border-style: dashed; border-color: var(--separator); background: transparent; }
 /* One hand to a row; one or two people inside it, stacked. */
@@ -609,7 +636,7 @@ main.screen.home { min-height: 0; }
   background: var(--fill); border: 1px solid var(--separator-strong); color: var(--label);
   padding: var(--space-2) var(--space-3) var(--space-2); border-radius: var(--radius-s); cursor: pointer; text-align: left;
   font-family: var(--font-text); font-size: var(--text-callout);
-  transition: border-color var(--dur-quick), box-shadow var(--dur-quick), background var(--dur-quick);
+  transition: border-color var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out), background var(--dur-quick) var(--ease-out);
 }
 .dd-btn .dd-value { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dd-btn .dd-caret {
@@ -634,11 +661,11 @@ main.screen.home { min-height: 0; }
 .dd-opt {
   padding: var(--space-2) var(--space-3) var(--space-2); border-radius: var(--radius-s); cursor: pointer; white-space: nowrap;
   display: flex; align-items: center; gap: var(--space-3); color: var(--label);
-  transition: background var(--dur-quick), color var(--dur-quick);
+  transition: background var(--dur-quick) var(--ease-out), color var(--dur-quick) var(--ease-out);
 }
 .dd-opt::before {
   content: ""; width: 6px; height: 6px; flex: none; transform: rotate(45deg);
-  border: 1px solid var(--separator-strong); background: transparent; transition: background var(--dur-base), border-color var(--dur-base);
+  border: 1px solid var(--separator-strong); background: transparent; transition: background var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
 }
 .dd-opt:hover { background: var(--accent-tint); color: var(--label); }
 .dd-opt.on { color: var(--accent-strong); }
@@ -677,7 +704,7 @@ main.screen.home { min-height: 0; }
   animation: deckgone 0.4s ease-in var(--deal-total, 2s) forwards;
 }
 @keyframes deckgone { to { opacity: 0; transform: translate(-50%, -80%) scale(0.8); } }
-.seat-row { padding: 14px 18px 12px; transition: border-color var(--dur-base), box-shadow var(--dur-base); }
+.seat-row { padding: 14px 18px 12px; transition: border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out); }
 .seat-row.active { border-color: var(--accent); box-shadow: var(--shadow-3), 0 0 28px var(--accent-edge); }
 .seat-row.active::before, .seat-row.active::after { border-color: var(--accent-strong); width: 18px; height: 18px; }
 .seat-row.me { background: var(--bg-elevated); }
@@ -705,7 +732,7 @@ main.screen.home { min-height: 0; }
   padding-top: 2px;
   user-select: none;
   box-shadow: 0 6px 14px var(--shadow-color);
-  transition: transform var(--dur-quick), box-shadow var(--dur-quick), border-color var(--dur-quick), background var(--dur-base);
+  transition: transform var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out), border-color var(--dur-quick) var(--ease-out), background var(--dur-base) var(--ease-out);
   border: 1px solid var(--back-edge);
   background: var(--back);
   color: var(--label);
@@ -752,7 +779,7 @@ main.screen.home { min-height: 0; }
      with no card left in it, which is a poor thing to be about to bet on.
      Enough to catch the light, not enough to wash the lattice out. */
   background: radial-gradient(circle at var(--gx) var(--gy), rgba(255, 255, 255, 0.24), var(--separator) 34%, transparent 62%);
-  mix-blend-mode: screen; transition: opacity var(--dur-quick);
+  mix-blend-mode: screen; transition: opacity var(--dur-quick) var(--ease-out);
 }
 
 /* A card you may act on says so without being pointed at. The hover and the
@@ -765,7 +792,7 @@ main.screen.home { min-height: 0; }
 }
 .card.selectable:hover, .card.draggable:hover, .card.selected {
   transform: rotateX(var(--rx)) rotateY(var(--ry)) translateY(-8px) translateZ(24px);
-  transition: transform var(--dur-quick) linear, box-shadow var(--dur-quick), border-color var(--dur-quick);
+  transition: transform var(--dur-quick) linear, box-shadow var(--dur-quick) var(--ease-out), border-color var(--dur-quick) var(--ease-out);
   border-color: var(--accent);
   box-shadow: 0 18px 28px var(--shadow-color), 0 0 0 2px var(--separator), 0 0 22px var(--accent-edge);
   z-index: 2;
@@ -961,7 +988,7 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 .ranks button {
   border: 1px solid var(--separator-strong); background: var(--fill); color: var(--label);
   padding: 10px 0 8px; border-radius: 3px; cursor: pointer; font-family: var(--font-text); font-weight: 700; font-size: 15px;
-  transition: background var(--dur-quick), border-color var(--dur-quick), color var(--dur-quick), transform var(--dur-slow) var(--ease-spring);
+  transition: background var(--dur-quick) var(--ease-out), border-color var(--dur-quick) var(--ease-out), color var(--dur-quick) var(--ease-out), transform var(--dur-slow) var(--ease-spring);
 }
 .ranks button:hover { border-color: var(--accent); background: var(--accent); color: var(--accent-contrast); transform: translateY(-2px); }
 .ranks button:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--separator); }
@@ -1034,7 +1061,7 @@ body.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
   padding: var(--space-2) var(--space-3) var(--space-3) var(--space-4); border-radius: var(--radius-s);
   background: var(--bg-elevated);
   border: 1px solid var(--separator);
-  transition: border-color var(--dur-quick), transform var(--dur-quick), background var(--dur-quick);
+  transition: border-color var(--dur-quick) var(--ease-out), transform var(--dur-quick) var(--ease-out), background var(--dur-quick) var(--ease-out);
 }
 .pu::before {
   content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px;
@@ -1332,7 +1359,7 @@ dialog.sheet::backdrop { background: var(--scrim); }
 /* A disclosure that looks like part of the page rather than a browser triangle. */
 .disclose > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: var(--space-2); min-height: var(--hit); font-weight: 600; color: var(--label); }
 .disclose > summary::-webkit-details-marker { display: none; }
-.disclose > summary::before { content: ""; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform var(--dur-quick); margin-right: 2px; }
+.disclose > summary::before { content: ""; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform var(--dur-quick) var(--ease-out); margin-right: 2px; }
 .disclose[open] > summary::before { transform: rotate(45deg); }
 
 /* --- the device asked for less ---------------------------------------------------

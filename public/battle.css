@@ -78,7 +78,7 @@
   background: var(--bg-grouped);
   color: var(--label-secondary);
   cursor: pointer;
-  transition: border-color var(--dur-quick), background var(--dur-quick), color var(--dur-quick);
+  transition: border-color var(--dur-quick) var(--ease-out), background var(--dur-quick) var(--ease-out), color var(--dur-quick) var(--ease-out);
 }
 .btl-opt b { font-size: var(--text-subhead); color: var(--label); }
 .btl-opt span { font-size: var(--text-caption); line-height: 1.35; }
@@ -152,7 +152,7 @@
   height: 100%;
   width: 0;
   background: var(--accent);
-  transition: width var(--dur-base) linear, background 0.4s;
+  transition: width var(--dur-base) linear, background 0.4s var(--ease-out);
 }
 
 .btl-card { padding: clamp(var(--space-5), 4vw, var(--space-6)); }
@@ -303,7 +303,7 @@
   background: var(--bg-grouped);
   color: var(--label);
   cursor: pointer;
-  transition: border-color var(--dur-quick), background var(--dur-quick);
+  transition: border-color var(--dur-quick) var(--ease-out), background var(--dur-quick) var(--ease-out);
 }
 .btl-choice-opt:hover:not(:disabled):not(.is-shut) {
   border-color: var(--separator-strong);

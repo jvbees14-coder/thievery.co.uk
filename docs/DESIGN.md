@@ -177,7 +177,17 @@ default; `--ease-move` is for something travelling across the screen;
 nothing in the interface eases in. A pressed control gives a little
 (`--press-scale`, 0.97). Hover effects sit inside
 `@media (hover: hover) and (pointer: fine)` so a phone never sticks on one.
-Nothing animates on hover beyond a colour and a lift. The flourishes are kept for the
+Nothing animates on hover beyond a colour and a lift.
+
+There is one orchestrated moment, the front page arriving: the words beside
+the headline rise in 60ms apart and the hand fans out from a stack before
+the queen is lifted. The headline itself never waits, because it is the
+page's largest text. The card table's door fans its hand the same way. A
+tile that is a link (the hall's rooms, the tools) rises 2px under a mouse,
+its deeper shadow faded in on a layer of its own. All of it is off under
+reduced motion and the site's still setting. Pages prefetch (never
+prerender) the link a pointer settles on, through speculation rules in the
+shared head. The flourishes are kept for the
 defining moments: a card dealt, a card flipped by somebody else, a guess that
 misses, the banners, the confetti on a win. Only transform and opacity move.
 
