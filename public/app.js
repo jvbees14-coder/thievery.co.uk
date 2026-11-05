@@ -1548,6 +1548,9 @@
     if (opts.draggable) cls.push('draggable');
     if (opts.dragging) cls.push('dragging');
     if (c.shown) cls.push('shown');
+    // A card you cased carries the two ranks it could be, in place of a rank.
+    const cased = !c.rank && Array.isArray(c.cased) ? c.cased.map((r) => RANKS[r - 1]) : null;
+    if (cased) cls.push('cased');
     if (opts.selectable) cls.push('selectable');
     if (opts.selected) cls.push('selected');
     if (opts.target) cls.push('target');
@@ -1555,7 +1558,7 @@
     if (opts.noting) cls.push('noting');
     if (flipKeys.has(`${si}:${ci}`)) cls.push('flipped-in');
     if (missKey === `${si}:${ci}`) cls.push('missed-at');
-    const rank = c.rank ? RANKS[c.rank - 1] : '';
+    const rank = c.rank ? RANKS[c.rank - 1] : cased ? cased.join('/') : '';
     // Red and black are also told apart by shape, for anybody who cannot tell
     // them apart by colour: a red card lies on its side, and each carries its
     // own mark in the corner, a diamond for red and a spade for black.
@@ -1579,6 +1582,8 @@
       : '';
     const title = c.shown
       ? 'Shown to you by your partner'
+      : cased
+      ? `You cased it: ${cased.join(' or ')}`
       : [opts.ruled && opts.ruled.length ? `Not ${opts.ruled.join(', not ')}` : '', noteSay]
           .filter(Boolean)
           .join(' — ');
@@ -1589,7 +1594,7 @@
     const reachable = opts.selectable || opts.draggable || opts.notable;
     const label = c.faceUp
       ? `${rank} of ${c.color}, face up`
-      : `${opts.mine || c.shown ? `${rank}, ` : ''}${c.color || 'unknown'} card, position ${ci + 1}${
+      : `${opts.mine || c.shown ? `${rank}, ` : cased ? `${cased.join(' or ')}, ` : ''}${c.color || 'unknown'} card, position ${ci + 1}${
           opts.ruled && opts.ruled.length ? `, ruled out: ${opts.ruled.join(', ')}` : ''
         }${noteSay ? `, your note: ${noteSay}` : ''}${opts.selected ? ', picked' : opts.selectable ? ', can be picked' : ''}`;
     return `<div class="${cls.join(' ')}" data-action="card" data-seat="${si}" data-idx="${ci}" ${opts.draggable ? `data-id="${c.id}"` : ''}
@@ -1752,7 +1757,7 @@
   //
   // Five and six hands are dealt with these; smaller tables never see any of
   // this. Playing one is a little conversation: pick it, then nominate
-  // whatever it needs — a card, a rank, a hand, somebody to send somewhere —
+  // whatever it needs — a card, a hand, somebody to send somewhere —
   // and it goes the moment the last of those is answered. `ui.pu` is where
   // that half-finished conversation lives.
 
@@ -1786,7 +1791,6 @@
     const { id, picked } = ui.pu;
     const opts = {};
     if (picked.card) opts.target = picked.card;
-    if (picked.rank !== undefined) opts.rank = picked.rank;
     if (picked.hand !== undefined) opts.hand = picked.hand;
     if (picked.player !== undefined) opts.player = picked.player;
     ui.pu = null;
@@ -1869,9 +1873,6 @@
     if (want === 'card') {
       return `${head}<p class="sub">Click any face-down card that is not your own.</p>${cancel}`;
     }
-    if (want === 'rank') {
-      return `${head}<p class="sub">Name the rank to listen for.</p>${rankButtons()}${cancel}`;
-    }
     if (want === 'player') {
       const already = ui.pu.picked.hand === undefined ? [] : [ui.pu.picked.hand];
       return `${head}<p class="sub">Whose next guess are you sending?</p>${handButtons('player', { exclude: already })}${cancel}`;
@@ -1888,9 +1889,7 @@
   // struck for a rank you have ruled out, ringed for one you fancy — but every
   // button still works: a note is a note, not a rule, and a guess the table
   // knows is wrong is yours to make. Marking up a card it is the notebook
-  // itself, and a tap writes rather than guesses. A power-up asking for a rank
-  // gets the plain row, because "how many Jacks are left" is a fair question
-  // whatever has already missed where.
+  // itself, and a tap writes rather than guesses.
   function rankButtons(target = null, marking = false) {
     const note = target ? notesFor(target.seat, target.idx) : { no: [], maybe: [] };
     return `<div class="ranks ${marking ? 'marking' : ''}">${RANKS.map((r, i) => {

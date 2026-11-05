@@ -638,7 +638,13 @@ main.screen.home { min-height: 0; }
 .card.black { width: var(--card-w); height: var(--card-h); }
 .card.red { width: var(--card-h); height: var(--card-w); border-color: var(--back-red-edge); background: var(--burgundy-deep); color: var(--back-red-ink); }
 .card.unknown { width: var(--card-w); height: var(--card-h); border-style: dashed; border-color: var(--text-faint); background: transparent; box-shadow: none; }
-.card.down:not(.mine):not(.shown) .rank { display: none; }
+.card.down:not(.mine):not(.shown):not(.cased) .rank { display: none; }
+/* A card you cased: the two ranks it could be, smaller, and in the colour of
+   a guess rather than of something known. */
+.card.down.cased .rank {
+  position: relative; z-index: 1; font-size: 12px; padding: 2px 4px 0; border-radius: 2px;
+  background: var(--glass); color: var(--text); white-space: nowrap;
+}
 .card.down::after {
   content: ""; position: absolute; inset: 4px; border-radius: 2px;
   border: 1px solid var(--brass-dim);

@@ -23,9 +23,10 @@
 // switch them on below them.
 //
 // Hidden ranks stay here. Each seat is only ever handed the cards it is
-// entitled to see — and a power-up that shows somebody a card goes through
-// the same `known` list a partner's show does, so there is exactly one path
-// by which a rank reaches anybody who does not own it.
+// entitled to see. A partner's show goes through the `known` list, and that
+// is the one path by which a single rank reaches anybody who does not own it.
+// A casing is not a show: it tells one hand two ranks, kept apart in `cased`
+// and sent as a pair, never as the card's `rank`.
 // ---------------------------------------------------------------------------
 
 import { dealSplit, shuffle, SEAT_COUNTS, MIN_SEATS, MAX_SEATS, usesPowerUps } from './deal.js';
@@ -97,6 +98,7 @@ export function createGame({ numSeats, teams, startSeat, names, counts: customCo
     turn: startSeat,
     step: null, // show | guess
     known: seats.map(() => []), // cards shown to this player, as "seat:idx"
+    cased: seats.map(() => ({})), // "seat:idx" -> the two ranks a casing narrowed it to
 
     // --- the power-up table ---
     powered, // five and six hands only, and not optional at those
@@ -309,12 +311,42 @@ function otherHand(g, seat, hand) {
   return hand;
 }
 
-// Let one seat see one card, by the same route a partner's show uses. It is
-// kept per-viewer and written nowhere shared, so what one player is shown
-// does not quietly become common knowledge for the rest of the round.
-function reveal(g, viewer, ts, idx) {
-  const key = `${ts}:${idx}`;
-  if (!g.known[viewer].includes(key)) g.known[viewer].push(key);
+// The other half of a casing: a rank the card could be, as far as `viewer`
+// can tell, but is not. Casing used to hand over the rank outright, which was
+// a vault crack with one more step — you named what you had been told and
+// went again. A pair keeps the guess a guess.
+//
+// The decoy has to survive what the caster can already see, or the pair
+// collapses to the answer. So it is a rank whose card of this colour is not in
+// sight (one card of each rank per colour, so a rank in sight is a rank this
+// is not), that nobody has already missed with here, and that fits the row
+// between the nearest cards either side the caster can read. Aces sit
+// anywhere, so they always fit. If nothing passes, any other rank will do:
+// a card that boxed in has very little left to hide.
+function decoyFor(g, viewer, ts, idx) {
+  const card = g.seats[ts].cards[idx];
+  const known = new Set(g.known[viewer]);
+  const sees = (si, ci) => si === viewer || g.seats[si].cards[ci].faceUp || known.has(`${si}:${ci}`);
+
+  const inSight = new Set();
+  g.seats.forEach((s, si) => s.cards.forEach((c, ci) => {
+    if (c !== card && c.color === card.color && sees(si, ci)) inSight.add(c.rank);
+  }));
+  const missed = new Set(g.misses.filter(([s, i]) => s === ts && i === idx).map(([, , r]) => r));
+
+  // The nearest readable non-ace on each side bounds the row. Two cards of one
+  // rank can sit side by side, so the bounds are inclusive.
+  const row = g.seats[ts].cards;
+  let lo = 2;
+  let hi = 13;
+  for (let i = idx - 1; i >= 0; i--) if (sees(ts, i) && row[i].rank !== 1) { lo = row[i].rank; break; }
+  for (let i = idx + 1; i < row.length; i++) if (sees(ts, i) && row[i].rank !== 1) { hi = row[i].rank; break; }
+
+  const others = [];
+  for (let r = 1; r <= 13; r++) if (r !== card.rank) others.push(r);
+  const fair = others.filter((r) => !inSight.has(r) && !missed.has(r) && (r === 1 || (r >= lo && r <= hi)));
+  const pool = fair.length ? fair : others;
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 /**
@@ -341,25 +373,17 @@ export function playPowerUp(g, seat, id, opts = {}) {
     // --- reading the table ---
     case 'casing_the_joint': {
       const c = otherCard(g, seat, opts.target);
+      const key = `${opts.target.seat}:${opts.target.idx}`;
+      if (g.known[seat].includes(key)) throw new Error('You already know that card');
+      // A second casing of the same card would draw a second decoy, and the
+      // one rank common to both answers would be the card.
+      if (g.cased[seat][key]) throw new Error('You have already cased that card');
       spend(g, seat, id);
-      reveal(g, seat, opts.target.seat, opts.target.idx);
+      const pair = [c.rank, decoyFor(g, seat, opts.target.seat, opts.target.idx)].sort((a, b) => a - b);
+      g.cased[seat][key] = pair;
       log(g, `${g.names[seat]} cased the joint.`, {
         privSeat: seat,
-        privText: `${possessive(g.names[opts.target.seat])} ${ordinal(opts.target.idx + 1)} card is ${aRank(c.rank)}. Nobody else was told.`,
-      });
-      break;
-    }
-    case 'loose_lips': {
-      const rank = Number(opts.rank);
-      validRank(rank);
-      spend(g, seat, id);
-      // Counted fresh every time it is asked, because the answer changes with
-      // every card that turns over.
-      let left = 0;
-      for (const s of g.seats) for (const c of s.cards) if (!c.faceUp && c.rank === rank) left += 1;
-      log(g, `${g.names[seat]} listened for loose lips about ${rankWord(rank)}s.`, {
-        privSeat: seat,
-        privText: `${left || 'No'} ${rankWord(rank)}${left === 1 ? '' : 's'} still face down across the whole table. You were not told where.`,
+        privText: `${possessive(g.names[opts.target.seat])} ${ordinal(opts.target.idx + 1)} card is ${aRank(pair[0])} or ${aRank(pair[1])}. Nobody else was told.`,
       });
       break;
     }
@@ -639,6 +663,10 @@ export function viewFor(g, viewer) {
           shown,
         };
         if (mine) card.id = c.id;
+        // A casing's pair, to the hand that cased it, while there is still
+        // something to guess. Never under `rank`: it is two ranks, not one.
+        const pair = !canSee && g.cased?.[viewer]?.[`${si}:${ci}`];
+        if (pair) card.cased = [...pair];
         return card;
       }),
     };

@@ -99,8 +99,7 @@ power-ups too, the same way it shares its cards.
 
 | | What it does |
 | --- | --- |
-| **Casing the joint** | Read one face-down card that is not yours. You learn its rank, it stays face down, and nobody is told. |
-| **Loose lips** | Name a rank and hear how many of it are still face down across the whole table. A count, never a place. |
+| **Casing the joint** | Look at one face-down card that is not yours. You are told two ranks, and it is one of them. It stays face down, and nobody else is told. |
 | **Second storey** | Your next wrong guess this turn does not end it. One to a turn. |
 | **Pickpocket** | An extra guess at a hand of your choosing, played at the start of your turn. |
 | **Trip the alarm** | Ends the run of correct guesses going on now. Anybody may pull it, at any time, including out of turn. |
