@@ -75,7 +75,20 @@
   background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-2), var(--edge-light);
 }
 .menu-daily h2 { margin: 0; font-size: var(--text-title-2); color: var(--label); }
-.menu-daily-deck { margin: 0; font-family: var(--font-display); font-size: var(--text-title-3); color: var(--label); }
+/* The day's deck is a badge over the heading, not a second heading under it. */
+.menu-daily-deck {
+  margin: 0; align-self: flex-start;
+  padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill);
+  border: 1px solid var(--accent-edge); background: var(--accent-tint); color: var(--accent);
+  font-size: var(--text-caption); font-weight: 600;
+}
+/* Ten card backs in a row, the panel's picture of what is on offer. */
+.menu-daily-ten { display: flex; gap: var(--space-1); margin: var(--space-2) 0; }
+.menu-daily-ten i {
+  flex: 1 1 0; max-width: 28px; aspect-ratio: 5 / 7; border-radius: var(--radius-s);
+  border: 1px solid var(--back-edge);
+  background: repeating-linear-gradient(45deg, var(--separator) 0 1px, transparent 1px 5px), var(--back);
+}
 .menu-daily-note { margin: 0; font-size: var(--text-subhead); color: var(--label-secondary); }
 .menu-daily-line { margin: 0; font-size: var(--text-subhead); font-weight: 600; color: var(--label); }
 .menu-daily-go { align-self: flex-start; margin-top: auto; }
@@ -256,9 +269,7 @@
   width: 7.5em; min-height: var(--hit); box-sizing: border-box;
   padding: 0 var(--space-3); border-radius: var(--radius-m);
   border: 1px solid var(--separator-strong); background: var(--fill); color: var(--label);
-  font-family: var(--font-mono); font-size: 1.25rem; letter-spacing: 0.3em; text-align: center; text-transform: uppercase;
 }
-.join-code input::placeholder { color: var(--label-tertiary); letter-spacing: 0.3em; }
 
 .landing-section { display: flex; flex-direction: column; gap: var(--space-5); }
 .landing-section-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); }

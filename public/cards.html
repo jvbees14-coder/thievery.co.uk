@@ -81,7 +81,7 @@
         <div class="or">or join with a code</div>
         <div class="join-row">
           <label class="visually-hidden" for="code">Room code</label>
-          <input id="code" maxlength="4" placeholder="CODE" autocapitalize="characters" autocomplete="off" spellcheck="false" inputmode="text" />
+          <input id="code" class="code-input" maxlength="4" placeholder="CODE" autocapitalize="characters" autocomplete="off" spellcheck="false" inputmode="text" />
           <button id="join" class="btn" type="button">Join game</button>
         </div>
       </div>
@@ -226,6 +226,16 @@
         <span aria-hidden="true">&middot;</span>
         <button data-motion-toggle type="button">Banner animations <span class="motion-state"></span></button>
       </p>
+    </div>
+
+    <!-- A hand held up beside the card on a wide screen, so the game's front
+         door looks like a card game before anybody sits down. Drawn in CSS
+         from the card tokens; nothing in it is read out or pressed. -->
+    <div class="home-stage" aria-hidden="true">
+      <span class="stage-card is-back"></span>
+      <span class="stage-card is-back is-red"></span>
+      <span class="stage-card is-face"><b>7</b><i>&spades;</i></span>
+      <span class="stage-card is-face is-red"><b>Q</b><i>&diams;</i></span>
     </div>
   </section>
 

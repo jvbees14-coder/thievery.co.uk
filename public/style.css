@@ -202,6 +202,17 @@ input::placeholder, textarea::placeholder { color: var(--label-tertiary); opacit
 input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 input:focus-visible, textarea:focus-visible, select:focus-visible { outline-offset: 0; }
 input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--danger); }
+
+/* A room code, wherever one is typed: the front page, the hall, the card
+   table, Battle and Switchhead. One look, so a code reads the same on the
+   way in as it does on the table. Each room sets only how wide it is. The
+   indent balances the space the last letter's spacing leaves on the right. */
+input.code-input {
+  font-family: var(--font-mono); font-weight: 600; font-size: var(--text-headline);
+  text-transform: uppercase; letter-spacing: 0.2em; text-indent: 0.2em; text-align: center;
+  font-variant-numeric: var(--numeric);
+}
+input.code-input::placeholder { letter-spacing: 0.2em; }
 input[type="checkbox"], input[type="radio"] { min-height: 0; width: 20px; height: 20px; accent-color: var(--accent); }
 input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
 input[type="number"]::-webkit-outer-spin-button,
@@ -341,6 +352,52 @@ main.screen.home { min-height: 0; }
   padding: var(--space-6) var(--space-6) var(--space-5);
   display: flex; flex-direction: column; gap: var(--space-4);
 }
+/* The hand beside the card, on a wide screen only. Four cards fanned from a
+   point below them, the way a hand is held: two backs, then a black seven
+   and a red queen, the queen lifted as if about to be laid down. It is
+   artwork, so its sizes are its own; its colours are the card tokens. */
+.home-stage { display: none; }
+@media (min-width: 1000px) {
+  .screen.home {
+    grid-template-columns: minmax(0, 460px) minmax(0, 420px);
+    justify-content: center; column-gap: var(--space-8);
+  }
+  .home-stage { display: block; position: relative; width: 100%; height: 440px; }
+}
+.stage-card {
+  position: absolute; left: 50%; top: 50%;
+  width: 150px; height: 216px; margin: -96px 0 0 -75px;
+  border-radius: var(--radius-l);
+  transform-origin: 50% 175%;
+  box-shadow: var(--shadow-3);
+}
+.stage-card.is-back {
+  border: 1px solid var(--back-edge);
+  background:
+    repeating-linear-gradient(45deg, var(--separator) 0 1px, transparent 1px 9px),
+    repeating-linear-gradient(-45deg, var(--separator) 0 1px, transparent 1px 9px),
+    var(--back);
+  box-shadow: var(--shadow-3), inset 0 0 0 7px var(--back), inset 0 0 0 8px var(--back-edge);
+}
+.stage-card.is-back.is-red {
+  border-color: var(--back-red-edge); background-color: var(--back-red);
+  box-shadow: var(--shadow-3), inset 0 0 0 7px var(--back-red), inset 0 0 0 8px var(--back-red-edge);
+}
+.stage-card.is-face {
+  border: 1px solid var(--stock-edge); background: var(--stock); color: var(--stock-ink);
+  display: grid; place-items: center;
+}
+.stage-card.is-face.is-red { color: var(--stock-red); }
+.stage-card b {
+  position: absolute; left: var(--space-3); top: var(--space-2);
+  font-family: var(--font-display); font-weight: 400; font-size: var(--text-large-title); line-height: 1;
+}
+.stage-card i { font-style: normal; font-size: 4rem; line-height: 1; }
+.stage-card:nth-child(1) { transform: rotate(-27deg); }
+.stage-card:nth-child(2) { transform: rotate(-9deg); }
+.stage-card:nth-child(3) { transform: rotate(9deg); }
+.stage-card:nth-child(4) { transform: rotate(27deg) translateY(-28px); }
+
 .eyebrow {
   margin: 0; font-size: var(--text-footnote); font-weight: 600; color: var(--label-secondary);
   display: flex; align-items: center; gap: var(--space-3);
@@ -355,7 +412,7 @@ main.screen.home { min-height: 0; }
 .or { text-align: center; color: var(--label-secondary); font-size: var(--text-footnote); display: flex; align-items: center; gap: var(--space-3); }
 .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--separator); }
 .join-row { display: flex; gap: var(--space-2); }
-.join-row input { flex: 1; min-width: 0; font-family: var(--font-mono); font-weight: 600; text-align: center; font-size: var(--text-headline); }
+.join-row input { flex: 1; min-width: 0; }
 
 /* The rules fold out from a brass diamond rather than a browser triangle. */
 .rules { color: var(--label-secondary); font-size: var(--text-subhead); border-top: 1px solid var(--separator); padding-top: var(--space-3); }
