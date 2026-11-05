@@ -141,17 +141,17 @@
 .menu-panel { margin: 0 auto; max-width: 780px; }
 .menu-panel-head {
   margin: 0 0 4px;
-  font-family: var(--display);
+  font-family: var(--font-display);
   font-size: 26px;
   font-weight: 400;
   letter-spacing: normal;
   text-transform: none;
-  color: var(--ivory);
+  color: var(--label);
 }
-.menu-panel-lede { margin: 0 0 22px; color: var(--text-dim); font-size: 15px; }
+.menu-panel-lede { margin: 0 0 22px; color: var(--label-secondary); font-size: 15px; }
 .menu-panel-foot { margin: 22px 0 0; font-size: 13px; }
-.menu-panel-foot a { color: var(--text-faint); text-decoration: none; }
-.menu-panel-foot a:hover { color: var(--brass); }
+.menu-panel-foot a { color: var(--label-tertiary); text-decoration: none; }
+.menu-panel-foot a:hover { color: var(--accent); }
 
 .menu-figures {
   display: grid;
@@ -161,8 +161,8 @@
 }
 .menu-figure {
   padding: 16px 14px;
-  border: 1px solid var(--brass-ghost);
-  border-radius: var(--radius);
+  border: 1px solid var(--accent-tint);
+  border-radius: var(--radius-s);
   background: var(--fill);
   text-align: center;
 }
@@ -173,26 +173,26 @@
   font-size: 2rem;
   font-weight: 700;
   line-height: 1.1;
-  color: var(--brass);
+  color: var(--accent);
 }
 .menu-figure span {
   display: block;
   margin-top: 6px;
-  font-family: var(--caps);
+  font-family: var(--font-text);
   font-size: var(--text-caption);
-  color: var(--text-dim);
+  color: var(--label-secondary);
 }
-.menu-figure i { display: block; margin-top: 2px; font-style: normal; font-size: 12px; color: var(--text-faint); }
+.menu-figure i { display: block; margin-top: 2px; font-style: normal; font-size: 12px; color: var(--label-tertiary); }
 
 .menu-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 20px; }
-.menu-note { margin: 0; color: var(--text-dim); font-size: 15px; }
+.menu-note { margin: 0; color: var(--label-secondary); font-size: 15px; }
 
 .menu-form {
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 18px 0;
-  border-top: 1px solid var(--brass-ghost);
+  border-top: 1px solid var(--accent-tint);
 }
 .menu-form:first-of-type { border-top: 0; }
 
@@ -208,15 +208,15 @@
    an account has an address. */
 .menu-members a.fc-acct { text-decoration: none; box-sizing: border-box; }
 .menu-member-back { margin: 0 0 14px; font-size: 13px; }
-.menu-member-back a { color: var(--text-faint); text-decoration: none; }
-.menu-member-back a:hover { color: var(--brass); }
+.menu-member-back a { color: var(--label-tertiary); text-decoration: none; }
+.menu-member-back a:hover { color: var(--accent); }
 .menu-member .menu-form .fc-h4 { margin: 0; }
 .menu-member-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-bottom: 4px; }
-.menu-member-head h3 { margin: 0; font-family: var(--display); font-size: 22px; font-weight: 400; color: var(--ivory); }
-.menu-member-facts { margin: 0 0 6px; font-size: 14px; color: var(--text-dim); }
+.menu-member-head h3 { margin: 0; font-family: var(--font-display); font-size: 22px; font-weight: 400; color: var(--label); }
+.menu-member-facts { margin: 0 0 6px; font-size: 14px; color: var(--label-secondary); }
 .menu-member .fc-actions { flex-wrap: wrap; }
 .menu-member .btn.danger { border-color: var(--danger-edge); color: var(--danger); }
-.menu-member .btn.danger:hover { background: var(--danger-tint); border-color: var(--bad); }
+.menu-member .btn.danger:hover { background: var(--danger-tint); border-color: var(--danger); }
 
 /* --- the front door, for a visitor ----------------------------------------
    The game first, in words a search engine can read, with a picture of a
@@ -414,10 +414,10 @@ html[data-motion="still"] .hand-card.is-lifted { animation: none; }
 
 .menu-modes-head {
   margin: 26px 0 10px;
-  font-family: var(--caps);
+  font-family: var(--font-text);
   font-size: 12px;
   font-weight: 700;
-  color: var(--ivory);
+  color: var(--label);
 }
 
 .menu-modes {
@@ -425,25 +425,25 @@ html[data-motion="still"] .hand-card.is-lifted { animation: none; }
   border-collapse: collapse;
   font-size: 15px;
 }
-.menu-modes th, .menu-modes td { padding: 9px 8px; border-bottom: 1px solid var(--brass-ghost); }
+.menu-modes th, .menu-modes td { padding: 9px 8px; border-bottom: 1px solid var(--accent-tint); }
 .menu-modes thead th {
-  font-family: var(--caps);
+  font-family: var(--font-text);
   font-size: var(--text-caption);
   font-weight: 700;
-  color: var(--text-faint);
+  color: var(--label-tertiary);
   text-align: right;
 }
 .menu-modes thead th:first-child { text-align: left; }
 .menu-modes tbody th {
   font-weight: 400;
   text-align: left;
-  color: var(--text);
+  color: var(--label);
 }
 /* The what-it-is line under each name, so the column can stay one word wide
    and still say which sizes a row covers. */
-.menu-modes tbody th span { display: block; font-size: 12px; color: var(--text-faint); }
-.menu-modes td { text-align: right; font-family: var(--mono); font-size: 13px; color: var(--text-dim); }
-.menu-modes td:last-child { color: var(--brass); }
+.menu-modes tbody th span { display: block; font-size: 12px; color: var(--label-tertiary); }
+.menu-modes td { text-align: right; font-family: var(--font-mono); font-size: 13px; color: var(--label-secondary); }
+.menu-modes td:last-child { color: var(--accent); }
 /* Never played is drawn rather than dropped: a table whose rows come and go
    cannot be read twice. */
 .menu-modes .is-empty th, .menu-modes .is-empty td { opacity: 0.45; }
@@ -453,4 +453,4 @@ html[data-motion="still"] .hand-card.is-lifted { animation: none; }
   .menu-modes th, .menu-modes td { padding: 8px 4px; }
 }
 
-.menu-form-head { margin: 0 0 10px; font-family: var(--caps); font-size: 13px; font-weight: 600; color: var(--ivory); }
+.menu-form-head { margin: 0 0 10px; font-family: var(--font-text); font-size: 13px; font-weight: 600; color: var(--label); }

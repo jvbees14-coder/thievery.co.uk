@@ -11,8 +11,8 @@
 
 textarea, select {
   background: var(--fill);
-  border: 1px solid var(--brass-dim);
-  color: var(--ivory);
+  border: 1px solid var(--separator-strong);
+  color: var(--label);
   padding: 12px 14px;
   border-radius: 3px;
   outline: none;
@@ -20,31 +20,31 @@ textarea, select {
   width: 100%;
 }
 textarea { resize: vertical; line-height: 1.5; }
-textarea::placeholder { color: var(--text-faint); }
+textarea::placeholder { color: var(--label-tertiary); }
 textarea:focus, select:focus, input:focus {
-  border-color: var(--brass);
-  box-shadow: 0 0 0 3px var(--brass-faint);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--separator);
 }
 
 /* A label's <span> is brass caps by inheritance from style.css. These two are
    asides within the label and should whisper instead. */
 .field > label .opt, .field > label .count {
-  color: var(--text-faint);
+  color: var(--label-tertiary);
   letter-spacing: 0.08em;
   font-weight: 400;
 }
-.hint { margin: 0; font-size: 13px; color: var(--text-dim); }
+.hint { margin: 0; font-size: 13px; color: var(--label-secondary); }
 .linkish {
   appearance: none; background: none; border: 0; padding: 0;
-  color: var(--brass); font: inherit; cursor: pointer; text-decoration: underline;
-  text-underline-offset: 3px; text-decoration-color: var(--brass-dim);
+  color: var(--accent); font: inherit; cursor: pointer; text-decoration: underline;
+  text-underline-offset: 3px; text-decoration-color: var(--separator-strong);
 }
-.linkish:hover { color: var(--brass-bright); }
+.linkish:hover { color: var(--accent-strong); }
 
 /* --- the door ------------------------------------------------------------- */
 
 .door-card { width: min(100%, 440px); }
-.door-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--brass-faint); }
+.door-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--separator); }
 .door-tab {
   appearance: none; background: none; border: 0; border-bottom: 2px solid transparent;
   min-height: var(--hit); padding: 0 14px; margin-bottom: -1px; cursor: pointer;
@@ -59,22 +59,22 @@ textarea:focus, select:focus, input:focus {
   background: var(--danger-tint); border: 1px solid var(--danger-edge); color: var(--danger);
 }
 .door-foot { margin: 4px 0 0; text-align: center; font-size: 13px; }
-.door-foot a { color: var(--text-faint); text-decoration: none; }
-.door-foot a:hover { color: var(--brass); }
+.door-foot a { color: var(--label-tertiary); text-decoration: none; }
+.door-foot a:hover { color: var(--accent); }
 
 /* --- the room ------------------------------------------------------------- */
 
 .fc-app { min-height: 100vh; }
 /* The room's own tabs, at the top of the room rather than in the site's bar. */
-.fc-tabs { display: flex; gap: 2px; flex-wrap: wrap; margin: 0 0 22px; padding-bottom: 10px; border-bottom: 1px solid var(--brass-faint); }
+.fc-tabs { display: flex; gap: 2px; flex-wrap: wrap; margin: 0 0 22px; padding-bottom: 10px; border-bottom: 1px solid var(--separator); }
 .fc-tab {
   appearance: none; background: none; border: 1px solid transparent; border-radius: 3px;
   padding: 9px 13px 7px; cursor: pointer;
-  font-family: var(--caps); font-size: var(--text-caption); font-weight: 700; color: var(--text-faint);
+  font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700; color: var(--label-tertiary);
   transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
-.fc-tab:hover { color: var(--text); background: var(--brass-ghost); }
-.fc-tab.is-on { color: var(--brass); border-color: var(--brass-dim); background: var(--brass-ghost); }
+.fc-tab:hover { color: var(--label); background: var(--accent-tint); }
+.fc-tab.is-on { color: var(--accent); border-color: var(--separator-strong); background: var(--accent-tint); }
 .fc-tab-admin { color: var(--team-b); }
 .fc-tab-admin.is-on { color: var(--team-b); border-color: var(--team-b-edge); }
 
@@ -83,13 +83,13 @@ textarea:focus, select:focus, input:focus {
 .fc-pane { animation: fcin 0.3s ease both; }
 @keyframes fcin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-.fc-h { font-family: var(--caps); font-weight: 600; font-size: 22px; color: var(--ivory); margin: 0 0 8px; }
-.fc-h3 { font-family: var(--caps); font-weight: 600; font-size: 13px; color: var(--brass); margin: 26px 0 12px; display: flex; align-items: baseline; gap: 10px; }
-.fc-h4 { font-family: var(--caps); font-weight: 600; font-size: var(--text-caption); color: var(--brass); margin: 22px 0 8px; }
-.fc-lede { margin: 0 0 20px; color: var(--text-dim); max-width: 62ch; }
-.fc-note { margin: 10px 0 0; font-size: 13px; color: var(--text-faint); line-height: 1.5; }
-.fc-tally { font-family: var(--mono); font-size: 12px; color: var(--text-faint); letter-spacing: 0; text-transform: none; }
-.fc-empty { color: var(--text-faint); font-style: italic; padding: 18px 2px; }
+.fc-h { font-family: var(--font-text); font-weight: 600; font-size: 22px; color: var(--label); margin: 0 0 8px; }
+.fc-h3 { font-family: var(--font-text); font-weight: 600; font-size: 13px; color: var(--accent); margin: 26px 0 12px; display: flex; align-items: baseline; gap: 10px; }
+.fc-h4 { font-family: var(--font-text); font-weight: 600; font-size: var(--text-caption); color: var(--accent); margin: 22px 0 8px; }
+.fc-lede { margin: 0 0 20px; color: var(--label-secondary); max-width: 62ch; }
+.fc-note { margin: 10px 0 0; font-size: 13px; color: var(--label-tertiary); line-height: 1.5; }
+.fc-tally { font-family: var(--font-mono); font-size: 12px; color: var(--label-tertiary); letter-spacing: 0; text-transform: none; }
+.fc-empty { color: var(--label-tertiary); font-style: italic; padding: 18px 2px; }
 
 /* --- the strip of numbers ------------------------------------------------- */
 
@@ -98,9 +98,9 @@ textarea:focus, select:focus, input:focus {
   margin-bottom: var(--space-5);
 }
 .fc-stat { background: var(--bg-elevated); border: 1px solid var(--separator); border-radius: var(--radius-m); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
-.fc-stat b { font-family: var(--font-text); font-variant-numeric: var(--numeric); font-size: var(--text-title-1); font-weight: 600; color: var(--ivory); line-height: 1; }
-.fc-stat span { font-family: var(--caps); font-size: var(--text-caption); font-weight: 700; color: var(--text-faint); }
-.fc-stat[data-rarity] b { color: var(--r-ink, var(--ivory)); }
+.fc-stat b { font-family: var(--font-text); font-variant-numeric: var(--numeric); font-size: var(--text-title-1); font-weight: 600; color: var(--label); line-height: 1; }
+.fc-stat span { font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700; color: var(--label-tertiary); }
+.fc-stat[data-rarity] b { color: var(--r-ink, var(--label)); }
 
 /* --- toolbar -------------------------------------------------------------- */
 
@@ -132,19 +132,19 @@ textarea:focus, select:focus, input:focus {
  * operations sit under it, in the flow, where the card's own height counts
  * them. */
 .fc-card {
-  --r-ink: var(--text-dim);
+  --r-ink: var(--label-secondary);
   position: relative; perspective: 1400px; min-height: 212px;
   display: flex; flex-direction: column;
 }
-.fc-card[data-rarity="uncommon"]  { --r-ink: var(--jade); }
+.fc-card[data-rarity="uncommon"]  { --r-ink: var(--success); }
 .fc-card[data-rarity="rare"]      { --r-ink: var(--team-a); }
 .fc-card[data-rarity="epic"]      { --r-ink: var(--r-epic); }
-.fc-card[data-rarity="legendary"] { --r-ink: var(--brass); }
+.fc-card[data-rarity="legendary"] { --r-ink: var(--accent); }
 .fc-card[data-rarity="mythic"]    { --r-ink: var(--team-b); }
 
 .fc-flip {
   position: relative; width: 100%; flex: 1 0 auto; min-height: 212px;
-  transition: transform 0.55s var(--bounce); transform-style: preserve-3d;
+  transition: transform 0.55s var(--ease-spring); transform-style: preserve-3d;
 }
 .fc-card.is-turned .fc-flip { transform: rotateY(180deg); }
 .fc-face {
@@ -152,7 +152,7 @@ textarea:focus, select:focus, input:focus {
   display: flex; flex-direction: column; gap: 8px;
   padding: 15px 16px 13px; border-radius: 5px; cursor: pointer;
   background: var(--bg-elevated);
-  border: 1px solid var(--brass-faint);
+  border: 1px solid var(--separator);
   box-shadow: 0 10px 26px var(--shadow-color);
   transition: border-color 0.2s, transform 0.2s;
 }
@@ -161,39 +161,39 @@ textarea:focus, select:focus, input:focus {
   content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 2px;
   background: var(--r-ink); opacity: 0.55; border-radius: 0 2px 2px 0;
 }
-.fc-face:hover { border-color: var(--brass-dim); }
+.fc-face:hover { border-color: var(--separator-strong); }
 .fc-back { transform: rotateY(180deg); }
 
 .fc-cardtop { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .fc-rarity {
-  font-family: var(--caps); font-size: var(--text-caption); font-weight: 700; color: var(--r-ink);
+  font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700; color: var(--r-ink);
 }
-.fc-worth { font-family: var(--mono); font-size: 12px; color: var(--brass); white-space: nowrap; }
-.fc-title { font-family: var(--display); font-size: 15px; color: var(--r-ink); margin: 0; }
-.fc-text { margin: 0; font-size: 15.5px; line-height: 1.45; color: var(--text); flex: 1; overflow: hidden; }
-.fc-back .fc-text { color: var(--ivory-dim); font-size: 14.5px; }
-.fc-hint { margin: 0; font-size: 12.5px; color: var(--text-faint); font-style: italic; }
+.fc-worth { font-family: var(--font-mono); font-size: 12px; color: var(--accent); white-space: nowrap; }
+.fc-title { font-family: var(--font-display); font-size: 15px; color: var(--r-ink); margin: 0; }
+.fc-text { margin: 0; font-size: 15.5px; line-height: 1.45; color: var(--label); flex: 1; overflow: hidden; }
+.fc-back .fc-text { color: var(--label-secondary); font-size: 14.5px; }
+.fc-hint { margin: 0; font-size: 12.5px; color: var(--label-tertiary); font-style: italic; }
 .fc-flavour { margin: 0; font-size: 12.5px; color: var(--r-ink); font-style: italic; opacity: 0.85; }
 .fc-cardfoot {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  padding-top: 9px; border-top: 1px solid var(--brass-ghost);
-  font-family: var(--mono); font-size: var(--text-caption); color: var(--text-faint);
+  padding-top: 9px; border-top: 1px solid var(--accent-tint);
+  font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-tertiary);
 }
 .fc-cardfoot .fc-sep { opacity: 0.4; }
 .fc-tag {
-  font-family: var(--caps); font-size: var(--text-caption); font-weight: 700;
-  border: 1px solid var(--brass-faint); border-radius: 999px; padding: 2px 7px 1px; color: var(--text-faint);
+  font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700;
+  border: 1px solid var(--separator); border-radius: 999px; padding: 2px 7px 1px; color: var(--label-tertiary);
 }
 .fc-ops { display: flex; gap: 5px; margin-top: 9px; flex-wrap: wrap; }
 .fc-op {
-  appearance: none; background: none; border: 1px solid var(--brass-faint); border-radius: 3px;
-  padding: 5px 9px 4px; cursor: pointer; color: var(--text-dim);
-  font-family: var(--caps); font-size: var(--text-caption); font-weight: 700;
+  appearance: none; background: none; border: 1px solid var(--separator); border-radius: 3px;
+  padding: 5px 9px 4px; cursor: pointer; color: var(--label-secondary);
+  font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
-.fc-op:hover { color: var(--ivory); border-color: var(--brass-dim); background: var(--brass-ghost); }
+.fc-op:hover { color: var(--label); border-color: var(--separator-strong); background: var(--accent-tint); }
 .fc-op.danger:hover { color: var(--danger); border-color: var(--danger-edge); background: var(--danger-tint); }
-.fc-op.on { color: var(--jade-bright); border-color: var(--success-edge); }
+.fc-op.on { color: var(--success); border-color: var(--success-edge); }
 .fc-card.is-pooled .fc-face { border-color: var(--success-edge); }
 
 /* --- making one ----------------------------------------------------------- */
@@ -202,32 +202,32 @@ textarea:focus, select:focus, input:focus {
 .fc-form { display: flex; flex-direction: column; gap: 16px; }
 .fc-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .fc-actions { display: flex; gap: 10px; align-items: center; }
-.fc-editing { margin: 0; font-size: 13px; color: var(--jade-bright); }
+.fc-editing { margin: 0; font-size: 13px; color: var(--success); }
 
 .fc-appraisal {
   position: sticky; top: 84px;
   padding: 20px 20px 22px; border-radius: 5px;
   background: var(--bg-elevated);
-  border: 1px solid var(--brass-faint);
+  border: 1px solid var(--separator);
 }
 .fc-meter { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
-.fc-meter-track { flex: 1; height: 7px; border-radius: 999px; background: var(--fill-strong); overflow: hidden; border: 1px solid var(--brass-ghost); }
+.fc-meter-track { flex: 1; height: 7px; border-radius: 999px; background: var(--fill-strong); overflow: hidden; border: 1px solid var(--accent-tint); }
 .fc-meter-fill {
   height: 100%; width: 0%; border-radius: 999px;
-  background: linear-gradient(90deg, var(--burgundy) 0%, var(--brass) 55%, var(--brass-bright) 100%);
-  transition: width 0.4s var(--bounce);
+  background: linear-gradient(90deg, var(--stock-red) 0%, var(--accent) 55%, var(--accent-strong) 100%);
+  transition: width 0.4s var(--ease-spring);
 }
 .fc-meter-num { display: flex; align-items: baseline; gap: 5px; }
-.fc-meter-num b { font-family: var(--font-text); font-variant-numeric: var(--numeric); font-size: var(--text-title-1); font-weight: 600; color: var(--ivory); }
-.fc-meter-num span { font-family: var(--caps); font-size: var(--text-caption); color: var(--text-faint); }
+.fc-meter-num b { font-family: var(--font-text); font-variant-numeric: var(--numeric); font-size: var(--text-title-1); font-weight: 600; color: var(--label); }
+.fc-meter-num span { font-family: var(--font-text); font-size: var(--text-caption); color: var(--label-tertiary); }
 
 .fc-parts, .fc-odds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.fc-parts li, .fc-odds li { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--text-dim); }
-.fc-parts li span:first-child, .fc-odds li span:first-child { flex: 0 0 96px; font-family: var(--caps); font-size: var(--text-caption); font-weight: 700; color: var(--text-faint); }
+.fc-parts li, .fc-odds li { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--label-secondary); }
+.fc-parts li span:first-child, .fc-odds li span:first-child { flex: 0 0 96px; font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700; color: var(--label-tertiary); }
 .fc-bar-track { flex: 1; height: 4px; border-radius: 999px; background: var(--fill-strong); overflow: hidden; }
-.fc-bar-fill { display: block; height: 100%; background: var(--brass-dim); border-radius: 999px; transition: width 0.4s ease; }
-.fc-odds .fc-bar-fill { background: var(--r-ink, var(--brass-dim)); }
-.fc-parts li b, .fc-odds li b { font-family: var(--mono); font-size: var(--text-caption); color: var(--text-dim); min-width: 46px; text-align: right; }
+.fc-bar-fill { display: block; height: 100%; background: var(--separator-strong); border-radius: 999px; transition: width 0.4s ease; }
+.fc-odds .fc-bar-fill { background: var(--r-ink, var(--separator-strong)); }
+.fc-parts li b, .fc-odds li b { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-secondary); min-width: 46px; text-align: right; }
 
 .fc-reveal {
   position: fixed; inset: 0; z-index: 60; display: grid; place-items: center;
@@ -235,14 +235,14 @@ textarea:focus, select:focus, input:focus {
   animation: fcin 0.3s ease both;
 }
 .fc-reveal-inner { display: flex; flex-direction: column; gap: 18px; align-items: center; width: min(100%, 330px); }
-.fc-reveal-cap { margin: 0; font-family: var(--caps); font-size: var(--text-caption); font-weight: 700; color: var(--brass); }
+.fc-reveal-cap { margin: 0; font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700; color: var(--accent); }
 /* A card's two faces are both taken out of the flow so they can sit on top of
    each other, which leaves the card itself nothing to be as wide as. In the
    collection the grid column decides and the question never comes up; here the
    holder has to be told, or it shrinks to fit nothing at all and the card
    arrives as a slit. */
 .fc-reveal-card { width: 100%; }
-.fc-reveal .fc-card { width: 100%; animation: strike 0.7s var(--bounce) both; }
+.fc-reveal .fc-card { width: 100%; animation: strike 0.7s var(--ease-spring) both; }
 @keyframes strike {
   from { opacity: 0; transform: rotateY(-95deg) scale(0.85); }
   to { opacity: 1; transform: none; }
@@ -258,7 +258,7 @@ textarea:focus, select:focus, input:focus {
    printed in — the band has told you what you got before you have read a word
    of it. Every rarity's ink is a light tone, so the words go on in near-black
    exactly as they do on the table's brass band. */
-.banner.fc { --r-ink: var(--brass); z-index: 70; }
+.banner.fc { --r-ink: var(--accent); z-index: 70; }
 .banner.fc::before {
   background:
     linear-gradient(90deg, rgba(255, 255, 255, 0) 32%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0) 68%),
@@ -276,41 +276,41 @@ textarea:focus, select:focus, input:focus {
   background: linear-gradient(90deg, transparent, var(--bg) 12%, var(--bg-elevated) 50%, var(--bg) 88%, transparent);
   box-shadow: 0 0 0 1px var(--danger-edge);
 }
-.banner.fc.burnt .banner-title { color: var(--bad); text-shadow: 0 0 40px var(--danger-edge); }
-.banner.fc.burnt .banner-sub { color: var(--text-dim); }
+.banner.fc.burnt .banner-title { color: var(--danger); text-shadow: 0 0 40px var(--danger-edge); }
+.banner.fc.burnt .banner-sub { color: var(--label-secondary); }
 
 /* --- the trading post ----------------------------------------------------- */
 
 .fc-trade-cols { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.9fr); gap: 30px; align-items: start; }
 .fc-offers { display: flex; flex-direction: column; gap: 8px; }
 .fc-offer {
-  --r-ink: var(--text-dim);
+  --r-ink: var(--label-secondary);
   display: flex; align-items: center; gap: 12px;
   padding: 11px 14px; border-radius: 4px;
-  background: var(--bg-grouped); border: 1px solid var(--brass-faint);
+  background: var(--bg-grouped); border: 1px solid var(--separator);
   border-left: 3px solid var(--r-ink);
 }
-.fc-offer[data-rarity="uncommon"]  { --r-ink: var(--jade); }
+.fc-offer[data-rarity="uncommon"]  { --r-ink: var(--success); }
 .fc-offer[data-rarity="rare"]      { --r-ink: var(--team-a); }
 .fc-offer[data-rarity="epic"]      { --r-ink: var(--r-epic); }
-.fc-offer[data-rarity="legendary"] { --r-ink: var(--brass); }
+.fc-offer[data-rarity="legendary"] { --r-ink: var(--accent); }
 .fc-offer[data-rarity="mythic"]    { --r-ink: var(--team-b); }
 .fc-offer.is-mine { background: var(--success-tint); }
 .fc-offer-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.fc-offer-front { font-size: 14.5px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fc-offer-meta { font-family: var(--mono); font-size: var(--text-caption); color: var(--text-faint); }
-.fc-offer-worth { font-family: var(--mono); font-size: 13px; color: var(--brass); white-space: nowrap; }
+.fc-offer-front { font-size: 14.5px; color: var(--label); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fc-offer-meta { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-tertiary); }
+.fc-offer-worth { font-family: var(--font-mono); font-size: 13px; color: var(--accent); white-space: nowrap; }
 
 .fc-trades { display: flex; flex-direction: column; gap: 10px; }
 .fc-trade {
   padding: 13px 15px; border-radius: 4px;
-  background: var(--bg-grouped); border: 1px solid var(--brass-faint);
+  background: var(--bg-grouped); border: 1px solid var(--separator);
 }
-.fc-trade-when { font-family: var(--mono); font-size: var(--text-caption); color: var(--text-faint); margin-bottom: 7px; }
-.fc-trade-line { display: flex; gap: 8px; font-size: 13.5px; color: var(--text-dim); padding: 2px 0; }
-.fc-trade-line em { font-style: normal; font-family: var(--caps); font-size: var(--text-caption); font-weight: 700; flex: 0 0 42px; padding-top: 3px; }
-.fc-trade-line.gave em { color: var(--bad); }
-.fc-trade-line.got em { color: var(--jade-bright); }
+.fc-trade-when { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-tertiary); margin-bottom: 7px; }
+.fc-trade-line { display: flex; gap: 8px; font-size: 13.5px; color: var(--label-secondary); padding: 2px 0; }
+.fc-trade-line em { font-style: normal; font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700; flex: 0 0 42px; padding-top: 3px; }
+.fc-trade-line.gave em { color: var(--danger); }
+.fc-trade-line.got em { color: var(--success); }
 .fc-trade-line ul { list-style: none; margin: 0; padding: 0; flex: 1; }
 .fc-trade-line li { overflow: hidden; text-overflow: ellipsis; }
 
@@ -319,32 +319,32 @@ textarea:focus, select:focus, input:focus {
 .fc-print-opts {
   display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
   padding: 14px 16px; margin-bottom: 18px; border-radius: 4px;
-  background: var(--bg-grouped); border: 1px solid var(--brass-faint);
+  background: var(--bg-grouped); border: 1px solid var(--separator);
 }
-.fc-check { display: flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--text-dim); cursor: pointer; }
-.fc-check input { width: auto; accent-color: var(--brass); }
-.fc-print-count { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--text-faint); }
+.fc-check { display: flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--label-secondary); cursor: pointer; }
+.fc-check input { width: auto; accent-color: var(--accent); }
+.fc-print-count { margin-left: auto; font-family: var(--font-mono); font-size: 12px; color: var(--label-tertiary); }
 
 .fc-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
 .fc-pick-item {
-  --r-ink: var(--text-dim);
+  --r-ink: var(--label-secondary);
   display: flex; gap: 11px; align-items: flex-start; cursor: pointer;
   padding: 11px 13px; border-radius: 4px;
-  background: var(--bg-grouped); border: 1px solid var(--brass-faint);
+  background: var(--bg-grouped); border: 1px solid var(--separator);
   border-left: 3px solid var(--r-ink);
   transition: border-color 0.15s, background 0.15s;
 }
-.fc-pick-item[data-rarity="uncommon"]  { --r-ink: var(--jade); }
+.fc-pick-item[data-rarity="uncommon"]  { --r-ink: var(--success); }
 .fc-pick-item[data-rarity="rare"]      { --r-ink: var(--team-a); }
 .fc-pick-item[data-rarity="epic"]      { --r-ink: var(--r-epic); }
-.fc-pick-item[data-rarity="legendary"] { --r-ink: var(--brass); }
+.fc-pick-item[data-rarity="legendary"] { --r-ink: var(--accent); }
 .fc-pick-item[data-rarity="mythic"]    { --r-ink: var(--team-b); }
-.fc-pick-item:hover { border-color: var(--brass-dim); }
+.fc-pick-item:hover { border-color: var(--separator-strong); }
 .fc-pick-item.is-on { background: var(--success-tint); border-color: var(--success-edge); }
-.fc-pick-item input { width: auto; margin-top: 3px; accent-color: var(--brass); }
+.fc-pick-item input { width: auto; margin-top: 3px; accent-color: var(--accent); }
 .fc-pick-body { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.fc-pick-front { font-size: 14px; color: var(--text); }
-.fc-pick-meta { font-family: var(--mono); font-size: var(--text-caption); color: var(--text-faint); }
+.fc-pick-front { font-size: 14px; color: var(--label); }
+.fc-pick-meta { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-tertiary); }
 
 /* --- the panel ------------------------------------------------------------ */
 
@@ -354,21 +354,21 @@ textarea:focus, select:focus, input:focus {
   display: flex; align-items: center; gap: 12px; text-align: left; width: 100%;
   appearance: none; cursor: pointer;
   padding: 11px 14px; border-radius: 4px;
-  background: var(--bg-grouped); border: 1px solid var(--brass-faint);
-  color: var(--text); font: inherit;
+  background: var(--bg-grouped); border: 1px solid var(--separator);
+  color: var(--label); font: inherit;
   transition: border-color 0.15s, background 0.15s;
 }
-.fc-acct:hover { border-color: var(--brass-dim); background: var(--brass-ghost); }
+.fc-acct:hover { border-color: var(--separator-strong); background: var(--accent-tint); }
 .fc-acct.is-admin { border-color: var(--team-b-edge); }
 .fc-acct.is-off { opacity: 0.5; }
 .fc-acct-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.fc-acct-name { font-size: 14.5px; color: var(--ivory); }
-.fc-acct-meta { font-family: var(--mono); font-size: var(--text-caption); color: var(--text-faint); }
-.fc-acct-worth { font-family: var(--mono); font-size: 12px; color: var(--brass); text-align: right; white-space: nowrap; }
+.fc-acct-name { font-size: 14.5px; color: var(--label); }
+.fc-acct-meta { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--label-tertiary); }
+.fc-acct-worth { font-family: var(--font-mono); font-size: 12px; color: var(--accent); text-align: right; white-space: nowrap; }
 .fc-mythic-result {
   margin-top: 16px; padding: 14px 16px; border-radius: 4px;
   background: var(--bg-grouped); border: 1px solid var(--team-b-edge);
-  color: var(--text); font-size: 14px;
+  color: var(--label); font-size: 14px;
 }
 
 /* --- the modal ------------------------------------------------------------ */
@@ -382,14 +382,14 @@ textarea:focus, select:focus, input:focus {
   position: relative; width: min(100%, 560px); max-height: 86vh; overflow-y: auto;
   padding: 30px 30px 28px; border-radius: 5px;
   background: var(--bg-elevated);
-  border: 1px solid var(--brass-dim); box-shadow: var(--shadow);
+  border: 1px solid var(--separator-strong); box-shadow: var(--shadow-3);
 }
 .fc-modal-x {
   position: absolute; right: 12px; top: 10px; appearance: none; background: none; border: 0;
-  color: var(--text-faint); font-size: 26px; line-height: 1; cursor: pointer; padding: 4px 8px;
+  color: var(--label-tertiary); font-size: 26px; line-height: 1; cursor: pointer; padding: 4px 8px;
 }
-.fc-modal-x:hover { color: var(--ivory); }
-.fc-modal-box h3 { font-family: var(--caps); font-weight: 600; font-size: 18px; color: var(--ivory); margin: 0 0 16px; }
+.fc-modal-x:hover { color: var(--label); }
+.fc-modal-box h3 { font-family: var(--font-text); font-weight: 600; font-size: 18px; color: var(--label); margin: 0 0 16px; }
 .fc-danger-zone { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--danger-edge); }
 
 /* The toast goes over everything, the modal and the question included. The
@@ -410,14 +410,14 @@ textarea:focus, select:focus, input:focus {
   width: min(100%, 420px); padding: 26px 26px 22px; border-radius: 5px;
   background: var(--bg-elevated);
   border: 1px solid var(--danger-edge);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-3);
 }
 .fc-confirm-box h3 {
-  margin: 0 0 10px; font-family: var(--caps); font-weight: 600; font-size: 19px; color: var(--ivory);
+  margin: 0 0 10px; font-family: var(--font-text); font-weight: 600; font-size: 19px; color: var(--label);
 }
 .fc-confirm-box .fc-actions { margin-top: 20px; }
 .fc-confirm-box .btn:not(.ghost) { border-color: var(--danger-edge); color: var(--danger); }
-.fc-confirm-box .btn:not(.ghost):hover { background: var(--danger-tint); border-color: var(--bad); }
+.fc-confirm-box .btn:not(.ghost):hover { background: var(--danger-tint); border-color: var(--danger); }
 
 /* The panel's view of one card. A card's faces are out of the flow so they can
    stack for the turn, which leaves the card nothing to be as wide as — the
@@ -428,7 +428,7 @@ textarea:focus, select:focus, input:focus {
 .fc-cardshow .fc-card, .fc-cardshow .fc-flip { width: 100%; min-height: 250px; }
 .fc-backlink {
   display: inline-block; margin-bottom: 14px;
-  font-family: var(--caps); font-size: var(--text-caption); font-weight: 700;
+  font-family: var(--font-text); font-size: var(--text-caption); font-weight: 700;
 }
 
 /* --- narrow screens ------------------------------------------------------- */
@@ -554,18 +554,18 @@ textarea:focus, select:focus, input:focus {
 .fc-deck-new { display: flex; gap: 10px; margin: 0 0 20px; max-width: 560px; }
 .fc-deck-new input { flex: 1; }
 .fc-decks { display: flex; flex-direction: column; gap: 12px; max-width: 760px; }
-.fc-deck { border: 1px solid var(--brass-faint); border-radius: var(--radius); padding: 10px 14px 12px; background: rgba(16, 19, 29, 0.6); }
+.fc-deck { border: 1px solid var(--separator); border-radius: var(--radius-s); padding: 10px 14px 12px; background: rgba(16, 19, 29, 0.6); }
 .fc-deck-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 6px 0; }
-.fc-deck-row.is-sub { padding-left: 22px; border-top: 1px solid var(--brass-ghost); }
-.fc-deck-row.is-sub .fc-deck-name::before { content: "› "; color: var(--text-faint); }
-.fc-deck-name { font-weight: 600; color: var(--ivory); }
-.fc-deck-row.is-sub .fc-deck-name { font-weight: 400; color: var(--text); }
+.fc-deck-row.is-sub { padding-left: 22px; border-top: 1px solid var(--accent-tint); }
+.fc-deck-row.is-sub .fc-deck-name::before { content: "› "; color: var(--label-tertiary); }
+.fc-deck-name { font-weight: 600; color: var(--label); }
+.fc-deck-row.is-sub .fc-deck-name { font-weight: 400; color: var(--label); }
 .fc-deck-acts { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
 .fc-deck-acts a.fc-op { text-decoration: none; }
 .fc-op.is-off { opacity: 0.45; cursor: default; }
 .fc-sub-new { display: flex; gap: 8px; margin: 8px 0 0 22px; }
 .fc-sub-new input { flex: 1; max-width: 320px; padding: 7px 10px; }
-.fc-deck-tag { color: var(--brass); }
+.fc-deck-tag { color: var(--accent); }
 @media (max-width: 560px) {
   .fc-deck-new, .fc-sub-new { flex-direction: column; }
   .fc-deck-acts { margin-left: 0; }

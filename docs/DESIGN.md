@@ -215,9 +215,9 @@ often they are broken:
 8. **Layers from `--z-*`** for anything fixed or floating.
 9. **One component per job.** The room-code field looks the same on the
    front page, the hall and the card table.
-10. **New code uses the semantic names** (`--accent`, `--font-text`), never
-    the Vault's old aliases (`--brass`, `--caps`). The aliases go as the
-    rooms are converted.
+10. **Semantic names only** (`--accent`, `--font-text`). The Vault's old
+    aliases (`--brass`, `--caps` and the rest) were removed once every room
+    had been converted; do not bring them back.
 
 The typefaces and the scheme stay as chosen on 2026-09-30: the device's own
 face for text, Limelight for headlines, light or dark by the device, the card

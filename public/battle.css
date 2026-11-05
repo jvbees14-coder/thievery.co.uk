@@ -19,10 +19,10 @@
 
 .btl-head {
   margin: 0 0 16px;
-  font-family: var(--caps);
+  font-family: var(--font-text);
   font-size: 13px;
   font-weight: 700;
-  color: var(--ivory);
+  color: var(--label);
 }
 
 .sr-only {
@@ -40,8 +40,8 @@
 /* --- the front door ------------------------------------------------------- */
 
 .btl-door { text-align: center; padding: clamp(24px, 5vw, 48px); }
-.btl-door-head { margin: 6px 0 14px; font-family: var(--display); font-size: clamp(28px, 5vw, 40px); }
-.btl-door-say { margin: 0 auto 26px; max-width: 46ch; color: var(--text-dim); }
+.btl-door-head { margin: 6px 0 14px; font-family: var(--font-display); font-size: clamp(28px, 5vw, 40px); }
+.btl-door-say { margin: 0 auto 26px; max-width: 46ch; color: var(--label-secondary); }
 
 .btl-door-acts {
   display: flex;
@@ -55,7 +55,7 @@
 .btl-join input {
   width: 7.5ch;
   text-align: center;
-  font-family: var(--caps);
+  font-family: var(--font-text);
   font-size: 18px;
 }
 
@@ -78,20 +78,20 @@
   gap: 4px;
   padding: 12px 14px;
   text-align: left;
-  border: 1px solid var(--brass-faint);
+  border: 1px solid var(--separator);
   border-radius: 10px;
-  background: var(--ink-2);
-  color: var(--text-dim);
+  background: var(--bg-grouped);
+  color: var(--label-secondary);
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s, color 0.15s;
 }
-.btl-opt b { font-size: 15px; color: var(--ivory); }
+.btl-opt b { font-size: 15px; color: var(--label); }
 .btl-opt span { font-size: 12.5px; line-height: 1.35; }
-.btl-opt:hover:not(:disabled) { border-color: var(--brass-dim); }
+.btl-opt:hover:not(:disabled) { border-color: var(--separator-strong); }
 .btl-opt.is-on {
-  border-color: var(--brass);
-  background: var(--brass-ghost);
-  color: var(--ivory);
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--label);
 }
 .btl-opt:disabled { cursor: default; opacity: 0.75; }
 
@@ -102,13 +102,13 @@
 .btl-code-say {
   margin: 0;
   font-size: 12px;
-  color: var(--text-dim);
+  color: var(--label-secondary);
 }
 .btl-code {
   margin: 4px 0 12px;
-  font-family: var(--caps);
+  font-family: var(--font-text);
   font-size: clamp(34px, 7vw, 48px);
-  color: var(--brass);
+  color: var(--accent);
 }
 .btl-copy { width: 100%; margin-bottom: 16px; }
 
@@ -118,7 +118,7 @@
   align-items: center;
   gap: 8px;
   padding: 9px 2px;
-  border-bottom: 1px solid var(--brass-faint);
+  border-bottom: 1px solid var(--separator);
 }
 .btl-player:last-child { border-bottom: 0; }
 .btl-player.is-away { opacity: 0.5; }
@@ -127,10 +127,10 @@
   font-size: var(--text-caption);
   padding: 2px 7px;
   border-radius: 999px;
-  border: 1px solid var(--brass-dim);
-  color: var(--brass);
+  border: 1px solid var(--separator-strong);
+  color: var(--accent);
 }
-.btl-tag.is-away { border-color: var(--brass-faint); color: var(--text-dim); }
+.btl-tag.is-away { border-color: var(--separator); color: var(--label-secondary); }
 
 /* --- a card being answered ------------------------------------------------ */
 
@@ -139,24 +139,24 @@
   justify-content: space-between;
   align-items: baseline;
   font-size: 12.5px;
-  color: var(--text-dim);
+  color: var(--label-secondary);
   margin-bottom: 6px;
 }
-.btl-clock { font-family: var(--font-text); font-variant-numeric: var(--numeric); color: var(--brass); }
+.btl-clock { font-family: var(--font-text); font-variant-numeric: var(--numeric); color: var(--accent); }
 
 /* The rail. It empties left to right and turns as it runs out, which is the
    whole of the warning — there is no number that needs watching. */
 .btl-clock-rail {
   height: 3px;
   border-radius: 999px;
-  background: var(--brass-faint);
+  background: var(--separator);
   overflow: hidden;
   margin-bottom: 18px;
 }
 .btl-clock-run {
   height: 100%;
   width: 0;
-  background: var(--brass);
+  background: var(--accent);
   transition: width 0.2s linear, background 0.4s;
 }
 
@@ -164,20 +164,20 @@
 .btl-card-owner {
   margin: 0 0 8px;
   font-size: 12px;
-  color: var(--text-dim);
+  color: var(--label-secondary);
 }
 .btl-front {
   margin: 0 0 14px;
-  font-family: var(--display);
+  font-family: var(--font-display);
   font-size: clamp(21px, 3.6vw, 30px);
   line-height: 1.3;
 }
 .btl-hint {
   margin: 0 0 18px;
   padding: 10px 14px;
-  border-left: 2px solid var(--brass-dim);
-  background: var(--ink-2);
-  color: var(--text-dim);
+  border-left: 2px solid var(--separator-strong);
+  background: var(--bg-grouped);
+  color: var(--label-secondary);
   font-style: italic;
 }
 
@@ -191,13 +191,13 @@
 }
 
 .btl-waiting { padding: 14px 0 2px; }
-.btl-waiting-say { margin: 0; color: var(--text-dim); }
+.btl-waiting-say { margin: 0; color: var(--label-secondary); }
 
 /* --- the reveal ----------------------------------------------------------- */
 
 .btl-reveal { margin-top: 18px; display: flex; flex-direction: column; gap: 14px; }
-.btl-back { padding: 18px 22px; border-color: var(--brass-dim); }
-.btl-back-text { margin: 6px 0 0; font-size: 17px; line-height: 1.5; color: var(--ivory); }
+.btl-back { padding: 18px 22px; border-color: var(--separator-strong); }
+.btl-back-text { margin: 6px 0 0; font-size: 17px; line-height: 1.5; color: var(--label); }
 
 .btl-marks { display: flex; flex-direction: column; gap: 10px; }
 
@@ -206,26 +206,26 @@
    90, and the page should not take that away from them. */
 .btl-mark {
   padding: 13px 16px;
-  border: 1px solid var(--brass-faint);
+  border: 1px solid var(--separator);
   border-left-width: 3px;
   border-radius: 8px;
-  background: var(--ink-2);
+  background: var(--bg-grouped);
 }
-.btl-mark.is-got { border-left-color: var(--jade); }
-.btl-mark.is-close { border-left-color: var(--brass); }
-.btl-mark.is-some { border-left-color: var(--brass-dim); }
-.btl-mark.is-missed { border-left-color: var(--bad); }
-.btl-mark.is-yours { background: var(--brass-ghost); }
+.btl-mark.is-got { border-left-color: var(--success); }
+.btl-mark.is-close { border-left-color: var(--accent); }
+.btl-mark.is-some { border-left-color: var(--separator-strong); }
+.btl-mark.is-missed { border-left-color: var(--danger); }
+.btl-mark.is-yours { background: var(--accent-tint); }
 
 .btl-mark-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-.btl-mark-who { font-weight: 600; color: var(--ivory); }
-.btl-mark-who i { font-style: normal; font-size: var(--text-caption); color: var(--brass); }
-.btl-mark-score { font-family: var(--font-text); font-variant-numeric: var(--numeric); font-weight: 600; font-size: 22px; color: var(--ivory); }
-.btl-mark-score small { font-size: var(--text-caption); color: var(--text-dim); }
+.btl-mark-who { font-weight: 600; color: var(--label); }
+.btl-mark-who i { font-style: normal; font-size: var(--text-caption); color: var(--accent); }
+.btl-mark-score { font-family: var(--font-text); font-variant-numeric: var(--numeric); font-weight: 600; font-size: 22px; color: var(--label); }
+.btl-mark-score small { font-size: var(--text-caption); color: var(--label-secondary); }
 .btl-mark-said { margin: 6px 0 4px; line-height: 1.45; }
-.btl-mark-said i { color: var(--text-dim); }
-.btl-mark-band { margin: 0; font-size: 12.5px; color: var(--text-dim); }
-.btl-mark-band b { color: var(--ivory); font-weight: 600; }
+.btl-mark-said i { color: var(--label-secondary); }
+.btl-mark-band { margin: 0; font-size: 12.5px; color: var(--label-secondary); }
+.btl-mark-band b { color: var(--label); font-weight: 600; }
 
 /* --- the running total ---------------------------------------------------- */
 
@@ -233,18 +233,18 @@
   list-style: none;
   margin: 22px 0 0;
   padding: 14px 0 0;
-  border-top: 1px solid var(--brass-faint);
+  border-top: 1px solid var(--separator);
   display: flex;
   flex-wrap: wrap;
   gap: 8px 22px;
 }
-.btl-running li { display: flex; gap: 8px; align-items: baseline; font-size: 13.5px; color: var(--text-dim); }
-.btl-running b { font-family: var(--caps); font-size: 16px; color: var(--ivory); }
+.btl-running li { display: flex; gap: 8px; align-items: baseline; font-size: 13.5px; color: var(--label-secondary); }
+.btl-running b { font-family: var(--font-text); font-size: 16px; color: var(--label); }
 
 /* --- the scoreboard ------------------------------------------------------- */
 
 .btl-end { text-align: center; padding: clamp(22px, 4vw, 38px); }
-.btl-end-head { margin: 6px 0 20px; font-family: var(--display); font-size: clamp(24px, 4.6vw, 34px); }
+.btl-end-head { margin: 6px 0 20px; font-family: var(--font-display); font-size: clamp(24px, 4.6vw, 34px); }
 
 .btl-standings { list-style: none; margin: 0 0 18px; padding: 0; text-align: left; }
 .btl-standing {
@@ -256,19 +256,19 @@
   border-radius: 8px;
   border: 1px solid transparent;
 }
-.btl-standing.is-won { border-color: var(--brass-dim); background: var(--brass-ghost); }
-.btl-standing.is-yours .btl-standing-name { color: var(--ivory); font-weight: 600; }
-.btl-standing-rank { font-family: var(--caps); color: var(--text-dim); }
-.btl-standing-avg { font-size: 12.5px; color: var(--text-dim); }
-.btl-standing-total { font-family: var(--font-text); font-variant-numeric: var(--numeric); font-weight: 600; font-size: 20px; color: var(--ivory); }
+.btl-standing.is-won { border-color: var(--separator-strong); background: var(--accent-tint); }
+.btl-standing.is-yours .btl-standing-name { color: var(--label); font-weight: 600; }
+.btl-standing-rank { font-family: var(--font-text); color: var(--label-secondary); }
+.btl-standing-avg { font-size: 12.5px; color: var(--label-secondary); }
+.btl-standing-total { font-family: var(--font-text); font-variant-numeric: var(--numeric); font-weight: 600; font-size: 20px; color: var(--label); }
 
 .btl-end-acts { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 
 .btl-review { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
 .btl-review-card { padding: 14px 18px; }
-.btl-review-front { margin: 0 0 8px; font-family: var(--display); font-size: 17px; }
-.btl-review-back, .btl-review-said { margin: 0 0 4px; font-size: 13.5px; color: var(--text-dim); line-height: 1.45; }
-.btl-review-back b, .btl-review-said b { color: var(--ivory); }
+.btl-review-front { margin: 0 0 8px; font-family: var(--font-display); font-size: 17px; }
+.btl-review-back, .btl-review-said { margin: 0 0 4px; font-size: 13.5px; color: var(--label-secondary); line-height: 1.45; }
+.btl-review-back b, .btl-review-said b { color: var(--label); }
 
 /* --- narrow ---------------------------------------------------------------- */
 
@@ -301,43 +301,43 @@
   text-align: left;
   font: inherit;
   line-height: 1.4;
-  border: 1px solid var(--brass-faint);
+  border: 1px solid var(--separator);
   border-left-width: 3px;
-  border-left-color: var(--brass-faint);
+  border-left-color: var(--separator);
   border-radius: 8px;
-  background: var(--ink-2);
-  color: var(--text);
+  background: var(--bg-grouped);
+  color: var(--label);
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
 }
 .btl-choice-opt:hover:not(:disabled):not(.is-shut) {
-  border-color: var(--brass-dim);
-  border-left-color: var(--brass);
+  border-color: var(--separator-strong);
+  border-left-color: var(--accent);
 }
 .btl-choice-opt:disabled { cursor: default; }
 
 /* Shut: the card is over and these are a result rather than a choice. */
 .btl-choice-opt.is-shut { cursor: default; opacity: 0.62; }
-.btl-choice-opt.is-right { border-left-color: var(--jade); opacity: 1; }
-.btl-choice-opt.is-picked { background: var(--brass-ghost); opacity: 1; }
+.btl-choice-opt.is-right { border-left-color: var(--success); opacity: 1; }
+.btl-choice-opt.is-picked { background: var(--accent-tint); opacity: 1; }
 /* Picked and not right is the one that wants saying plainly. */
-.btl-choice-opt.is-picked.is-shut:not(.is-right) { border-left-color: var(--bad); }
+.btl-choice-opt.is-picked.is-shut:not(.is-right) { border-left-color: var(--danger); }
 
 .btl-choice-text { flex: 1; }
 .btl-choice-tag {
   flex: none;
   font-size: var(--text-caption);
-  color: var(--text-dim);
+  color: var(--label-secondary);
 }
-.btl-choice-opt.is-right .btl-choice-tag { color: var(--jade-bright); }
+.btl-choice-opt.is-right .btl-choice-tag { color: var(--success); }
 
 /* --- today's ten ------------------------------------------------------------
    The daily deck sits under the door rather than inside it: the door is for
    rooms, and this is the one thing here that needs no room and nobody else. */
 
 .btl-today { margin-top: 18px; text-align: center; padding: clamp(20px, 4vw, 34px); }
-.btl-today-deck { margin: 4px 0 8px; font-family: var(--display); font-size: clamp(22px, 4vw, 30px); font-weight: 400; color: var(--ivory); }
-.btl-today-say { margin: 0 auto 18px; max-width: 46ch; color: var(--text-dim); }
+.btl-today-deck { margin: 4px 0 8px; font-family: var(--font-display); font-size: clamp(22px, 4vw, 30px); font-weight: 400; color: var(--label); }
+.btl-today-say { margin: 0 auto 18px; max-width: 46ch; color: var(--label-secondary); }
 
 /* One board, drawn the same on the door and on the result. */
 .btl-board { list-style: none; margin: 18px auto 12px; padding: 0; max-width: 420px; text-align: left; }
@@ -348,16 +348,16 @@
   gap: 10px;
   align-items: baseline;
   padding: 7px 4px;
-  border-bottom: 1px solid var(--brass-faint);
+  border-bottom: 1px solid var(--separator);
   font-size: 14.5px;
 }
 .btl-board-row:last-child { border-bottom: 0; }
-.btl-board-place { font-family: var(--caps); font-size: 12px; color: var(--text-dim); }
-.btl-board-name i { font-style: normal; font-size: var(--text-caption); color: var(--brass); }
-.btl-board-row b { font-family: var(--caps); color: var(--ivory); }
-.btl-board-row.is-yours { background: var(--brass-ghost); }
+.btl-board-place { font-family: var(--font-text); font-size: 12px; color: var(--label-secondary); }
+.btl-board-name i { font-style: normal; font-size: var(--text-caption); color: var(--accent); }
+.btl-board-row b { font-family: var(--font-text); color: var(--label); }
+.btl-board-row.is-yours { background: var(--accent-tint); }
 
-.btl-end-daily { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--brass-faint); }
+.btl-end-daily { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--separator); }
 .btl-end-link { margin: 14px 0 0; font-size: 13.5px; }
 
 /* --- watching, and out ------------------------------------------------------ */
@@ -365,15 +365,15 @@
 .btl-banner {
   margin: 0 0 12px;
   padding: 10px 14px;
-  border: 1px solid var(--brass-faint);
-  border-radius: var(--radius);
-  background: var(--brass-ghost);
-  color: var(--text-dim);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-s);
+  background: var(--accent-tint);
+  color: var(--label-secondary);
   font-size: 14px;
   text-align: center;
 }
 .btl-running li.is-out { opacity: 0.5; text-decoration: line-through; }
-.btl-mark-who i.is-out { color: var(--bad); }
+.btl-mark-who i.is-out { color: var(--danger); }
 
 /* --- the question list ------------------------------------------------------ */
 
@@ -384,12 +384,12 @@
 .btl-bank-tools { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr); gap: 10px; margin: 16px 0 6px; }
 .btl-bank-tools select, .btl-bank-tools input { width: 100%; }
 .btl-bank-list { list-style: none; margin: 10px 0 16px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.btl-q { padding: 14px 16px; border: 1px solid var(--brass-faint); border-radius: var(--radius); background: var(--fill); }
-.btl-q-front { margin: 0 0 8px; color: var(--ivory); }
-.btl-q-options { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 3px; color: var(--text-dim); font-size: 15px; }
-.btl-q-options b { display: inline-block; width: 1.4em; color: var(--brass-dim); font-family: var(--caps); }
-.btl-q-answer summary { cursor: pointer; color: var(--brass); font-size: 14px; }
-.btl-q-answer p { margin: 6px 0 0; color: var(--jade-bright); }
+.btl-q { padding: 14px 16px; border: 1px solid var(--separator); border-radius: var(--radius-s); background: var(--fill); }
+.btl-q-front { margin: 0 0 8px; color: var(--label); }
+.btl-q-options { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 3px; color: var(--label-secondary); font-size: 15px; }
+.btl-q-options b { display: inline-block; width: 1.4em; color: var(--separator-strong); font-family: var(--font-text); }
+.btl-q-answer summary { cursor: pointer; color: var(--accent); font-size: 14px; }
+.btl-q-answer p { margin: 6px 0 0; color: var(--success); }
 @media (max-width: 560px) {
   .btl-bank-tools { grid-template-columns: 1fr; }
 }

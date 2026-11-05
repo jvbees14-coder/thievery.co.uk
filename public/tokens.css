@@ -14,14 +14,15 @@
  * Contrast for every pair of text and background is worked out in
  * docs/DESIGN.md. Change a colour here and run the table there again.
  *
- * Three layers, top to bottom:
+ * Two layers, top to bottom:
  *
  *   1. The semantic tokens (--bg, --label, --accent and so on). New code uses
  *      these and nothing else.
  *   2. The scales: space, type, radius, motion, materials.
- *   3. The Vault's old names (--ink, --brass, --text-dim...), kept as aliases
- *      of the semantic tokens so the rooms written against them follow the
- *      theme without being rewritten line by line. Do not add to them.
+ *
+ * The Vault's old names (--ink, --brass, --text-dim and the rest) were
+ * aliases of the semantic tokens until November 2026, when every room was
+ * converted. They are gone; do not bring them back.
  */
 
 /* --- 1. colour: the Vault by night (the default) ---------------------------- */
@@ -423,36 +424,4 @@
     --glass-specular: none; --glass-glow: transparent;
     --glass-caustic: none; --glass-focus: none; --glass-prism: none; --glass-glint: transparent;
   }
-}
-
-/* --- 3. the Vault's old names ------------------------------------------------- */
-
-:root {
-  --ink: var(--bg);
-  --ink-2: var(--bg-grouped);
-  --ink-3: var(--bg-elevated);
-  --ink-4: var(--bg-elevated-2);
-  --brass: var(--accent);
-  --brass-bright: var(--accent-strong);
-  --brass-dim: var(--separator-strong);
-  --brass-faint: var(--separator);
-  --brass-ghost: var(--accent-tint);
-  --ivory: var(--label);
-  --ivory-dim: var(--label-secondary);
-  --text: var(--label);
-  --text-dim: var(--label-secondary);
-  --text-faint: var(--label-tertiary);
-  --jade: var(--success);
-  --jade-bright: var(--success);
-  --jade-pale: var(--success);
-  --bad: var(--danger);
-  --burgundy: var(--stock-red);
-  --burgundy-deep: var(--back-red);
-  --radius: var(--radius-s);
-  --shadow: var(--shadow-3);
-  --display: var(--font-display);
-  --caps: var(--font-text);
-  --body: var(--font-text);
-  --mono: var(--font-mono);
-  --bounce: var(--ease-spring);
 }
