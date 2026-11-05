@@ -62,6 +62,23 @@ const MIME = {
 // had none. Not one of them costs anything here: this page is never framed,
 // its types are never worth guessing at, and no full address of ours is any
 // other site's business.
+// The head tags Gerrymander's own build does not write: where the page lives,
+// and what a link to it looks like when shared. Both addresses (the folder
+// and its index.html) name the folder as the one true address.
+const GERRYMANDER_HEAD = [
+  '<link rel="canonical" href="https://thievery.co.uk/gerrymander/" />',
+  '<meta property="og:site_name" content="Thievery" />',
+  '<meta property="og:type" content="website" />',
+  '<meta property="og:title" content="Gerrymander · Thievery" />',
+  '<meta property="og:description" content="A puzzle about drawing constituency boundaries. Draw the map, win the seats." />',
+  '<meta property="og:url" content="https://thievery.co.uk/gerrymander/" />',
+  '<meta property="og:image" content="https://thievery.co.uk/og/gerrymander.jpg" />',
+  '<meta property="og:image:width" content="1200" />',
+  '<meta property="og:image:height" content="630" />',
+  '<meta property="og:image:alt" content="Gerrymander on Thievery: draw the boundaries, win the seats." />',
+  '<meta name="twitter:card" content="summary_large_image" />',
+].join(' ');
+
 // What an address nobody recognises is answered with. A page with the bar's
 // way home on it, rather than two words of plain text.
 const NOT_FOUND = readView('404.html');
@@ -161,7 +178,7 @@ function serve(req, res) {
     fs.readFile(path.join(PUBLIC_DIR, 'gerrymander', 'index.html'), 'utf8', (err, html) => {
       if (err) return notFound(res);
       res.writeHead(200, { 'Content-Type': MIME['.html'], 'Cache-Control': 'no-cache', ...SAFE_HEADERS });
-      res.end(withBar(html, 'gerrymander', { main: 'app' }));
+      res.end(withBar(html, 'gerrymander', { main: 'app', head: GERRYMANDER_HEAD, title: 'Gerrymander · Thievery' }));
     });
     return;
   }

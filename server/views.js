@@ -181,6 +181,7 @@ export function head(rooms = []) {
     '<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a0c14" />',
     '<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5efe2" />',
     '<link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />',
+    '<link rel="icon" href="/icons/icon-192.png" sizes="192x192" type="image/png" />',
     '<link rel="apple-touch-icon" href="/icons/icon-180.png" />',
     '<link rel="manifest" href="/site.webmanifest" />',
     '<link rel="preload" href="/fonts/limelight-400-latin.woff2" as="font" type="font/woff2" crossorigin />',
@@ -262,10 +263,16 @@ export function render(html) {
  * fight the game's, and not prefs.js, which would write over the game's own
  * data-motion on <html>. `main` is the id the skip link should land on.
  */
-export function withBar(html, current, { main = 'main' } = {}) {
-  const sheet = '<link rel="stylesheet" href="/shell.css" />\n    <script src="/shell.js" defer></script>\n  </head>';
+// A page built elsewhere can also be given the head tags it was built
+// without (`head`: the canonical address, the share tags) and the site's name
+// in its title (`title`), so it is found and shared as one of ours. Its own
+// files are left exactly as the build wrote them.
+export function withBar(html, current, { main = 'main', head = '', title = '' } = {}) {
+  const sheet = `${head}\n    <link rel="stylesheet" href="/shell.css" />\n    <script src="/shell.js" defer></script>\n  </head>`;
   const top = bar(current, { signedIn: false, main });
-  return versioned(html.replace('</head>', sheet).replace(/<body([^>]*)>/, (open) => `${open}\n  ${top}`));
+  let out = html.replace('</head>', sheet).replace(/<body([^>]*)>/, (open) => `${open}\n  ${top}`);
+  if (title) out = out.replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`);
+  return versioned(out);
 }
 
 export function readView(name) {

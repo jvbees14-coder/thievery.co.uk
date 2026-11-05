@@ -298,7 +298,7 @@ async function run() {
   await check('/gerrymander/ serves the game to anybody', async () => {
     const res = await stranger.page('/gerrymander/');
     assert.equal(res.status, 200);
-    assert.ok(res.html.includes('id="app"') && res.html.includes('<title>Gerrymander</title>'), 'expected the game page');
+    assert.ok(res.html.includes('id="app"') && res.html.includes('<title>Gerrymander · Thievery</title>'), 'expected the game page');
   });
 
   // The game is built elsewhere, so the bar is put on it as it leaves. It is
