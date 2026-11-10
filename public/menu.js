@@ -158,6 +158,12 @@
     $('#tile-mindmaps').classList.toggle('is-shut', !rooms.mindmaps);
     $('#nav-mindmaps').classList.toggle('is-shut', !rooms.mindmaps);
     if (!rooms.mindmaps) $('#tile-mindmaps-figure').textContent = 'Unavailable right now';
+    // Lockup is never shut: it runs in the browser. Its tile says how far
+    // this account has got, once it has finished a game signed in.
+    const lockup = play.lockup;
+    $('#tile-lockup-figure').textContent = lockup && lockup.games
+      ? `Best: wave ${lockup.best} of 30 \u00b7 ${plural(lockup.games, 'game', 'games')}`
+      : 'Keep the thieves out of the vault';
 
     // --- the admin's door
     for (const id of ['#tile-members', '#who-members']) $(id).hidden = !user.admin;

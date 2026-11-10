@@ -17,7 +17,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.join(__dirname, '..', 'public', 'og');
-const ALL = ['home', 'cards', 'flashcards', 'battle', 'switchhead', 'mindmaps', 'tools', 'gerrymander'];
+const ALL = ['home', 'cards', 'flashcards', 'battle', 'switchhead', 'mindmaps', 'tools', 'gerrymander', 'lockup'];
 // Name pages on the command line to draw only those, so adding one does not
 // re-encode every other picture into a byte-different copy of itself.
 const asked = process.argv.slice(2);

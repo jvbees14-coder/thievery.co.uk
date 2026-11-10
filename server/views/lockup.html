@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  {{head:lockup}}
+  <title>Lockup · Thievery</title>
+  <meta name="description" content="A free tower defence where the towers are playing cards. Line them up into poker hands and keep the thieves out of the vault. No sign-up." />
+  <link rel="canonical" href="https://thievery.co.uk/lockup" />
+  <meta property="og:site_name" content="Thievery" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Lockup · Thievery" />
+  <meta property="og:description" content="A tower defence where the towers are playing cards. Line them up into poker hands and keep the thieves out of the vault." />
+  <meta property="og:url" content="https://thievery.co.uk/lockup" />
+  <meta property="og:image" content="https://thievery.co.uk/og/lockup.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Lockup on Thievery: a tower defence where the towers are playing cards." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <script src="/lockup-rules.js" defer></script>
+  <script src="/lockup.js" defer></script>
+</head>
+<body>
+  {{bar:public:lockup}}
+
+  <!-- Lockup needs no account and keeps nothing on our side, so this page is
+       one of the plain ones in site.js and stays up in an outage. The rules
+       are public/lockup-rules.js and everything on the page is drawn by
+       public/lockup.js; the markup here is the frame it fills in. Every id and class is prefixed lk- so nothing of the
+       room's can meet the bar's or the base sheet's. -->
+  <main id="main" class="lk-main">
+    <h1 class="visually-hidden">Lockup</h1>
+
+    <section class="lk-table" aria-label="The table">
+      <div class="lk-hud">
+        <div><span>Wave</span><b id="lk-wave">1 / 30</b></div>
+        <div><span>Chips</span><b id="lk-chips" class="lk-gold">100</b></div>
+        <div><span>Cards</span><b id="lk-cards">12 / 12</b></div>
+      </div>
+      <!-- The board is artwork in the table's own colours, like the card
+           table, so it and the sheets laid over it stay dark on a light
+           page. -->
+      <div class="lk-boardwrap" id="lk-boardwrap" data-scheme="dark">
+        <canvas id="lk-board" aria-label="The board. Pick a card from your hand, then choose a spot beside the carpet."></canvas>
+        <div class="lk-overlay" id="lk-overlay"></div>
+      </div>
+    </section>
+
+    <aside class="lk-side" aria-label="Your hand and the wave">
+      <div class="lk-coach" id="lk-coach" hidden>
+        <p id="lk-coachtext" aria-live="polite"></p>
+        <button class="btn small" id="lk-coachskip" type="button">Skip tips</button>
+      </div>
+      <div class="lk-hand" id="lk-hand" aria-label="Your hand"></div>
+      <div class="lk-controls">
+        <button class="btn primary" id="lk-send" type="button">Send wave 1</button>
+        <button class="btn" id="lk-redeal" type="button">Redeal</button>
+        <button class="btn" id="lk-speed" type="button" aria-label="Game speed">1&times;</button>
+        <button class="btn" id="lk-pause" type="button">Pause</button>
+      </div>
+      <div class="lk-info" id="lk-info" aria-live="polite"></div>
+      <details class="lk-ref">
+        <summary>Hands</summary>
+        <p>Cards side by side in a row or column make a hand. Each card keeps its best one.</p>
+        <table>
+          <tr><th scope="row">Pair</th><td>+15% power</td></tr>
+          <tr><th scope="row">Two pair</th><td>+30% power</td></tr>
+          <tr><th scope="row">Three of a kind</th><td>+45% power</td></tr>
+          <tr><th scope="row">Straight, 3 to 5</th><td>+10% power, +20 to 40% reach</td></tr>
+          <tr><th scope="row">Flush, 3 to 5</th><td>+25 to 55% power</td></tr>
+          <tr><th scope="row">Full house</th><td>+80% power</td></tr>
+          <tr><th scope="row">Four of a kind</th><td>+100% power</td></tr>
+          <tr><th scope="row">Straight flush</th><td>+60 to 100% power, +30 to 50% reach</td></tr>
+        </table>
+        <p>Spades shoot far. Clubs hit hard up close. Hearts slow. Diamonds pay. Jokers are wild.</p>
+      </details>
+      <details class="lk-ref">
+        <summary>Face cards</summary>
+        <table>
+          <tr><th scope="row">Jack</th><td>Quick hands. Acts 35% faster.</td></tr>
+          <tr><th scope="row">Queen</th><td>Long sight. 20% more reach.</td></tr>
+          <tr><th scope="row">King</th><td>Court. Cards touching it gain 12% power.</td></tr>
+          <tr><th scope="row">Ace</th><td>Ace high. Ignores armour and names forgers.</td></tr>
+        </table>
+      </details>
+      <details class="lk-ref">
+        <summary>Thieves</summary>
+        <table>
+          <tr><th scope="row">Pickpocket</th><td>Quick and flimsy.</td></tr>
+          <tr><th scope="row">Bruiser</th><td>Slow, tough, shrugs off small hits.</td></tr>
+          <tr><th scope="row">Cat burglar</th><td>Cuts every corner.</td></tr>
+          <tr><th scope="row">Forger</th><td>Face down until a spade, joker or ace names it.</td></tr>
+          <tr><th scope="row">Lookout</th><td>Hurries along every thief near it.</td></tr>
+          <tr><th scope="row">Double act</th><td>Stop it and two pickpockets tumble out.</td></tr>
+          <tr><th scope="row">Mastermind</th><td>Every tenth wave. Takes two cards.</td></tr>
+        </table>
+      </details>
+      <button class="btn small lk-mute" id="lk-mute" type="button">Mute sound</button>
+    </aside>
+  </main>
+
+  {{foot}}
+</body>
+</html>

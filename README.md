@@ -25,6 +25,11 @@ Signing in changes exactly one thing at the card table: the rounds are added
 up afterwards. It changes nothing about how the game is played, and a round
 played signed out is recorded nowhere at all.
 
+**Lockup**, at <https://thievery.co.uk/lockup>, is a tower defence for one
+where the towers are playing cards: line them up into poker hands and keep
+the thieves out of the vault. Like the card game it needs no account, and it
+keeps nothing but your best wave, on your own device.
+
 ## The idea
 
 Half a deck of cards is dealt out face down into three to six *hands*. Each

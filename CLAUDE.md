@@ -7,13 +7,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm start              # serve on PORT (default 3000)
 npm run dev            # same, with --watch
-npm test               # all nine suites, in order; any failure stops the run
+npm test               # all ten suites, in order; any failure stops the run
 npm run test:source    # the source as bytes: no literal control characters
 npm run test:game      # the card game: real server, real clients, whole rounds played out
 npm run test:powerups  # the five/six-hand power-up rules, played against game.js directly
 npm run test:site      # the front hall, the addresses, and the lifetime record
 npm run test:battle    # the marker, a match played out, and the one rule about the back
 npm run test:switchhead # the shedding rules against shed.js, then a game over the socket
+npm run test:lockup    # Lockup's rules, run as the browser runs them, and whole games played out
 npm run test:flashcards # the flashcards room over HTTP
 npm run test:mindmaps  # the mind maps over HTTP: the tree check, the revisions, whose map
 npm run test:r2        # the storage layer, against a stub S3 client
@@ -60,6 +61,7 @@ One server, a hall and five rooms off it:
 | `/switchhead`, `/switchhead/ABCD` | `server/switchhead.js` | required |
 | `/mindmaps` | `server/mindmaps.js` | required |
 | `/gerrymander/` | static files out of `public/gerrymander/`, with a redirect from `/gerrymander` in `server/index.js` | never |
+| `/lockup` | `server/site.js` — one view, `server/views/lockup.html`; the game is `public/lockup-rules.js` and `public/lockup.{js,css}` | never |
 | `/about`, `/privacy` | `server/site.js` — plain pages, up even in an outage | never |
 | `/tools`, `/tools/<slug>` | `server/site.js` and `server/tools.js` — the tools index and any tool pages | never |
 | `/styleguide` | `server/site.js` — every token and component; not linked, `noindex` | never |
@@ -105,6 +107,50 @@ the game's) and not `prefs.js` (it would write over the game's own
 `data-motion`). `shell.css` therefore dresses the wordmark and the bar's
 icons itself. The game's source keeps its plain-element rules inside `#app`
 for the same reason, so the bar is never restyled by the game.
+
+**Lockup** (`server/views/lockup.html`; `public/lockup-rules.js`,
+`public/lockup.{js,css}`) is a tower
+defence where the towers are playing cards, and to the server it is a plain
+page: `site.js` lists it in `PLAIN_PAGES` beside About and Privacy, so it
+needs no account, reads nothing from the ledger and stays up in an outage.
+Unlike Gerrymander it is written here, as an ordinary view: the whole of
+`{{head:lockup}}`, `{{bar:public:lockup}}` and `{{foot}}`. Its link in the bar
+is a `site-extra` beside Gerrymander's, not a sixth tab: `site-extra-early`
+puts it in the bar whenever the bar is along the top (901px), and
+Gerrymander's joins it from 1361px.
+
+The game is two scripts. `public/lockup-rules.js` is the rules and never
+touches the page (`newGame`, `place`, `sendWave`, `step`); it is a plain
+script, not a module, and hangs what it offers on `globalThis.LockupRules`.
+`public/lockup.js` draws them. `test/lockup.test.js` runs the rules file as
+the browser does and plays whole games with it. Things that are easy to
+break:
+
+- **A card is lost only at the door.** A thief takes one from the vault and
+  walks back out; stopped, it drops the card where it stood, and the card
+  goes home after ten seconds unless another thief reaches it first.
+- **Hands are read along rows and columns**, over every stretch of two to
+  five neighbouring cards (`scoreGrid`), and a card keeps the best power and
+  the best reach it is offered. Jokers are tried as every card.
+- **One deck of fifty-four.** A card on the table is out of the deck until it
+  is sold, which is what makes four of a kind a real find.
+- **The numbers are in `CFG`**, and were set by playing the rules headless
+  (`window.lockup.rules` in the console, or the suite's `playOut`). Changing one changes the daily table
+  for everybody, since the day's deal is worked out from the UTC date and
+  nothing is stored.
+- **Everything the browser keeps is one entry**, `thievery-lockup`, listed on
+  `/privacy`; `test/site.test.js` reads the key out of the script and fails
+  if the privacy page does not name it.
+- **Its ids and classes are all `lk-`**, because the page loads `style.css`
+  and `controls.css` and must not meet their `.sheet` or `.controls`. The
+  board's wrapper carries `data-scheme="dark"`: the canvas is artwork in the
+  card table's colours and stays dark on a light page.
+- **The record is the page's word.** A finished game is posted to
+  `/api/site/lockup` as a number of waves, and `Stats.recordLockup` adds it
+  to `stats.lockup` (`games`, `wins`, `best`) for whoever is signed in; a
+  stranger gets a 401 and the page ignores it. Nothing checks the figure
+  beyond its range, which is why it is only ever shown to its owner, on
+  their own menu tile. Do not build a board out of it.
 
 **The flashcards room** (`server/flashcards.js`, `cards.js`, `trading.js`;
 `public/flashcards*.{js,css}`) is the opposite: real logins, and a document

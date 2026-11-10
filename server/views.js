@@ -56,6 +56,7 @@ export const ICONS = {
   members: '<circle cx="9" cy="9" r="3"/><circle cx="16.5" cy="10" r="2.25"/><path d="M3 19c.75-3 3-4.5 6-4.5s5.25 1.5 6 4.5M15 14.25c2.25 0 4.5 1.1 5.25 3.75"/>',
   tools: '<path d="M14.5 5.5a4 4 0 0 0-5 5L4 16l4 4 5.5-5.5a4 4 0 0 0 5-5l-2.5 2.5-2.5-.5-.5-2.5z"/>',
   gerrymander: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h6v4h10M10 4v6M14 14v6"/>',
+  lockup: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3M12 14.5v2"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
   share: '<path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12"/>',
@@ -104,7 +105,11 @@ export function bar(current = '', { signedIn = true, main = 'main' } = {}) {
   // Gerrymander is not a room (it is a static game with no account), so it is
   // not one of the five tabs. It is a sixth link outside the nav, shown only
   // where the bar has room for it, which leaves the phone's tab bar alone.
+  // Lockup is the same kind of thing (one page, no account) and gets the same
+  // kind of link, but it is in the bar whenever the bar is along the top:
+  // Gerrymander's waits until there is room for both.
   const extraHere = current === 'gerrymander' ? ' aria-current="page"' : '';
+  const lockupHere = current === 'lockup' ? ' aria-current="page"' : '';
   // The nav and the extra link are held together so a wide bar can centre
   // them as one row, on the page rather than in whatever room the account
   // button leaves. On a phone the holder steps aside (display: contents) and
@@ -113,6 +118,7 @@ export function bar(current = '', { signedIn = true, main = 'main' } = {}) {
     <nav class="menu-nav" aria-label="Rooms">
       ${links}
     </nav>
+    <a class="menu-nav-link site-extra site-extra-early" href="/lockup"${lockupHere}>${icon('lockup')}<span>Lockup</span></a>
     <a class="menu-nav-link site-extra" href="/gerrymander/"${extraHere}>${icon('gerrymander')}<span>Gerrymander</span></a>
     </div>`;
   if (!signedIn) {

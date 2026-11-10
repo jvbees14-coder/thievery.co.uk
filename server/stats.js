@@ -54,8 +54,21 @@ export function blank() {
     battle: battleBlank(),
     // --- and Switchhead, which is a third
     switchhead: switchBlank(),
+    // --- and Lockup, which is played alone
+    lockup: lockupBlank(),
   };
 }
+
+// Lockup is a game for one that runs entirely in the browser, so what is
+// kept here is what the page said happened and nothing checks it. That is
+// why it is a personal best, shown to its owner on their own menu, and never
+// a board anybody else's figure sits beside.
+const lockupBlank = () => ({
+  games: 0, // games played through to an end, won or lost
+  wins: 0,  // of those, the ones where the vault held for all thirty waves
+  best: 0,  // the most waves seen off in one game
+});
+export const LOCKUP_WAVES = 30;
 
 // The revision room's figures. Kept in their own object rather than spread
 // across the record above, because nothing here is comparable with anything
@@ -115,6 +128,7 @@ function fill(mine) {
   // fields it never knew about arrive at nought rather than undefined.
   mine.battle = { ...battleBlank(), ...(mine.battle || {}) };
   mine.switchhead = { ...switchBlank(), ...(mine.switchhead || {}) };
+  mine.lockup = { ...lockupBlank(), ...(mine.lockup || {}) };
   return mine;
 }
 
@@ -259,6 +273,23 @@ export function recordSwitchhead(userId, { won = false, head = false, players = 
 }
 
 /**
+ * A game of Lockup has ended. `waves` is how many were seen off, and a win is
+ * all of them. Like a battle, it moves the two dates and leaves the round
+ * counters alone.
+ */
+export function recordLockup(userId, { waves = 0 } = {}) {
+  if (!userId || !available()) return;
+  const mine = recordFor(userId);
+  const lk = mine.lockup;
+  lk.games += 1;
+  if (waves >= LOCKUP_WAVES) lk.wins += 1;
+  if (waves > lk.best) lk.best = waves;
+  if (!mine.first) mine.first = Date.now();
+  mine.last = Date.now();
+  touch();
+}
+
+/**
  * What the menu is told. A fresh account has never played anything, which is
  * a blank record rather than an absence: the page prints zeros and says so in
  * words, and has nothing to special-case.
@@ -304,6 +335,7 @@ export function forUser(userId) {
       winRate: mine.switchhead.games ? mine.switchhead.wins / mine.switchhead.games : 0,
       headRate: mine.switchhead.games ? mine.switchhead.heads / mine.switchhead.games : 0,
     },
+    lockup: { ...mine.lockup },
   };
 }
 

@@ -364,6 +364,39 @@ async function run() {
     assert.ok(res.html.includes('class="menu-nav-link site-extra" href="/gerrymander/"'), 'the bar does not link to Gerrymander');
   });
 
+  // Lockup is one view and two files: no login, no API, nothing kept on our
+  // side. It is a plain page to the server, so it gets the whole of the site's
+  // head, the public bar with itself marked, and the footer.
+  await check('/lockup serves the game to anybody, with the bar and Lockup marked', async () => {
+    const res = await stranger.page('/lockup');
+    assert.equal(res.status, 200);
+    assert.ok(res.html.includes('id="lk-board"') && res.html.includes('<title>Lockup · Thievery</title>'), 'expected the game page');
+    assert.ok(res.html.includes('class="site-bar"') && res.html.includes('class="site-foot"'), '/lockup has no bar or no footer');
+    assert.ok(res.html.includes('href="/lockup" aria-current="page"'), '/lockup does not mark Lockup as here');
+    assert.ok(!res.html.includes('id="who"'), '/lockup has an account menu, and the game has no account');
+    for (const [where, type] of [['/lockup-rules.js', 'text/javascript'], ['/lockup.js', 'text/javascript'], ['/lockup.css', 'text/css']]) {
+      assert.ok(new RegExp(`"${where.replace('.', '\\.')}\\?v=[0-9a-f]{10}"`).test(res.html), `the page does not name a versioned ${where}`);
+      const file = await fetch(`http://localhost:${PORT}${where}`);
+      assert.equal(file.status, 200, `${where} should be served`);
+      assert.ok((file.headers.get('content-type') || '').startsWith(type), `${where} came back as ${file.headers.get('content-type')}`);
+      await file.arrayBuffer();
+    }
+  });
+
+  await check('the bar links to Lockup, and the door lists it nowhere else', async () => {
+    const res = await stranger.page('/');
+    assert.equal(res.html.split('href="/lockup"').length - 1, 1, 'expected exactly the bar link');
+    assert.ok(res.html.includes('class="menu-nav-link site-extra site-extra-early" href="/lockup"'), 'the bar does not link to Lockup');
+  });
+
+  // Whatever the game keeps in the browser has to be on the privacy page.
+  await check('the one thing Lockup keeps in the browser is listed on /privacy', async () => {
+    const script = await (await fetch(`http://localhost:${PORT}/lockup.js`)).text();
+    const key = (script.match(/STORE_KEY = '([^']+)'/) || [])[1];
+    assert.ok(key, 'lockup.js should name its storage key');
+    assert.ok((await stranger.page('/privacy')).html.includes(`<code>${key}</code>`), `/privacy does not list ${key}`);
+  });
+
   await check('the game page by its file name is sent to /cards', async () => {
     const res = await stranger.page('/cards.html');
     assert.equal(res.status, 301);
@@ -373,7 +406,7 @@ async function run() {
   // The views and the game page are annotated for whoever maintains them.
   // None of that is for the visitor, so none of it may reach a browser.
   await check('no page is served with its comments or its placeholders in it', async () => {
-    for (const where of ['/', '/cards', '/cards/ABCD', '/flashcards', '/battle', '/switchhead', '/mindmaps', '/about', '/privacy', '/gerrymander/', '/nowhere']) {
+    for (const where of ['/', '/cards', '/cards/ABCD', '/flashcards', '/battle', '/switchhead', '/mindmaps', '/about', '/privacy', '/gerrymander/', '/lockup', '/nowhere']) {
       const { html } = await stranger.page(where);
       assert.ok(!html.includes('<!--'), `${where} was served with a comment in it`);
       assert.ok(!html.includes('{{'), `${where} was served with a placeholder in it`);
@@ -449,6 +482,7 @@ async function run() {
     }
     assert.ok(!res.html.includes('<!--') && !res.html.includes('{{'), 'the menu was served unrendered');
     assert.ok(res.html.includes('href="/gerrymander/"'), 'the menu does not link to Gerrymander');
+    assert.ok(res.html.includes('id="tile-lockup" href="/lockup"'), 'the menu does not link to Lockup');
     assert.ok(!res.html.includes('Open an account'), 'the door was served to a member');
   });
 
@@ -474,6 +508,26 @@ async function run() {
   await check('the display name can be changed', async () => {
     const body = ok(await alice.call('account', { method: 'POST', body: { displayName: 'Alice at the table' } }), 'account');
     assert.equal(body.user.displayName, 'Alice at the table');
+  });
+
+  // Lockup is played in the browser, so its record is what the page reports:
+  // a finished game and how many waves it saw off. The best is kept, a worse
+  // game never lowers it, and a figure the game could not reach is refused.
+  await check('a finished game of Lockup is added to the record', async () => {
+    assert.equal(ok(await alice.call('me'), 'me').play.lockup.games, 0, 'a new account has played no Lockup');
+    assert.equal(ok(await alice.call('lockup', { method: 'POST', body: { waves: 12 } }), 'lockup').lockup.best, 12);
+    const after = ok(await alice.call('lockup', { method: 'POST', body: { waves: 4 } }), 'lockup').lockup;
+    assert.deepEqual(after, { games: 2, wins: 0, best: 12 });
+    assert.equal(ok(await alice.call('lockup', { method: 'POST', body: { waves: 30 } }), 'lockup').lockup.wins, 1, 'thirty waves is a win');
+    assert.equal(ok(await alice.call('me'), 'me').play.lockup.best, 30, 'the menu is not told the best');
+  });
+
+  await check('Lockup refuses a figure the game could not reach, and a stranger', async () => {
+    for (const waves of [31, -1, 2.5, '12']) {
+      assert.equal((await alice.call('lockup', { method: 'POST', body: { waves } })).status, 400, `waves ${JSON.stringify(waves)} was accepted`);
+    }
+    assert.equal((await visitor().call('lockup', { method: 'POST', body: { waves: 5 } })).status, 401);
+    assert.equal(ok(await alice.call('me'), 'me').play.lockup.games, 3, 'a refused figure was counted');
   });
 
   await check('changing a password needs the old one', async () => {

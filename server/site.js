@@ -41,7 +41,7 @@ import * as Mindmaps from './mindmaps.js';
 import * as Maps from './maps.js';
 import * as Daily from './daily.js';
 import * as Decks from './decks.js';
-import { send, fail, originOk, currentUser, requireUser } from './plumbing.js';
+import { send, fail, originOk, currentUser, requireUser, readBody } from './plumbing.js';
 import { readView, render } from './views.js';
 import * as Tools from './tools.js';
 
@@ -58,12 +58,17 @@ const views = {
   closed: readView('menu-closed.html'),
   about: readView('about.html'),
   privacy: readView('privacy.html'),
+  lockup: readView('lockup.html'),
   tools: Tools.indexPage(),
   styleguide: readView('styleguide.html'),
 };
 const PLAIN_PAGES = {
   '/about': views.about,
   '/privacy': views.privacy,
+  // Lockup is a game rather than a page of words, but it is the same to the
+  // server: one view, no account, nothing read from the ledger. All of it
+  // runs in the browser out of public/lockup.js.
+  '/lockup': views.lockup,
   '/tools': views.tools,
   '/styleguide': views.styleguide,
 };
@@ -326,6 +331,20 @@ export function handle(req, res, url) {
       if (head === 'account' && method === 'POST') return Door.account(req, res, snapshot);
       if (head === 'account' && method === 'DELETE') return Flashcards.deleteOwnAccount(req, res);
       if (head === 'me' && method === 'GET') return send(res, 200, snapshot(requireUser(req)));
+
+      // A game of Lockup has ended in somebody's browser, and they are signed
+      // in. The figure is the page's word for it, so the only thing checked
+      // is that it is a figure the game could have reached; see stats.js for
+      // why that is enough for what it is used for.
+      if (head === 'lockup' && method === 'POST') {
+        const user = requireUser(req);
+        const { waves } = await readBody(req);
+        if (!Number.isInteger(waves) || waves < 0 || waves > Stats.LOCKUP_WAVES) {
+          return send(res, 400, { error: `Waves must be a whole number from 0 to ${Stats.LOCKUP_WAVES}.` });
+        }
+        Stats.recordLockup(user.id, { waves });
+        return send(res, 200, { lockup: Stats.forUser(user.id).lockup });
+      }
 
       // The members panel. Accounts belong to the whole site rather than to
       // the flashcards room, so the admin can reach them from the hall; the

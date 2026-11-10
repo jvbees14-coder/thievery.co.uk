@@ -123,6 +123,7 @@
 .tile-switchhead .icon { color: var(--team-b); }
 .tile-mindmaps .icon { color: var(--mm-c5); }
 .tile-gerrymander .icon { color: var(--mm-c4); }
+.tile-lockup .icon { color: var(--r-legendary); }
 
 /* A room that cannot be reached is still drawn, dimmed, and says why in its
    own figure line. Hiding it would leave a hole nobody could account for. */
@@ -301,7 +302,7 @@
 
 /* The other rooms, as cards on the table, each with a little picture of
    itself drawn in the colours its room already uses. */
-.landing-rooms { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--space-5); }
+.landing-rooms { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-5); }
 .room-card {
   display: flex; flex-direction: column; gap: var(--space-3);
   padding: var(--space-5); border-radius: var(--radius-l);
@@ -353,6 +354,14 @@
 .art-map .d1 { background: var(--mm-c5); }
 .art-map .d2 { background: var(--mm-c3); }
 .art-map .d3 { background: var(--mm-c4); }
+/* Lockup: three cards in a line, with the band a made hand is drawn on. */
+.art-lockup { display: flex; align-items: center; justify-content: center; }
+.art-run { display: flex; gap: var(--space-3); padding: var(--space-3) var(--space-5); border-radius: var(--radius-pill); background: var(--accent-tint); box-shadow: inset 0 0 0 1px var(--accent-edge); }
+.art-run span {
+  display: grid; place-items: center; width: 36px; height: 50px; border-radius: var(--radius-s);
+  background: var(--stock); color: var(--stock-ink); border: 1px solid var(--stock-edge);
+  font-weight: 700; font-size: var(--text-subhead); box-shadow: var(--shadow-1);
+}
 
 /* The way in. A card back lies under the corner of the band; the door card
    is the flashcards room's, its two tabs drawn as a segmented control. */
