@@ -57,6 +57,7 @@ export const ICONS = {
   tools: '<path d="M14.5 5.5a4 4 0 0 0-5 5L4 16l4 4 5.5-5.5a4 4 0 0 0 5-5l-2.5 2.5-2.5-.5-.5-2.5z"/>',
   gerrymander: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h6v4h10M10 4v6M14 14v6"/>',
   lockup: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3M12 14.5v2"/>',
+  more: '<circle cx="5.5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="18.5" cy="12" r="1.25"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
   share: '<path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12"/>',
@@ -74,10 +75,15 @@ export function icon(name, cls = 'icon') {
 
 // --- the rooms --------------------------------------------------------------
 
-// The rooms the bar links to, in the order it lists them. Five, and no more:
-// on a phone they are the tab bar, and a sixth would be a "More". The long
-// name is for a wide screen and the short one for a tab, which has room for
-// one word under its icon.
+// The rooms the bar links to, in the order it lists them. The long name is
+// for a wide screen and the short one for a tab, which has room for one word
+// under its icon.
+//
+// A phone's tab bar holds five things and five words is already a squeeze,
+// so once there was a sixth place to go the fifth tab became "More": the
+// first four rooms keep a tab each, and everything in MORE is a row in the
+// sheet that tab opens. Mind maps is a room on a wide bar and a row on a
+// phone; Lockup, Gerrymander and the tools are rows that were never tabs.
 const ROOMS = [
   { id: 'cards', href: '/cards', name: 'Play Thievery', short: 'Play' },
   { id: 'flashcards', href: '/flashcards', name: 'Flashcards', short: 'Flashcards' },
@@ -86,9 +92,21 @@ const ROOMS = [
   { id: 'mindmaps', href: '/mindmaps', name: 'Mind maps', short: 'Maps' },
 ];
 
+const MORE = [
+  { id: 'mindmaps', href: '/mindmaps', name: 'Mind maps', note: 'One idea in the middle, and everything branching off it' },
+  { id: 'lockup', href: '/lockup', name: 'Lockup', note: 'Keep the thieves out of the vault' },
+  { id: 'gerrymander', href: '/gerrymander/', name: 'Gerrymander', note: 'Draw the map, win the seats' },
+  { id: 'tools', href: '/tools', name: 'Tools', note: 'Small things that each do one job' },
+];
+
 export function bar(current = '', { signedIn = true, main = 'main' } = {}) {
+  const LENS = '<span class="menu-nav-lens" aria-hidden="true"></span>';
+  const moreHere = MORE.some((m) => m.id === current);
   const links = ROOMS.map((r) => {
     const here = r.id === current ? ' aria-current="page"' : '';
+    // A room that is a row under More on a phone has no tab there, so it
+    // carries no lens either: the lens belongs to the More tab instead.
+    const tab = !MORE.some((m) => m.id === r.id);
     const label =
       r.name === r.short
         ? `<span>${r.name}</span>`
@@ -97,9 +115,20 @@ export function bar(current = '', { signedIn = true, main = 'main' } = {}) {
     // as wide as the word under it rather than a fifth of the bar. The lens
     // is an element of its own so it can glide to the next tab without
     // stretching the icon and the word along with it.
-    const lens = here ? '<span class="menu-nav-lens" aria-hidden="true"></span>' : '';
-    return `<a class="menu-nav-link" id="nav-${r.id}" href="${r.href}"${here}><span class="menu-nav-face">${lens}${icon(r.id)}${label}</span></a>`;
-  }).join('\n      ');
+    const lens = here && tab ? LENS : '';
+    return `<a class="menu-nav-link${tab ? '' : ' menu-nav-wide'}" id="nav-${r.id}" href="${r.href}"${here}><span class="menu-nav-face">${lens}${icon(r.id)}${label}</span></a>`;
+  }).concat(
+    // The phone's fifth tab. It is a link to the sheet so that it still does
+    // something with scripts off (the sheet is on the page), and shell.js
+    // opens the sheet properly when they are on.
+    `<a class="menu-nav-link menu-nav-more" id="nav-more" href="#more-sheet" role="button" aria-haspopup="dialog" aria-controls="more-sheet"${moreHere ? ' aria-current="page"' : ''}><span class="menu-nav-face">${moreHere ? LENS : ''}${icon('more')}<span>More</span></span></a>`
+  ).join('\n      ');
+  const sheet = `<dialog class="sheet more-sheet" id="more-sheet" aria-labelledby="more-title">
+    <div class="sheet-head"><h2 id="more-title">More</h2><button class="sheet-close" type="button" data-close-sheet aria-label="Close">${icon('close')}</button></div>
+    <nav class="more-list" aria-label="More">
+      ${MORE.map((m) => `<a href="${m.href}"${m.id === current ? ' aria-current="page"' : ''}>${icon(m.id)}<span><b>${m.name}</b><small>${m.note}</small></span></a>`).join('\n      ')}
+    </nav>
+  </dialog>`;
   const skip = `<a class="skip-link" href="#${main}">Skip to content</a>`;
   const mark = '<a class="site-mark wordmark" href="/">Thievery<em>.co.uk</em></a>';
   // Gerrymander is not a room (it is a static game with no account), so it is
@@ -126,7 +155,8 @@ export function bar(current = '', { signedIn = true, main = 'main' } = {}) {
   <header class="site-bar">
     ${mark}
     ${nav}
-  </header>`;
+  </header>
+  ${sheet}`;
   }
   return `${skip}
   <header class="site-bar">
@@ -143,7 +173,8 @@ export function bar(current = '', { signedIn = true, main = 'main' } = {}) {
         <button data-act="signout" type="button" role="menuitem">Sign out</button>
       </div>
     </div>
-  </header>`;
+  </header>
+  ${sheet}`;
 }
 
 // The last line changes on every page load, from a short list. It is the one

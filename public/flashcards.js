@@ -253,6 +253,24 @@
       <div class="fc-stat"><b>${s.worth.toLocaleString('en-GB')}</b><span>Total value</span></div>
       <div class="fc-stat"><b>${state.pool.filter((p) => p.mine).length}</b><span>On offer</span></div>
       ${rarityStats}`;
+    drawReview();
+  }
+
+  // What the schedule says about today. Battle is where a card is answered,
+  // so the button goes there, on a solo run of exactly the cards that are due.
+  function drawReview() {
+    const rv = state.review;
+    const el = $('#review');
+    el.hidden = !rv || !state.stats.count;
+    if (el.hidden) return;
+    const when = (iso) => new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'UTC' });
+    if (rv.due) {
+      const fresh = rv.fresh ? ` (${rv.fresh} new)` : '';
+      el.innerHTML = `<p><b>${rv.due}</b> ${rv.due === 1 ? 'card is' : 'cards are'} due for review today${fresh}.</p>
+        <a class="btn primary" href="/battle?deck=%40due">Review due cards</a>`;
+    } else {
+      el.innerHTML = `<p>Nothing is due for review today.${rv.next ? ` The next card comes round on ${when(rv.next)}.` : ''}${rv.waiting ? ` ${rv.waiting} new ${rv.waiting === 1 ? 'card is' : 'cards are'} waiting for tomorrow.` : ''}</p>`;
+    }
   }
 
   function visibleCards() {
@@ -492,6 +510,7 @@
     fillDeckSelect($('#f-deck'), '<option value="">No deck</option>');
     $('#f-deck-hint').hidden = decks.length > 0;
     fillDeckSelect($('#filter-deck'), '<option value="">Every deck</option><option value="-">Not in a deck</option>');
+    fillDeckSelect($('#import-deck'), '<option value="">No deck</option>');
   }
 
   const renameDeck = guard(async (id) => {
@@ -1227,6 +1246,26 @@
     const input = form.querySelector('input');
     state = await api('decks', { method: 'POST', body: { name: input.value, parentId: form.dataset.parent } });
     drawAll();
+  }));
+
+  // Cards from a file. The file is read here and sent as text; what is and
+  // is not a card is the server's to say, a line at a time.
+  $('#import').addEventListener('submit', guard(async (ev) => {
+    ev.preventDefault();
+    const file = $('#import-file').files[0];
+    if (!file) throw new Error('Choose a file first.');
+    if (file.size > 60000) throw new Error('That file is too big. Bring up to 200 cards at a time.');
+    const text = await file.text();
+    const result = await api('import', { method: 'POST', body: { text, deck: $('#import-deck').value } });
+    state = result;
+    drawAll();
+    $('#import-file').value = '';
+    const out = $('#import-result');
+    const shown = result.skipped.slice(0, 12);
+    out.hidden = false;
+    out.innerHTML = `<p><b>${plural(result.made, 'card', 'cards')} made.</b>${result.skipped.length ? ` ${plural(result.skipped.length, 'line was', 'lines were')} skipped:` : ''}</p>` +
+      (shown.length ? `<ul>${shown.map((s) => `<li>Line ${s.line}${s.front ? ` (${esc(s.front)})` : ''}: ${esc(s.reason)}</li>`).join('')}</ul>` : '') +
+      (result.skipped.length > shown.length ? `<p>And ${result.skipped.length - shown.length} more.</p>` : '');
   }));
 
   // The make form.

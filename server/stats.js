@@ -64,11 +64,16 @@ export function blank() {
 // why it is a personal best, shown to its owner on their own menu, and never
 // a board anybody else's figure sits beside.
 const lockupBlank = () => ({
-  games: 0, // games played through to an end, won or lost
-  wins: 0,  // of those, the ones where the vault held for all thirty waves
-  best: 0,  // the most waves seen off in one game
+  games: 0,   // games played through to an end, won or lost
+  wins: 0,    // of those, the ones where the vault held for all thirty waves
+  best: 0,    // the most waves seen off in one game
+  stopped: 0, // thieves stopped, over every game
+  dailies: 0, // daily tables finished and played back by the server
+  rooms: {},  // room id -> { games, best }
 });
 export const LOCKUP_WAVES = 30;
+// A game played on past thirty can go a long way, but not for ever.
+export const LOCKUP_MAX_WAVES = 999;
 
 // The revision room's figures. Kept in their own object rather than spread
 // across the record above, because nothing here is comparable with anything
@@ -277,13 +282,20 @@ export function recordSwitchhead(userId, { won = false, head = false, players = 
  * all of them. Like a battle, it moves the two dates and leaves the round
  * counters alone.
  */
-export function recordLockup(userId, { waves = 0 } = {}) {
+export function recordLockup(userId, { waves = 0, room = '', stopped = 0, daily = false } = {}) {
   if (!userId || !available()) return;
   const mine = recordFor(userId);
   const lk = mine.lockup;
   lk.games += 1;
   if (waves >= LOCKUP_WAVES) lk.wins += 1;
   if (waves > lk.best) lk.best = waves;
+  lk.stopped += stopped;
+  if (daily) lk.dailies += 1;
+  if (room) {
+    const r = (lk.rooms[room] ??= { games: 0, best: 0 });
+    r.games += 1;
+    if (waves > r.best) r.best = waves;
+  }
   if (!mine.first) mine.first = Date.now();
   mine.last = Date.now();
   touch();
@@ -335,7 +347,7 @@ export function forUser(userId) {
       winRate: mine.switchhead.games ? mine.switchhead.wins / mine.switchhead.games : 0,
       headRate: mine.switchhead.games ? mine.switchhead.heads / mine.switchhead.games : 0,
     },
-    lockup: { ...mine.lockup },
+    lockup: { ...mine.lockup, winRate: mine.lockup.games ? mine.lockup.wins / mine.lockup.games : 0 },
   };
 }
 

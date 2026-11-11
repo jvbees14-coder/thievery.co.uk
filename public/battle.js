@@ -296,16 +296,17 @@
       const decks = s.yourDecks || [];
       deckSel.innerHTML =
         '<option value="">All your flashcards</option>' +
+        `<option value="@due">Due today (${s.yourDue || 0})</option>` +
         decks.map((d) => `<option value="${esc(d.id)}">${esc(d.name)} (${d.count})</option>`).join('');
       deckSel.value = s.ownDeck || '';
       const deck = decks.find((d) => d.id === s.ownDeck);
       subSel.innerHTML =
-        `<option value="">${deck ? 'All flashcards in this deck' : 'Pick a deck first'}</option>` +
+        `<option value="">${deck ? 'All flashcards in this deck' : s.ownDeck === '@due' ? 'Every card that is due' : 'Pick a deck first'}</option>` +
         (deck ? deck.subs.map((x) => `<option value="${esc(x.id)}">${esc(x.name)} (${x.count})</option>`).join('') : '');
       subSel.value = s.ownSub || '';
       deckSel.disabled = false;
       subSel.disabled = !deck || !deck.subs.length;
-      if (!decks.length) {
+      if (!decks.length && s.ownDeck !== '@due') {
         $('#own-note').hidden = false;
         $('#own-note').innerHTML = 'You can sort your cards into decks in <a class="linkish" href="/flashcards">Flashcards</a>.';
       }

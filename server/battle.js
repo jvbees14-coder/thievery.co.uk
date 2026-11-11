@@ -81,6 +81,7 @@ import * as Sections from './sections.js';
 import * as Decks from './decks.js';
 import * as Daily from './daily.js';
 import * as Grade from './grade.js';
+import * as Review from './review.js';
 import * as Stats from './stats.js';
 import { available } from './store.js';
 import { currentUser } from './plumbing.js';
@@ -274,6 +275,10 @@ function pick(list, n) {
 // line out of a hand-written deck, or a row of one of the MMLU sets.
 //
 // A member's flashcard is always `text`: you write a back, not four options.
+//
+// `cardId` is which flashcard it was, kept only for a member's own, so that
+// an owner's answer can be put towards when the card is next due (review.js).
+// It never leaves the room: viewFor names every field it sends.
 const asCard = (c, ownerId = null, ownerName = null) => ({
   kind: 'text',
   front: String(c.front || ''),
@@ -281,7 +286,13 @@ const asCard = (c, ownerId = null, ownerName = null) => ({
   hint: String(c.hint || ''),
   ownerId,
   ownerName,
+  cardId: ownerId && c.id ? c.id : null,
 });
+
+// What a solo room's deck is set to when it is not a deck at all but
+// whatever the schedule says is due today. It cannot be a deck's id: those
+// are random hex, and this is not.
+export const DUE = '@due';
 
 /**
  * A four-option card as a match holds it.
@@ -353,13 +364,20 @@ function dealFrom(room, people) {
   // Members' own cards. Everybody's collection is read first, so that a
   // player with nothing in theirs is named rather than silently contributing
   // none and losing a duel they never had a card in.
-  const narrowed = room.mode === 'solo' && room.ownDeck;
+  const dueOnly = room.mode === 'solo' && room.ownDeck === DUE;
+  const narrowed = room.mode === 'solo' && room.ownDeck && !dueOnly;
   const holdings = people.map((p) => {
-    const owned = !p.userId ? [] : narrowed ? Sections.cardsIn(p.userId, room.ownDeck, room.ownSub) : Cards.cardsOf(p.userId);
-    return { player: p, cards: shuffled(owned.filter((c) => c.front && c.back)) };
+    const all = !p.userId ? [] : narrowed ? Sections.cardsIn(p.userId, room.ownDeck, room.ownSub) : Cards.cardsOf(p.userId);
+    // The due cards come in the order they are owed, longest overdue first,
+    // so a short run takes the ones that have waited longest.
+    const owned = dueOnly ? Review.due(p.userId, all) : shuffled(all);
+    return { player: p, cards: owned.filter((c) => c.front && c.back) };
   });
 
   const empty = holdings.filter((h) => !h.cards.length);
+  if (dueOnly && empty.length) {
+    throw new Error('Nothing is due today. Test yourself on a deck instead, or come back tomorrow.');
+  }
   if (narrowed && empty.length) {
     throw new Error(room.ownSub ? 'That sub-deck has no cards in it yet.' : 'That deck has no cards in it yet.');
   }
@@ -483,6 +501,17 @@ function closeCard(room) {
     if (!inAt(room, p, m.at)) continue;
     if (p.answers[m.at]) continue;
     p.answers[m.at] = markOf(room, '', card, null);
+  }
+  // A member answering their own flashcard has told the schedule something:
+  // how well they knew it today. Only the owner's answer counts, because the
+  // schedule is theirs, and not on a run back over the misses, where the
+  // answer was on screen a minute ago.
+  if (card.cardId && !m.retry) {
+    for (const p of room.players) {
+      if (!inAt(room, p, m.at) || !p.userId || p.userId !== card.ownerId) continue;
+      const points = p.answers[m.at].points;
+      keepCounting(() => Review.record(p.userId, card.cardId, points));
+    }
   }
   // Sudden death is decided here, on the final marks, and not when an answer
   // comes in: a card is only settled once it is closed.
@@ -692,11 +721,13 @@ export function viewFor(room, player) {
     ownDeck: room.ownDeck,
     ownSub: room.ownSub,
     // Their names, for everybody else in the room, who cannot see the host's decks.
-    ownDeckName: (room.ownDeck && Sections.byId(room.ownDeck)?.name) || '',
+    ownDeckName: room.ownDeck === DUE ? 'Cards due today' : (room.ownDeck && Sections.byId(room.ownDeck)?.name) || '',
     ownSubName: (room.ownSub && Sections.byId(room.ownSub)?.name) || '',
     // The viewer's own decks, for the lobby's pickers. Names and counts only.
     // Sent in the lobby and not during a match, where nothing reads them.
     yourDecks: room.match ? null : player.userId ? Sections.listFor(player.userId) : [],
+    // And how many of the viewer's cards the schedule says are due today.
+    yourDue: room.match || !player.userId ? 0 : Review.summary(player.userId, Cards.cardsOf(player.userId)).due,
     pass: PASS,
     // While the room is on the daily deck: which day, which deck, and the
     // board as it stands, so the result screen can say where the run landed.
@@ -1046,7 +1077,7 @@ function settings(room, player, msg) {
   // new deck starts on all of itself.
   if (msg.ownDeck !== undefined) {
     const id = String(msg.ownDeck || '');
-    if (id) {
+    if (id && id !== DUE) {
       const deck = Sections.own(player.userId, id);
       if (deck.parentId) throw new Error('That is a sub-deck, not a deck.');
     }

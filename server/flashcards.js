@@ -24,6 +24,9 @@ import * as Trading from './trading.js';
 import * as Sections from './sections.js';
 import * as Maps from './maps.js';
 import * as Daily from './daily.js';
+import * as Lockup from './lockup.js';
+import * as Review from './review.js';
+import * as Porting from './porting.js';
 import * as Door from './door.js';
 import * as Stats from './stats.js';
 import { data, touch } from './store.js';
@@ -81,6 +84,9 @@ function collectionFor(user) {
     cards: cards.map((c) => ({ ...Cards.publicCard(c, user.id), deck: Sections.sectionOf(c)?.id || null })),
     decks: Sections.listFor(user.id),
     stats: { count: cards.length, worth, byRarity, limit: Cards.CARDS_PER_USER },
+    // What the schedule makes of them today: how many are due, and when the
+    // next ones come round (review.js).
+    review: Review.summary(user.id, cards),
   };
 }
 
@@ -143,6 +149,91 @@ async function handleEditCard(req, res, id) {
   Cards.editCard(card, body);
   if (body.deck !== undefined) Sections.file(user, card, body.deck);
   send(res, 200, { card: { ...Cards.publicCard(card, user.id), deck: Sections.sectionOf(card)?.id || null }, ...snapshot(user) });
+}
+
+// --- in and out, as a file ---------------------------------------------------
+
+// A member's cards as a file to keep: CSV, which comes back in whole, or the
+// tab-separated text Anki imports (porting.js). Oldest first, so the file
+// reads in the order the cards were written.
+function handleExport(req, res, url) {
+  const user = requireUser(req);
+  const anki = url.searchParams.get('format') === 'anki';
+  const rows = Cards.cardsOf(user.id)
+    .sort((a, b) => a.created - b.created)
+    .map((c) => {
+      const s = Sections.sectionOf(c);
+      const parent = s && s.parentId ? Sections.byId(s.parentId) : null;
+      return {
+        front: c.front,
+        back: c.back,
+        hint: c.hint || '',
+        category: c.category || '',
+        deck: parent ? parent.name : s ? s.name : '',
+        sub: parent ? s.name : '',
+      };
+    });
+  const day = new Date().toISOString().slice(0, 10);
+  res.writeHead(200, {
+    'Content-Type': `${anki ? 'text/plain' : 'text/csv'}; charset=utf-8`,
+    'Content-Disposition': `attachment; filename="thievery-flashcards-${day}.${anki ? 'txt' : 'csv'}"`,
+    'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff',
+  });
+  // The mark at the front of the CSV is what tells a spreadsheet the file
+  // is UTF-8 rather than whatever it would otherwise guess.
+  res.end(anki ? Porting.toAnki(rows) : '\uFEFF' + Porting.toCsv(rows));
+}
+
+// Cards brought in from a file. Every row goes through createCard, exactly
+// as a card typed into the form does, so each is appraised, rolled and
+// counted against the collection's limit like any other. A row that cannot
+// be a card is skipped and said, with its line, and the rest still come in:
+// one bad line in two hundred should not cost the other hundred and
+// ninety-nine. A row whose front and back the member already holds is
+// skipped too, so the same file brought twice is not the collection doubled.
+async function handleImport(req, res) {
+  const user = requireUser(req);
+  const body = await readBody(req);
+  if (body.deck) Sections.own(user.id, body.deck);
+  const rows = Porting.parse(body.text);
+
+  const same = (front, back) => `${front}\u001f${back}`.toLowerCase();
+  const held = new Set(Cards.cardsOf(user.id).map((c) => same(c.front, c.back)));
+
+  // A row that names a deck goes in it, and the deck is made if it is not
+  // there. Names are matched as the member would read them: case aside.
+  const made = new Map();
+  const sectionNamed = (name, parentId) => {
+    const key = `${parentId || ''}/${name.toLowerCase()}`;
+    if (made.has(key)) return made.get(key);
+    const found = Sections.ofUser(user.id).find((s) => (s.parentId || null) === parentId && s.name.toLowerCase() === name.toLowerCase());
+    const section = found || Sections.create(user, { name, parentId });
+    made.set(key, section);
+    return section;
+  };
+  const whereFor = (row) => {
+    if (!row.deck) return body.deck || '';
+    const deck = sectionNamed(row.deck, null);
+    return row.sub ? sectionNamed(row.sub, deck.id).id : deck.id;
+  };
+
+  let count = 0;
+  const skipped = [];
+  for (const row of rows) {
+    try {
+      if (!row.front || !row.back) throw new Error('It needs a front and a back.');
+      if (held.has(same(row.front, row.back))) throw new Error('You already have this card.');
+      const where = whereFor(row);
+      const card = Cards.createCard(user, { front: row.front, back: row.back, hint: row.hint, category: row.category });
+      if (where) Sections.file(user, card, where);
+      held.add(same(card.front, card.back));
+      count += 1;
+    } catch (err) {
+      skipped.push({ line: row.line, front: row.front.slice(0, 60), reason: err.status === 400 || !err.status ? err.message : 'It could not be made.' });
+    }
+  }
+  send(res, 200, { made: count, skipped, ...snapshot(user) });
 }
 
 // --- decks and sub-decks ----------------------------------------------------
@@ -330,6 +421,8 @@ function removeAccount(user) {
   // not leave a row behind keyed to an id nothing will ever look up again.
   delete data().stats[user.id];
   Daily.removeAllFor(user.id);
+  Lockup.removeAllFor(user.id);
+  Review.removeAllFor(user.id);
   Sections.removeAllFor(user.id);
   Maps.removeAllFor(user.id);
   touch();
@@ -577,6 +670,8 @@ export function handle(req, res, url) {
       if (head === 'cards' && a && method === 'DELETE') return handleDeleteCard(req, res, a);
 
       // --- a member's own decks and sub-decks
+      if (head === 'export' && method === 'GET') return handleExport(req, res, url);
+      if (head === 'import' && method === 'POST') return handleImport(req, res);
       if (head === 'decks' && !a && method === 'POST') return handleCreateDeck(req, res);
       if (head === 'decks' && a && method === 'POST') return handleRenameDeck(req, res, a);
       if (head === 'decks' && a && method === 'DELETE') return handleDeleteDeck(req, res, a);

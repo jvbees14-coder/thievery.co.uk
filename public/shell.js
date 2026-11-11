@@ -206,7 +206,22 @@
   var nav = document.querySelector('.menu-nav');
   var narrow = window.matchMedia('(max-width: 900px)');
   if (nav) {
-    var tabs = Array.prototype.slice.call(nav.querySelectorAll('.menu-nav-link'));
+    // Only the tabs that are on show: on a phone a room under More has a
+    // link in the bar's markup and no tab, and it must not be slid onto.
+    var every = Array.prototype.slice.call(nav.querySelectorAll('.menu-nav-link'));
+    var shown = function (tab) { return tab.getClientRects().length > 0; };
+    var tabs = every.filter(shown);
+    // More opens a sheet rather than a page.
+    var moreTab = document.getElementById('nav-more');
+    var moreSheet = document.getElementById('more-sheet');
+    var openMore = function () { if (moreSheet && !moreSheet.open && moreSheet.showModal) moreSheet.showModal(); };
+    if (moreTab) {
+      moreTab.addEventListener('click', function (ev) {
+        if (!moreSheet || !moreSheet.showModal) return;
+        ev.preventDefault();
+        openMore();
+      });
+    }
     var home = nav.querySelector('.menu-nav-lens');
     var homeFace = home ? home.parentNode : null;
     var slide = null;
@@ -298,7 +313,10 @@
       var f = faceOf(s.over).getBoundingClientRect();
       place(s.lens, f.left + f.width / 2, s.over);
       glint(f.left + f.width / 2);
-      if (s.over.getAttribute('aria-current') === 'page') {
+      if (s.over === moreTab) {
+        setTimeout(function () { putBack(s.lens); }, 260);
+        openMore();
+      } else if (s.over.getAttribute('aria-current') === 'page') {
         setTimeout(function () { putBack(s.lens); }, 260);
       } else {
         var to = s.over.href;
@@ -308,6 +326,7 @@
 
     nav.addEventListener('pointerdown', function (ev) {
       if (!narrow.matches || slide || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
+      tabs = every.filter(shown);
       slide = { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, lens: null, over: null };
     });
     nav.addEventListener('pointermove', function (ev) {

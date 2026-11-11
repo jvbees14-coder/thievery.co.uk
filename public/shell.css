@@ -110,6 +110,37 @@
 @media (min-width: 1361px) {
   .menu-nav-link.site-extra { display: inline-flex; }
 }
+/* More is the phone's fifth tab and nothing on a wide bar, where everything
+   under it has a link of its own. Its sheet is dressed here rather than by
+   style.css, because Gerrymander's page has the bar and not that sheet. */
+.menu-nav-link.menu-nav-more { display: none; }
+dialog.more-sheet {
+  width: min(calc(100vw - 2 * var(--space-4)), 560px); max-height: 86vh; margin: auto; padding: 0;
+  border: 1px solid var(--separator); border-radius: var(--radius-l);
+  background: var(--bg-elevated); color: var(--label); overflow: hidden;
+  font-family: var(--font-text);
+}
+dialog.more-sheet::backdrop { background: var(--scrim); }
+.more-sheet .sheet-head { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4) var(--space-3) var(--space-5); border-bottom: 1px solid var(--separator); }
+.more-sheet .sheet-head h2 { flex: 1; margin: 0; font-family: var(--font-text); font-size: var(--text-headline); font-weight: 600; }
+.more-sheet .sheet-close {
+  appearance: none; border: 0; background: var(--fill); color: var(--label-secondary); cursor: pointer;
+  width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; flex: none;
+}
+.more-sheet .sheet-close .icon { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.25; stroke-linecap: round; }
+.more-list { display: grid; padding: var(--space-2); }
+.more-list a {
+  display: flex; align-items: center; gap: var(--space-4); min-height: 56px; padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-m); color: var(--label); text-decoration: none;
+}
+.more-list a[aria-current="page"] { background: var(--accent-tint); }
+.more-list .icon { width: 24px; height: 24px; flex: none; color: var(--accent); fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.more-list span { display: grid; gap: 2px; }
+.more-list b { font-size: var(--text-body); font-weight: 600; }
+.more-list small { font-size: var(--text-footnote); color: var(--label-secondary); }
+@media (hover: hover) and (pointer: fine) {
+  .more-list a:hover { background: var(--fill); }
+}
 /* The face and the lens are the phone's; on a wide screen the link itself
    is the highlight. */
 .menu-nav-face { display: contents; }
@@ -222,6 +253,9 @@
     background: none;
   }
   .menu-nav-link:hover, .menu-nav-link[aria-current="page"] { background: none; }
+  /* Four rooms and More. A room that is a row in More's sheet has no tab. */
+  .menu-nav-link.menu-nav-wide { display: none; }
+  .menu-nav-link.menu-nav-more { display: flex; }
   .menu-nav-face {
     position: relative; isolation: isolate;
     flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;

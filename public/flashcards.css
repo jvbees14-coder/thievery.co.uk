@@ -93,6 +93,15 @@ textarea:focus, select:focus, input:focus {
 
 /* --- the strip of numbers ------------------------------------------------- */
 
+/* What is due today: one line and one button, above the figures. */
+.fc-review {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3);
+  margin-bottom: var(--space-4); padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--accent-edge); border-radius: var(--radius-l); background: var(--accent-tint);
+}
+.fc-review[hidden] { display: none; }
+.fc-review p { margin: 0; color: var(--label); }
+.fc-review b { font-variant-numeric: var(--numeric); }
 .fc-ledger {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: var(--space-2);
   margin-bottom: var(--space-5);
@@ -551,6 +560,17 @@ textarea:focus, select:focus, input:focus {
 
 /* --- decks and sub-decks ------------------------------------------------------- */
 
+/* Cards in and out as a file, under the decks. */
+.fc-io-head { margin-top: var(--space-7); }
+.fc-io { display: grid; gap: var(--space-2); max-width: 560px; margin: 0 0 var(--space-4); }
+.fc-io label { font-size: var(--text-subhead); color: var(--label-secondary); margin-top: var(--space-2); }
+.fc-io input[type="file"] { font: inherit; color: var(--label); max-width: 100%; }
+.fc-io .btn { justify-self: start; margin-top: var(--space-3); }
+.fc-io-result { max-width: 62ch; margin: 0 0 var(--space-4); padding: var(--space-3) var(--space-4); border: 1px solid var(--separator); border-radius: var(--radius-m); background: var(--bg-elevated); }
+.fc-io-result[hidden] { display: none; }
+.fc-io-result p { margin: 0; }
+.fc-io-result ul { margin: var(--space-2) 0 0; padding-left: var(--space-5); color: var(--label-secondary); font-size: var(--text-subhead); }
+.fc-io-out { display: flex; flex-wrap: wrap; gap: var(--space-3); margin: 0; }
 .fc-deck-new { display: flex; gap: var(--space-3); margin: 0 0 var(--space-5); max-width: 560px; }
 .fc-deck-new input { flex: 1; }
 .fc-decks { display: flex; flex-direction: column; gap: var(--space-3); max-width: 760px; }

@@ -645,6 +645,123 @@ async function run() {
     assert.ok(res.status === 413 || res.status === 400, `expected a refusal, got ${res.status}`);
   });
 
+  // --- cards in and out as a file ---------------------------------------------
+
+  // The reading and the writing are pure, so they are checked as text first.
+  await check('a file of cards is read by its headings, its quotes and its tabs', async () => {
+    const Porting = await import('../server/porting.js');
+    const csv = Porting.parse('\uFEFFFront,Back,Deck,Sub-deck\r\n"What, exactly, is ""it""?","Two\nlines",Rivers,Long ones\r\n\r\nSecond front,Second back,,\r\n');
+    assert.equal(csv.length, 2, 'a blank line is not a card');
+    assert.deepEqual([csv[0].front, csv[0].back, csv[0].deck, csv[0].sub, csv[0].line], ['What, exactly, is "it"?', 'Two\nlines', 'Rivers', 'Long ones', 2]);
+    assert.deepEqual([csv[1].front, csv[1].deck, csv[1].line], ['Second front', '', 5], 'a quoted line break is counted when a later card is pointed at');
+
+    // Headings in another order, and under the names other programs use.
+    const named = Porting.parse('Answer,Hint,Question\nParis,A capital,Which city is on the Seine?\n');
+    assert.deepEqual([named[0].front, named[0].back, named[0].hint], ['Which city is on the Seine?', 'Paris', 'A capital']);
+
+    // What Anki writes: its opening lines, tabs, and HTML in the fields.
+    const anki = Porting.parse('#separator:tab\n#html:true\nA <b>bold</b> front\tFirst line<br>second &amp; last\nPlain front\tPlain back\n');
+    assert.deepEqual([anki[0].front, anki[0].back, anki[0].line], ['A bold front', 'First line\nsecond & last', 3]);
+    assert.equal(anki[1].back, 'Plain back');
+    // And with no opening lines at all, a tab still means a tab.
+    assert.equal(Porting.parse('Front one\tBack, with a comma\n')[0].back, 'Back, with a comma');
+
+    assert.throws(() => Porting.parse('   \n'), /nothing in that file/i);
+    assert.throws(() => Porting.parse(Array.from({ length: Porting.IMPORT_MAX_ROWS + 1 }, (_, i) => `f${i},b${i}`).join('\n')), /at a time/);
+  });
+
+  await check('what is written out reads back in as it was', async () => {
+    const Porting = await import('../server/porting.js');
+    const rows = [
+      { front: 'A front, with a comma', back: 'A "quoted" back\nover two lines', hint: 'h', category: 'c', deck: 'Rivers', sub: 'Long ones' },
+      { front: '=SUM(A1:A9)', back: '-5', hint: '', category: '', deck: '', sub: '' },
+      { front: '@handle', back: '-not a number', hint: '', category: '', deck: '', sub: '' },
+    ];
+    const csv = Porting.toCsv(rows);
+    assert.ok(csv.startsWith('Front,Back,Hint,Category,Deck,Sub-deck\r\n'));
+    // A cell a spreadsheet would run is written so that it will not be.
+    assert.ok(csv.includes("\r\n'=SUM(A1:A9),-5,") && csv.includes("'@handle,'-not a number"), 'a formula was written as a formula');
+    const back = Porting.parse(csv).map(({ line, ...r }) => r);
+    assert.deepEqual(back, rows);
+
+    const anki = Porting.toAnki(rows);
+    assert.ok(anki.startsWith('#separator:tab\n#html:false\n'));
+    const read = Porting.parse(anki);
+    assert.deepEqual([read[0].front, read[0].back], ['A front, with a comma', 'A "quoted" back over two lines'], 'a card is one line to Anki');
+    assert.equal(read.length, 3);
+  });
+
+  await check('a file of cards is brought in, a line at a time', async () => {
+    const carol = visitor();
+    ok(await carol.call('register', { method: 'POST', body: { username: 'carol-imports', password: 'a-long-enough-password' } }), 'register');
+    const text = [
+      'Front,Back,Hint,Category,Deck,Sub-deck',
+      'Which river runs through Cairo on its way north?,The Nile,Longest in Africa,geography,Rivers,African',
+      'Which river runs through Vienna and Budapest alike?,The Danube,,geography,Rivers,',
+      'ab,Too short a front to be a question,,,,',
+      'A front that has been given no back at all,,,,,',
+      'What does a card with no deck of its own get filed under?,Whatever the form says,,,,',
+    ].join('\n');
+    const filing = ok(await carol.call('decks', { method: 'POST', body: { name: 'Loose ends' } }), 'a deck').deck.id;
+    const res = ok(await carol.call('import', { method: 'POST', body: { text, deck: filing } }), 'import');
+    assert.equal(res.made, 3);
+    assert.deepEqual(res.skipped.map((s) => s.line), [4, 5], 'the two bad lines are the two that are named');
+    assert.match(res.skipped[0].reason, /too short/i);
+    assert.match(res.skipped[1].reason, /front and a back/i);
+    assert.equal(res.cards.length, 3);
+    assert.ok(res.cards.every((c) => c.rarity && c.value > 0), 'an imported card is appraised like any other');
+
+    // The decks named in the file are made, and the cards are in them.
+    const rivers = res.decks.find((d) => d.name === 'Rivers');
+    assert.ok(rivers && rivers.count === 2 && rivers.subs.length === 1 && rivers.subs[0].name === 'African', 'the deck and its sub-deck were not made');
+    const nile = res.cards.find((c) => c.back === 'The Nile');
+    assert.equal(nile.deck, rivers.subs[0].id);
+    assert.equal(nile.hint, 'Longest in Africa');
+    assert.equal(res.cards.find((c) => c.back === 'Whatever the form says').deck, filing, 'a card with no deck of its own goes where the form said');
+
+    // The same file again is not the collection doubled, nor the decks.
+    const again = ok(await carol.call('import', { method: 'POST', body: { text, deck: filing } }), 'the same file again');
+    assert.equal(again.made, 0);
+    assert.equal(again.cards.length, 3);
+    assert.equal(again.skipped.filter((s) => /already have/i.test(s.reason)).length, 3);
+    assert.equal(again.decks.filter((d) => d.name === 'Rivers').length, 1);
+
+    assert.equal((await carol.call('import', { method: 'POST', body: { text: '' } })).status, 400);
+    assert.equal((await carol.call('import', { method: 'POST', body: { text, deck: 'not-a-deck' } })).status >= 400, true, 'a deck that is not theirs was accepted');
+    assert.equal((await visitor().call('import', { method: 'POST', body: { text } })).status, 401);
+  });
+
+  await check('a member can take their cards away as a file, and bring them back', async () => {
+    const carol = visitor();
+    ok(await carol.call('login', { method: 'POST', body: { username: 'carol-imports', password: 'a-long-enough-password' } }), 'login');
+    const fetchFile = async (format) => {
+      const res = await fetch(`http://localhost:${PORT}/api/flashcards/export?format=${format}`, { headers: { Cookie: carol.cookie } });
+      return { status: res.status, type: res.headers.get('content-type'), name: res.headers.get('content-disposition'), text: await res.text() };
+    };
+    const csv = await fetchFile('csv');
+    assert.equal(csv.status, 200);
+    assert.ok(csv.type.startsWith('text/csv') && /attachment; filename="thievery-flashcards-\d{4}-\d\d-\d\d\.csv"/.test(csv.name));
+    const Porting = await import('../server/porting.js');
+    const rows = Porting.parse(csv.text);
+    assert.equal(rows.length, 3);
+    const nile = rows.find((r) => r.back === 'The Nile');
+    assert.deepEqual([nile.deck, nile.sub, nile.hint, nile.category], ['Rivers', 'African', 'Longest in Africa', 'geography']);
+
+    const anki = await fetchFile('anki');
+    assert.ok(anki.type.startsWith('text/plain') && anki.name.endsWith('.txt"'));
+    assert.equal(anki.text.split('\n').filter((l) => l && !l.startsWith('#')).length, 3);
+
+    // Into somebody else's empty collection, the file is the same cards.
+    const dave = visitor();
+    ok(await dave.call('register', { method: 'POST', body: { username: 'dave-receives', password: 'a-long-enough-password' } }), 'register');
+    const got = ok(await dave.call('import', { method: 'POST', body: { text: csv.text } }), 'import');
+    assert.equal(got.made, 3);
+    assert.equal(got.decks.find((d) => d.name === 'Rivers').subs[0].name, 'African');
+
+    const none = await fetch(`http://localhost:${PORT}/api/flashcards/export`);
+    assert.equal(none.status, 401, 'a stranger was given a file');
+  });
+
   await check('the game is untouched at /cards', async () => {
     const table = await fetch(`http://localhost:${PORT}/cards`);
     const html = await table.text();

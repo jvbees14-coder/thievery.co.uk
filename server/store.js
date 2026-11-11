@@ -72,6 +72,8 @@ function empty() {
     daily: {},     // YYYY-MM-DD -> id -> the first run of that day's deck
     sections: {},  // id -> a member's own deck or sub-deck (sections.js)
     maps: {},      // id -> a member's mind map (maps.js)
+    lockup: {},    // YYYY-MM-DD -> id -> the first daily table finished that day (lockup.js)
+    reviews: {},   // id -> card id -> when that member's card is next due (review.js)
   };
 }
 

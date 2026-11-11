@@ -28,7 +28,15 @@ played signed out is recorded nowhere at all.
 **Lockup**, at <https://thievery.co.uk/lockup>, is a tower defence for one
 where the towers are playing cards: line them up into poker hands and keep
 the thieves out of the vault. Like the card game it needs no account, and it
-keeps nothing but your best wave, on your own device.
+keeps nothing but your best wave, on your own device. Cards are cheap and
+are made by upgrading them: three tracks each, one of which can be taken all
+the way. There are three rooms, a room editor whose rooms travel in a link,
+and a daily table with a board that the server checks by playing each game
+back.
+
+**Flashcards** can be reviewed on a schedule (cards you know come round less
+often; the ones you miss come back tomorrow), and can be imported from and
+exported to CSV or Anki's plain text.
 
 ## The idea
 

@@ -44,6 +44,9 @@
 
     <!-- ------------------------------------------------------- collection -->
     <section id="tab-collection" class="fc-pane">
+      <!-- What is due today, with the one button that deals it. Drawn by
+           drawLedger; hidden until there is a card to say it about. -->
+      <div id="review" class="fc-review" hidden></div>
       <div id="ledger" class="fc-ledger"><span class="skeleton is-delayed fc-skel-stat" aria-hidden="true"></span><span class="skeleton is-delayed fc-skel-stat" aria-hidden="true"></span><span class="skeleton is-delayed fc-skel-stat" aria-hidden="true"></span></div>
 
       <div class="fc-toolbar">
@@ -83,6 +86,31 @@
       </form>
       <div id="deck-list" class="fc-decks"></div>
       <p id="decks-empty" class="fc-empty" hidden>No decks yet.</p>
+
+      <!-- Cards in and out as a file. The reading and writing is
+           server/porting.js; an imported card is made exactly as a typed
+           one is. -->
+      <h2 class="fc-h fc-io-head">Import and export</h2>
+      <p class="fc-lede">
+        Bring cards in from a spreadsheet or from Anki, or take a copy of
+        yours away. A CSV file has the headings Front, Back, Hint, Category,
+        Deck and Sub-deck. From Anki, export a deck as &ldquo;Notes in Plain
+        Text&rdquo;. Each imported card gets a rarity like any other.
+      </p>
+      <form id="import" class="fc-io" autocomplete="off">
+        <label for="import-file">File: CSV or Anki text, up to 200 cards</label>
+        <input id="import-file" type="file" accept=".csv,.tsv,.txt,text/csv,text/plain,text/tab-separated-values" required />
+        <label for="import-deck">Cards with no deck of their own go in</label>
+        <select id="import-deck" class="fc-select">
+          <option value="">No deck</option>
+        </select>
+        <button class="btn primary" type="submit">Import cards</button>
+      </form>
+      <div id="import-result" class="fc-io-result" role="status" hidden></div>
+      <p class="fc-io-out">
+        <a class="btn" href="/api/flashcards/export?format=csv" download data-no-prefetch>Export as CSV</a>
+        <a class="btn" href="/api/flashcards/export?format=anki" download data-no-prefetch>Export for Anki</a>
+      </p>
     </section>
 
     <!-- ------------------------------------------------------------- make -->

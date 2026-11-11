@@ -852,6 +852,102 @@ async function run() {
     c.close();
   });
 
+  // --- when a card is next due -----------------------------------------------
+
+  // The schedule is arithmetic on a mark, so most of it is checked as that.
+  await check('a card answered well is left longer each time, and one forgotten starts again', async () => {
+    const Review = await import('../server/review.js');
+    const today = 20000;
+    let s = Review.next(null, 70, today);
+    assert.deepEqual([s.interval, s.reps, s.due, s.first], [1, 1, today + 1, today], 'a new card answered well comes back tomorrow');
+    s = Review.next(s, 70, today + 1);
+    assert.equal(s.interval, 3);
+    const third = Review.next(s, 70, today + 4);
+    assert.ok(third.interval > 3, 'the third good answer should leave it longer still');
+    assert.ok(Review.next(third, 95, third.due).interval > Review.next(third, 70, third.due).interval, 'an easy answer leaves it longer than a good one');
+    assert.ok(Review.next(third, 50, third.due).interval < Review.next(third, 70, third.due).interval, 'and a shaky one, less long');
+
+    const lapsed = Review.next(third, 10, third.due);
+    assert.deepEqual([lapsed.interval, lapsed.reps, lapsed.lapses], [1, 0, 1], 'a forgotten card starts again from tomorrow');
+    assert.ok(lapsed.ease < third.ease, 'and is counted a harder card for it');
+
+    // The same day twice is revision, not two days' worth of knowing it.
+    const again = Review.next(third, 95, third.last);
+    assert.equal(again.interval, third.interval, 'a second good answer the same day pushed the card further out');
+    assert.equal(Review.next(third, 10, third.last).interval, 1, 'but a worse answer the same day still counts');
+
+    // However it is answered, the ease and the interval stay inside their bounds.
+    let low = null, high = null;
+    for (let i = 0; i < 60; i++) { low = Review.next(low, 0, today + i); high = Review.next(high, 100, (high ? high.due : today)); }
+    assert.ok(low.ease >= 1.3 && low.interval === 1);
+    assert.ok(high.ease <= 3 && high.interval <= 365);
+    assert.equal(Review.next(null, 100, today).interval, 3, 'a new card known cold skips the first day');
+  });
+
+  await check('due today deals what is due, and the answers move the cards on', async () => {
+    const gail = await member('gail');
+    const backs = {};
+    for (let i = 1; i <= 3; i++) {
+      const card = ok(await gail.fc('cards', {
+        method: 'POST',
+        body: { front: `Gail asks schedule question ${i}`, back: `Gail answers schedule number ${i} plainly`, category: 'test' },
+      }), 'a card').card;
+      backs[card.front] = `Gail answers schedule number ${i} plainly`;
+    }
+    const before = ok(await gail.fc('me'), "gail's collection").review;
+    assert.deepEqual([before.due, before.fresh, before.later, before.next], [3, 3, 0, null], 'three new cards are three cards due');
+
+    const g = new Battler(gail);
+    await g.connect();
+    g.send({ type: 'battle:create' });
+    await g.waitFor((st) => !!st.code, 'a room');
+    g.send({ type: 'battle:settings', mode: 'solo', source: 'mine', ownDeck: '@due', length: 10, clock: 0 });
+    let st = await g.waitFor((x) => x.ownDeck === '@due', 'the due cards');
+    assert.equal(st.yourDue, 3, 'the lobby is not told how many are due');
+    assert.equal(st.ownDeckName, 'Cards due today');
+
+    // One answered word for word, the others not known at all.
+    const known = Object.keys(backs)[0];
+    g.send({ type: 'battle:start' });
+    st = await g.waitFor((x) => x.match && x.match.phase === 'asking', 'the first card');
+    assert.equal(st.match.total, 3, 'the run should be exactly the cards that are due');
+    for (let i = 0; i < 3; i++) {
+      st = await g.waitFor((x) => x.match && x.match.at === i && x.match.phase === 'asking', `card ${i + 1}`);
+      assert.ok(!JSON.stringify(st).includes('cardId'), 'which flashcard it is has no business leaving the room');
+      const front = st.match.card.front;
+      g.send({ type: 'battle:answer', text: front === known ? backs[front] : 'no idea' });
+      st = await g.waitFor((x) => x.match && (x.match.phase !== 'asking' || x.match.at !== i), 'the reveal');
+      if (st.match.phase === 'reveal') g.send({ type: 'battle:next' });
+    }
+    await g.waitFor((x) => x.match && x.match.phase === 'ended', 'the end');
+
+    const after = ok(await gail.fc('me'), "gail's collection").review;
+    assert.deepEqual([after.due, after.fresh, after.later], [0, 0, 3], 'every card answered today is scheduled for another day');
+    const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+    assert.equal(after.next, tomorrow, 'the forgotten ones come back tomorrow');
+
+    // With nothing due there is nothing to deal, and the room says so.
+    g.send({ type: 'battle:again' });
+    await g.waitFor((x) => !x.match, 'the lobby');
+    assert.equal(g.state.yourDue, 0);
+    assert.match(await g.expectError({ type: 'battle:start' }, 'a run with nothing due'), /nothing is due/i);
+
+    // A card that goes takes its schedule with it.
+    const held = ok(await gail.fc('me'), 'the cards').cards;
+    ok(await gail.fc(`cards/${held[0].id}`, { method: 'DELETE' }), 'a card deleted');
+    assert.equal(ok(await gail.fc('me'), 'the cards').review.later, 2);
+    g.close();
+  });
+
+  // A flood of new cards is let in a few a day, not announced all at once.
+  await check('new cards come due a few at a time', async () => {
+    const Review = await import('../server/review.js');
+    const cards = Array.from({ length: 25 }, (_, i) => ({ id: `new-${i}`, created: i }));
+    const sum = Review.summary('nobody-at-all', cards);
+    assert.deepEqual([sum.due, sum.fresh, sum.waiting], [Review.NEW_PER_DAY, Review.NEW_PER_DAY, 25 - Review.NEW_PER_DAY]);
+    assert.deepEqual(Review.due('nobody-at-all', cards).map((c) => c.id), cards.slice(0, Review.NEW_PER_DAY).map((c) => c.id), 'the oldest new cards first');
+  });
+
   // --- your own decks ------------------------------------------------------
 
   await check('solo on your own deck deals only that deck, and a sub-deck only that', async () => {

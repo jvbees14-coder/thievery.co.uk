@@ -162,7 +162,7 @@
     // this account has got, once it has finished a game signed in.
     const lockup = play.lockup;
     $('#tile-lockup-figure').textContent = lockup && lockup.games
-      ? `Best: wave ${lockup.best} of 30 \u00b7 ${plural(lockup.games, 'game', 'games')}`
+      ? `Best: wave ${lockup.best}${lockup.best > 30 ? '' : ' of 30'} \u00b7 ${plural(lockup.games, 'game', 'games')}`
       : 'Keep the thieves out of the vault';
 
     // --- the admin's door
@@ -186,6 +186,7 @@
     renderBattle(battle);
     renderSwitchhead(switchhead);
 
+    renderLockup(lockup);
     const bots = play.rounds - play.versus;
     const botWins = play.wins - play.versusWins;
     $('#stats-people').textContent = play.versus
@@ -267,6 +268,20 @@
     $('#switchhead-note').textContent = sh.games
       ? `At tables of ${(sh.seats / sh.games).toFixed(1)} players on average. The goal turned over ${plural(sh.flips, 'time', 'times')} across them.`
       : 'Nothing yet.';
+  }
+
+  // Lockup's record. The best wave is the figure; the rooms say where.
+  const LOCKUP_ROOMS = { corridor: 'the Corridor', spiral: 'the Spiral', fork: 'the Fork' };
+  function renderLockup(lk) {
+    $('#lockup-figures').innerHTML = [
+      figure(lk.games.toLocaleString('en-GB'), 'Games played'),
+      figure(lk.best.toLocaleString('en-GB'), 'Best wave', lk.best > 30 ? 'playing on past thirty' : 'of thirty'),
+      figure(lk.wins.toLocaleString('en-GB'), 'Vaults held', percent(lk.winRate, lk.games)),
+      figure(lk.stopped.toLocaleString('en-GB'), 'Thieves stopped'),
+      figure(lk.dailies.toLocaleString('en-GB'), 'Daily tables'),
+    ].join('');
+    const rooms = Object.entries(lk.rooms || {}).filter(([id]) => LOCKUP_ROOMS[id]).map(([id, r]) => `wave ${r.best} in ${LOCKUP_ROOMS[id]}`);
+    $('#lockup-note').textContent = lk.games ? (rooms.length ? `Best by room: ${rooms.join(', ')}.` : 'Finish a game signed in and the rooms are listed here.') : 'Nothing yet.';
   }
 
   const rowFor = (play, key) => (key.startsWith('seats.') ? play.seats[key.slice(6)] : play[key]) || { rounds: 0, wins: 0 };

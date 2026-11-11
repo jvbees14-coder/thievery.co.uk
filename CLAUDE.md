@@ -12,10 +12,10 @@ npm run test:source    # the source as bytes: no literal control characters
 npm run test:game      # the card game: real server, real clients, whole rounds played out
 npm run test:powerups  # the five/six-hand power-up rules, played against game.js directly
 npm run test:site      # the front hall, the addresses, and the lifetime record
-npm run test:battle    # the marker, a match played out, and the one rule about the back
+npm run test:battle    # the marker, a match played out, the one rule about the back, and the review schedule
 npm run test:switchhead # the shedding rules against shed.js, then a game over the socket
 npm run test:lockup    # Lockup's rules, run as the browser runs them, and whole games played out
-npm run test:flashcards # the flashcards room over HTTP
+npm run test:flashcards # the flashcards room over HTTP, and cards in and out as a file
 npm run test:mindmaps  # the mind maps over HTTP: the tree check, the revisions, whose map
 npm run test:r2        # the storage layer, against a stub S3 client
 npm run r2:check       # are the four R2_* variables real? needs them in the environment
@@ -65,7 +65,7 @@ One server, a hall and five rooms off it:
 | `/about`, `/privacy` | `server/site.js` — plain pages, up even in an outage | never |
 | `/tools`, `/tools/<slug>` | `server/site.js` and `server/tools.js` — the tools index and any tool pages | never |
 | `/styleguide` | `server/site.js` — every token and component; not linked, `noindex` | never |
-| `/api/site/…` | the door, the menu's figures, the members panel | mostly |
+| `/api/site/…` | the door, the menu's figures, the members panel, Lockup's record and its daily board | mostly |
 | `/api/flashcards/…` | the collection, the post, the panel | yes |
 | `/api/mindmaps/…` | a member's maps | yes |
 | *(the battle room and Switchhead have no API — all of it is socket)* | | |
@@ -126,6 +126,26 @@ script, not a module, and hangs what it offers on `globalThis.LockupRules`.
 the browser does and plays whole games with it. Things that are easy to
 break:
 
+- **A card is made by what is spent on it.** Cards are cheap; each has three
+  tracks of three steps (`TRACKS`, `upgrade`), and `canUpgrade` lets only
+  one track take its last step. The numbers were set so that cards alone
+  fail around the middle waves. If you change `CFG`, play it out before you
+  keep it: `test/lockup.test.js` has a `playOut` that will.
+- **A room is one carpet or more** (`MAPS`, `buildMap`). At the Fork there
+  are two, the thieves take the doors turn about (`g.sent`), and each leaves
+  by the one it came in at. A room somebody drew is a string of corners
+  (`roomFromCode`), carried after the `#` in a link and checked as something
+  off the wire; it never reaches the server, and a game on one is not
+  counted anywhere.
+- **Thirty waves is a win, and `keepGoing` plays on.** Never on the daily
+  table, which ends at thirty for everybody.
+- **A seed and its moves are the whole game.** Every move is written into
+  `g.log` against `g.ticks`, which only advances while a wave runs.
+  `replayer` plays a log back and must arrive at the same game to the chip,
+  which is why distances are taken with a square root rather than
+  `Math.hypot` (browsers may round that differently) and why nothing that
+  decides anything may call `Math.random`. Break that and the daily board
+  starts refusing honest games.
 - **A card is lost only at the door.** A thief takes one from the vault and
   walks back out; stopped, it drops the card where it stood, and the card
   goes home after ten seconds unless another thief reaches it first.
@@ -145,12 +165,25 @@ break:
   and `controls.css` and must not meet their `.sheet` or `.controls`. The
   board's wrapper carries `data-scheme="dark"`: the canvas is artwork in the
   card table's colours and stays dark on a light page.
-- **The record is the page's word.** A finished game is posted to
-  `/api/site/lockup` as a number of waves, and `Stats.recordLockup` adds it
-  to `stats.lockup` (`games`, `wins`, `best`) for whoever is signed in; a
-  stranger gets a 401 and the page ignores it. Nothing checks the figure
-  beyond its range, which is why it is only ever shown to its owner, on
-  their own menu tile. Do not build a board out of it.
+- **The record is the page's word; the board is not.** A finished game is
+  posted to `/api/site/lockup` (waves, room, thieves stopped) and
+  `Stats.recordLockup` adds it to `stats.lockup` for whoever is signed in.
+  Nothing checks those figures beyond their range, so they are only ever
+  shown to their owner: the menu tile and the Stats panel. The daily board
+  is the opposite. `server/lockup.js` runs the same rules file the browser
+  does; a finished daily game is posted to `/api/site/lockup/daily` as its
+  list of moves, played back in slices (`playBack`, so a long game never
+  holds the card table up), and what goes on the board is what the playing
+  back found. First finished game of the day only, as with the Battle
+  room's ten; boards are `lockup[YYYY-MM-DD][userId]`, kept a fortnight.
+
+**More, on a phone.** The tab bar is four rooms and More (`MORE` in
+`views.js`). More's sheet is a `<dialog>` in the bar's own markup, so it is
+on every page the bar is on, and it is dressed by `shell.css` because
+Gerrymander's page has no `style.css`. Mind maps is a link on a wide bar and
+a row under More on a phone: its link carries `menu-nav-wide` and no lens,
+and the More tab is the one marked when any of its rows is the page you are
+on. `shell.js` slides only over the tabs that are on show.
 
 **The flashcards room** (`server/flashcards.js`, `cards.js`, `trading.js`;
 `public/flashcards*.{js,css}`) is the opposite: real logins, and a document
@@ -368,6 +401,33 @@ not exist in anybody else's. The host's list comes in `viewFor` as
 `yourDecks` (lobby only); the others get `ownDeckName`/`ownSubName`. The
 choice is cleared when the host changes. "Test yourself" in the flashcards
 room links to `/battle?deck=…&sub=…`, which opens a solo room on it.
+
+### When a card is next due
+
+`review.js` keeps, per member and per card, an interval in days that grows
+when the card is answered well and collapses when it is not
+(`reviews[userId][cardId]` in the document). It asks nothing itself: the
+Battle room tells it the mark (`closeCard`, the owner's own answer only, and
+never on a run back over the misses), and it tells the flashcards room how
+many are due. "Review due cards" is a link to `/battle?deck=%40due`: a solo
+room whose deck is `Battle.DUE` deals `Review.due()` instead of a deck.
+
+- A day is a UTC day and an interval is whole days.
+- New cards come due `NEW_PER_DAY` at a time, oldest first.
+- A second good answer the same day does not push a card further out.
+- A match card's `cardId` never leaves the room; `test/battle.test.js`
+  looks for it in what a client is sent.
+
+### In and out as a file
+
+`porting.js` reads and writes cards as text: CSV with a heading row (which
+round-trips, decks and all) and the tab-separated text Anki uses. It is
+pure. `handleImport` makes each row through `Cards.createCard`, so an
+imported card is appraised, rolled and limited like a typed one; a bad row
+is skipped and named by its line, a row the member already holds is skipped,
+and a deck named in the file is made if it is not there. Two hundred rows a
+file. A cell a spreadsheet would run as a formula is written with a leading
+quote, because traded cards mean an export can hold somebody else's text.
 
 ### Access control
 

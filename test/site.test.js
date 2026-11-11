@@ -360,7 +360,7 @@ async function run() {
 
   await check('the bar links to Gerrymander, and the door lists it nowhere else', async () => {
     const res = await stranger.page('/');
-    assert.equal(res.html.split('href="/gerrymander/"').length - 1, 1, 'expected exactly the bar link');
+    assert.equal(res.html.split('href="/gerrymander/"').length - 1, 2, "expected the bar's link and the row under More, and no other");
     assert.ok(res.html.includes('class="menu-nav-link site-extra" href="/gerrymander/"'), 'the bar does not link to Gerrymander');
   });
 
@@ -383,9 +383,27 @@ async function run() {
     }
   });
 
+  // A phone's tab bar is four rooms and More, and More's sheet is where the
+  // rest of the site is reached from: it has to be on every page the bar is
+  // on, Gerrymander's included, and mark the page it is opened from.
+  await check('every bar carries More, and its sheet lists what has no tab', async () => {
+    for (const [where, here] of [['/', ''], ['/cards', ''], ['/lockup', '/lockup'], ['/gerrymander/', '/gerrymander/'], ['/tools', '/tools'], ['/about', '']]) {
+      const { html } = await stranger.page(where);
+      assert.ok(html.includes('id="nav-more"') && html.includes('<dialog class="sheet more-sheet" id="more-sheet"'), `${where} has no More tab or no sheet`);
+      const sheet = html.slice(html.indexOf('id="more-sheet"'), html.indexOf('</dialog>', html.indexOf('id="more-sheet"')));
+      for (const row of ['/mindmaps', '/lockup', '/gerrymander/', '/tools']) {
+        assert.ok(sheet.includes(`href="${row}"`), `${where}: More does not list ${row}`);
+      }
+      const marked = /id="nav-more"[^>]*aria-current="page"/.test(html);
+      assert.equal(marked, !!here, `${where}: the More tab is ${marked ? '' : 'not '}marked`);
+      if (here) assert.ok(sheet.includes(`href="${here}" aria-current="page"`), `${where}: its own row is not marked`);
+      assert.equal(html.split('class="menu-nav-lens"').length - 1, where === '/cards' || here ? 1 : 0, `${where}: expected one lens at most, on the tab that is here`);
+    }
+  });
+
   await check('the bar links to Lockup, and the door lists it nowhere else', async () => {
     const res = await stranger.page('/');
-    assert.equal(res.html.split('href="/lockup"').length - 1, 1, 'expected exactly the bar link');
+    assert.equal(res.html.split('href="/lockup"').length - 1, 2, "expected the bar's link and the row under More, and no other");
     assert.ok(res.html.includes('class="menu-nav-link site-extra site-extra-early" href="/lockup"'), 'the bar does not link to Lockup');
   });
 
@@ -515,19 +533,78 @@ async function run() {
   // game never lowers it, and a figure the game could not reach is refused.
   await check('a finished game of Lockup is added to the record', async () => {
     assert.equal(ok(await alice.call('me'), 'me').play.lockup.games, 0, 'a new account has played no Lockup');
-    assert.equal(ok(await alice.call('lockup', { method: 'POST', body: { waves: 12 } }), 'lockup').lockup.best, 12);
-    const after = ok(await alice.call('lockup', { method: 'POST', body: { waves: 4 } }), 'lockup').lockup;
-    assert.deepEqual(after, { games: 2, wins: 0, best: 12 });
-    assert.equal(ok(await alice.call('lockup', { method: 'POST', body: { waves: 30 } }), 'lockup').lockup.wins, 1, 'thirty waves is a win');
-    assert.equal(ok(await alice.call('me'), 'me').play.lockup.best, 30, 'the menu is not told the best');
+    assert.equal(ok(await alice.call('lockup', { method: 'POST', body: { waves: 12, room: 'spiral', stopped: 140 } }), 'lockup').lockup.best, 12);
+    const after = ok(await alice.call('lockup', { method: 'POST', body: { waves: 4, room: 'spiral', stopped: 20 } }), 'lockup').lockup;
+    assert.deepEqual([after.games, after.wins, after.best, after.stopped, after.dailies], [2, 0, 12, 160, 0]);
+    assert.deepEqual(after.rooms, { spiral: { games: 2, best: 12 } }, 'a worse game in a room does not lower its best');
+    assert.equal(ok(await alice.call('lockup', { method: 'POST', body: { waves: 30, room: 'fork' } }), 'lockup').lockup.wins, 1, 'thirty waves is a win');
+    const on = ok(await alice.call('lockup', { method: 'POST', body: { waves: 41, room: 'fork' } }), 'lockup').lockup;
+    assert.deepEqual([on.wins, on.best, on.rooms.fork.best], [2, 41, 41], 'a game played on past thirty is a win and a best');
+    assert.equal(ok(await alice.call('me'), 'me').play.lockup.best, 41, 'the menu is not told the best');
   });
 
   await check('Lockup refuses a figure the game could not reach, and a stranger', async () => {
-    for (const waves of [31, -1, 2.5, '12']) {
+    for (const waves of [1000, -1, 2.5, '12']) {
       assert.equal((await alice.call('lockup', { method: 'POST', body: { waves } })).status, 400, `waves ${JSON.stringify(waves)} was accepted`);
     }
+    assert.equal((await alice.call('lockup', { method: 'POST', body: { waves: 5, room: 'cellar' } })).status, 400, 'a room that does not exist was accepted');
+    assert.equal((await alice.call('lockup', { method: 'POST', body: { waves: 5, stopped: -3 } })).status, 400);
     assert.equal((await visitor().call('lockup', { method: 'POST', body: { waves: 5 } })).status, 401);
-    assert.equal(ok(await alice.call('me'), 'me').play.lockup.games, 3, 'a refused figure was counted');
+    assert.equal(ok(await alice.call('me'), 'me').play.lockup.games, 4, 'a refused figure was counted');
+  });
+
+  // The daily board is the one place a Lockup figure sits beside somebody
+  // else's, so it is never taken on trust: the page sends its moves and the
+  // server plays them back. The suite plays a short game with the same rules
+  // file to have a real list of moves to send.
+  await check("Lockup's daily board holds what the server played back, once a day", async () => {
+    const vm = await import('node:vm');
+    const file = path.join(__dirname, '..', 'public', 'lockup-rules.js');
+    if (!globalThis.LockupRules) vm.runInThisContext(fs.readFileSync(file, 'utf8'), { filename: file });
+    const R = globalThis.LockupRules;
+    const table = R.dailyTable();
+    const g = R.newGame(table.seed, 'daily', table.room, table.stakes);
+    while (g.phase === 'build' || g.phase === 'wave') {
+      if (g.phase === 'build') {
+        const i = g.hand.findIndex((c) => c && g.chips >= R.cost(c));
+        const spot = [...R.map.near].find((k) => !g.grid[k]);
+        if (i >= 0 && spot !== undefined && g.wave < 2) R.place(g, i, spot % R.COLS, Math.floor(spot / R.COLS));
+        R.sendWave(g);
+      }
+      R.step(g, R.DT);
+    }
+    const waves = R.cleared(g), kept = R.VAULT_START - g.lost;
+
+    const empty = ok(await visitor().call('lockup/daily'), 'the board, to a stranger');
+    assert.deepEqual([empty.room, empty.board.length, empty.signedIn], [table.room, 0, false]);
+    assert.equal((await visitor().call('lockup/daily', { method: 'POST', body: { moves: g.log } })).status, 401, 'a stranger got on the board');
+
+    const forged = JSON.parse(JSON.stringify(g.log));
+    forged.splice(1, 0, [0, 'p', 9, 0, 0]);
+    assert.equal((await alice.call('lockup/daily', { method: 'POST', body: { moves: forged } })).status, 400, 'a list the rules refuse was put on the board');
+    assert.equal((await alice.call('lockup/daily', { method: 'POST', body: { moves: 'thirty waves, honest' } })).status, 400);
+    assert.equal(ok(await alice.call('lockup/daily'), 'the board').board.length, 0, 'a refused game is on the board');
+
+    const before = ok(await alice.call('me'), 'me').play.lockup;
+    const first = ok(await alice.call('lockup/daily', { method: 'POST', body: { moves: g.log } }), 'a real game');
+    assert.equal(first.counted, true);
+    assert.deepEqual(first.result, { waves, kept });
+    assert.equal(first.board.length, 1);
+    assert.deepEqual([first.board[0].waves, first.board[0].kept, first.board[0].you], [waves, kept, true]);
+    const after = ok(await alice.call('me'), 'me').play.lockup;
+    assert.deepEqual([after.games - before.games, after.dailies - before.dailies, after.stopped - before.stopped], [1, 1, g.stopped], 'a daily game is in the record as the server found it');
+
+    // Only the first go of the day counts, and a second is not played back.
+    const second = ok(await alice.call('lockup/daily', { method: 'POST', body: { moves: [] } }), 'a second go');
+    assert.equal(second.counted, false);
+    assert.equal(second.board[0].waves, waves);
+    assert.equal(ok(await alice.call('me'), 'me').play.lockup.games, after.games);
+
+    // Anybody may read the board, and nobody is told an account id by it.
+    const seen = ok(await visitor().call('lockup/daily'), 'the board, to a stranger');
+    assert.equal(seen.board.length, 1);
+    assert.equal(seen.board[0].you, false);
+    assert.deepEqual(Object.keys(seen.board[0]).sort(), ['kept', 'name', 'waves', 'you']);
   });
 
   await check('changing a password needs the old one', async () => {

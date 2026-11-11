@@ -10,16 +10,20 @@
 // localStorage (STORE_KEY, listed on /privacy). A finished game is also told
 // to /api/site/lockup, which adds it to the record of whoever is signed in
 // and answers 401 to everybody else. The page cannot see the session cookie,
-// so it asks either way and does nothing with the answer.
+// so it asks either way. A finished daily game is sent as its list of moves
+// instead, for the server to play back and put on the day's board. A room
+// somebody drew travels in the address, after the #, and never leaves the
+// browser.
 // ---------------------------------------------------------------------------
 
 (() => {
 'use strict';
 
 const {
-  COLS, ROWS, VAULT_START, LAST_WAVE, DT, CFG, MAPS, SUITS, FACE, THIEF, DEBUT, HAND_NAME,
-  clamp, rankLabel, cardName, cost, buildable, scoreGrid, towerStats, genWave,
-  newGame, redealCost, redeal, place, sellValue, raiseCost, raise, sell, sendWave, step, dailySeed,
+  COLS, ROWS, VAULT_START, LAST_WAVE, DT, CFG, MAPS, SUITS, FACE, THIEF, DEBUT, HAND_NAME, TRACK_TOP,
+  clamp, rankLabel, cardName, cost, buildable, scoreGrid, towerStats, tracksOf, genWave,
+  newGame, redealCost, redeal, place, sellValue, canUpgrade, upgradeCost, upgrade, sell, sendWave, keepGoing, cleared, step,
+  dailyTable, cellsOfCode, codeOfCells, roomFault, roomFromCode,
 } = globalThis.LockupRules;
 // The room being drawn. The rules keep their own note of it for a game in
 // play; this one also has to follow the start sheet, where no game exists.
@@ -30,6 +34,11 @@ const $ = id => document.getElementById('lk-' + id);
 const cv = $('board'), ctx = cv.getContext('2d');
 let g = null, sel = -1, selTower = null, hover = null, speed = 1, paused = false, S = 40, dpr = 1, quiet = false;
 let lastSig = '', lastPhase = '', lastChips = 0, lastDeal = 0, coach = -1, coachText = '';
+// A room being drawn, the last one that was, and today's board once it has
+// been asked for.
+let editor = null, customRoom = null, daily = { loaded: false, room: 0, board: [], signedIn: false };
+// One colour a track, on the card's pips and in the panel beside the board.
+const TRACK_COLOURS = ['#c9952b', '#3f8f86', '#8a5bb8'];
 // The site's own switch for animations (prefs.js), asked each time because
 // it can be changed while a game is running.
 const still = () => window.thieveryStill ? window.thieveryStill() : matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -42,7 +51,7 @@ const store = {
   get(k) { const v = this.all()[k]; return v == null ? null : String(v); },
   set(k, v) { try { const a = this.all(); a[k] = v; localStorage.setItem(STORE_KEY, JSON.stringify(a)); } catch (e) { } }
 };
-let pickMap = clamp(+store.get('map') || 0, 0, MAPS.length - 1), pickStakes = CFG.stakes[store.get('stakes')] ? store.get('stakes') : 'standard';
+let pickMap = clamp(Math.trunc(+store.get('map')) || 0, 0, MAPS.length - 1), pickStakes = CFG.stakes[store.get('stakes')] ? store.get('stakes') : 'standard';
 M = MAPS[pickMap];
 
 // --- sound (synthesised, off until the first click) ------------------------
@@ -59,7 +68,7 @@ function beep(f, d, type, v, slide) {
   } catch (e) { }
 }
 const SOUNDS = {
-  place: () => beep(520, .08, 'triangle', .06, 200), sell: () => beep(300, .1, 'triangle', .05, -120),
+  place: () => beep(520, .08, 'triangle', .06, 200), upgrade: () => { beep(620, .07, 'triangle', .06, 260); setTimeout(() => beep(930, .1, 'triangle', .05), 60); }, sell: () => beep(300, .1, 'triangle', .05, -120),
   hand: () => { beep(660, .12, 'triangle', .06); setTimeout(() => beep(880, .18, 'triangle', .06), 90); },
   deal: () => beep(900, .04, 'square', .02, -400), send: () => beep(180, .25, 'sawtooth', .04, 120),
   steal: () => beep(240, .2, 'square', .04, -90), lost: () => beep(140, .5, 'sawtooth', .06, -70),
@@ -157,6 +166,8 @@ function draw() {
   bg.addColorStop(0, '#171c2c'); bg.addColorStop(1, '#0c0f18');
   c.fillStyle = bg; c.fillRect(0, 0, W, H);
 
+  if (editor) { drawEditor(c, W, H); return; }
+
   // spots: marked when a card is in hand, faint dots otherwise
   const picking = g && sel >= 0 && g.hand[sel];
   for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
@@ -169,7 +180,7 @@ function draw() {
   }
 
   // the carpet
-  const trace = () => { c.beginPath(); M.wp.forEach((p, i) => i ? c.lineTo(p[0] * S, p[1] * S) : c.moveTo(p[0] * S, p[1] * S)); };
+  const trace = () => { c.beginPath(); for (const r of M.routes) r.wp.forEach((p, i) => i ? c.lineTo(p[0] * S, p[1] * S) : c.moveTo(p[0] * S, p[1] * S)); };
   c.lineJoin = 'round'; c.lineCap = 'butt';
   trace(); c.strokeStyle = 'rgba(0,0,0,.35)'; c.lineWidth = S * .96; c.stroke();
   trace(); c.strokeStyle = 'rgba(226,184,87,.4)'; c.lineWidth = S * .84; c.stroke();
@@ -178,7 +189,7 @@ function draw() {
   c.setLineDash([S * .12, S * .22]); trace(); c.strokeStyle = 'rgba(226,184,87,.22)'; c.lineWidth = 1.5; c.stroke(); c.setLineDash([]);
   // door
   c.fillStyle = '#e2b857'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `600 ${Math.round(S * .2)}px system-ui, sans-serif`;
-  c.fillText('DOOR', M.door[0] * S, M.door[1] * S);
+  for (const r of M.routes) c.fillText('DOOR', r.door[0] * S, r.door[1] * S);
 
   // vault
   const vx = M.vault[0] * S, vy = M.vault[1] * S, vn = g ? g.vault : VAULT_START, vf = g ? g.vaultFlash : 0;
@@ -219,7 +230,13 @@ function draw() {
     const pop = still() ? 0 : t.pop * t.pop;
     const glow = t.hand || t === selTower ? .3 + t.shine * .7 : 0;
     drawCard(c, t.cx * S, t.cy * S - t.kick * S * .05 - pop * S * .25, t.card, 1 + t.kick * .06 + pop * .35, 1, glow);
-    for (let i = 0; i < t.lvl; i++) { c.beginPath(); c.arc(t.cx * S + S * .2, t.cy * S - S * .32 + i * S * .13, S * .045, 0, 7); c.fillStyle = '#c9952b'; c.fill(); }
+    // What has been spent on it: a column of pips a track, down the right
+    // edge, and a ring round the track that took its last step.
+    for (let k = 0; k < 3; k++) for (let i = 0; i < t.up[k]; i++) {
+      const px = t.cx * S + S * (.07 + k * .095), py = t.cy * S - S * .33 + i * S * .1;
+      c.beginPath(); c.arc(px, py, S * .036, 0, 7); c.fillStyle = TRACK_COLOURS[k]; c.fill();
+      if (t.up[k] >= TRACK_TOP && i === 0) { c.beginPath(); c.arc(px, py, S * .058, 0, 7); c.strokeStyle = TRACK_COLOURS[k]; c.lineWidth = 1; c.stroke(); }
+    }
     if (t.court) { c.fillStyle = '#c9952b'; c.font = `${Math.round(S * .16)}px system-ui, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('♚︎', t.cx * S - S * .2, t.cy * S + S * .33); }
   }
   // hover ghost
@@ -268,8 +285,9 @@ function draw() {
 // --- panels ----------------------------------------------------------------
 const esc = s => String(s).replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
-function statLines(card, pow, rng, lvl, court) {
-  const st = towerStats(card, pow, rng, lvl, court), out = [];
+const ordinal = n => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
+function statLines(card, pow, rng, up, court) {
+  const st = towerStats(card, pow, rng, up, court), out = [];
   out.push(['Reach', st.range.toFixed(1)]);
   if (card.s === 'H') { out.push(['Slows by', Math.round(st.slow * 100) + '%']); out.push(['Scorch', st.dmg.toFixed(1) + ' a second']); }
   else { out.push(['Hit', Math.round(st.dmg)]); out.push(['Speed', st.rate.toFixed(2) + ' a second']); }
@@ -281,22 +299,66 @@ function handsOnTable() {
   if (!g.handList.length) return g.towers.length >= 2 ? `<p class="lk-hint">No hands on the table yet. Put matching suits or ranks side by side.</p>` : '';
   return `<div class="lk-made"><span>On the table</span>${g.handList.map(([h, n]) => `<b>${HAND_NAME[h]}${n > 1 ? ' ×' + n : ''}</b>`).join('')}</div>`;
 }
+// The three tracks of the card that is selected: how far each has been
+// taken, what the next step does, and what it costs. A track that cannot
+// take its last step because another already has says so.
+function trackRows(t) {
+  return tracksOf(t.card).map((tr, k) => {
+    const n = t.up[k], top = n >= TRACK_TOP, open = canUpgrade(t, k), price = top ? 0 : upgradeCost(t, k);
+    const pips = [0, 1, 2].map(i => `<i class="${i < n ? 'is-on' : ''}"></i>`).join('');
+    const label = top ? 'Complete' : !open ? 'Locked' : `Upgrade · ${price}`;
+    const next = top ? tr.steps[TRACK_TOP - 1] : !open ? 'Another track has taken its last step.' : tr.steps[n];
+    return `<div class="lk-track lk-track-${k}"><div class="lk-track-head"><b>${tr.name}</b><span class="lk-pips" role="img" aria-label="${n} of ${TRACK_TOP} steps">${pips}</span></div>
+      <p>${next}</p><button class="btn small${open && !top ? ' primary' : ''}" type="button" data-track="${k}" ${top || !open || g.chips < price ? 'disabled' : ''}>${label}</button></div>`;
+  }).join('');
+}
+function boardHtml(list) {
+  if (!list || !list.length) return '';
+  return `<ol class="lk-boardlist">${list.map(r => `<li class="${r.you ? 'is-you' : ''}"><span>${esc(r.name)}</span><b>Wave ${r.waves}</b><i>${r.kept} kept</i></li>`).join('')}</ol>`;
+}
 function renderInfo() {
   const el = $('info');
-  if (!g) { el.innerHTML = ''; return; }
+  if (editor) {
+    const fault = roomFault(editor.cells);
+    el.innerHTML = `<h3>Draw a room</h3><p>Tap an edge square for the door, then a square along the same row or column for each corner. The last corner is the vault.</p>
+      <p class="${fault ? 'lk-hint' : 'lk-new'}">${esc(editor.note || fault || 'This room is ready to play.')}</p>
+      <div class="lk-pair"><button class="btn" type="button" id="lk-ed-undo" ${editor.cells.length ? '' : 'disabled'}>Undo</button><button class="btn" type="button" id="lk-ed-clear" ${editor.cells.length ? '' : 'disabled'}>Clear</button></div>
+      <div class="lk-pair"><button class="btn primary" type="button" id="lk-ed-play" ${fault ? 'disabled' : ''}>Play this room</button><button class="btn" type="button" id="lk-ed-link" ${fault ? 'disabled' : ''}>Copy link</button></div>
+      <div class="lk-pair"><button class="btn" type="button" id="lk-ed-back">Back</button></div>`;
+    $('ed-undo').onclick = () => { editor.cells.pop(); editor.note = ''; renderInfo(); };
+    $('ed-clear').onclick = () => { editor.cells = []; editor.note = ''; renderInfo(); };
+    $('ed-play').onclick = () => closeEditor(true);
+    $('ed-back').onclick = () => closeEditor(false);
+    $('ed-link').onclick = () => {
+      const url = `${location.origin}/lockup#room=${codeOfCells(editor.cells)}`;
+      const said = () => { editor.note = 'Link copied. Anybody who opens it gets this room.'; renderInfo(); };
+      if (navigator.clipboard) navigator.clipboard.writeText(url).then(said, () => { editor.note = url; renderInfo(); });
+      else { editor.note = url; renderInfo(); }
+    };
+    return;
+  }
+  if (!g) {
+    // Nothing in play: the panel is today's board.
+    if (!daily.loaded) { el.innerHTML = ''; return; }
+    el.innerHTML = `<h3>Today’s table</h3><p>${MAPS[daily.room].name}. Everybody is dealt the same cards, and your first finished game of the day is the one that counts.</p>
+      ${boardHtml(daily.board) || '<p class="lk-hint">Nobody has finished today’s table yet.</p>'}
+      ${daily.signedIn ? '' : '<p class="lk-hint">Sign in on the home page to put your score on the board.</p>'}`;
+    return;
+  }
   if (selTower) {
     const t = selTower, su = SUITS[t.card.s];
-    el.innerHTML = `<h3>${esc(cardName(t.card))}</h3><p>${su.role}</p>${faceLine(t.card)}${statLines(t.card, t.pow, t.rng, t.lvl, t.court)}
+    el.innerHTML = `<h3>${esc(cardName(t.card))}</h3><p>${su.role}</p>${faceLine(t.card)}${statLines(t.card, t.pow, t.rng, t.up, t.court)}
       <div class="lk-row"><span>Hand</span><b class="${t.hand ? 'lk-gold' : ''}">${t.hand ? HAND_NAME[t.hand] : 'None yet'}</b></div>
       ${t.court ? `<div class="lk-row"><span>Beside a king</span><b class="lk-gold">+${Math.round(t.court * 100)}% power</b></div>` : ''}
-      <div class="lk-row"><span>Raises</span><b>${t.lvl} of ${CFG.maxRaise}</b></div>
-      <div class="lk-pair"><button class="btn primary" id="lk-raise" ${t.lvl >= CFG.maxRaise || g.chips < raiseCost(t) ? 'disabled' : ''}>${t.lvl >= CFG.maxRaise ? 'Fully raised' : `Raise · ${raiseCost(t)}`}</button>
-      <button class="btn" id="lk-sell">Sell for ${sellValue(g, t)}</button></div>`;
+      <div class="lk-tracks">${trackRows(t)}</div>
+      <p class="lk-hint">Only one track can take its last step.</p>
+      <div class="lk-pair"><button class="btn" type="button" id="lk-sell">Sell for ${sellValue(g, t)}</button></div>`;
     $('sell').onclick = () => { sell(g, t); selTower = null; lastSig = ''; };
-    $('raise').onclick = () => { raise(g, t); lastSig = ''; };
+    for (const b of el.querySelectorAll('[data-track]')) b.onclick = () => { upgrade(g, t, +b.dataset.track); lastSig = ''; };
   } else if (sel >= 0 && g.hand[sel]) {
     const card = g.hand[sel];
-    el.innerHTML = `<h3>${esc(cardName(card))}</h3><p>${SUITS[card.s].role}</p>${faceLine(card)}${statLines(card, 0, 0, 0, 0)}<p class="lk-hint">Tap a marked spot beside the carpet. Line cards up to make poker hands.</p>`;
+    el.innerHTML = `<h3>${esc(cardName(card))}</h3><p>${SUITS[card.s].role}</p>${faceLine(card)}${statLines(card, 0, 0, null, 0)}
+      <p class="lk-hint">Upgrades: ${tracksOf(card).map(tr => tr.name).join(', ')}. Tap a marked spot beside the carpet to lay it.</p>`;
   } else if (g.phase === 'build') {
     const n = g.wave + 1, q = genWave(g.seed, n, g.hpScale), counts = {};
     for (const e of q) counts[e.type] = (counts[e.type] || 0) + 1;
@@ -309,16 +371,16 @@ function renderInfo() {
 }
 const TIPS = [
   'The bends of the carpet see the most traffic.',
-  'Two cards of the same rank side by side make a pair. Pairs hit harder.',
+  'Tap a card on the table to upgrade it. A cheap card with upgrades beats a dear one without.',
   'Clubs and high cards get through a bruiser’s padding. Small hits mostly bounce.',
-  'Three in a row of one suit is a flush. Three ranks in a row is a straight, and reaches further.',
+  'Two cards of the same rank side by side make a pair. Three of one suit is a flush, three ranks in a row a straight.',
   'Cat burglars leave the carpet. Cover the middle of each stretch.',
-  'Hearts do little harm alone. Put them where your hitters already reach.',
+  'Only one track of a card can take its last step. Pick the one that suits where the card sits.',
   'Forgers cannot be touched until a spade, a joker or an ace has them in reach.',
-  'Chips to spare? Tap a card on the table and raise it. Each raise adds 30% power.',
+  'Hearts do little harm alone. Put them where your hitters already reach.',
   'Take out the lookout first and the rest slow back down.',
   'The Mastermind takes two cards at once.',
-  'Lines can cross. One card can sit in a row hand and a column hand, and keeps the better of each.',
+  'Cards alone will not hold the later waves. Spend on the ones in the best spots.',
   'Splash from clubs deals with the pickpockets a double act leaves behind.',
   'A king lifts every card touching it, corners included.',
   'A redeal costs more each time in the same wave.'
@@ -337,11 +399,12 @@ function renderHand() {
 function syncUI() {
   if (!g) return;
   tickCoach();
-  const sig = [g.chips, g.phase, g.wave, sel, g.towers.indexOf(selTower), g.vault, g.lost, g.redeals, speed, paused, g.towers.length, g.towers.reduce((a, t) => a + t.lvl, 0), g.hand.map(c => c ? c.s + c.r : '-').join('')].join('|');
+  const sig = [g.chips, g.phase, g.wave, sel, g.towers.indexOf(selTower), g.vault, g.lost, g.redeals, speed, paused, g.towers.length, g.towers.reduce((a, t) => a + t.up[0] + t.up[1] + t.up[2], 0), g.hand.map(c => c ? c.s + c.r : '-').join('')].join('|');
   if (sig === lastSig) return;
   lastSig = sig;
   if (sel >= 0 && (!g.hand[sel] || g.chips < cost(g.hand[sel]))) sel = -1;
-  $('wave').textContent = (g.phase === 'build' ? g.wave + 1 : g.wave) + ' / ' + LAST_WAVE;
+  const wave = g.phase === 'build' ? g.wave + 1 : g.wave;
+  $('wave').textContent = g.endless ? String(wave) : wave + ' / ' + LAST_WAVE;
   const chipsEl = $('chips');
   chipsEl.textContent = g.chips;
   if (g.chips > lastChips && !still()) { chipsEl.classList.remove('lk-pop'); void chipsEl.offsetWidth; chipsEl.classList.add('lk-pop'); }
@@ -349,9 +412,9 @@ function syncUI() {
   $('cards').textContent = (VAULT_START - g.lost) + ' / ' + VAULT_START;
   $('cards').classList.toggle('lk-bad', g.lost >= 8);
   renderHand(); renderInfo();
-  const live = g.phase === 'build' || g.phase === 'wave';
+  const playing = g.phase === 'build' || g.phase === 'wave';
   $('send').disabled = g.phase !== 'build'; $('send').textContent = g.phase === 'build' ? `Send wave ${g.wave + 1}` : 'Wave running';
-  $('redeal').disabled = !live || g.chips < redealCost(g); $('redeal').textContent = `Redeal · ${redealCost(g)}`;
+  $('redeal').disabled = !playing || g.chips < redealCost(g); $('redeal').textContent = `Redeal · ${redealCost(g)}`;
   $('speed').textContent = speed + '×'; $('pause').textContent = paused ? 'Resume' : 'Pause';
   if (g.phase !== lastPhase) {
     lastPhase = g.phase;
@@ -365,7 +428,7 @@ const COACH = [
   { text: () => sel >= 0 ? 'Put it touching the first. Matching suits or ranks in a line make a hand.' : 'Pick another card.', nudge: () => sel >= 0 ? null : 'hand', done: () => g.towers.length >= 2 || !g.hand.some(c => c && g.chips >= cost(c)) },
   { text: () => 'Send the wave when you are ready.', nudge: () => 'send', done: () => g.phase !== 'build' || g.wave > 0 },
   { text: () => 'Thieves take a card and run for the door. Stop one and the card drops.', nudge: () => null, done: () => g.wave >= 1 && g.phase === 'build' },
-  { text: () => 'New cards every wave. Tap a card on the table to raise or sell it.', nudge: () => null, done: () => g.wave >= 2 }
+  { text: () => 'Tap a card on the table to upgrade it. Upgrades matter more than extra cards.', nudge: () => null, done: () => g.wave >= 2 || g.towers.some(t => t.up.some(Boolean)) }
 ];
 function tickCoach() {
   if (coach < 0) return;
@@ -383,55 +446,161 @@ function endCoach() {
 }
 $('coachskip').onclick = endCoach;
 
+// --- the daily board -------------------------------------------------------
+
+// Today's board is asked for once when the page opens, and again by the reply
+// to a finished daily game. A stranger can read it; only a member is on it.
+function loadBoard() {
+  if (quiet) return;
+  fetch('/api/site/lockup/daily').then(r => r.ok ? r.json() : null).then(body => {
+    if (!body) return;
+    daily = { loaded: true, room: body.room, board: body.board, signedIn: body.signedIn };
+    if (!g) renderInfo();
+  }).catch(() => { });
+}
+// A finished daily game is sent as the list of moves that made it. The
+// server plays them through the same rules and puts what it finds on the
+// board, so the figure there is never this page's word for it.
+function postDaily(moves) {
+  const say = html => { const el = document.getElementById('lk-endboard'); if (el) el.innerHTML = html; };
+  fetch('/api/site/lockup/daily', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ moves }) })
+    .then(r => r.json().then(body => ({ status: r.status, body })))
+    .then(({ status, body }) => {
+      if (status === 401) return say('<p class="lk-hint">Sign in on the home page to put your score on the board.</p>');
+      if (status !== 200) return say(`<p class="lk-hint">${esc(body.error || 'The board could not be reached.')}</p>`);
+      daily = { loaded: true, room: body.room, board: body.board, signedIn: true };
+      const place = body.board.findIndex(r => r.you) + 1;
+      say(`<p class="lk-hint">${body.counted ? `On today’s board: ${ordinal(place)} of ${body.board.length}.` : 'Your first game today is the one on the board.'}</p>${boardHtml(body.board.slice(0, 5))}`);
+    }).catch(() => say('<p class="lk-hint">The board could not be reached.</p>'));
+}
+
 // --- start and end sheets --------------------------------------------------
 const best = () => +store.get('best') || 0;
 const segHtml = (label, attr, items, cur) => `<div class="lk-opt"><span>${label}</span><div class="lk-seg" role="group" aria-label="${label}">${items.map(([v, t]) => `<button type="button" data-${attr}="${v}" aria-pressed="${String(v) === String(cur)}">${t}</button>`).join('')}</div></div>`;
 function showEnd() {
-  const cleared = g.phase === 'won' ? LAST_WAVE : g.wave - 1, kept = VAULT_START - g.lost, prev = best();
-  if (cleared > prev && !quiet) store.set('best', cleared);
-  if (!quiet) {
-    fetch('/api/site/lockup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ waves: cleared }) }).catch(() => { });
+  const waves = cleared(g), kept = VAULT_START - g.lost, prev = best();
+  // A drawn room can be as easy as its maker likes, so it is played for
+  // itself: no best, no record, no board.
+  const counted = g.mapIndex >= 0 && !quiet;
+  if (counted && waves > prev) store.set('best', waves);
+  if (counted && g.mode === 'daily') postDaily(g.log);
+  else if (counted) {
+    fetch('/api/site/lockup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ waves, room: g.room, stopped: g.stopped }) }).catch(() => { });
   }
+  const won = g.phase === 'won';
   $('overlay').hidden = false;
-  $('overlay').innerHTML = `<div class="lk-sheet"><p class="lk-eyebrow">${g.mode === 'daily' ? 'Daily table' : 'Free play'} · ${M.name}</p>
-    <h2 class="display">${g.phase === 'won' ? 'The vault holds.' : 'Cleaned out.'}</h2>
-    <p>${g.phase === 'won' ? `All ${LAST_WAVE} waves turned away, with ${kept} of ${VAULT_START} cards still yours.` : `They got the lot on wave ${g.wave}. You saw off ${plural(cleared, 'wave')}.`}</p>
-    <p class="lk-hint">${cleared > prev ? 'A new best.' : `Your best is ${plural(prev, 'wave')}.`}</p>
-    <div class="lk-actions"><button class="btn primary" data-mode="${g.mode}">Play again</button><button class="btn" data-menu>Change table</button></div></div>`;
+  $('overlay').innerHTML = `<div class="lk-sheet"><p class="lk-eyebrow">${g.mode === 'daily' ? 'Daily table' : g.endless ? 'Endless' : 'Free play'} · ${M.name}</p>
+    <h2 class="display">${won ? 'The vault holds.' : 'Cleaned out.'}</h2>
+    <p>${won ? `All ${LAST_WAVE} waves turned away, with ${kept} of ${VAULT_START} cards still yours.` : `They got the lot on wave ${g.wave}. You saw off ${plural(waves, 'wave')}.`}</p>
+    ${counted ? `<p class="lk-hint">${waves > prev ? 'A new best.' : `Your best is ${plural(prev, 'wave')}.`}</p>` : ''}
+    <div id="lk-endboard"></div>
+    <div class="lk-actions">${won && g.mode !== 'daily' ? '<button class="btn primary" type="button" data-endless>Keep going</button>' : ''}<button class="btn${won && g.mode !== 'daily' ? '' : ' primary'}" type="button" data-mode="${g.mode}">Play again</button><button class="btn" type="button" data-menu>Change table</button></div></div>`;
   wireSheet();
 }
 function showStart() {
   const b = best();
-  M = MAPS[pickMap];
+  if (pickMap < 0 && !customRoom) pickMap = 0;
+  M = pickMap < 0 ? customRoom : MAPS[pickMap];
+  const rooms = MAPS.map((m, i) => [i, m.name.replace('The ', '')]);
+  if (customRoom) rooms.push([-1, 'Drawn']);
   $('overlay').hidden = false;
   $('overlay').innerHTML = `<div class="lk-sheet"><p class="lk-eyebrow">A tower defence for one</p>
     <h2 class="display">They’re coming for your cards.</h2>
     <ol class="lk-steps"><li><b>Deal</b> Five cards a wave. Pay chips to put any of them on the table.</li>
-    <li><b>Line up</b> Neighbouring cards make poker hands. Better hands hit harder.</li>
+    <li><b>Upgrade</b> Cards are cheap. What you spend on them afterwards is what holds the door.</li>
     <li><b>Lock up</b> Stop a thief and the card drops. Let one out the door and it’s gone.</li></ol>
-    ${segHtml('Room', 'map', MAPS.map((m, i) => [i, m.name.replace('The ', '')]), pickMap)}
+    ${segHtml('Room', 'map', rooms, pickMap)}
     ${segHtml('Stakes', 'stakes', [['low', 'Low'], ['standard', 'Standard'], ['high', 'High']], pickStakes)}
-    <div class="lk-actions"><button class="btn primary" data-mode="free">Play</button><button class="btn" data-mode="daily">Play daily table</button></div>
+    <div class="lk-actions"><button class="btn primary" type="button" data-mode="free">Play</button><button class="btn" type="button" data-mode="daily">Play daily table</button><button class="btn" type="button" data-draw>Draw a room</button></div>
     <p class="lk-hint">${b ? `Your best is ${plural(b, 'wave')}. ` : ''}The daily table picks the room and deals everyone the same cards, at standard stakes.</p></div>`;
   wireSheet();
+  renderInfo();
 }
 function wireSheet() {
   const o = $('overlay');
   for (const b of o.querySelectorAll('[data-mode]')) b.onclick = () => start(b.dataset.mode);
-  for (const b of o.querySelectorAll('[data-map]')) b.onclick = () => { pickMap = +b.dataset.map; store.set('map', pickMap); g = null; showStart(); };
+  for (const b of o.querySelectorAll('[data-map]')) b.onclick = () => { pickMap = +b.dataset.map; if (pickMap >= 0) store.set('map', pickMap); g = null; showStart(); };
   for (const b of o.querySelectorAll('[data-stakes]')) b.onclick = () => { pickStakes = b.dataset.stakes; store.set('stakes', pickStakes); showStart(); };
   for (const b of o.querySelectorAll('[data-menu]')) b.onclick = () => { g = null; resetHud(); showStart(); };
+  for (const b of o.querySelectorAll('[data-draw]')) b.onclick = openEditor;
+  for (const b of o.querySelectorAll('[data-endless]')) b.onclick = () => { if (keepGoing(g)) { $('overlay').hidden = true; lastPhase = g.phase; lastSig = ''; } };
 }
 function resetHud() { $('hand').innerHTML = ''; $('info').innerHTML = ''; $('wave').textContent = '1 / ' + LAST_WAVE; $('chips').textContent = CFG.start; $('cards').textContent = VAULT_START + ' / ' + VAULT_START; $('cards').classList.remove('lk-bad'); }
 function start(mode, seed, opts) {
-  const daily = mode === 'daily';
-  if (seed == null) seed = daily ? dailySeed() : (Math.random() * 2 ** 32) >>> 0;
-  const mapIndex = opts && opts.map != null ? opts.map : daily ? seed % MAPS.length : pickMap;
-  const stakes = opts && opts.stakes ? opts.stakes : daily ? 'standard' : pickStakes;
-  g = newGame(seed, mode, mapIndex, stakes); M = MAPS[mapIndex]; sel = -1; selTower = null; paused = false; lastSig = ''; lastPhase = 'build'; lastChips = g.chips; lastDeal = 0;
+  const isDaily = mode === 'daily', table = isDaily ? dailyTable() : null;
+  if (seed == null) seed = isDaily ? table.seed : (Math.random() * 2 ** 32) >>> 0;
+  const room = opts && opts.map != null ? opts.map : isDaily ? table.room : pickMap >= 0 ? pickMap : customRoom;
+  const stakes = opts && opts.stakes ? opts.stakes : isDaily ? 'standard' : pickStakes;
+  g = newGame(seed, mode, room, stakes); M = typeof room === 'number' ? MAPS[room] : room;
+  editor = null; sel = -1; selTower = null; paused = false; lastSig = ''; lastPhase = 'build'; lastChips = g.chips; lastDeal = 0;
   $('overlay').hidden = true;
   if (!quiet && !store.get('seen')) { coach = 0; coachText = ''; } else if (coach >= 0) endCoach();
   return g;
+}
+
+// --- drawing a room --------------------------------------------------------
+
+// The editor is the board with no game on it. A room is a list of corners,
+// and the rules say whether a list is a room (roomFault); the page only
+// collects taps and refuses the ones that could never become one.
+function openEditor() {
+  editor = { cells: customRoom ? cellsOfCode(customRoom.code) : [], note: '' };
+  g = null; resetHud();
+  $('overlay').hidden = true;
+  renderInfo();
+}
+function closeEditor(play) {
+  const code = codeOfCells(editor.cells), room = roomFromCode(code);
+  editor = null;
+  if (room) {
+    customRoom = room; pickMap = -1;
+    try { history.replaceState(null, '', '#room=' + code); } catch (e) { }
+  }
+  if (play && room) start('free'); else showStart();
+}
+function editorTap(x, y) {
+  if (!(x >= 0 && x < COLS && y >= 0 && y < ROWS)) return;
+  const cells = editor.cells, last = cells[cells.length - 1];
+  editor.note = '';
+  if (!last) {
+    if (x !== 0 && y !== 0 && x !== COLS - 1 && y !== ROWS - 1) editor.note = 'Start on an edge square: that is the door.';
+    else cells.push([x, y]);
+  } else if (last[0] === x && last[1] === y) {
+    return;
+  } else if ((last[0] !== x) === (last[1] !== y)) {
+    editor.note = 'Pick a square in the same row or column as the last corner.';
+  } else {
+    cells.push([x, y]);
+    const fault = roomFault(cells);
+    if (/cross|corners/.test(fault)) { cells.pop(); editor.note = fault; }
+  }
+  renderInfo();
+}
+function drawEditor(c, W, H) {
+  const cells = editor.cells, last = cells[cells.length - 1];
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+    const edge = x === 0 || y === 0 || x === COLS - 1 || y === ROWS - 1;
+    const open = last ? (last[0] === x) !== (last[1] === y) : edge;
+    if (open) {
+      rr(c, x * S + S * .1, y * S + S * .1, S * .8, S * .8, S * .1);
+      c.fillStyle = 'rgba(226,184,87,.06)'; c.fill(); c.strokeStyle = 'rgba(226,184,87,.28)'; c.lineWidth = 1; c.setLineDash([3, 3]); c.stroke(); c.setLineDash([]);
+    } else { c.fillStyle = 'rgba(241,234,217,.1)'; c.fillRect((x + .5) * S - 1, (y + .5) * S - 1, 2, 2); }
+  }
+  if (!last) return;
+  const trace = () => { c.beginPath(); cells.forEach(([x, y], i) => i ? c.lineTo((x + .5) * S, (y + .5) * S) : c.moveTo((x + .5) * S, (y + .5) * S)); };
+  c.lineJoin = 'round'; c.lineCap = 'round';
+  trace(); c.strokeStyle = 'rgba(226,184,87,.4)'; c.lineWidth = S * .84; c.stroke();
+  trace(); c.strokeStyle = '#3a1420'; c.lineWidth = S * .78; c.stroke();
+  c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#e2b857'; c.font = `600 ${Math.round(S * .2)}px system-ui, sans-serif`;
+  c.fillText('DOOR', (cells[0][0] + .5) * S, (cells[0][1] + .5) * S);
+  if (cells.length > 1) c.fillText('VAULT', (last[0] + .5) * S, (last[1] + .5) * S);
+}
+// A link somebody was sent: /lockup#room=... The code is checked by the
+// rules like anything else off the wire, and a bad one is simply no room.
+function readHash() {
+  const m = /^#room=([0-9a-b]+)$/.exec(location.hash);
+  const room = m && roomFromCode(m[1]);
+  if (room) { customRoom = room; pickMap = -1; }
 }
 
 // --- input -----------------------------------------------------------------
@@ -439,6 +608,7 @@ function cellAt(e) { const r = cv.getBoundingClientRect(); return { x: Math.floo
 cv.addEventListener('pointermove', e => { hover = e.pointerType === 'touch' ? null : cellAt(e); });
 cv.addEventListener('pointerleave', () => { hover = null; });
 cv.addEventListener('click', e => {
+  if (editor) { const { x, y } = cellAt(e); editorTap(x, y); return; }
   if (!g || paused) return;
   const { x, y } = cellAt(e), t = g.grid[y * COLS + x];
   if (t) { selTower = selTower === t ? null : t; sel = -1; }
@@ -470,7 +640,10 @@ function frame(now) {
   drainEvents(); syncUI(); draw();
   requestAnimationFrame(frame);
 }
-fit(); showStart(); requestAnimationFrame(frame);
+// A link to a drawn room opened while the page is already up changes only
+// what follows the #, which loads nothing, so it is read again here.
+addEventListener('hashchange', () => { readHash(); if (!g && !editor) showStart(); });
+fit(); readHash(); showStart(); loadBoard(); requestAnimationFrame(frame);
 
 // A handle for the console: start a game, place cards and step the rules by
 // hand, which is how a change to CFG is tried before it is kept.

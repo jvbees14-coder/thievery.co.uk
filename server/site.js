@@ -41,6 +41,7 @@ import * as Mindmaps from './mindmaps.js';
 import * as Maps from './maps.js';
 import * as Daily from './daily.js';
 import * as Decks from './decks.js';
+import * as Lockup from './lockup.js';
 import { send, fail, originOk, currentUser, requireUser, readBody } from './plumbing.js';
 import { readView, render } from './views.js';
 import * as Tools from './tools.js';
@@ -336,14 +337,48 @@ export function handle(req, res, url) {
       // in. The figure is the page's word for it, so the only thing checked
       // is that it is a figure the game could have reached; see stats.js for
       // why that is enough for what it is used for.
-      if (head === 'lockup' && method === 'POST') {
+      if (head === 'lockup' && !a && method === 'POST') {
         const user = requireUser(req);
-        const { waves } = await readBody(req);
-        if (!Number.isInteger(waves) || waves < 0 || waves > Stats.LOCKUP_WAVES) {
-          return send(res, 400, { error: `Waves must be a whole number from 0 to ${Stats.LOCKUP_WAVES}.` });
+        const { waves, room = '', stopped = 0 } = await readBody(req);
+        if (!Number.isInteger(waves) || waves < 0 || waves > Stats.LOCKUP_MAX_WAVES) {
+          return send(res, 400, { error: `Waves must be a whole number from 0 to ${Stats.LOCKUP_MAX_WAVES}.` });
         }
-        Stats.recordLockup(user.id, { waves });
+        if (room !== '' && !Lockup.ROOM_IDS.includes(room)) return send(res, 400, { error: 'No such room.' });
+        if (!Number.isInteger(stopped) || stopped < 0 || stopped > 100000) return send(res, 400, { error: 'Thieves stopped must be a whole number.' });
+        Stats.recordLockup(user.id, { waves, room, stopped });
         return send(res, 200, { lockup: Stats.forUser(user.id).lockup });
+      }
+
+      // The daily table's board. Anybody may read it. To be on it, a member
+      // sends the moves of a finished game and they are played back through
+      // the rules (lockup.js): the board holds what that found, never what
+      // the page said. The first finished game of the day is the one kept.
+      if (head === 'lockup' && a === 'daily' && method === 'GET') {
+        const viewer = currentUser(req);
+        return send(res, 200, Lockup.today(viewer ? viewer.id : null));
+      }
+      if (head === 'lockup' && a === 'daily' && method === 'POST') {
+        const user = requireUser(req);
+        const key = Lockup.todayKey();
+        if (Lockup.hasPlayed(user.id, key)) return send(res, 200, { counted: false, ...Lockup.today(user.id) });
+        const { moves } = await readBody(req);
+        // A game begun before midnight and finished after it was dealt
+        // yesterday's cards, so yesterday's table is tried before it is
+        // called a list nobody could have played.
+        let day = key;
+        let result = await Lockup.playBack(user.id, day, moves);
+        if (!result.ok && !result.busy) {
+          const before = Lockup.todayKey(Date.now() - 86_400_000);
+          if (!Lockup.hasPlayed(user.id, before)) {
+            const again = await Lockup.playBack(user.id, before, moves);
+            if (again.ok) { result = again; day = before; }
+          }
+        }
+        if (result.busy) return send(res, 503, { error: 'The board is busy. Your game is not lost: try again in a moment.' });
+        if (!result.ok) return send(res, 400, { error: 'That game could not be played back, so it is not on the board.' });
+        const counted = Lockup.record(user.id, day, result);
+        if (counted) Stats.recordLockup(user.id, { waves: result.waves, room: Lockup.ROOM_IDS[Lockup.tableFor(day).room], stopped: result.stopped, daily: true });
+        return send(res, 200, { counted: counted && day === key, result: { waves: result.waves, kept: result.kept }, ...Lockup.today(user.id) });
       }
 
       // The members panel. Accounts belong to the whole site rather than to

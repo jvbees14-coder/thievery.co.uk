@@ -127,6 +127,39 @@
 .lk-row { display: flex; justify-content: space-between; padding: var(--space-1) 0; border-top: 1px solid var(--separator); font-size: var(--text-subhead); }
 .lk-row span { color: var(--label-secondary); }
 .lk-row b { font-variant-numeric: var(--numeric); }
+/* The three tracks of a selected card: a name, how far along it is, what the
+   next step does, and the button that takes it. One colour a track, the same
+   three the pips on the card are drawn in. */
+.lk-tracks { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
+.lk-track {
+  --track: var(--r-legendary);
+  display: grid; grid-template-columns: 1fr auto; gap: 2px var(--space-3); align-items: center;
+  padding: var(--space-2) var(--space-3); border-radius: var(--radius-m);
+  border: 1px solid var(--separator); border-left: 3px solid var(--track);
+}
+.lk-track-1 { --track: var(--team-a); }
+.lk-track-2 { --track: var(--r-epic); }
+.lk-track-head { display: flex; align-items: center; gap: var(--space-2); }
+.lk-track-head b { font-size: var(--text-subhead); }
+.lk-pips { display: inline-flex; gap: 3px; }
+.lk-pips i { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--track); }
+.lk-pips i.is-on { background: var(--track); }
+.lk-info .lk-track p { grid-column: 1; margin: 0; font-size: var(--text-footnote); }
+.lk-track .btn { grid-column: 2; grid-row: 1 / span 2; font-variant-numeric: var(--numeric); }
+
+/* The day's board: a name, how far they got, and what they kept. */
+.lk-boardlist { list-style: none; counter-reset: lk-place; margin: 0 0 var(--space-3); padding: 0; }
+.lk-boardlist li {
+  counter-increment: lk-place; display: grid; grid-template-columns: 1.6rem 1fr auto auto; gap: var(--space-2); align-items: baseline;
+  padding: var(--space-1) 0; border-top: 1px solid var(--separator); font-size: var(--text-subhead);
+}
+.lk-boardlist li::before { content: counter(lk-place); color: var(--label-secondary); font-variant-numeric: var(--numeric); }
+.lk-boardlist span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lk-boardlist b { font-variant-numeric: var(--numeric); }
+.lk-boardlist i { font-style: normal; color: var(--label-secondary); font-size: var(--text-footnote); }
+.lk-boardlist .is-you span { color: var(--accent); font-weight: 600; }
+.lk-sheet .lk-boardlist { text-align: left; }
+
 .lk-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-3); }
 .lk-made { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin: 0 0 var(--space-3); }
 .lk-made span { font-size: var(--text-caption); letter-spacing: 0.08em; text-transform: uppercase; color: var(--label-secondary); }
