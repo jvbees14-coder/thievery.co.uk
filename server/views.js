@@ -141,8 +141,8 @@ export function bar(current = '', { signedIn = true, main = 'main' } = {}) {
   // Gerrymander's waits until there is room for both.
   const extraHere = current === 'gerrymander' ? ' aria-current="page"' : '';
   const lockupHere = current === 'lockup' ? ' aria-current="page"' : '';
-  // How it works is a third extra link, shown as its icon (see shell.css),
-  // and on a phone it is a row under More.
+  // How it works is a third extra link, with its name, once the bar has room
+  // for it (see shell.css); on a phone it is a row under More.
   const hiwHere = current === 'explainers' ? ' aria-current="page"' : '';
   // The nav and the extra link are held together so a wide bar can centre
   // them as one row, on the page rather than in whatever room the account
@@ -154,7 +154,7 @@ export function bar(current = '', { signedIn = true, main = 'main' } = {}) {
     </nav>
     <a class="menu-nav-link site-extra site-extra-early" href="/lockup"${lockupHere}>${icon('lockup')}<span>Lockup</span></a>
     <a class="menu-nav-link site-extra" href="/gerrymander/"${extraHere}>${icon('gerrymander')}<span>Gerrymander</span></a>
-    <a class="menu-nav-link site-extra site-extra-compact" href="/how-it-works" title="How it works"${hiwHere}>${icon('explainers')}<span class="site-extra-label">How it works</span></a>
+    <a class="menu-nav-link site-extra site-extra-compact" href="/how-it-works"${hiwHere}>${icon('explainers')}<span>How it works</span></a>
     </div>`;
   if (!signedIn) {
     return `${skip}

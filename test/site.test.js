@@ -436,6 +436,11 @@ async function run() {
     assert.equal((await stranger.page('/how-it-works/nowhere')).status, 404);
     const home = await stranger.page('/about');
     assert.ok(home.html.includes('<a href="/how-it-works">How it works</a>'), 'the foot does not link How it works');
+    // The front page lists it among the rooms, with a link of its own, since
+    // the bar only has room for it on the widest screens.
+    const door = await stranger.page('/');
+    assert.ok(door.html.includes('<h3><a href="/how-it-works">How it works</a></h3>'), 'the front page does not list How it works');
+    assert.ok(index.html.includes('class="menu-nav-link site-extra site-extra-compact" href="/how-it-works" aria-current="page"><svg') && index.html.includes('<span>How it works</span></a>'), 'the bar link has no name');
   });
 
   await check("every file an explainer page names is there", async () => {
@@ -556,6 +561,7 @@ async function run() {
     assert.ok(!res.html.includes('<!--') && !res.html.includes('{{'), 'the menu was served unrendered');
     assert.ok(res.html.includes('href="/gerrymander/"'), 'the menu does not link to Gerrymander');
     assert.ok(res.html.includes('id="tile-lockup" href="/lockup"'), 'the menu does not link to Lockup');
+    assert.ok(res.html.includes('id="tile-explainers" href="/how-it-works"'), 'the menu does not link to How it works');
     assert.ok(!res.html.includes('Open an account'), 'the door was served to a member');
   });
 

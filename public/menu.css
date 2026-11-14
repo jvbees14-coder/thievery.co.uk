@@ -124,6 +124,7 @@
 .tile-mindmaps .icon { color: var(--mm-c5); }
 .tile-gerrymander .icon { color: var(--mm-c4); }
 .tile-lockup .icon { color: var(--r-legendary); }
+.tile-explainers .icon { color: var(--team-a); }
 
 /* A room that cannot be reached is still drawn, dimmed, and says why in its
    own figure line. Hiding it would leave a hole nobody could account for. */
@@ -361,6 +362,18 @@
   display: grid; place-items: center; width: 36px; height: 50px; border-radius: var(--radius-s);
   background: var(--stock); color: var(--stock-ink); border: 1px solid var(--stock-edge);
   font-weight: 700; font-size: var(--text-subhead); box-shadow: var(--shadow-1);
+}
+
+/* How it works: the Earth inside two satellite orbits, as on its own pages. */
+.art-explainers svg { display: block; width: 100%; height: 100%; }
+.art-explainers .orbit { fill: none; stroke: var(--ornament); stroke-width: 1.5; }
+.art-explainers .earth { fill: var(--bg-elevated-2); stroke: var(--team-a); stroke-width: 2; }
+.art-explainers .grid { fill: none; stroke: var(--team-a); stroke-width: 1; opacity: 0.6; }
+.art-explainers .sat { fill: var(--accent); }
+.room-card h3 a { color: inherit; text-decoration: none; }
+.room-card h3 a::after { content: " ›"; color: var(--accent); }
+@media (hover: hover) and (pointer: fine) {
+  .room-card h3 a:hover { text-decoration: underline; text-decoration-color: var(--accent); }
 }
 
 /* The way in. A card back lies under the corner of the band; the door card

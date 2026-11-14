@@ -973,9 +973,11 @@ listed in `server/explainers.js`; an unlisted view is a 404.
   stops on a chapter change and on `pagehide`. Nothing on the site makes a
   noise by itself.
 - In the bar it is a third `site-extra`, after Lockup and Gerrymander and
-  shown from 1441px (the games' widths are sized for them and the longest
-  account name), as its icon alone (`.site-extra-compact` in `shell.css`);
-  on a phone it is a row under More (`MORE` in `views.js`).
+  shown with its name from 1441px (the games' widths are sized for them
+  and the longest account name; `.site-extra-compact` in `shell.css`); on a
+  phone it is a row under More (`MORE` in `views.js`). The home page lists
+  it too: a tile in the hall (`menu.html`) and a card that links on the
+  signed-out front page (`menu-door.html`).
 - Scenes are ES modules importing `../engine.js` without a `?v=`, so they
   are revalidated rather than pinned for a year; only the page's entry
   script is versioned.
