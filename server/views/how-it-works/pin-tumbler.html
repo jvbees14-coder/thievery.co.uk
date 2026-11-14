@@ -1,0 +1,61 @@
+<!--
+  How a pin tumbler lock works. Poured into _page.html; the scene is
+  public/explainers/pin-tumbler/scene.js. It explains the mechanism and why
+  it can be picked, at the level of the MIT guide and any locksport primer;
+  it is not a how-to for any particular lock.
+-->
+        <section class="hiw-chapter" id="pins" aria-labelledby="h-pins">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-pins">Pins and a shear line</h2>
+          <p>Most front doors, padlocks and desk drawers use the same design, patented by Linus Yale Jr. in the 1860s. Inside is a cylinder, the <button class="hiw-term" data-term="plug">plug</button>, that turns to work the bolt, sitting in a shell that does not.</p>
+          <p>Pin stacks stand in holes drilled through both. Each stack is a brass key pin at the bottom, a steel driver pin above it, and a spring pushing both down.</p>
+          <p>The boundary between the plug and the shell is the shear line. With no key in, the driver pins sit across it, pinning the plug to the shell so it can't turn.</p>
+        </section>
+
+        <section class="hiw-chapter" id="key" aria-labelledby="h-key">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-key">What the key does</h2>
+          <p>The key pins are different lengths. The key's cuts are different depths to match, so that when it is all the way in, each key pin is lifted by just the right amount.</p>
+          <p>When it is, the gap between every key pin and its driver lies exactly on the shear line. Nothing crosses it, and the plug turns.</p>
+          <p>A different key lifts some pins too far and others not far enough. One pin across the line is enough to stop the plug.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Push the right key in slowly and watch the gaps arrive at the line together. Then try the other key.</p>
+        </section>
+
+        <section class="hiw-chapter" id="tolerance" aria-labelledby="h-tolerance">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-tolerance">Nothing is made perfectly</h2>
+          <p>In an ideal lock the pin holes would be in a perfectly straight line. In a real one they are a tiny bit out, by fractions of a millimetre, because every machine that drills them has some slack.</p>
+          <p>That matters when someone turns the plug without the key. The plug moves a hair, and the one pin whose hole is most out of line gets pinched first. That pin is said to bind. The others are still loose.</p>
+          <p>The picture exaggerates the misalignment so you can see it. In a real lock it can be felt but not seen.</p>
+        </section>
+
+        <section class="hiw-chapter" id="picking" aria-labelledby="h-picking">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-picking">Picking, one pin at a time</h2>
+          <p>Picking uses that flaw. Light turning pressure makes one pin bind. Lift that pin until its gap reaches the shear line, and the plug turns a hair further: the driver now rests on the edge of the plug, above the line, and the key pin drops back down. The pin is set.</p>
+          <p>Now a different pin binds. Set that one, then the next, until no driver crosses the line and the plug turns, without a key ever matching the cuts.</p>
+          <p>Lift a binding pin too far and its key pin crosses the line instead, and jams. Letting go of the pressure drops every pin and starts again.</p>
+          <p class="hiw-try"><strong>Try it.</strong> With the pressure on, lift the binding pin to the line and let go. Lift a pin that isn't binding and see it fall back.</p>
+        </section>
+
+        <section class="hiw-chapter" id="security" aria-labelledby="h-security">
+          <p class="hiw-chapter-num">Chapter 5</p>
+          <h2 id="h-security">Fighting back</h2>
+          <p>Better locks are harder to pick. Spool driver pins are narrow in the middle: when one reaches the line, the plug turns a little and then catches, so a picker feels a pin set when it hasn't.</p>
+          <p>Tighter manufacturing makes the binding order harder to feel. More pins and more cut depths make more keys possible: five pins with six depths each allow 6⁵, or 7,776, different keys, before the rules about which cuts can sit next to each other take some away.</p>
+          <p>Most burglars don't pick locks at all. They force them, which is why good door cylinders in the UK are tested against snapping and drilling as well as picking.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The lock in the scene is a simplified five-pin cylinder, with exaggerated proportions so the pins can be seen. Real locks bind in an order set by their own tiny flaws; this one binds in a fixed order.</p>
+      <ol>
+        <li>Ted the Tool, <a href="https://www.lysator.liu.se/mit-guide/chapter4.html" rel="noopener">MIT Guide to Lock Picking, chapter 4</a>: the binding defect, and setting a pin at the shear line.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Pin_tumbler_lock" rel="noopener">Pin tumbler lock</a>: key pins, driver pins, springs and the shear line, and Linus Yale Jr.'s patents of the 1860s.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Lock_picking" rel="noopener">Lock picking</a>: security pins such as spool pins, and false sets.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="plug" data-title="Plug">The cylinder in the middle of the lock that the key goes into. When it turns, it moves a cam that works the bolt.</p>
+    </template>

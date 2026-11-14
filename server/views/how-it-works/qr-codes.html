@@ -1,0 +1,58 @@
+<!--
+  How a QR code works. Poured into _page.html; the scene is
+  public/explainers/qr-codes/scene.js, on the encoder in qr.js. Chapter
+  ids: anatomy, data, ecc, masks, damage.
+-->
+        <section class="hiw-chapter" id="anatomy" aria-labelledby="h-anatomy">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-anatomy">A barcode in two directions</h2>
+          <p>A QR code was invented in 1994 by Denso Wave, a Japanese company, to track car parts. It stores data in a square grid of dark and light squares called modules, and everything about its layout helps a camera find and read it at any angle.</p>
+          <p>The three big squares in the corners are finder patterns: their ratio of dark to light, 1:1:3:1:1, is easy to spot from any direction. The dotted timing lines between them mark out the grid. Larger codes add small alignment squares, so a camera can correct for a bent or tilted page. Next to the finders, the format information says how the rest was written.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Type something. The code is real: point your phone's camera at it.</p>
+        </section>
+
+        <section class="hiw-chapter" id="data" aria-labelledby="h-data">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-data">Your text as bits</h2>
+          <p>Your text becomes bytes, the bytes become bits, and in front of them go a few bits saying what kind of data follows and how long it is. Whatever room is left is filled with a set padding pattern.</p>
+          <p>The bits go into the grid in a snaking path: two columns at a time, starting at the bottom right, going up, then down the next pair, stepping round anything that is already there. The longer the message, the larger the grid: version 1 is 21 by 21, and every version after that adds four modules each way.</p>
+        </section>
+
+        <section class="hiw-chapter" id="ecc" aria-labelledby="h-ecc">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-ecc">Spare information</h2>
+          <p>After the data comes error correction: extra bytes worked out from the data with <button class="hiw-term" data-term="rs">Reed-Solomon codes</button>, the same mathematics used on CDs and by space probes. If some bytes are smudged or missing, the reader can work out what they were.</p>
+          <p>There are four levels. L can mend about 7% of the code's bytes, M about 15%, Q 25% and H 30%. More mending means more spare bytes, so the same text needs a bigger grid.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Switch between the levels and watch the code grow.</p>
+        </section>
+
+        <section class="hiw-chapter" id="masks" aria-labelledby="h-masks">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-masks">Masks</h2>
+          <p>Raw data can come out in awkward patterns: long stripes, big blocks, or shapes that look like a finder pattern and confuse the camera. So before finishing, the encoder flips the data modules according to one of eight fixed patterns, called masks.</p>
+          <p>It tries all eight, scores each for awkward patterns, and keeps the one with the lowest penalty. The reader learns which mask was used from the format information and flips the modules back.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Pick each mask in turn and compare the penalties.</p>
+        </section>
+
+        <section class="hiw-chapter" id="damage" aria-labelledby="h-damage">
+          <p class="hiw-chapter-num">Chapter 5</p>
+          <h2 id="h-damage">Why a logo in the middle works</h2>
+          <p>Error correction is why QR codes on posters often have a logo in the middle. The logo destroys some of the data, and the reader mends it, as long as the damage stays within what the level can repair.</p>
+          <p>The finder patterns can't be covered: without them the camera can't find the code at all. And a code that is already damaged by the logo has less spare for scratches and dirt.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Cover the middle and scan it at level H, then at level L.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The codes are made by a real encoder running in your browser, in byte mode, versions 1 to 10. Its error correction and format information were checked against the standard's published examples and tables, and every code it makes decodes back to the exact text. The covered patch in chapter 5 is sized to about half of what each level can mend.</p>
+      <ol>
+        <li>Denso Wave, <a href="https://www.qrcode.com/en/history/" rel="noopener">History of QR code</a>: invented in 1994.</li>
+        <li>Denso Wave, <a href="https://www.qrcode.com/en/about/error_correction.html" rel="noopener">Error correction feature</a>: levels L, M, Q and H restoring about 7%, 15%, 25% and 30% of codewords.</li>
+        <li>Project Nayuki, <a href="https://www.nayuki.io/page/creating-a-qr-code-step-by-step" rel="noopener">Creating a QR code step by step</a>: the layout, zigzag, masks and penalties followed here.</li>
+        <li>Thonky, <a href="https://www.thonky.com/qr-code-tutorial/" rel="noopener">QR code tutorial</a>: the worked Reed-Solomon example and the format-information table used to check the encoder.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="rs" data-title="Reed-Solomon codes">A way of adding extra bytes, worked out from the data, so that a set number of damaged or missing bytes can be recovered exactly.</p>
+    </template>

@@ -1,0 +1,89 @@
+<!doctype html>
+<!--
+  The layout every explainer is built on. Copy this file to
+  server/views/how-it-works/<slug>.html, fill in everything in capitals,
+  and list the explainer in server/explainers.js. Nothing is served until
+  it is listed. docs/ADDING_AN_EXPLAINER.md has the whole walk-through.
+
+  The shape, top to bottom:
+    1. The title, and one line under it.
+    2. {{hiw-stage}}: the scene, its controls and numbers and the step
+       buttons, from _stage.html. The engine fills them in.
+    3. The writing, one <section class="hiw-chapter"> per chapter. Each
+       id is the name the scene's chapter() switches on.
+    4. Sources and notes: where every figure came from.
+    5. The glossary: one entry per <button class="hiw-term">.
+-->
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  {{head:explainers}}
+  <title>TITLE · Thievery</title>
+  <meta name="description" content="An interactive explainer: ONE PLAIN SENTENCE ABOUT WHAT YOU LEARN." />
+  <link rel="canonical" href="https://thievery.co.uk/how-it-works/SLUG" />
+  <meta property="og:site_name" content="Thievery" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="TITLE · Thievery" />
+  <meta property="og:description" content="THE HOOK FROM server/explainers.js." />
+  <meta property="og:url" content="https://thievery.co.uk/how-it-works/SLUG" />
+  <meta property="og:image" content="https://thievery.co.uk/og/how-it-works-SLUG.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="WHAT THE SHARE PICTURE SHOWS." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "LearningResource",
+    "name": "TITLE",
+    "description": "ONE PLAIN SENTENCE ABOUT WHAT YOU LEARN.",
+    "url": "https://thievery.co.uk/how-it-works/SLUG",
+    "learningResourceType": "Interactive explainer",
+    "inLanguage": "en-GB",
+    "isAccessibleForFree": true
+  }
+  </script>
+</head>
+<body>
+  {{bar:public:explainers}}
+
+  <main id="main" class="hiw-page" data-explainer="SLUG">
+    <header class="hiw-head">
+      <p class="hiw-back"><a href="/how-it-works">How it works</a></p>
+      <h1 class="hiw-title display">TITLE</h1>
+      <p class="hiw-lede">ONE LINE: WHAT THE READER WILL UNDERSTAND BY THE END.</p>
+    </header>
+
+    <div class="hiw-layout">
+      {{hiw-stage}}
+
+      <div class="hiw-text">
+        <!-- One of these per chapter. The id is the scene's name for it. -->
+        <section class="hiw-chapter" id="CHAPTER-ID" aria-labelledby="h-CHAPTER-ID">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-CHAPTER-ID">CHAPTER TITLE</h2>
+          <p>TWO OR THREE SHORT PARAGRAPHS. A word that needs explaining is a <button class="hiw-term" data-term="TERM">term</button>.</p>
+          <p class="hiw-try"><strong>Try it.</strong> WHAT TO DO WITH THE SCENE, IF THERE IS SOMETHING.</p>
+        </section>
+      </div>
+    </div>
+
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>WHAT IS TO SCALE, WHAT IS SPED UP OR SLOWED DOWN, AND WHAT IS SIMPLIFIED.</p>
+      <ol>
+        <li>PUBLISHER, <a href="URL" rel="noopener">TITLE</a>: WHICH FIGURES CAME FROM IT.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="TERM" data-title="Term">ONE OR TWO SENTENCES.</p>
+    </template>
+  </main>
+
+  {{foot}}
+
+  <script type="module" src="/explainers/SLUG/scene.js"></script>
+</body>
+</html>

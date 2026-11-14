@@ -1,0 +1,61 @@
+<!--
+  How a wing makes lift. Poured into _page.html; the scene is
+  public/explainers/wing-lift/scene.js, on the ideal-flow solution in
+  flow.js.
+-->
+        <section class="hiw-chapter" id="flow" aria-labelledby="h-flow">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-flow">Air bends round a wing</h2>
+          <p>A wing in flight sits in a stream of air. The air can't go through it, so it goes round: over the curved top and under the flatter bottom, and leaves the sharp back edge heading slightly downwards.</p>
+          <p>The specks in the picture are carried by an exact solution for air flowing round this wing shape, the kind used to teach aerodynamics for a century. Brighter specks are moving faster.</p>
+          <p>Look at the colours. The air over the top is moving faster than the air underneath.</p>
+        </section>
+
+        <section class="hiw-chapter" id="myth" aria-labelledby="h-myth">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-myth">Not equal time</h2>
+          <p>A common explanation says the air over the top has further to go, so it must speed up to meet the air underneath at the back. That's wrong. Nothing makes the two meet again.</p>
+          <p>The red line is a row of air released all at once. Watch it reach the wing and split. The air over the top doesn't just keep up: it arrives at the back well before the air underneath.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Wait for the line to pass the wing. It never joins up again.</p>
+        </section>
+
+        <section class="hiw-chapter" id="pressure" aria-labelledby="h-pressure">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-pressure">Pressure does the lifting</h2>
+          <p>Where air speeds up its pressure drops, and where it slows its pressure rises. This trade between speed and pressure is <button class="hiw-term" data-term="bernoulli">Bernoulli's principle</button>. Above the wing the pressure is lower than the air around; below it is a little higher.</p>
+          <p>That difference, spread over the whole wing, is the lift. It's the same thing seen another way: the wing turns the air downwards, and pushing air down pushes the wing up.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change the angle and watch the blue patch over the top grow.</p>
+        </section>
+
+        <section class="hiw-chapter" id="angle" aria-labelledby="h-angle">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-angle">Angle of attack</h2>
+          <p>Tilt the wing up into the oncoming air and it turns more air downwards, so it lifts more. The tilt is the angle of attack, and for small angles the lift grows almost exactly in proportion to it.</p>
+          <p>But only up to a point. At around 15° the air can no longer follow the curve of the top surface. It breaks away into a tumbling wake, much of the lift disappears, and the wing has stalled.</p>
+          <p>The exact flow in the picture doesn't know about stalling, so past 15° the scene draws it by hand.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Raise the angle until the wing stalls.</p>
+        </section>
+
+        <section class="hiw-chapter" id="numbers" aria-labelledby="h-numbers">
+          <p class="hiw-chapter-num">Chapter 5</p>
+          <h2 id="h-numbers">Lifting a plane</h2>
+          <p>Lift grows with the square of the speed: twice as fast, four times the lift. It also grows with the air's density, the wing's area and the lift coefficient, which carries the shape and the angle.</p>
+          <p>A typical four-seat light aircraft has 16.2 square metres of wing and weighs about 1,100 kg fully loaded. With this idealised wing it needs about 22 metres a second (43 knots) near the stall angle, and more at gentler angles. A real light aircraft, whose wings lift a little less, stalls at around 48 knots.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Find the slowest speed that lifts 1,100 kg, then lower the angle and find it again.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The flow is the exact ideal (frictionless) flow round a Joukowski aerofoil, with the circulation set by the Kutta condition so the air leaves the trailing edge smoothly. The lift is the Kutta-Joukowski lift for that flow. Real wings have thinner shapes and somewhat less lift, and the stall is added by hand. Air at sea level: 1.225 kg/m³.</p>
+      <ol>
+        <li>NASA Glenn Research Center, <a href="https://www.grc.nasa.gov/www/k-12/airplane/wrong1.html" rel="noopener">Incorrect lift theory: equal transit</a>: why the "equal time" explanation is wrong.</li>
+        <li>NASA Glenn Research Center, <a href="https://www.grc.nasa.gov/www/k-12/airplane/lifteq.html" rel="noopener">The lift equation</a>: lift = ½ × density × speed² × area × lift coefficient.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Joukowsky_transform" rel="noopener">Joukowsky transform</a> and <a href="https://en.wikipedia.org/wiki/Kutta_condition" rel="noopener">Kutta condition</a>.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Cessna_172" rel="noopener">Cessna 172</a>: a wing area of 16.2 m² and a loaded weight of about 1,100 kg, the typical four-seat light aircraft.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Stall_(fluid_dynamics)" rel="noopener">Stall</a>: lift falling away beyond the critical angle of attack, often around 15°.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="bernoulli" data-title="Bernoulli's principle">Along the path of a flowing fluid, where its speed goes up its pressure goes down, and the other way round.</p>
+    </template>

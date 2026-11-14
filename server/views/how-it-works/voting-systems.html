@@ -1,0 +1,56 @@
+<!--
+  How voting systems differ. Poured into _page.html; the scene is
+  public/explainers/voting-systems/scene.js. Chapter ids: plurality,
+  spoiler, ranked, condorcet, arrow. It explains counting rules; it takes
+  no side on any real election or party.
+-->
+        <section class="hiw-chapter" id="plurality" aria-labelledby="h-plurality">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-plurality">Most votes wins</h2>
+          <p>Every dot is a voter, placed by their opinions, and the lettered circles are candidates. Each voter likes the nearest candidate best, the next nearest second, and so on. Dots are coloured by their first choice.</p>
+          <p>The simplest rule counts only first choices: whoever has most wins, even without a majority. It is called first past the post, and it is how MPs are elected to the House of Commons.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Drag the candidates and watch the voters change sides.</p>
+        </section>
+
+        <section class="hiw-chapter" id="spoiler" aria-labelledby="h-spoiler">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-spoiler">The spoiler</h2>
+          <p>Here A and C are close together, and B is on the other side. One against one, A beats B comfortably. But A and C split the voters on their side, and B wins with well under half.</p>
+          <p>C didn't win, and wasn't going to, but changed who did. Candidates who are similar hurt each other, which pushes parties and voters to vote tactically.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Drag C away from A and watch A win again.</p>
+        </section>
+
+        <section class="hiw-chapter" id="ranked" aria-labelledby="h-ranked">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-ranked">Ranked choice</h2>
+          <p>Ranked-choice voting, also called the alternative vote or instant runoff, asks voters to number the candidates in order. If nobody has more than half the first choices, the last-placed candidate is knocked out and their voters' ballots go to their next choice. Repeat until someone has a majority.</p>
+          <p>With the same candidates as before, C's voters pass to A, and A wins. Australia has elected its House of Representatives this way for over a century.</p>
+        </section>
+
+        <section class="hiw-chapter" id="condorcet" aria-labelledby="h-condorcet">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-condorcet">Head to head</h2>
+          <p>Another idea, from the Marquis de Condorcet in 1785: run every pair of candidates against each other, using the rankings. A candidate who beats every rival one to one ought to win.</p>
+          <p>Here, C sits in the middle. C is few voters' first choice, so loses under first past the post, but more voters prefer C to A and to B. Ranked choice knocks C out first, too. And sometimes there is no such winner at all: A beats B, B beats C, C beats A, like rock, paper, scissors.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Drag C about the middle and watch the head-to-head results.</p>
+        </section>
+
+        <section class="hiw-chapter" id="arrow" aria-labelledby="h-arrow">
+          <p class="hiw-chapter-num">Chapter 5</p>
+          <h2 id="h-arrow">No perfect rule</h2>
+          <p>Same voters, same candidates, and the rules can disagree about who won. In 1951 the economist Kenneth Arrow proved that no rule for turning rankings into a result can meet a short list of reasonable-sounding conditions all at once.</p>
+          <p>Choosing a voting system means choosing which flaws to live with. And that is before anyone redraws the boundaries: for that, try <a href="/gerrymander/">Gerrymander</a>.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Move the four candidates about and see how often the rules disagree.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The voters are made up: 1,500 points in two loose camps and a scattered middle, each ranking the candidates by distance, the usual spatial model of voting. Every result is counted from those ballots. Approval voting here approves of every candidate within a fixed distance.</p>
+      <ol>
+        <li>UK Parliament, <a href="https://www.parliament.uk/about/how/elections-and-voting/voting-systems/" rel="noopener">Voting systems in the UK</a>: first past the post for the House of Commons.</li>
+        <li>Australian Electoral Commission, <a href="https://www.aec.gov.au/learn/preferential-voting.htm" rel="noopener">Preferential voting</a>: used for the House of Representatives since 1918.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Condorcet_paradox" rel="noopener">Condorcet paradox</a>: Condorcet's essay of 1785, and cycles.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Arrow%27s_impossibility_theorem" rel="noopener">Arrow's impossibility theorem</a>: Kenneth Arrow, 1951.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Spoiler_effect" rel="noopener">Spoiler effect</a>.</li>
+      </ol>
+    </section>

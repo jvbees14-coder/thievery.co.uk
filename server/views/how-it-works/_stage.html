@@ -1,0 +1,34 @@
+<!--
+  The stage every explainer shares: the scene, its controls and numbers,
+  and the step buttons. server/explainers.js puts it in where a page says
+  {{hiw-stage}}. Pinned beside the writing on a wide screen, above it on a
+  phone. The engine fills every [data-slot]; nothing here is page-specific.
+-->
+      <div class="hiw-stage">
+        <figure class="hiw-scene">
+          <canvas class="hiw-canvas" aria-label="The scene for the current chapter. Where something can be moved, N picks it and the arrow keys move it." aria-describedby="hiw-status"></canvas>
+          <p class="hiw-note" data-slot="note" hidden></p>
+          <button class="hiw-play" type="button" data-slot="play">
+            <svg class="when-playing" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2.5" width="3.5" height="11" rx="1"/><rect x="9.5" y="2.5" width="3.5" height="11" rx="1"/></svg>
+            <svg class="when-paused" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.6v10.8a.8.8 0 0 0 1.2.7l8.6-5.4a.8.8 0 0 0 0-1.4L5.2 1.9A.8.8 0 0 0 4 2.6z"/></svg>
+            <span data-label>Pause</span>
+          </button>
+          <p class="hiw-status" id="hiw-status" data-slot="status" role="status" aria-live="polite"></p>
+        </figure>
+
+        <div class="hiw-panel">
+          <div class="hiw-controls" data-slot="controls"></div>
+          <div class="hiw-readout" data-slot="readout"></div>
+        </div>
+
+        <nav class="hiw-steps" aria-label="Chapters">
+          <button class="btn icon-only" type="button" data-step="prev" aria-label="Previous chapter" title="Previous chapter">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+          </button>
+          <p class="hiw-step-label" data-step-label aria-live="polite"></p>
+          <button class="btn icon-only" type="button" data-step="next" aria-label="Next chapter" title="Next chapter">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+          </button>
+          <div class="hiw-dots" data-step-dots></div>
+        </nav>
+      </div>

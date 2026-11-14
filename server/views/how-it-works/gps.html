@@ -1,0 +1,144 @@
+<!doctype html>
+<!--
+  How GPS finds you. Built on _layout.html; the scene is
+  public/explainers/gps/scene.js, and each chapter's id below is the name
+  that file's chapter() switches on. Change an id and the scene stops
+  following the writing.
+
+  Every figure in the writing is in the sources at the bottom, and the
+  scene works its numbers out from the same constants (globe.js, scene.js).
+  If one changes, change the other.
+-->
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  {{head:explainers}}
+  <title>How GPS finds you · Thievery</title>
+  <meta name="description" content="An interactive explainer: how 32 satellites, a stopwatch and a correction from Einstein tell your phone where it is. Drag the satellites and see the numbers change." />
+  <link rel="canonical" href="https://thievery.co.uk/how-it-works/gps" />
+  <meta property="og:site_name" content="Thievery" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="How GPS finds you · Thievery" />
+  <meta property="og:description" content="Thirty-two satellites, a stopwatch, and a correction from Einstein. Drag the satellites and see the numbers change." />
+  <meta property="og:url" content="https://thievery.co.uk/how-it-works/gps" />
+  <meta property="og:image" content="https://thievery.co.uk/og/how-it-works-gps.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="The Earth and the six rings of GPS orbits, with signals spreading out from the satellites." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "LearningResource",
+    "name": "How GPS finds you",
+    "description": "An interactive explainer on how GPS works: satellites, signal travel time, trilateration, clock error and relativity.",
+    "url": "https://thievery.co.uk/how-it-works/gps",
+    "learningResourceType": "Interactive explainer",
+    "inLanguage": "en-GB",
+    "isAccessibleForFree": true
+  }
+  </script>
+</head>
+<body>
+  {{bar:public:explainers}}
+
+  <main id="main" class="hiw-page" data-explainer="gps">
+    <header class="hiw-head">
+      <p class="hiw-back"><a href="/how-it-works">How it works</a></p>
+      <h1 class="hiw-title display">How GPS finds you</h1>
+      <p class="hiw-lede">Your phone works out where it is from satellites it never speaks to. Here is how, one piece at a time.</p>
+    </header>
+
+    <div class="hiw-layout">
+      {{hiw-stage}}
+
+      <div class="hiw-text">
+        <section class="hiw-chapter" id="big-picture" aria-labelledby="h-big-picture">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-big-picture">The big picture</h2>
+          <p>There are 32 GPS satellites in service. Each one is about 20,200 km up, moving at 3.87 km/s, and goes round the Earth once every 11 hours 58 minutes. They fly in six rings tipped 55° to the equator, so that wherever you stand, around ten of them are above your horizon right now.</p>
+          <p>The picture is to scale. The Earth really is that small next to the orbits. We have put you in London.</p>
+          <p>Your phone never sends the satellites anything. It only listens, and the rest of this page is how listening is enough.</p>
+        </section>
+
+        <section class="hiw-chapter" id="shout" aria-labelledby="h-shout">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-shout">Satellites shout the time</h2>
+          <p>Each satellite carries <button class="hiw-term" data-term="atomic">atomic clocks</button> and broadcasts the same two things, over and over: the exact time by its clock, and exactly where it is (its <button class="hiw-term" data-term="ephemeris">ephemeris</button>).</p>
+          <p>The rings are those broadcasts spreading out at the speed of light. Here they are slowed down 20 times. At full speed, one reaches you in about a fifteenth of a second.</p>
+          <p>The labels are what four of the satellites in view are saying: who they are, and when they sent it, to the millionth of a second.</p>
+        </section>
+
+        <section class="hiw-chapter" id="delay" aria-labelledby="h-delay">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-delay">Delay is distance</h2>
+          <p>Your phone notes when each message arrives and compares that with the time stamped on it. The difference is how long the signal was travelling.</p>
+          <p>Light covers 299,792 km every second, so a travel time is a distance: multiply one by the other. A satellite straight overhead is about 20,200 km away and its signal takes 67 ms. One on the horizon is nearer 25,800 km away, and its signal takes 86 ms.</p>
+          <p>This view is a flat slice through the Earth, with one satellite going over.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Drag the satellite across the sky and watch the travel time change. Drag it below the horizon and the signal stops: GPS needs a clear line to the sky.</p>
+        </section>
+
+        <section class="hiw-chapter" id="trilateration" aria-labelledby="h-trilateration">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-trilateration">Where the circles meet</h2>
+          <p>One distance says how far you are from a satellite, not where. In space, that puts you somewhere on a sphere around it.</p>
+          <p>In this flat slice every sphere becomes a circle. One satellite gives you a circle. Two give the two places the circles cross. A third leaves one. Finding a place from distances like this is called <button class="hiw-term" data-term="trilateration">trilateration</button>.</p>
+          <p>In three dimensions it takes one more step: one satellite gives a sphere, two a circle, three just two points. One of those is usually far out in space, so the receiver can throw it away.</p>
+          <p>How the circles cross matters as much as how many there are. Satellites bunched in one part of the sky cross at shallow angles, and a small error in one range slides the crossing a long way. That is what "Fix good to" measures, assuming each range is good to 5 m. It is called <button class="hiw-term" data-term="dop">dilution of precision</button>.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Switch satellites off to see the fix fail. Drag two of them close together and watch the fix get worse.</p>
+        </section>
+
+        <section class="hiw-chapter" id="clock" aria-labelledby="h-clock">
+          <p class="hiw-chapter-num">Chapter 5</p>
+          <h2 id="h-clock">The clock problem</h2>
+          <p>All of this assumes your phone knows the time to a millionth of a second. It doesn't. A phone keeps time with a <button class="hiw-term" data-term="quartz">quartz crystal</button>, not an atomic clock, and it can easily be out by far more than that.</p>
+          <p>Light travels about 300 m in a microsecond (μs). So a phone clock that is out by 1 μs puts every range out by 300 m. The same clock times every signal, so every range is out by the same amount, and the circles stop meeting.</p>
+          <p>The answer is to treat the clock error as one more unknown and solve for it. In this slice two satellites fix a position, so a third pins down the clock. In three dimensions it takes three for the position, so a fourth satellite pins down the clock. That is why a receiver needs at least four, and why your phone ends up knowing the time better than it did.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Move the clock error and watch the gap open up. Then switch on "Solve for the clock error".</p>
+        </section>
+
+        <section class="hiw-chapter" id="einstein" aria-labelledby="h-einstein">
+          <p class="hiw-chapter-num">Chapter 6</p>
+          <h2 id="h-einstein">Einstein matters</h2>
+          <p>The satellites' clocks have a problem of their own: in orbit, they don't tick at the same rate as clocks on the ground.</p>
+          <p>They move at 3.87 km/s, and a moving clock runs slow (<button class="hiw-term" data-term="special">special relativity</button>): about 7.2 μs a day. They are also 20,200 km further from the Earth's mass, where gravity is weaker and clocks run fast (<button class="hiw-term" data-term="general">general relativity</button>): about 45.7 μs a day. Together, a satellite clock gains about 38 μs a day.</p>
+          <p>Light travels about 11.5 km in 38 μs. Left alone, every range would drift by that much more each day.</p>
+          <p>So the clocks are set to run slow before launch: 10.22999999543 MHz rather than 10.23 MHz, which in orbit comes out exactly right. The receiver corrects the smaller effects that are left.</p>
+          <p>Because every satellite clock gains at almost the same rate, a receiver solving for its own clock error would soak up much of the drift. But GPS is also the clock that phone networks, power grids and banks set their time by, and a time signal 38 μs out after one day would be no use to any of them.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Play the day with the corrections off. Then switch off gravity: speed alone makes the satellite clocks fall behind.</p>
+        </section>
+      </div>
+    </div>
+
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The scene is to scale and works its numbers out with the real speed of light. The orbits are sped up and the signals slowed down, and the scene says by how much. The satellites sit in the real constellation's six planes, spread evenly round each one rather than copied from today's positions.</p>
+      <ol>
+        <li>GPS.gov, <a href="https://archive.gps.gov/systems/gps/space/" rel="noopener">Space segment</a>: about 20,200 km up, twice round a day, six equally spaced orbital planes.</li>
+        <li>US Space Force, <a href="https://www.gps.gov/sites/default/files/2026-04/Mediate%2020260421_CGSIC%20MD%2031_FINAL.pdf" rel="noopener">GPS status to the Civil GPS Service Interface Committee</a> (April 2026), and <a href="https://www.executivegov.com/articles/ussf-gps-iii-sv10-launch-spacex-lockheed" rel="noopener">ExecutiveGov</a>: GPS III SV10 brought the operational constellation to 32.</li>
+        <li>N. Ashby, <a href="https://link.springer.com/article/10.12942/lrr-2003-1" rel="noopener">Relativity in the Global Positioning System</a>, Living Reviews in Relativity 6 (2003): the 55° planes, the orbit's 26,560 km radius, the relativistic rates, and the 10.22999999543 MHz setting.</li>
+        <li>GPS World, <a href="https://www.gpsworld.com/inside-the-box-gps-and-relativity/" rel="noopener">GPS and relativity</a>: about 7 μs a day slow, 45 μs fast and 38 μs net, and why the drift matters most for timing.</li>
+        <li>BIPM, <a href="https://www.bipm.org/en/publications/si-brochure" rel="noopener">The International System of Units</a>: the speed of light is exactly 299,792,458 m/s.</li>
+      </ol>
+      <p>Worked out here: a 26,560 km orbit round a 6,371 km Earth is 20,189 km up, 67.3 ms of light at the zenith and 25,785 km (86.0 ms) at the horizon. It moves at 3.87 km/s and takes half a sidereal day, 11 h 58 min. Speed slows its clock by 7.2 μs a day (v²/2c²) and gravity speeds it up by 45.7 μs a day; Ashby gives the net as 38.6 μs a day. A microsecond of light is 299.8 m.</p>
+    </section>
+
+    <!-- The glossary. Each word in the text with class hiw-term opens the
+         entry here with the same data-term. -->
+    <template id="hiw-glossary">
+      <p data-def="atomic" data-title="Atomic clock">A clock that counts the vibrations of atoms, caesium or rubidium in GPS satellites. They drift by a few billionths of a second a day.</p>
+      <p data-def="ephemeris" data-title="Ephemeris">A precise description of a satellite's orbit, sent as part of its signal, so a receiver can work out where it was at any moment.</p>
+      <p data-def="trilateration" data-title="Trilateration">Finding a position from distances to known points. Triangulation, which is often named instead, uses angles.</p>
+      <p data-def="dop" data-title="Dilution of precision">How much the layout of the satellites magnifies the errors in the ranges. Low is good: satellites spread across the sky.</p>
+      <p data-def="quartz" data-title="Quartz crystal">The timekeeper in a phone or a watch: cheap and steady, but it can gain or lose a millionth of a second every second.</p>
+      <p data-def="special" data-title="Special relativity">Einstein's 1905 theory. One of its results: a clock moving past you runs slow, by an amount that grows with its speed.</p>
+      <p data-def="general" data-title="General relativity">Einstein's 1915 theory of gravity. One of its results: a clock deeper in a gravity well runs slow, so one high above the Earth runs fast.</p>
+    </template>
+  </main>
+
+  {{foot}}
+
+  <script type="module" src="/explainers/gps/scene.js"></script>
+</body>
+</html>

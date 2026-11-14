@@ -1,0 +1,52 @@
+<!--
+  How a message crosses the internet. Poured into _page.html; the scene is
+  public/explainers/internet-packets/scene.js. Chapter ids: split, routes,
+  loss, speed.
+-->
+        <section class="hiw-chapter" id="split" aria-labelledby="h-split">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-split">Messages in pieces</h2>
+          <p>Nothing crosses the internet in one piece. A message, a photo or a web page is cut into packets of at most about 1,500 bytes, the largest an ordinary network link will carry in one go.</p>
+          <p>Each packet carries a header: where it came from, where it is going, and a number saying where its piece belongs in the whole. Take away the 40 or so bytes of header and about 1,460 bytes of message fit in each.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change the size of the message and see how many packets it takes.</p>
+        </section>
+
+        <section class="hiw-chapter" id="routes" aria-labelledby="h-routes">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-routes">Every packet finds its own way</h2>
+          <p>The internet is a mesh of links between <button class="hiw-term" data-term="router">routers</button>. Each router looks at a packet's destination and passes it on along whichever link it reckons is best at that moment, without knowing or caring about the packets before it.</p>
+          <p>When a link gets busy, packets queue, and the next ones may be sent another way. So the pieces of one message can cross the Atlantic on different cables and arrive out of order. The receiver uses their numbers to put them back together.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Watch for amber at the bottom: a packet that has arrived early, waiting for an earlier one.</p>
+        </section>
+
+        <section class="hiw-chapter" id="loss" aria-labelledby="h-loss">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-loss">Lost on the way</h2>
+          <p>Routers that are overwhelmed simply drop packets. Nothing warns the sender. Instead, the protocol used for most traffic, TCP, has the receiver acknowledge what it gets.</p>
+          <p>If a packet's acknowledgement doesn't come back in time, the sender assumes it was lost and sends it again. Losing packets also tells TCP the network is congested, and it slows down.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Turn up the losses. The message still arrives whole; it just takes longer.</p>
+        </section>
+
+        <section class="hiw-chapter" id="speed" aria-labelledby="h-speed">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-speed">The speed of light in glass</h2>
+          <p>Long-distance links are optical fibre: pulses of light in glass. Light in glass travels at about two thirds of its speed in a vacuum, roughly 204,000 km a second.</p>
+          <p>London and New York are 5,570 km apart along the curve of the Earth. Even in a perfectly straight fibre, a packet would take 27 ms one way, so 55 ms there and back. Real cables wander and routers add delays: measured round trips are typically a little over 60 ms.</p>
+          <p>That floor is physics. No upgrade can make a reply from New York arrive faster than light can carry it.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The network is simplified: a few real places joined by straight links, each link's delay its length in fibre plus a random queue. Real routing is decided by routers exchanging maps of the network, not chosen afresh for every packet as here. The map is Natural Earth's.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Maximum_transmission_unit" rel="noopener">Maximum transmission unit</a>: 1,500 bytes for Ethernet, and TCP's 1,460-byte segments.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Transmission_Control_Protocol" rel="noopener">Transmission Control Protocol</a>: sequence numbers, acknowledgements, retransmission and congestion control.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Optical_fiber" rel="noopener">Optical fibre</a>: a refractive index of about 1.47, so light at about two thirds of its speed in a vacuum.</li>
+        <li>Hatsnet, <a href="https://hatsnet.io/docs/network/latency/pairs/lon-nyc-rtt" rel="noopener">London to New York round-trip time</a>: about 64 ms measured, against a fibre floor of about 55 ms.</li>
+        <li><a href="https://www.naturalearthdata.com/" rel="noopener">Natural Earth</a>: the coastlines, public domain.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="router" data-title="Router">A computer whose job is to pass packets on towards their destination, one link at a time.</p>
+    </template>

@@ -1,0 +1,61 @@
+<!--
+  How a shuffle mixes a deck. Poured into _page.html; the scene is
+  public/explainers/shuffling/scene.js, which switches on these chapter ids.
+-->
+        <section class="hiw-chapter" id="order" aria-labelledby="h-order">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-order">A lot of orders</h2>
+          <p>A deck of 52 cards can be put in 80,658,175,170,943,878,571,660,636,856,403,766,975,289,505,440,883,277,824,000,000,000,000 different orders. That number is 52 × 51 × 50 and so on down to 1, written <button class="hiw-term" data-term="factorial">52!</button>.</p>
+          <p>So a properly shuffled deck is almost certainly in an order no deck has ever been in before. The catch is the word "properly".</p>
+          <p>In the picture, each card is coloured by where it started: a new deck is a smooth band from one end to the other. Watch what riffling does to it.</p>
+        </section>
+
+        <section class="hiw-chapter" id="riffle" aria-labelledby="h-riffle">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-riffle">The riffle</h2>
+          <p>A riffle shuffle cuts the deck roughly in half and lets the two halves fall together, a few cards at a time from each thumb.</p>
+          <p>Mathematicians model it like this: the cut falls where 52 coin tosses say, so near the middle but rarely exactly, and each card that drops comes from one half or the other with odds in proportion to how many cards each half still holds. Real riffles by practised hands are close to this.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Riffle once and look closely. The colours are interleaved, but each half kept its own order.</p>
+        </section>
+
+        <section class="hiw-chapter" id="rising" aria-labelledby="h-rising">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-rising">Rising sequences</h2>
+          <p>That leftover order has a name. A <button class="hiw-term" data-term="rising">rising sequence</button> is a run of cards that started next to each other and still appear in the same order, perhaps with other cards between them.</p>
+          <p>A new deck is one rising sequence. One riffle makes at most two, and every riffle after that can at most double the count. A truly random deck has 26.5 on average, so it takes at least five riffles before the count can even get there.</p>
+          <p>A magician who knows this can find a card you put back in a deck that has been riffled three times.</p>
+          <p class="hiw-try"><strong>Try it.</strong> With the colours showing rising sequences, riffle a few times and watch the count grow.</p>
+        </section>
+
+        <section class="hiw-chapter" id="seven" aria-labelledby="h-seven">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-seven">Why seven</h2>
+          <p>In 1992 Dave Bayer and Persi Diaconis worked out exactly how far from random a deck is after any number of these riffles. The chart is their result.</p>
+          <p>After four riffles the deck is, by their measure, still almost as far from random as it could be. Then the distance drops off a cliff: 0.92 after five, 0.61 after six, 0.33 after seven. After that each riffle only halves what is left.</p>
+          <p>That is where "shuffle seven times" comes from. Seven is where the steep part of the fall ends, not the point where a deck becomes perfect.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Riffle from a new deck and watch your bar on the chart move.</p>
+        </section>
+
+        <section class="hiw-chapter" id="overhand" aria-labelledby="h-overhand">
+          <p class="hiw-chapter-num">Chapter 5</p>
+          <h2 id="h-overhand">The overhand shuffle</h2>
+          <p>The overhand shuffle slides small packets from one hand to the other. It reverses the order of the packets but keeps the order inside each, so most cards stay next to the neighbours they started with.</p>
+          <p>It mixes very slowly. One mathematical result says at least about 50 are needed to mix a deck, and computer experiments put it in the thousands.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Overhand a hundred times and compare the colours with seven riffles.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The riffles in the scene follow the Gilbert-Shannon-Reeds model, and the chart is Bayer and Diaconis's exact table for it, not a simulation. The overhand shuffle moves packets of one to eight cards.</p>
+      <ol>
+        <li>D. Bayer and P. Diaconis, "Trailing the dovetail shuffle to its lair", Annals of Applied Probability 2 (1992): the distances after one to ten riffles, and rising sequences.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Gilbert%E2%80%93Shannon%E2%80%93Reeds_model" rel="noopener">Gilbert-Shannon-Reeds model</a>: the model of a riffle.</li>
+        <li>SAS blog, <a href="https://blogs.sas.com/content/iml/2018/09/19/overhand-shuffle-riffle.html" rel="noopener">Overhand and riffle shuffles</a>: Pemantle's result of about 50 overhand shuffles at least, and experiments needing a thousand or more.</li>
+        <li>The value of 52! is exact, and a random deck's average of 26.5 rising sequences is (52 + 1) ÷ 2.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="factorial" data-title="Factorial">The product of every whole number from 1 up to that one: 4! is 4 × 3 × 2 × 1 = 24.</p>
+      <p data-def="rising" data-title="Rising sequence">A set of cards that were next to each other in the original order and still come in that order, wherever they now are in the deck.</p>
+    </template>

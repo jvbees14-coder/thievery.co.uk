@@ -1,0 +1,63 @@
+<!doctype html>
+<!--
+  The page an explainer's writing is poured into. An explainer's view in this
+  folder holds only its chapters, its sources and its glossary; everything
+  else is here, filled in by server/explainers.js from the explainer's entry
+  in EXPLAINERS:
+
+    {{hiw-title}} {{hiw-hook}} {{hiw-lede}} {{hiw-slug}} {{hiw-alt}}
+    {{hiw-description}}   the meta description
+    {{hiw-stage}}         _stage.html
+    {{hiw-chapters}}      the explainer's view, down to the comment that
+                          says "end of chapters"
+    {{hiw-after}}         the rest of it: the sources and the glossary
+
+  A view that starts with <!doctype is a whole page and is used as it is
+  (gps.html was written before this file).
+-->
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  {{head:explainers}}
+  <title>{{hiw-title}} · Thievery</title>
+  <meta name="description" content="{{hiw-description}}" />
+  <link rel="canonical" href="https://thievery.co.uk/how-it-works/{{hiw-slug}}" />
+  <meta property="og:site_name" content="Thievery" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="{{hiw-title}} · Thievery" />
+  <meta property="og:description" content="{{hiw-hook}}" />
+  <meta property="og:url" content="https://thievery.co.uk/how-it-works/{{hiw-slug}}" />
+  <meta property="og:image" content="https://thievery.co.uk/og/how-it-works-{{hiw-slug}}.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="{{hiw-alt}}" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <script type="application/ld+json">{{hiw-jsonld}}</script>
+</head>
+<body>
+  {{bar:public:explainers}}
+
+  <main id="main" class="hiw-page" data-explainer="{{hiw-slug}}">
+    <header class="hiw-head">
+      <p class="hiw-back"><a href="/how-it-works">How it works</a></p>
+      <h1 class="hiw-title display">{{hiw-title}}</h1>
+      <p class="hiw-lede">{{hiw-lede}}</p>
+    </header>
+
+    <div class="hiw-layout">
+      {{hiw-stage}}
+
+      <div class="hiw-text">
+{{hiw-chapters}}
+      </div>
+    </div>
+
+{{hiw-after}}
+  </main>
+
+  {{foot}}
+
+  <script type="module" src="/explainers/{{hiw-slug}}/scene.js"></script>
+</body>
+</html>

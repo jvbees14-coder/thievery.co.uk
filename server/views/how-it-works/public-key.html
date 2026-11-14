@@ -1,0 +1,57 @@
+<!--
+  How strangers share a secret. Poured into _page.html; the scene is
+  public/explainers/public-key/scene.js.
+-->
+        <section class="hiw-chapter" id="problem" aria-labelledby="h-problem">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-problem">The problem</h2>
+          <p>Your browser has never met your bank's server before, and everything they say to each other crosses wires and radio that anyone can listen to. Yet within a fraction of a second they agree a secret key that nobody listening can work out.</p>
+          <p>Cryptographers tell this story with Alice and Bob, who want to talk privately, and Eve, who hears everything they send. The question is how Alice and Bob can agree a secret when every word between them is public.</p>
+        </section>
+
+        <section class="hiw-chapter" id="paint" aria-labelledby="h-paint">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-paint">Mixing paint</h2>
+          <p>Think of it with paint. Alice and Bob agree, in public, on a starting colour. Each also picks a secret colour and keeps it to themselves.</p>
+          <p>Each mixes the public colour with their secret one and sends the mix. Eve sees both mixes go past. Then each adds their own secret colour to the mix they received. Both end up with the same three colours stirred together, so the same final colour.</p>
+          <p>Eve has the public colour and both mixes, but she can't un-mix paint to get either secret out, so she can't make the final colour.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change either secret colour. The two final pots always match.</p>
+        </section>
+
+        <section class="hiw-chapter" id="numbers" aria-labelledby="h-numbers">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-numbers">The same with numbers</h2>
+          <p>Real computers use arithmetic on a clock face, called <button class="hiw-term" data-term="mod">modular arithmetic</button>. Here the public numbers are 5 and 23. Alice picks a secret number <i>a</i> and sends 5 multiplied by itself <i>a</i> times, keeping only the remainder after dividing by 23. Bob does the same with his secret <i>b</i>.</p>
+          <p>Then each raises what they received to their own secret. Alice's (5<sup>b</sup>)<sup>a</sup> and Bob's (5<sup>a</sup>)<sup>b</sup> are the same number, just as the paint was the same colour. This is the Diffie-Hellman key exchange, published in 1976.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change either secret. Watch the hops round the clock, and check the two shared numbers still match.</p>
+        </section>
+
+        <section class="hiw-chapter" id="hard" aria-labelledby="h-hard">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-hard">Easy one way, hard the other</h2>
+          <p>Going forwards is quick: even with enormous numbers, raising to a power round a clock takes a computer microseconds. Going backwards, from Alice's public number to her secret, means finding how many hops round the clock got there. With 23 places you could just try them all. Nobody knows a fast way to do it in general.</p>
+          <p>Real systems use numbers hundreds of digits long, or the same idea on a curve, called elliptic-curve cryptography, which most secure web connections now use. Trying every secret would take longer than the universe has existed.</p>
+        </section>
+
+        <section class="hiw-chapter" id="padlock" aria-labelledby="h-padlock">
+          <p class="hiw-chapter-num">Chapter 5</p>
+          <h2 id="h-padlock">Padlocks anyone can close</h2>
+          <p>A related idea, RSA from 1977, splits a key in two. The public key is like an open padlock you hand out to anyone: they can lock a message with it. Only the private key opens it again.</p>
+          <p>The numbers here are the standard textbook example. The public key is 3233 and 17; the private key is 2753. Raise a message to the 17th power round a clock of 3233 and it scrambles; raise the result to the 2753rd and it comes back.</p>
+          <p>Working out 2753 from 3233 needs its two prime factors, 61 and 53. For a 3233 that is easy. For a public key 617 digits long, nobody can do it.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Pick any message number and watch it lock and unlock.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The arithmetic in the scene is exact, done with whole numbers of any size in your browser. The numbers are tiny so they can be seen; real keys are hundreds of digits long.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange" rel="noopener">Diffie-Hellman key exchange</a>: the paint picture, the method with a public base and prime, and its 1976 publication.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/RSA_(cryptosystem)" rel="noopener">RSA (cryptosystem)</a>: the 1977 system, and the worked example with p = 61, q = 53, n = 3233, e = 17 and d = 2753.</li>
+        <li>A 2048-bit RSA key, the common size today, is a number 617 digits long.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="mod" data-title="Modular arithmetic">Arithmetic that wraps round, like a clock: on a clock of 23, 20 + 5 is 2. Every result is the remainder after dividing by 23.</p>
+    </template>

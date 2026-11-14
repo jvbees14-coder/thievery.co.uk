@@ -415,6 +415,61 @@ async function run() {
     assert.ok((await stranger.page('/privacy')).html.includes(`<code>${key}</code>`), `/privacy does not list ${key}`);
   });
 
+  // How it works: plain pages anybody can read, listed in server/explainers.js
+  // and nowhere else, so an unlisted slug is the 404 and not a half-made page.
+  await check('the explainers are served, listed, and linked from the bar', async () => {
+    const index = await stranger.page('/how-it-works');
+    assert.equal(index.status, 200);
+    assert.ok(index.html.includes('href="/how-it-works/gps"'), 'the index does not list the GPS explainer');
+    assert.ok(index.html.includes('aria-current="page"') && index.html.includes('site-extra-compact'), 'the bar does not mark How it works');
+    const gps = await stranger.page('/how-it-works/gps');
+    assert.equal(gps.status, 200);
+    assert.ok(gps.html.includes('<title>How GPS finds you · Thievery</title>'));
+    assert.ok(gps.html.includes('og:image" content="https://thievery.co.uk/og/how-it-works-gps.jpg"'));
+    for (const id of ['big-picture', 'shout', 'delay', 'trilateration', 'clock', 'einstein']) {
+      assert.ok(gps.html.includes(`id="${id}"`), `chapter ${id} is missing, and the scene switches on it`);
+    }
+    const slash = await stranger.page('/how-it-works/');
+    assert.equal(slash.status, 301);
+    assert.equal(slash.location, '/how-it-works');
+    assert.equal((await stranger.page('/how-it-works/_layout')).status, 404, 'the layout is not a page');
+    assert.equal((await stranger.page('/how-it-works/nowhere')).status, 404);
+    const home = await stranger.page('/about');
+    assert.ok(home.html.includes('<a href="/how-it-works">How it works</a>'), 'the foot does not link How it works');
+  });
+
+  await check("every file an explainer page names is there", async () => {
+    for (const file of ['/explainers.css', '/explainers/engine.js', '/explainers/index.js', '/explainers/shared/draw.js', '/explainers/shared/earth.js', '/explainers/shared/land.js', '/explainers/gps/globe.js', '/og/how-it-works.jpg']) {
+      const res = await fetch(`http://localhost:${PORT}${file}`);
+      assert.equal(res.status, 200, `${file} is missing`);
+      await res.arrayBuffer();
+    }
+  });
+
+  // Every listed explainer: its page, its scene and thumbnail, its share
+  // picture, and a scene that names every chapter its page has. A chapter
+  // renamed in one place and not the other is a chapter the scene ignores.
+  await check('every listed explainer is whole', async () => {
+    const { EXPLAINERS } = await import('../server/explainers.js');
+    const index = await stranger.page('/how-it-works');
+    for (const x of EXPLAINERS) {
+      assert.ok(index.html.includes(`href="/how-it-works/${x.slug}"`), `the index does not list ${x.slug}`);
+      const page = await stranger.page(`/how-it-works/${x.slug}`);
+      assert.equal(page.status, 200, `${x.slug} did not load`);
+      assert.ok(!page.html.includes('<!--') && !page.html.includes('{{'), `${x.slug} was served unfinished`);
+      assert.ok(page.html.includes(`og/how-it-works-${x.slug}.jpg`), `${x.slug} names no share picture`);
+      for (const file of [`/explainers/${x.slug}/scene.js`, x.thumb, `/og/how-it-works-${x.slug}.jpg`]) {
+        const res = await fetch(`http://localhost:${PORT}${file}`);
+        assert.equal(res.status, 200, `${file} is missing`);
+        await res.arrayBuffer();
+      }
+      const ids = [...page.html.matchAll(/class="hiw-chapter" id="([a-z-]+)"/g)].map((m) => m[1]);
+      assert.equal(ids.length, x.chapters, `${x.slug} says ${x.chapters} chapters but has ${ids.length}`);
+      const scene = fs.readFileSync(path.join(__dirname, '..', 'public', 'explainers', x.slug, 'scene.js'), 'utf8');
+      for (const id of ids) assert.ok(scene.includes(`'${id}'`) || scene.includes(`${id}:`), `${x.slug}'s scene never mentions chapter ${id}`);
+    }
+  });
+
   await check('the game page by its file name is sent to /cards', async () => {
     const res = await stranger.page('/cards.html');
     assert.equal(res.status, 301);
@@ -424,7 +479,7 @@ async function run() {
   // The views and the game page are annotated for whoever maintains them.
   // None of that is for the visitor, so none of it may reach a browser.
   await check('no page is served with its comments or its placeholders in it', async () => {
-    for (const where of ['/', '/cards', '/cards/ABCD', '/flashcards', '/battle', '/switchhead', '/mindmaps', '/about', '/privacy', '/gerrymander/', '/lockup', '/nowhere']) {
+    for (const where of ['/', '/cards', '/cards/ABCD', '/flashcards', '/battle', '/switchhead', '/mindmaps', '/about', '/privacy', '/gerrymander/', '/lockup', '/how-it-works', '/how-it-works/gps', '/nowhere']) {
       const { html } = await stranger.page(where);
       assert.ok(!html.includes('<!--'), `${where} was served with a comment in it`);
       assert.ok(!html.includes('{{'), `${where} was served with a placeholder in it`);

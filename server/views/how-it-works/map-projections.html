@@ -1,0 +1,59 @@
+<!--
+  Why every map is wrong. Poured into _page.html; the scene is
+  public/explainers/map-projections/scene.js.
+-->
+        <section class="hiw-chapter" id="peel" aria-labelledby="h-peel">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-peel">You can't flatten an orange</h2>
+          <p>Try to flatten an orange peel and it tears or wrinkles. The surface of a sphere simply cannot be laid flat without stretching some of it. Carl Friedrich Gauss proved it in 1827: no flat map of the world can get every distance right.</p>
+          <p>So every world map is a compromise, called a <button class="hiw-term" data-term="projection">projection</button>. Each one decides what to keep true (shapes, areas, directions, distances along some lines) and what to give up.</p>
+        </section>
+
+        <section class="hiw-chapter" id="mercator" aria-labelledby="h-mercator">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-mercator">Mercator</h2>
+          <p>Gerardus Mercator drew his map in 1569 for sailors. On it, a line at a constant compass bearing is a straight line, so a navigator could rule a course and steer it. To make that work, the map keeps angles true everywhere, and stretches things more and more towards the poles to do it.</p>
+          <p>At 60° north, everything is drawn twice as wide and twice as tall as at the equator, so four times the area. By Greenland's latitude it is about ten times.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Pick up Greenland and drag it down towards the equator. It is the same piece of land the whole way; only the map changes its size.</p>
+        </section>
+
+        <section class="hiw-chapter" id="tissot" aria-labelledby="h-tissot">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-tissot">Circles that grow</h2>
+          <p>In 1859 Nicolas Tissot found a neat way to see what a projection does. Draw identical small circles all over the globe, then draw them through the map.</p>
+          <p>On Mercator they stay circles, because angles are kept, but they swell towards the poles. On the equirectangular map, a plain grid of latitude and longitude, they stretch sideways. On an equal-area map they all keep the same area, and get squashed instead.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Switch between the projections and watch the circles.</p>
+        </section>
+
+        <section class="hiw-chapter" id="equal" aria-labelledby="h-equal">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-equal">Equal area</h2>
+          <p>Equal-area projections keep every country's size in proportion, at the cost of bending shapes near the edges. On one, Africa is plainly about fourteen times the size of Greenland, which is the truth.</p>
+          <p>The Mollweide projection, from 1805, is an ellipse. Equal Earth, designed in 2018, is gentler on shapes and is used by NASA and others for world maps.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Send Greenland to the equator on Mercator, then switch to Equal Earth and see it shrink to its real size.</p>
+        </section>
+
+        <section class="hiw-chapter" id="choose" aria-labelledby="h-choose">
+          <p class="hiw-chapter-num">Chapter 5</p>
+          <h2 id="h-choose">Every map is a choice</h2>
+          <p>None of these is wrong. Mercator is still the right map for navigating, and web maps use a version of it because it keeps streets at right angles when you zoom in. An equal-area map is the right one for comparing countries. Nothing is right for everything.</p>
+          <p>The numbers compare Greenland with Australia as drawn: the area of the shape on screen. Greenland really has a little over a quarter of Australia's area.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Move Greenland anywhere and flick between the four projections.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The coastlines are Natural Earth's, simplified. Greenland is moved by rotating it on the globe, so its true size and shape are kept and only the projection changes them. Mercator is cut off at 82° north and south.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Mercator_projection" rel="noopener">Mercator projection</a>: Mercator's map of 1569, its constant-bearing lines, and its scale growing with latitude.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Tissot%27s_indicatrix" rel="noopener">Tissot's indicatrix</a>.</li>
+        <li>B. Šavrič, T. Patterson and B. Jenny, <a href="https://en.wikipedia.org/wiki/Equal_Earth_projection" rel="noopener">The Equal Earth map projection</a> (2018): the formulas used here.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Theorema_Egregium" rel="noopener">Theorema Egregium</a>: Gauss, 1827.</li>
+        <li>Areas: Greenland 2,166,086 km², Australia 7,688,287 km², Africa about 30.37 million km² (CIA World Factbook and Wikipedia).</li>
+        <li><a href="https://www.naturalearthdata.com/" rel="noopener">Natural Earth</a>: the coastlines, public domain.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="projection" data-title="Map projection">A rule for turning every point on the globe, a latitude and a longitude, into a point on a flat page.</p>
+    </template>

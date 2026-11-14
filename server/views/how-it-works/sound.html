@@ -1,0 +1,61 @@
+<!--
+  How sound works. Poured into _page.html; the scene is
+  public/explainers/sound/scene.js. Chapter ids: waves, pitch, harmonics,
+  square, hearing. Sound plays only when the reader presses Play sound.
+-->
+        <section class="hiw-chapter" id="waves" aria-labelledby="h-waves">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-waves">Pressure on the move</h2>
+          <p>A loudspeaker cone pushes the air in front of it, then pulls back. Each push crowds the air molecules together a little; each pull spreads them out. The crowding is passed from molecule to molecule, so a pattern of high and low pressure travels outwards.</p>
+          <p>No molecule makes the journey. Each one only shuffles back and forth around its own place, like the red one. What travels is the pattern, at about 343 metres a second in air at room temperature.</p>
+          <p>When that pattern reaches your ear, it pushes your eardrum in and out in the same rhythm, and you hear it.</p>
+        </section>
+
+        <section class="hiw-chapter" id="pitch" aria-labelledby="h-pitch">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-pitch">Pitch is frequency</h2>
+          <p>How many pushes arrive each second is the frequency, measured in hertz. More pushes a second sounds higher. The A that orchestras tune to is 440 Hz.</p>
+          <p>Because the speed is fixed, a higher frequency packs the pushes closer together: the distance between them, the wavelength, is the speed divided by the frequency. At 440 Hz that is 78 cm; a deep 50 Hz hum is nearly 7 m long.</p>
+          <p>Double the frequency and you go up an octave. Each of the twelve semitones in between multiplies it by the twelfth root of 2, about 1.059.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Press Play sound (it is quiet), then slide the frequency.</p>
+        </section>
+
+        <section class="hiw-chapter" id="harmonics" aria-labelledby="h-harmonics">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-harmonics">Why a violin doesn't sound like a flute</h2>
+          <p>A pure tone is a smooth sine wave, and sounds dull. A string or a column of air in an instrument vibrates at its main frequency and, at the same time, at two, three, four times it and more. These extra tones are <button class="hiw-term" data-term="harmonic">harmonics</button>.</p>
+          <p>The ear hears them as one note, but the mix of harmonics gives the note its character, its timbre. Same pitch, different recipe.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Play the sound and turn the harmonics up and down one at a time.</p>
+        </section>
+
+        <section class="hiw-chapter" id="square" aria-labelledby="h-square">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-square">Any sound from sine waves</h2>
+          <p>In 1807 Joseph Fourier claimed that any repeating wave can be built by adding sine waves. Even a square wave, all sharp corners, is the sum of the odd harmonics, each smaller in proportion: 1, ⅓, ⅕, ⅐ and on.</p>
+          <p>Each term brings the sum closer, but a small overshoot at every corner never goes away: about 9% of the jump, however many terms you add. It is called the Gibbs phenomenon.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Add harmonics one at a time and listen as the tone turns buzzy.</p>
+        </section>
+
+        <section class="hiw-chapter" id="hearing" aria-labelledby="h-hearing">
+          <p class="hiw-chapter-num">Chapter 5</p>
+          <h2 id="h-hearing">What we can hear</h2>
+          <p>Young human ears hear from about 20 Hz to 20,000 Hz. The top end falls with age, and many adults hear little above about 15,000 Hz.</p>
+          <p>A piano covers 27.5 Hz to 4,186 Hz, but its notes carry harmonics far above that, and without them it would not sound like a piano.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Play the sound and slide to the top and the bottom until you can no longer hear it. Small speakers give out well before 20 Hz.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The waveforms are exact; they are drawn slowed down, since even a low note completes dozens of cycles in the time the picture shows one. The sound is made by your browser's Web Audio, quietly, and only when you press Play sound.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Speed_of_sound" rel="noopener">Speed of sound</a>: 343 m/s in dry air at 20 °C.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/A440_(pitch_standard)" rel="noopener">A440</a>: the tuning standard; and <a href="https://en.wikipedia.org/wiki/Equal_temperament" rel="noopener">Equal temperament</a>: semitones a twelfth root of 2 apart.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Gibbs_phenomenon" rel="noopener">Gibbs phenomenon</a>: an overshoot of about 9% of the jump; and <a href="https://en.wikipedia.org/wiki/Fourier_series" rel="noopener">Fourier series</a>, from Fourier's work of 1807.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Hearing_range" rel="noopener">Hearing range</a>: about 20 Hz to 20 kHz, the upper limit falling with age.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Piano_key_frequencies" rel="noopener">Piano key frequencies</a>: A0 at 27.5 Hz to C8 at 4,186 Hz.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="harmonic" data-title="Harmonic">A tone at a whole-number multiple of a note's main frequency: twice it, three times it, and so on.</p>
+    </template>

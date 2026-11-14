@@ -1,0 +1,60 @@
+<!--
+  How a camera lens focuses. Poured into _page.html; the scene is
+  public/explainers/camera-lens/scene.js. Chapter ids: rays, focus,
+  aperture, depth, focal.
+-->
+        <section class="hiw-chapter" id="rays" aria-labelledby="h-rays">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-rays">Bending light to a point</h2>
+          <p>Light slows down in glass, so a ray that meets a curved piece of it at an angle bends. A lens that is thicker in the middle bends every ray from one point of a subject so they all meet again at one point behind it. Where they meet, an image forms, upside down.</p>
+          <p>Three rays are easy to follow. One arriving level with the axis leaves through the <button class="hiw-term" data-term="focal">focal point</button>. One through the centre goes straight on. One through the near focal point leaves level.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Drag the subject towards the lens. The image moves away and grows, and inside the focal length the rays never meet at all: that is a magnifying glass.</p>
+        </section>
+
+        <section class="hiw-chapter" id="focus" aria-labelledby="h-focus">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-focus">Focusing</h2>
+          <p>The thin-lens equation says where the image forms: 1/f = 1/u + 1/v, where f is the focal length, u the distance to the subject and v the distance to the image. For a 50 mm lens and a subject 2 m away, the image forms 51.3 mm behind the lens.</p>
+          <p>The sensor sits at one distance. Focusing moves the lens so that the image of the thing you care about lands exactly on it. If it lands in front of or behind the sensor, each point spreads into a small disc of blur.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Move the subject without refocusing and watch the blur grow, then focus on it again.</p>
+        </section>
+
+        <section class="hiw-chapter" id="aperture" aria-labelledby="h-aperture">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-aperture">The aperture</h2>
+          <p>Inside the lens is an adjustable hole, the aperture. Its size is given as an <button class="hiw-term" data-term="fnumber">f-number</button>: the focal length divided by the hole's width. At f/2 a 50 mm lens opens 25 mm wide; at f/8, 6.25 mm.</p>
+          <p>The standard steps (f/1.4, 2, 2.8, 4, 5.6, 8...) each go up by about 1.4 times, the square root of 2, so each step halves the area of the hole and the light that gets through.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Close the aperture and watch the cone of light narrow.</p>
+        </section>
+
+        <section class="hiw-chapter" id="depth" aria-labelledby="h-depth">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-depth">Depth of field</h2>
+          <p>Only one distance is ever in perfect focus. Things nearer or further are blurred, but if the blur is small enough nobody can see it. For a full-frame camera, the usual limit is a blur disc 0.03 mm across.</p>
+          <p>A narrower cone of light makes a smaller blur disc for the same focusing error. So closing the aperture deepens the zone that looks sharp, called the depth of field, and opening it right up blurs the background behind a portrait.</p>
+          <p class="hiw-try"><strong>Try it.</strong> With a far subject behind the near one, go from f/1.4 to f/16 and watch its blur shrink.</p>
+        </section>
+
+        <section class="hiw-chapter" id="focal" aria-labelledby="h-focal">
+          <p class="hiw-chapter-num">Chapter 5</p>
+          <h2 id="h-focal">Focal length</h2>
+          <p>A longer focal length puts the image further behind the lens and makes it bigger, so the same sensor sees a narrower slice of the world. On a full-frame sensor, 36 mm wide, a 50 mm lens sees about 40° across; a 24 mm lens about 74°; a 200 mm lens about 10°.</p>
+          <p>That is all zoom is: changing the focal length.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Zoom from wide to long and watch the person 20 m away fill the frame.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The scene uses the thin-lens equation, which treats the lens as a single thin piece of glass. Real camera lenses are many pieces of glass, but they focus and gather light in the same way. Chapter 1 is in units of the focal length; the rest is a 50 mm lens on a full-frame (36 × 24 mm) sensor, to scale inside the camera.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Thin_lens" rel="noopener">Thin lens</a>: 1/f = 1/u + 1/v and the three principal rays.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/F-number" rel="noopener">F-number</a>: the focal length over the aperture's diameter, and full stops a factor of √2 apart.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Circle_of_confusion" rel="noopener">Circle of confusion</a>: about 0.03 mm for a full-frame camera, and the depth-of-field formulas using it.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Angle_of_view_(photography)" rel="noopener">Angle of view</a>: 2 × arctan(sensor width ÷ 2f).</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="focal" data-title="Focal point">Where rays arriving level with the lens's axis all meet. Its distance from the lens is the focal length.</p>
+      <p data-def="fnumber" data-title="F-number">The focal length divided by the width of the aperture. A smaller number means a wider opening.</p>
+    </template>

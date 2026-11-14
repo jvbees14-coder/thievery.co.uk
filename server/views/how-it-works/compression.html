@@ -1,0 +1,57 @@
+<!--
+  How compression works. Poured into _page.html; the scene is
+  public/explainers/compression/scene.js. Chapter ids: bits, frequent,
+  huffman, result, limits.
+-->
+        <section class="hiw-chapter" id="bits" aria-labelledby="h-bits">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-bits">Text is numbers</h2>
+          <p>A computer stores text as numbers, and numbers as bits: ones and noughts. Ordinary English letters each take one byte, eight bits, whether the letter is a common <i>e</i> or a rare <i>z</i>.</p>
+          <p>That is simple and wasteful. Compression is the art of storing the same thing in fewer bits, and getting every bit of it back.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Type anything. Each square is one bit; each colour is one character.</p>
+        </section>
+
+        <section class="hiw-chapter" id="frequent" aria-labelledby="h-frequent">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-frequent">Some letters are common</h2>
+          <p>Characters don't turn up equally often. In English, <i>e</i> is about one letter in eight, and spaces are commoner still. Morse code already knew this: <i>E</i> is a single dot.</p>
+          <p>So the idea is to give common characters short codes and rare ones long codes. The catch is making the codes impossible to misread when they are run together with no gaps.</p>
+        </section>
+
+        <section class="hiw-chapter" id="huffman" aria-labelledby="h-huffman">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-huffman">Huffman's tree</h2>
+          <p>In 1952 David Huffman, then a student at MIT, found the best way to do it. Write each character with its count. Join the two smallest into a pair, whose count is their total. Repeat until everything is in one tree.</p>
+          <p>Then read each character's code off the path from the top: 0 for every left turn, 1 for every right. Common characters join late and sit near the top, with short codes. And because no code is the start of another, a run of bits can only be read one way.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Step through the merges, or press Play.</p>
+        </section>
+
+        <section class="hiw-chapter" id="result" aria-labelledby="h-result">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-result">Fewer bits</h2>
+          <p>Encode the text with the tree's codes and it shrinks, often to about half. To read it back, a program needs the tree as well, which costs a little space of its own, so very short texts don't really gain.</p>
+          <p>Huffman coding is still everywhere. It is one of the two halves of the method inside ZIP files, PNG images and the pages a web server sends, the other half replacing repeated phrases with short pointers back to their first appearance.</p>
+        </section>
+
+        <section class="hiw-chapter" id="limits" aria-labelledby="h-limits">
+          <p class="hiw-chapter-num">Chapter 5</p>
+          <h2 id="h-limits">What can't be squeezed</h2>
+          <p>In 1948 Claude Shannon showed there is a floor. For a given mix of characters, its <button class="hiw-term" data-term="entropy">entropy</button> is the fewest bits per character any code of this kind can manage on average. Huffman's codes come within a whisker of it.</p>
+          <p>Truly random text has nothing to exploit: every letter is as likely as any other. And a file that has already been compressed looks random, which is why zipping a JPEG photo saves almost nothing.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Compare random letters with one letter repeated.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The scene runs a real Huffman coder on your text in your browser. Bit counts are exact; they leave out the cost of storing the tree.</p>
+      <ol>
+        <li>D. A. Huffman, "A method for the construction of minimum-redundancy codes", Proceedings of the IRE (1952); see Wikipedia, <a href="https://en.wikipedia.org/wiki/Huffman_coding" rel="noopener">Huffman coding</a>.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Letter_frequency" rel="noopener">Letter frequency</a>: <i>e</i> at about 12.7% of letters in English.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Deflate" rel="noopener">Deflate</a>: the method in ZIP, PNG and gzip, combining LZ77 and Huffman coding.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Entropy_(information_theory)" rel="noopener">Entropy (information theory)</a>: Shannon, 1948.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="entropy" data-title="Entropy">The average surprise of each character, in bits. Text where any character could come next has high entropy; predictable text has low.</p>
+    </template>

@@ -1,0 +1,50 @@
+<!--
+  How a touchscreen knows where you touched. Poured into _page.html; the
+  scene is public/explainers/touchscreen/scene.js. Chapter ids: grid,
+  finger, between, multi.
+-->
+        <section class="hiw-chapter" id="grid" aria-labelledby="h-grid">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-grid">A grid you can't see</h2>
+          <p>Under the glass of a phone is a grid of electrodes made of a material that conducts electricity but lets light through, usually indium tin oxide. One set runs across the screen in rows; another runs up and down in columns, on a separate layer.</p>
+          <p>Wherever a row crosses a column, the two form a tiny <button class="hiw-term" data-term="capacitor">capacitor</button>. The phone's touch controller sends a signal down one row at a time and listens on every column to how much of it comes through at each crossing.</p>
+          <p>The picture is enlarged a lot: the electrodes are a few millimetres apart.</p>
+        </section>
+
+        <section class="hiw-chapter" id="finger" aria-labelledby="h-finger">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-finger">Your finger steals a little</h2>
+          <p>Your body conducts, and it is a big object connected loosely to the ground. Bring a finger near a crossing and some of the electric field that ran between the row and the column runs into your finger instead. Less signal reaches the column.</p>
+          <p>The controller measures every crossing many times a second and looks for the ones that have dropped. That is why the screen ignores a fingernail or a gloved finger: they don't conduct.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Drag the finger about and watch the crossings near it light up.</p>
+        </section>
+
+        <section class="hiw-chapter" id="between" aria-labelledby="h-between">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-between">Finding the point between the wires</h2>
+          <p>A fingertip covers several crossings at once, and the ones nearest its centre change most. By taking an average of their positions, weighted by how much each one changed, the controller places your finger between the wires, far more finely than their spacing.</p>
+          <p>Without that averaging, a touch could only ever land on a crossing, and lines you draw would jump in steps.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Turn the averaging off, then drag slowly and watch the red dot jump from crossing to crossing.</p>
+        </section>
+
+        <section class="hiw-chapter" id="multi" aria-labelledby="h-multi">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-multi">More than one finger</h2>
+          <p>Because every crossing is measured on its own, two fingers make two separate bumps in the readings, and the controller finds each one. That is what makes pinching to zoom possible.</p>
+          <p>Bring the fingers close and the bumps merge into one, which is why two fingers pressed together count as one touch. Electrical noise, from a charger for instance, adds false bumps that the controller has to filter out.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Drag the two fingers together until they become one, then turn up the noise.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The scene models each finger's effect as a smooth bump in the readings, with random noise, on a 10 by 16 grid 4.5 mm apart. Real controllers use more electrodes and more careful filtering, but find touches the same way.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Touchscreen#Projected_capacitance" rel="noopener">Touchscreen: projected capacitance</a>: mutual-capacitance grids of rows and columns, and multi-touch.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Indium_tin_oxide" rel="noopener">Indium tin oxide</a>: the transparent conductor used in touchscreens.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Capacitive_sensing" rel="noopener">Capacitive sensing</a>: mutual capacitance, and why a finger reduces it.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="capacitor" data-title="Capacitor">Two conductors close together but not touching. A changing voltage on one makes a signal on the other, through the electric field between them.</p>
+    </template>

@@ -110,6 +110,16 @@
 @media (min-width: 1361px) {
   .menu-nav-link.site-extra { display: inline-flex; }
 }
+/* How it works: a third extra link, as its icon alone (its name is still
+   read out and shown on hover). The two games' widths above are sized for
+   them and the longest account name, so this one waits for another 80px;
+   narrower than that it is in the foot, and on a phone a row under More. */
+.menu-nav-link.site-extra.site-extra-compact { display: none; }
+@media (min-width: 1441px) {
+  .menu-nav-link.site-extra.site-extra-compact { display: inline-flex; }
+}
+.site-extra-compact { padding: 0 var(--space-2); }
+.site-extra-compact .site-extra-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 /* More is the phone's fifth tab and nothing on a wide bar, where everything
    under it has a link of its own. Its sheet is dressed here rather than by
    style.css, because Gerrymander's page has the bar and not that sheet. */

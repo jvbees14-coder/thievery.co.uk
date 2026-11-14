@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  {{head:explainers}}
+  <title>How it works · Thievery</title>
+  <meta name="description" content="Interactive explainers on Thievery.co.uk: learn how things work by playing with them. Live scenes, real numbers, no sign-up." />
+  <link rel="canonical" href="https://thievery.co.uk/how-it-works" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Thievery" />
+  <meta property="og:title" content="How it works · Thievery" />
+  <meta property="og:description" content="Learn how things work by playing with them. Live scenes, real numbers." />
+  <meta property="og:url" content="https://thievery.co.uk/how-it-works" />
+  <meta property="og:image" content="https://thievery.co.uk/og/how-it-works.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="How it works on Thievery: the Earth inside the rings of GPS orbits." />
+  <meta name="twitter:card" content="summary_large_image" />
+</head>
+<body>
+  {{bar:public:explainers}}
+
+  <!-- The cards are written by server/explainers.js from its EXPLAINERS
+       list. Each card's picture is a canvas that public/explainers/index.js
+       draws, and stills when the device asks for less motion. -->
+  <main id="main" class="page-main hiw-index">
+    <h1 class="hiw-index-title display">How it works</h1>
+    <p class="hiw-index-lede">Learn how things work by playing with them. Every page is a live scene you can pull about, with the real numbers beside it.</p>
+    {{explainers}}
+  </main>
+
+  {{foot}}
+
+  <script type="module" src="/explainers/index.js"></script>
+</body>
+</html>

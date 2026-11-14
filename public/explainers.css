@@ -1,0 +1,294 @@
+/* Thievery.co.uk — How it works.
+ *
+ * The index at /how-it-works and the layout every explainer is built on
+ * (server/views/how-it-works/_layout.html). Tokens only, like everything
+ * else; the scene itself is drawn on a canvas in the same tokens, read off
+ * the page by public/explainers/engine.js.
+ *
+ * The shape: on a wide screen the writing scrolls on the left and the scene
+ * is pinned on the right; at 900px and under the scene sits on top, with
+ * the step buttons under it and only the current chapter's writing below. */
+
+/* --- the scene's own inks ----------------------------------------------------------
+   Named for what they are in a scene, and each one is a token the site
+   already has in both schemes, so nothing here needs a light block. */
+
+.hiw-page, .hiw-index {
+  --hiw-ink-1: var(--team-a);
+  --hiw-ink-2: var(--team-b);
+  --hiw-ink-3: var(--r-uncommon);
+  --hiw-ink-4: var(--watcher);
+  --hiw-signal: var(--accent);
+  --hiw-scene-bg: var(--bg-grouped);
+}
+
+/* --- the index ------------------------------------------------------------------------ */
+
+.hiw-index { max-width: 1040px; }
+.hiw-index-title { margin: 0 0 var(--space-2); font-size: clamp(var(--text-title-1), 6vw, 3rem); }
+.hiw-index-lede { margin: 0 0 var(--space-6); max-width: var(--measure-narrow); font-size: var(--text-title-3); color: var(--label-secondary); }
+.hiw-group + .hiw-group { margin-top: var(--space-7); }
+.hiw-group-name { margin: 0 0 var(--space-4); font-size: var(--text-title-3); font-weight: 600; color: var(--label); }
+.hiw-grid {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: var(--space-5);
+}
+.hiw-card {
+  position: relative; height: 100%;
+  display: grid; grid-template-rows: auto auto 1fr auto; gap: var(--space-2);
+  padding: var(--space-3) var(--space-3) var(--space-5);
+  background: var(--bg-elevated); border: 1px solid var(--separator); border-radius: var(--radius-l);
+  box-shadow: var(--shadow-2), var(--edge-light);
+  color: var(--label); text-decoration: none;
+  transition: border-color var(--dur-quick) var(--ease-out), transform var(--dur-base) var(--ease-out);
+}
+.hiw-card > :not(.hiw-thumb) { margin-inline: var(--space-2); }
+@media (hover: hover) and (pointer: fine) {
+  .hiw-card:hover { border-color: var(--separator-strong); transform: translateY(-2px); }
+}
+.hiw-thumb {
+  display: block; width: 100%; aspect-ratio: 16 / 10; margin-bottom: var(--space-2);
+  border-radius: var(--radius-m); background: var(--hiw-scene-bg);
+  box-shadow: inset 0 0 0 1px var(--separator);
+}
+.hiw-card-name { font-family: var(--font-display); font-size: var(--text-title-2); line-height: 1.15; }
+.hiw-card-hook { color: var(--label-secondary); font-size: var(--text-subhead); }
+.hiw-card-meta { font-size: var(--text-footnote); color: var(--label-tertiary); font-variant-numeric: var(--numeric); }
+
+/* --- an explainer: the page ------------------------------------------------------------- */
+
+.hiw-page { width: 100%; max-width: var(--page-max); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-7); }
+.hiw-back { margin: 0 0 var(--space-2); font-size: var(--text-subhead); }
+.hiw-back a { display: inline-flex; align-items: center; min-height: var(--hit); }
+.hiw-back a::before { content: "‹"; margin-right: var(--space-1); }
+.hiw-title { margin: 0; font-size: clamp(var(--text-title-1), 6vw, 3rem); }
+.hiw-lede { margin: var(--space-2) 0 var(--space-5); max-width: var(--measure-narrow); color: var(--label-secondary); font-size: var(--text-title-3); }
+
+.hiw-layout { display: grid; gap: var(--space-4); }
+.hiw-stage { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+
+/* The scene: a recessed window onto the canvas. */
+.hiw-scene {
+  position: relative; margin: 0;
+  aspect-ratio: 1 / 0.95; max-height: 70vh;
+  border-radius: var(--radius-l); overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 50% 40%, transparent 40%, var(--fill) 100%),
+    var(--hiw-scene-bg);
+  box-shadow: inset 0 0 0 1px var(--separator);
+}
+.hiw-canvas { display: block; width: 100%; height: 100%; touch-action: pan-y; }
+.hiw-canvas.is-grabbable { cursor: grab; }
+.hiw-canvas.is-dragging { cursor: grabbing; }
+.hiw-canvas:focus-visible { outline-offset: -3px; }
+
+/* Floating over the scene: a note on the scale at the top left, the pause
+   button at the top right, and the status line along the bottom. */
+.hiw-note {
+  position: absolute; top: var(--space-3); left: var(--space-3); max-width: calc(100% - 7rem);
+  margin: 0; padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-s); background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+  font-size: var(--text-caption); color: var(--label-secondary); font-variant-numeric: var(--numeric);
+  pointer-events: none;
+}
+.hiw-play {
+  position: absolute; top: var(--space-2); right: var(--space-2);
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  min-height: var(--hit); padding: 0 var(--space-3);
+  border: 1px solid var(--glass-edge); border-radius: var(--radius-pill);
+  background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+  color: var(--label); font-size: var(--text-footnote); font-weight: 600; cursor: pointer;
+}
+.hiw-play svg { width: 14px; height: 14px; fill: currentColor; }
+.hiw-play .when-paused { display: none; }
+.hiw-play.is-paused .when-paused { display: block; }
+.hiw-play.is-paused .when-playing { display: none; }
+.hiw-play:active { transform: scale(var(--press-scale)); }
+.hiw-status {
+  position: absolute; left: var(--space-3); right: var(--space-3); bottom: var(--space-3);
+  margin: 0; text-align: center; pointer-events: none;
+  font-size: var(--text-subhead); font-weight: 600; color: var(--label);
+  text-shadow: 0 0 6px var(--hiw-scene-bg), 0 0 2px var(--hiw-scene-bg);
+}
+.hiw-status:empty { display: none; }
+
+/* --- under the scene: the controls and the numbers --------------------------------------- */
+
+.hiw-panel {
+  display: grid; gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-elevated); border: 1px solid var(--separator); border-radius: var(--radius-l);
+  box-shadow: var(--shadow-1), var(--edge-light);
+}
+.hiw-panel:has(.hiw-controls:empty):has(.hiw-readout:empty) { display: none; }
+.hiw-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: var(--space-2) var(--space-5); }
+.hiw-controls:empty { display: none; }
+.hiw-controls:not(:empty) + .hiw-readout:not(:empty) { padding-top: var(--space-3); border-top: 1px solid var(--separator); }
+
+.hiw-field { min-width: 0; }
+.hiw-field-top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); font-size: var(--text-subhead); }
+.hiw-field-top label { color: var(--label-secondary); }
+.hiw-field-value { font-weight: 600; color: var(--label); white-space: nowrap; }
+.hiw-field-hint { grid-column: 1 / -1; margin: 0; font-size: var(--text-footnote); color: var(--label-tertiary); }
+.hiw-toggle {
+  display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: var(--space-3);
+  min-height: var(--hit); font-size: var(--text-subhead); color: var(--label-secondary);
+}
+.hiw-toggle label { cursor: pointer; }
+.hiw-action { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-height: var(--hit); }
+
+/* The slider: a thin track filled with the accent up to the thumb, inside a
+   hit area a thumb can find. */
+.hiw-slider input[type="range"] {
+  --fill: 50%;
+  -webkit-appearance: none; appearance: none;
+  display: block; width: 100%; height: var(--hit); margin: 0; padding: 0;
+  border: 0; border-radius: 0; box-shadow: none;
+  background: transparent; cursor: pointer;
+}
+.hiw-slider input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px; border-radius: var(--radius-pill);
+  background: linear-gradient(to right, var(--accent) var(--fill), var(--segment-track) var(--fill));
+}
+.hiw-slider input[type="range"]::-moz-range-track { height: 4px; border-radius: var(--radius-pill); background: var(--segment-track); }
+.hiw-slider input[type="range"]::-moz-range-progress { height: 4px; border-radius: var(--radius-pill); background: var(--accent); }
+.hiw-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 24px; height: 24px; margin-top: -10px; border-radius: 50%;
+  background: var(--bg-elevated); border: 1px solid var(--separator-strong); box-shadow: var(--shadow-2);
+}
+.hiw-slider input[type="range"]::-moz-range-thumb {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--bg-elevated); border: 1px solid var(--separator-strong); box-shadow: var(--shadow-2);
+}
+.hiw-slider input[type="range"]:focus-visible { outline-offset: -6px; }
+
+/* Chips: one per satellite, pressed while it is switched on. */
+.hiw-chips { grid-column: 1 / -1; }
+.hiw-chips-label { margin: 0 0 var(--space-1); font-size: var(--text-subhead); color: var(--label-secondary); }
+.hiw-chip-row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.hiw-chip {
+  --chip: var(--accent);
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  min-height: var(--hit); padding: 0 var(--space-3);
+  border: 1px solid var(--separator-strong); border-radius: var(--radius-pill);
+  background: transparent; color: var(--label-secondary); font-size: var(--text-subhead); cursor: pointer;
+  transition: background var(--dur-quick) var(--ease-out), border-color var(--dur-quick) var(--ease-out);
+}
+.hiw-chip-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--chip); flex: none; }
+.hiw-chip[aria-pressed="true"] { background: var(--accent-tint); border-color: var(--chip); color: var(--label); }
+.hiw-chip[aria-pressed="true"] .hiw-chip-dot { background: var(--chip); }
+.hiw-chip-note { color: var(--label-tertiary); font-size: var(--text-footnote); }
+.hiw-chip:active { transform: scale(var(--press-scale)); }
+
+/* The live numbers. */
+.hiw-readout:empty { display: none; }
+.hiw-readout-list {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 7.5rem), 1fr)); gap: var(--space-3) var(--space-4);
+  margin: 0;
+}
+.hiw-readout-row { --row: transparent; min-width: 0; padding-left: var(--space-2); border-left: 2px solid var(--row); }
+.hiw-readout-row dt { font-size: var(--text-footnote); color: var(--label-secondary); }
+.hiw-readout-row dd { margin: 0; font-size: var(--text-title-3); font-weight: 600; color: var(--label); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* --- the step buttons -------------------------------------------------------------------------- */
+
+.hiw-steps {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--space-2);
+}
+.hiw-steps .btn.icon-only svg { width: 20px; height: 20px; }
+.hiw-step-label { margin: 0; text-align: center; font-size: var(--text-subhead); font-weight: 600; color: var(--label); }
+.hiw-dots { grid-column: 1 / -1; display: flex; justify-content: center; gap: 0; }
+.hiw-dot {
+  display: grid; place-items: center; width: 32px; height: 32px; padding: 0;
+  border: 0; background: transparent; cursor: pointer;
+}
+.hiw-dot::before {
+  content: ""; width: 8px; height: 8px; border-radius: var(--radius-pill); background: var(--separator-strong);
+  transition: width var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out);
+}
+.hiw-dot[aria-current="step"]::before { width: 22px; background: var(--accent); }
+
+/* --- the writing ---------------------------------------------------------------------------------- */
+
+.hiw-text { min-width: 0; }
+.hiw-chapter { max-width: var(--measure); }
+.hiw-chapter-num { margin: 0 0 var(--space-1); font-size: var(--text-footnote); font-weight: 600; color: var(--label-tertiary); font-variant-numeric: var(--numeric); }
+.hiw-chapter h2 { margin: 0 0 var(--space-3); font-family: var(--font-display); font-weight: 400; font-size: var(--text-title-1); line-height: 1.15; }
+.hiw-chapter p { margin: 0 0 var(--space-4); line-height: 1.6; }
+.hiw-chapter .hiw-try {
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius-m);
+  background: var(--accent-tint); color: var(--label); font-size: var(--text-subhead);
+}
+.hiw-chapter .hiw-try strong { color: var(--accent); }
+.hiw-figures { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: var(--space-3); margin: 0 0 var(--space-4); padding: 0; list-style: none; }
+.hiw-figures li { padding: var(--space-2) var(--space-3); border-radius: var(--radius-m); background: var(--fill); }
+.hiw-figures b { display: block; font-size: var(--text-title-3); font-variant-numeric: var(--numeric); }
+.hiw-figures span { font-size: var(--text-footnote); color: var(--label-secondary); }
+
+/* A word with a meaning behind it: a button that reads as part of the
+   sentence, with a dotted line under it. */
+.hiw-term {
+  display: inline; padding: 0; margin: 0; border: 0; background: none;
+  font: inherit; color: inherit; cursor: help;
+  text-decoration: underline dotted var(--accent); text-decoration-thickness: 2px; text-underline-offset: 4px;
+}
+.hiw-term[aria-expanded="true"] { color: var(--accent); }
+.hiw-gloss {
+  position: absolute; z-index: var(--z-popover);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-elevated-2); border: 1px solid var(--separator); border-radius: var(--radius-m);
+  box-shadow: var(--shadow-3), var(--edge-light);
+  font-size: var(--text-subhead); line-height: 1.5; color: var(--label);
+}
+.hiw-gloss p { margin: 0; }
+.hiw-gloss .hiw-gloss-term { margin-bottom: var(--space-1); font-weight: 700; }
+
+/* The sources, at the end of the writing. */
+.hiw-sources { max-width: var(--measure); margin-top: var(--space-7); padding-top: var(--space-5); border-top: 1px solid var(--separator); font-size: var(--text-footnote); color: var(--label-secondary); }
+.hiw-sources h2 { margin: 0 0 var(--space-3); font-size: var(--text-headline); font-weight: 600; color: var(--label); }
+.hiw-sources ol { margin: 0; padding-left: 1.25rem; display: grid; gap: var(--space-2); }
+.hiw-sources p { margin: 0 0 var(--space-3); }
+
+/* --- a phone: one chapter at a time, under the scene ------------------------------------------------- */
+
+[data-mode="step"] .hiw-chapter:not(.is-current) { display: none; }
+@media (max-width: 900px) {
+  .hiw-scene { max-height: 62vh; }
+  .hiw-chapter h2 { font-size: var(--text-title-2); }
+  .hiw-readout-row dd { font-size: var(--text-headline); }
+  .hiw-steps { position: sticky; top: calc(var(--bar-h) + var(--space-2)); z-index: var(--z-raised); padding: var(--space-1); border-radius: var(--radius-pill); background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
+}
+
+/* --- a wide screen: the writing scrolls, the scene stays ----------------------------------------------- */
+
+@media (min-width: 901px) {
+  .hiw-layout { grid-template-columns: minmax(0, 26rem) minmax(0, 1fr); gap: var(--space-7); align-items: start; }
+  .hiw-stage {
+    order: 2; position: sticky; top: calc(var(--bar-h) + var(--space-4));
+    height: calc(100vh - var(--bar-h) - var(--space-6));
+    height: calc(100dvh - var(--bar-h) - var(--space-6));
+  }
+  .hiw-scene { flex: 1 1 auto; min-height: 240px; max-height: none; aspect-ratio: auto; }
+  .hiw-text { order: 1; padding-bottom: 30vh; }
+  .hiw-chapter { min-height: 70vh; padding: 12vh 0 0; opacity: 0.42; transition: opacity var(--dur-slow) var(--ease-out); }
+  .hiw-chapter:first-child { padding-top: var(--space-2); }
+  .hiw-chapter.is-current { opacity: 1; }
+  .hiw-steps { grid-template-columns: auto auto 1fr auto; }
+  .hiw-steps .hiw-dots { grid-column: auto; justify-content: flex-end; }
+  .hiw-steps .hiw-step-label { text-align: left; }
+  .hiw-panel { padding: var(--space-3); gap: var(--space-2); }
+  .hiw-readout-list { grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: var(--space-2) var(--space-4); }
+  .hiw-readout-row dd { font-size: var(--text-headline); }
+  .hiw-controls:not(:empty) + .hiw-readout:not(:empty) { padding-top: var(--space-2); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hiw-card, .hiw-chapter, .hiw-dot::before, .hiw-chip { transition: none; }
+}
+:root[data-motion="still"] .hiw-card, :root[data-motion="still"] .hiw-chapter { transition: none; }
+
+/* Fields typed into, inside the controls panel. */
+.hiw-text-field { display: grid; gap: var(--space-1); grid-column: 1 / -1; }
+.hiw-text-field label { font-size: var(--text-subhead); color: var(--label-secondary); }
+.hiw-choice[aria-checked="true"] { background: var(--accent-tint); border-color: var(--accent); color: var(--label); }

@@ -11,7 +11,7 @@ npm test               # all ten suites, in order; any failure stops the run
 npm run test:source    # the source as bytes: no literal control characters
 npm run test:game      # the card game: real server, real clients, whole rounds played out
 npm run test:powerups  # the five/six-hand power-up rules, played against game.js directly
-npm run test:site      # the front hall, the addresses, and the lifetime record
+npm run test:site      # the front hall, the addresses, the explainers, and the lifetime record
 npm run test:battle    # the marker, a match played out, the one rule about the back, and the review schedule
 npm run test:switchhead # the shedding rules against shed.js, then a game over the socket
 npm run test:lockup    # Lockup's rules, run as the browser runs them, and whole games played out
@@ -23,6 +23,7 @@ npm run icons          # redraw public/icons/*.png from the mark in the script
 npm run fonts          # refetch public/fonts/*.woff2 and public/fonts.css (Limelight only)
 node scripts/contrast.mjs   # the contrast table for docs/DESIGN.md, from tokens.css
 npx -y -p playwright node scripts/og-images.mjs   # redraw public/og/*.jpg, the share pictures
+npx -y -p playwright node scripts/og-explainers.mjs   # redraw every How it works share picture (names on the command line for some)
 ```
 
 There is no build step, no linter and no test framework — the suites are plain
@@ -64,6 +65,7 @@ One server, a hall and five rooms off it:
 | `/lockup` | `server/site.js` — one view, `server/views/lockup.html`; the game is `public/lockup-rules.js` and `public/lockup.{js,css}` | never |
 | `/about`, `/privacy` | `server/site.js` — plain pages, up even in an outage | never |
 | `/tools`, `/tools/<slug>` | `server/site.js` and `server/tools.js` — the tools index and any tool pages | never |
+| `/how-it-works`, `/how-it-works/<slug>` | `server/site.js` and `server/explainers.js` — the interactive explainers | never |
 | `/styleguide` | `server/site.js` — every token and component; not linked, `noindex` | never |
 | `/api/site/…` | the door, the menu's figures, the members panel, Lockup's record and its daily board | mostly |
 | `/api/flashcards/…` | the collection, the post, the panel | yes |
@@ -924,6 +926,59 @@ the socket.
 
 **Tools** are pages at `/tools/<slug>` listed in `server/tools.js`, built on
 `server/views/tools/_layout.html`. `docs/ADDING_A_TOOL.md` is the walk-through.
+
+## How it works
+
+Interactive explainers, nineteen of them in six sections: a canvas scene
+pinned beside writing cut into chapters, every chapter changing the scene.
+Plain pages like the tools (no login, nothing stored, up in an outage),
+listed in `server/explainers.js`; an unlisted view is a 404.
+`docs/ADDING_AN_EXPLAINER.md` is the walk-through.
+
+- **A view holds only its writing.** `server/explainers.js` pours it into
+  `_page.html` (head, share tags, title) with `_stage.html` (the scene and
+  its controls); the line `<!-- end of chapters -->` splits the chapters
+  from the sources. The shared pieces' own comments name the placeholders,
+  so `build()` strips them before filling anything in. `gps.html`, older,
+  is a whole page and is used as it is.
+
+- **The engine is `public/explainers/engine.js`** and a scene is
+  `public/explainers/<slug>/scene.js` calling `mount()`. The engine owns the
+  canvas size, the loop (asleep off screen, in a background tab, and when
+  `draw` returns false), the chapters, the controls, the readouts, the
+  glossary and dragging. A scene that does any of that itself is doing it
+  twice.
+- **A chapter's `id` in the view is the name the scene switches on.** Rename
+  one in the HTML and that chapter's scene silently stops following.
+  `test/site.test.js` checks every explainer's scene mentions every one of
+  its page's ids, and that the count matches `chapters` in the list.
+- **The scene is drawn in tokens**, read off the page, plus the section's
+  own `--hiw-ink-*` in `explainers.css`, each an existing token. No literal
+  colours, so light and dark need nothing extra.
+- **Motion:** nothing moves by itself unless `api.playing && api.motion`;
+  reduced motion and the site's still setting start it paused.
+- **Figures are sourced on the page.** Each scene's constants and its
+  writing say the same numbers; change one, change the other and the
+  sources list. Where a claim could not be sourced it was cut, not hedged.
+- **The coastlines are Natural Earth's** (public domain), simplified into
+  `public/explainers/shared/land.js` once and credited on `/about`. Globes
+  draw them as dots (`shared/earth.js`, `landDots`) so nothing needs
+  clipping at the edge of the disc; flat maps draw the rings.
+- **Two scenes do real work, not pictures of it.** `qr-codes/qr.js` is a
+  QR encoder (byte mode, versions 1 to 10), checked against the standard's
+  published Reed-Solomon example and format table and by decoding its own
+  output; `wing-lift/flow.js` is the exact ideal flow round a Joukowski
+  aerofoil. Change either with the same care as `grade.js`.
+- **Sound plays only on a press** (`sound/scene.js`, Web Audio, quiet), and
+  stops on a chapter change and on `pagehide`. Nothing on the site makes a
+  noise by itself.
+- In the bar it is a third `site-extra`, after Lockup and Gerrymander and
+  shown from 1441px (the games' widths are sized for them and the longest
+  account name), as its icon alone (`.site-extra-compact` in `shell.css`);
+  on a phone it is a row under More (`MORE` in `views.js`).
+- Scenes are ES modules importing `../engine.js` without a `?v=`, so they
+  are revalidated rather than pinned for a year; only the page's entry
+  script is versioned.
 
 New accounts start with an empty collection. They used to be dealt three
 cards about the rules; `Cards.sweepWelcome()` runs on every boot and deletes

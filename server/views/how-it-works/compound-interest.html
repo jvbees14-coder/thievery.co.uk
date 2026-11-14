@@ -1,0 +1,55 @@
+<!--
+  How compound interest works. Poured into _page.html; the scene is
+  public/explainers/compound-interest/scene.js. Chapter ids: simple, often,
+  seventytwo, regular, against. Arithmetic only: no advice about anybody's
+  money, no products, no recommendations.
+-->
+        <section class="hiw-chapter" id="simple" aria-labelledby="h-simple">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-simple">Interest on interest</h2>
+          <p>Put £1,000 somewhere that pays 5% a year. If the interest is paid out and spent, you earn £50 every year: after 30 years, £1,500 of interest on top of your £1,000. That is simple interest.</p>
+          <p>Leave the interest in, and next year you earn 5% on £1,050, then on £1,102.50, and so on. Each year's interest earns interest of its own. After 30 years the £1,000 has become £4,321.94.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Stretch the years and watch the gap between the two lines open up.</p>
+        </section>
+
+        <section class="hiw-chapter" id="often" aria-labelledby="h-often">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-often">How often it's added</h2>
+          <p>In 1683 Jacob Bernoulli asked a simple question. £1 earns 100% a year. If the interest is added twice a year at 50% each time, you end with £2.25, not £2. Monthly, £2.61. Daily, £2.71.</p>
+          <p>It keeps growing but never passes £2.71828…, a number now called <i>e</i>. It turns up everywhere growth feeds on itself, from bacteria to radioactive decay.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Compound more and more often, and watch it creep towards <i>e</i>.</p>
+        </section>
+
+        <section class="hiw-chapter" id="seventytwo" aria-labelledby="h-seventytwo">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-seventytwo">The rule of 72</h2>
+          <p>A shortcut for how long anything growing at a steady rate takes to double: divide 72 by the yearly percentage. At 6%, about 12 years; at 9%, about 8.</p>
+          <p>It is a rough rule but a good one for ordinary rates, because 72 is close to the true figure and divides neatly by so many numbers.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change the rate and compare the rule with the exact answer.</p>
+        </section>
+
+        <section class="hiw-chapter" id="regular" aria-labelledby="h-regular">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-regular">A little every month</h2>
+          <p>Paying in a small amount every month adds up the same way: every payment starts earning from the day it arrives. Over long stretches, most of the final total can be growth rather than money paid in.</p>
+          <p>That makes time the strongest part of the sum. Money paid in early has longest to grow, so starting later costs more than the payments that were missed.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Start ten years later and compare the totals.</p>
+        </section>
+
+        <section class="hiw-chapter" id="against" aria-labelledby="h-against">
+          <p class="hiw-chapter-num">Chapter 5</p>
+          <h2 id="h-against">It works against you too</h2>
+          <p>Compounding doesn't care whose side it is on. A debt left unpaid at a high rate grows the same way: £1,000 owed at 22% a year, with nothing paid off, is more than £7,000 after ten years.</p>
+          <p>Prices do it as well. At 2% inflation a year, what £1,000 buys today, about £500 will buy in 35 years. Savings growing more slowly than prices are shrinking.</p>
+          <p>This page is arithmetic, not advice. Real accounts have fees, taxes and changing rates.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>Every figure is worked out with the standard formulas: a balance of P(1 + r/n)<sup>nt</sup>, and monthly payments compounded at the matching monthly rate. Nothing here is advice about any real account.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Compound_interest" rel="noopener">Compound interest</a>: the formula, and Jacob Bernoulli's 1683 question that led to <i>e</i>.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/E_(mathematical_constant)" rel="noopener">e (mathematical constant)</a>: 2.71828…</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Rule_of_72" rel="noopener">Rule of 72</a>.</li>
+      </ol>
+    </section>

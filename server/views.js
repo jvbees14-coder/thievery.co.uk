@@ -55,6 +55,7 @@ export const ICONS = {
   account: '<circle cx="12" cy="9" r="3.75"/><path d="M5.5 19.5c1.1-3.75 3.75-5.25 6.5-5.25s5.4 1.5 6.5 5.25"/>',
   members: '<circle cx="9" cy="9" r="3"/><circle cx="16.5" cy="10" r="2.25"/><path d="M3 19c.75-3 3-4.5 6-4.5s5.25 1.5 6 4.5M15 14.25c2.25 0 4.5 1.1 5.25 3.75"/>',
   tools: '<path d="M14.5 5.5a4 4 0 0 0-5 5L4 16l4 4 5.5-5.5a4 4 0 0 0 5-5l-2.5 2.5-2.5-.5-.5-2.5z"/>',
+  explainers: '<circle cx="12" cy="12" r="2.5"/><ellipse cx="12" cy="12" rx="9.5" ry="4.25" transform="rotate(-28 12 12)"/><circle cx="19.6" cy="7.2" r="1.1"/>',
   gerrymander: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h6v4h10M10 4v6M14 14v6"/>',
   lockup: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3M12 14.5v2"/>',
   more: '<circle cx="5.5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="18.5" cy="12" r="1.25"/>',
@@ -97,6 +98,7 @@ const MORE = [
   { id: 'lockup', href: '/lockup', name: 'Lockup', note: 'Keep the thieves out of the vault' },
   { id: 'gerrymander', href: '/gerrymander/', name: 'Gerrymander', note: 'Draw the map, win the seats' },
   { id: 'tools', href: '/tools', name: 'Tools', note: 'Small things that each do one job' },
+  { id: 'explainers', href: '/how-it-works', name: 'How it works', note: 'Learn how things work by playing with them' },
 ];
 
 export function bar(current = '', { signedIn = true, main = 'main' } = {}) {
@@ -139,6 +141,9 @@ export function bar(current = '', { signedIn = true, main = 'main' } = {}) {
   // Gerrymander's waits until there is room for both.
   const extraHere = current === 'gerrymander' ? ' aria-current="page"' : '';
   const lockupHere = current === 'lockup' ? ' aria-current="page"' : '';
+  // How it works is a third extra link, shown as its icon (see shell.css),
+  // and on a phone it is a row under More.
+  const hiwHere = current === 'explainers' ? ' aria-current="page"' : '';
   // The nav and the extra link are held together so a wide bar can centre
   // them as one row, on the page rather than in whatever room the account
   // button leaves. On a phone the holder steps aside (display: contents) and
@@ -149,6 +154,7 @@ export function bar(current = '', { signedIn = true, main = 'main' } = {}) {
     </nav>
     <a class="menu-nav-link site-extra site-extra-early" href="/lockup"${lockupHere}>${icon('lockup')}<span>Lockup</span></a>
     <a class="menu-nav-link site-extra" href="/gerrymander/"${extraHere}>${icon('gerrymander')}<span>Gerrymander</span></a>
+    <a class="menu-nav-link site-extra site-extra-compact" href="/how-it-works" title="How it works"${hiwHere}>${icon('explainers')}<span class="site-extra-label">How it works</span></a>
     </div>`;
   if (!signedIn) {
     return `${skip}
@@ -196,6 +202,7 @@ export function foot() {
       <a href="/about">About</a>
       <a href="/privacy">Privacy</a>
       <a href="/tools">Tools</a>
+      <a href="/how-it-works">How it works</a>
       <a href="/about#credits">Credits</a>
       <a href="https://github.com/jvbees14-coder/thievery.co.uk" rel="noopener">GitHub</a>
     </nav>

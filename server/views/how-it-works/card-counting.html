@@ -1,0 +1,57 @@
+<!--
+  How card counting works. Poured into _page.html; the scene is
+  public/explainers/card-counting/scene.js, which switches on these ids.
+  Nothing here encourages anybody to gamble: it explains the arithmetic.
+-->
+        <section class="hiw-chapter" id="edge" aria-labelledby="h-edge">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-edge">The house edge</h2>
+          <p>Blackjack is the one casino game where the odds change as the cards come out. A player who makes the mathematically best play every time (called <button class="hiw-term" data-term="basic">basic strategy</button>) still loses in the long run, but only slightly: with good rules, the house keeps under half a penny in every pound bet.</p>
+          <p>Casinos deal from a shoe of several decks shuffled together, six in this picture, and shuffle again when a plastic cut card comes out, about three-quarters of the way through.</p>
+          <p>Cards that have gone are gone. So what is left in the shoe is never quite a full deck's mix, and that is the whole of what counting uses.</p>
+        </section>
+
+        <section class="hiw-chapter" id="count" aria-labelledby="h-count">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-count">Keeping count</h2>
+          <p>Counting doesn't mean remembering every card. The most common system, Hi-Lo, gives each card one of three values: 2 to 6 count +1, 7 to 9 count nothing, and tens, picture cards and aces count −1.</p>
+          <p>Add them up as they are dealt. That total is the running count. When it is high, more low cards have gone than usual, so the shoe is left rich in tens and aces.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Hide the count, deal twenty cards, keep the count in your head, then show it and see if you were right.</p>
+        </section>
+
+        <section class="hiw-chapter" id="true" aria-labelledby="h-true">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-true">The true count</h2>
+          <p>A running count of +6 means more with one deck left than with five. So counters divide it by the number of decks still in the shoe, which gives the true count.</p>
+          <p>The bars show what the true count is measuring: how far the cards left in the shoe have drifted from a full shoe's share of low, middle and high cards.</p>
+        </section>
+
+        <section class="hiw-chapter" id="why" aria-labelledby="h-why">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-why">Why tens and aces help</h2>
+          <p>A shoe rich in tens and aces is better for the player in several ways. Blackjacks come up more often, and a player's blackjack pays 3 to 2. A dealer showing a low card must keep drawing until they reach 17, and with more tens about they bust more often. Doubling down on 10 or 11 lands a ten more often.</p>
+          <p>Counters' rule of thumb is that each point of true count moves the edge by about half a percentage point. So at a true count of about +1, the player is roughly even, and above that, slightly ahead. It is a rough figure that varies with the rules and the system.</p>
+          <p>The counter's move is simple: bet small when the count is low and more when it is high.</p>
+        </section>
+
+        <section class="hiw-chapter" id="catch" aria-labelledby="h-catch">
+          <p class="hiw-chapter-num">Chapter 5</p>
+          <h2 id="h-catch">The catch</h2>
+          <p>Played well, counting turns an edge of about half a percent against the player into about one percent for them. That is a tiny edge, and luck swamps it for a long time: a counter can lose for hours, or weeks, while doing everything right.</p>
+          <p>Casinos fight back by shuffling earlier, so good counts never arrive, and by asking players they think are counting to leave. Counting in your head is not illegal in the UK or the US, but a casino is a private business and doesn't have to deal you in.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Press Play and watch the true count wander. Most of the time it sits near zero.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The scene deals a real, randomly shuffled six-deck shoe and keeps an exact Hi-Lo count. The edge it shows is the rule of thumb (a starting edge of −0.5% plus half a point per true count), not a simulation of blackjack.</p>
+      <ol>
+        <li>Wizard of Odds, <a href="https://wizardofodds.com/games/blackjack/card-counting/high-low/" rel="noopener">The High-Low card counting system</a>: the card values and the true count.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Card_counting" rel="noopener">Card counting</a>: a basic-strategy house edge historically under 0.5%, a typical counter's edge of about 1%, and the law in the UK and the US.</li>
+        <li>Las Vegas Advisor, <a href="https://www.lasvegasadvisor.com/gambling-with-an-edge/how-true-is-your-true-count/" rel="noopener">How true is your true count?</a>: why the half-a-point-per-count rule is only approximate.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="basic" data-title="Basic strategy">A table of the best play (hit, stand, double or split) for every hand against every dealer card, worked out by computer.</p>
+    </template>

@@ -45,6 +45,7 @@ import * as Lockup from './lockup.js';
 import { send, fail, originOk, currentUser, requireUser, readBody } from './plumbing.js';
 import { readView, render } from './views.js';
 import * as Tools from './tools.js';
+import * as Explainers from './explainers.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
@@ -231,7 +232,16 @@ export function handle(req, res, url) {
   // nothing from the ledger, so they are answered before anything that does,
   // and stay up in an outage. The style guide is for whoever maintains the
   // site: it is not linked, and asks not to be indexed.
-  const plain = PLAIN_PAGES[pathname] || (pathname.startsWith('/tools/') && Tools.toolPage(pathname.slice(7)));
+  // How it works is the same kind of page, and the address is written
+  // without a trailing slash, like /tools; the other spelling is sent there.
+  if (pathname === '/how-it-works/') {
+    redirect(res, `/how-it-works${url.search}`, 301);
+    return true;
+  }
+  const plain =
+    PLAIN_PAGES[pathname] ||
+    (pathname.startsWith('/tools/') && Tools.toolPage(pathname.slice(7))) ||
+    (pathname.startsWith('/how-it-works') && Explainers.pageFor(pathname));
   if (plain) {
     res.writeHead(200, {
       'Content-Type': 'text/html; charset=utf-8',
