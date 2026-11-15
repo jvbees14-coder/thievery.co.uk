@@ -79,6 +79,18 @@ const GERRYMANDER_HEAD = [
   '<meta name="twitter:card" content="summary_large_image" />',
 ].join(' ');
 
+// The same for Pocket Universe, which is built in another project too. There
+// is no share picture of its own yet, so a link to it is shared as a summary.
+const UNIVERSE_HEAD = [
+  '<link rel="canonical" href="https://thievery.co.uk/pocket-universe/" />',
+  '<meta property="og:site_name" content="Thievery" />',
+  '<meta property="og:type" content="website" />',
+  '<meta property="og:title" content="Pocket Universe · Thievery" />',
+  '<meta property="og:description" content="A gravity sandbox. Throw planets, stars, comets and black holes about and watch them orbit, collide and merge." />',
+  '<meta property="og:url" content="https://thievery.co.uk/pocket-universe/" />',
+  '<meta name="twitter:card" content="summary" />',
+].join(' ');
+
 // What an address nobody recognises is answered with. A page with the bar's
 // way home on it, rather than two words of plain text.
 const NOT_FOUND = readView('404.html');
@@ -179,6 +191,24 @@ function serve(req, res) {
       if (err) return notFound(res);
       res.writeHead(200, { 'Content-Type': MIME['.html'], 'Cache-Control': 'no-cache', ...SAFE_HEADERS });
       res.end(withBar(html, 'gerrymander', { main: 'app', head: GERRYMANDER_HEAD, title: 'Gerrymander · Thievery' }));
+    });
+    return;
+  }
+  // Pocket Universe is the same arrangement: a finished static game in
+  // public/pocket-universe/, made in its own project with relative paths, so
+  // its address ends in a slash and its page gets the bar on the way out. It
+  // has no copy of our tokens, so it asks withBar for them (see views.js). Its
+  // service worker is /pocket-universe/sw.js and reaches nothing outside that
+  // folder.
+  if (file === '/pocket-universe') {
+    res.writeHead(301, { Location: `/pocket-universe/${url.search}`, 'Cache-Control': 'no-store' });
+    return res.end();
+  }
+  if (file === '/pocket-universe/' || file === '/pocket-universe/index.html') {
+    fs.readFile(path.join(PUBLIC_DIR, 'pocket-universe', 'index.html'), 'utf8', (err, html) => {
+      if (err) return notFound(res);
+      res.writeHead(200, { 'Content-Type': MIME['.html'], 'Cache-Control': 'no-cache', ...SAFE_HEADERS });
+      res.end(withBar(html, 'universe', { main: 'sky', head: UNIVERSE_HEAD, title: 'Pocket Universe · Thievery', tokens: true }));
     });
     return;
   }

@@ -391,7 +391,7 @@ async function run() {
       const { html } = await stranger.page(where);
       assert.ok(html.includes('id="nav-more"') && html.includes('<dialog class="sheet more-sheet" id="more-sheet"'), `${where} has no More tab or no sheet`);
       const sheet = html.slice(html.indexOf('id="more-sheet"'), html.indexOf('</dialog>', html.indexOf('id="more-sheet"')));
-      for (const row of ['/mindmaps', '/lockup', '/gerrymander/', '/tools']) {
+      for (const row of ['/mindmaps', '/lockup', '/gerrymander/', '/pocket-universe/', '/tools']) {
         assert.ok(sheet.includes(`href="${row}"`), `${where}: More does not list ${row}`);
       }
       const marked = /id="nav-more"[^>]*aria-current="page"/.test(html);
@@ -413,6 +413,74 @@ async function run() {
     const key = (script.match(/STORE_KEY = '([^']+)'/) || [])[1];
     assert.ok(key, 'lockup.js should name its storage key');
     assert.ok((await stranger.page('/privacy')).html.includes(`<code>${key}</code>`), `/privacy does not list ${key}`);
+  });
+
+  // Pocket Universe is Gerrymander's arrangement again: static files out of
+  // public/pocket-universe/, made in another project, with the bar put on the
+  // page as it leaves. Unlike Gerrymander it carries no copy of our tokens,
+  // so it is sent ours, ahead of the bar's stylesheet.
+  await check('/pocket-universe is sent to /pocket-universe/, query and all', async () => {
+    const res = await stranger.page('/pocket-universe?x=1');
+    assert.equal(res.status, 301);
+    assert.equal(res.location, '/pocket-universe/?x=1');
+  });
+
+  await check('/pocket-universe/ serves the game with the bar, Pocket Universe marked', async () => {
+    for (const where of ['/pocket-universe/', '/pocket-universe/index.html']) {
+      const res = await stranger.page(where);
+      assert.equal(res.status, 200);
+      const { html } = res;
+      assert.ok(html.includes('id="sky"') && html.includes('<title>Pocket Universe · Thievery</title>'), `${where}: expected the game page`);
+      assert.ok(html.includes('class="site-bar"') && html.includes('class="site-mark wordmark" href="/"'), `${where} has no bar or no way home`);
+      assert.ok(html.includes('href="/pocket-universe/" aria-current="page"'), `${where} does not mark Pocket Universe as here`);
+      assert.ok(html.includes('href="#sky"'), `${where}: the skip link does not land on the game`);
+      const tokens = html.search(/href="\/tokens\.css\?v=\w+"/), shell = html.search(/href="\/shell\.css\?v=\w+"/);
+      assert.ok(tokens > 0 && shell > tokens, `${where} should load tokens.css, then shell.css`);
+      assert.ok(!/href="\/style\.css/.test(html), `${where} loads the site's page styles over the game's`);
+      assert.ok(!html.includes('id="who"'), `${where} has an account menu, and the game has no account`);
+      // The site makes no request to anybody else, and the game must not either.
+      assert.ok(!/(?:src|href)="https?:\/\//.test(html.replace(/<meta[^>]*>|<link rel="canonical"[^>]*>/g, '')), `${where} loads something from another site`);
+    }
+  });
+
+  await check("Pocket Universe's files come back with the right types", async () => {
+    const want = {
+      '/pocket-universe/manifest.webmanifest': 'application/manifest+json',
+      '/pocket-universe/sw.js': 'text/javascript',
+      '/pocket-universe/icons/icon.svg': 'image/svg+xml',
+      '/pocket-universe/icons/icon-192.png': 'image/png',
+    };
+    for (const [where, type] of Object.entries(want)) {
+      const res = await fetch(`http://localhost:${PORT}${where}`);
+      assert.equal(res.status, 200, `${where} should be served`);
+      assert.ok((res.headers.get('content-type') || '').startsWith(type), `${where} came back as ${res.headers.get('content-type')}`);
+      if (where.endsWith('sw.js')) assert.equal(res.headers.get('cache-control'), 'no-cache', 'the worker must be revalidated');
+      await res.arrayBuffer();
+    }
+    const m = JSON.parse((await stranger.page('/pocket-universe/manifest.webmanifest')).html);
+    for (const icon of m.icons) {
+      const res = await fetch(new URL(icon.src, `http://localhost:${PORT}/pocket-universe/`));
+      assert.equal(res.status, 200, `${icon.src} is named in the manifest but missing`);
+      await res.arrayBuffer();
+    }
+    const miss = await stranger.page('/pocket-universe/nonexistent');
+    assert.equal(miss.status, 404);
+  });
+
+  await check('the front page links to Pocket Universe from the bar, More and its card', async () => {
+    const res = await stranger.page('/');
+    assert.equal(res.html.split('href="/pocket-universe/"').length - 1, 3, "expected the bar's link, the row under More and the card");
+    assert.ok(res.html.includes('class="menu-nav-link site-extra site-extra-late" href="/pocket-universe/"'), 'the bar does not link to Pocket Universe');
+    const sheet = res.html.slice(res.html.indexOf('id="more-sheet"'), res.html.indexOf('</dialog>', res.html.indexOf('id="more-sheet"')));
+    assert.ok(sheet.includes('href="/pocket-universe/"'), 'More does not list Pocket Universe');
+  });
+
+  await check('everything Pocket Universe keeps in the browser is listed on /privacy', async () => {
+    const page = await (await fetch(`http://localhost:${PORT}/pocket-universe/index.html`)).text();
+    const keys = new Set([...page.matchAll(/localStorage\.(?:getItem|setItem)\('([^']+)'/g)].map((m) => m[1]));
+    assert.ok(keys.size >= 3, `expected the game's storage keys, found ${[...keys].join(', ') || 'none'}`);
+    const privacy = (await stranger.page('/privacy')).html;
+    for (const key of keys) assert.ok(privacy.includes(`<code>${key}</code>`), `/privacy does not list ${key}`);
   });
 
   // How it works: plain pages anybody can read, listed in server/explainers.js

@@ -58,6 +58,7 @@ export const ICONS = {
   explainers: '<circle cx="12" cy="12" r="2.5"/><ellipse cx="12" cy="12" rx="9.5" ry="4.25" transform="rotate(-28 12 12)"/><circle cx="19.6" cy="7.2" r="1.1"/>',
   gerrymander: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h6v4h10M10 4v6M14 14v6"/>',
   lockup: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3M12 14.5v2"/>',
+  universe: '<circle cx="12" cy="12" r="2.5"/><path d="M19.6 9.2A8 8 0 1 1 15.6 4.9"/><circle cx="18.2" cy="6.2" r="1.6"/><path d="M3 20.5l3.5-3.5"/>',
   more: '<circle cx="5.5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="18.5" cy="12" r="1.25"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
@@ -97,6 +98,7 @@ const MORE = [
   { id: 'mindmaps', href: '/mindmaps', name: 'Mind maps', note: 'One idea in the middle, and everything branching off it' },
   { id: 'lockup', href: '/lockup', name: 'Lockup', note: 'Keep the thieves out of the vault' },
   { id: 'gerrymander', href: '/gerrymander/', name: 'Gerrymander', note: 'Draw the map, win the seats' },
+  { id: 'universe', href: '/pocket-universe/', name: 'Pocket Universe', note: 'Throw planets about and watch gravity do the rest' },
   { id: 'tools', href: '/tools', name: 'Tools', note: 'Small things that each do one job' },
   { id: 'explainers', href: '/how-it-works', name: 'How it works', note: 'Learn how things work by playing with them' },
 ];
@@ -144,6 +146,11 @@ export function bar(current = '', { signedIn = true, main = 'main' } = {}) {
   // How it works is a third extra link, with its name, once the bar has room
   // for it (see shell.css); on a phone it is a row under More.
   const hiwHere = current === 'explainers' ? ' aria-current="page"' : '';
+  // Pocket Universe is a fourth, the same kind of thing as Gerrymander (a
+  // static game built elsewhere, no account), and the last to find room: it
+  // joins the others only on the widest bars (see shell.css). Everywhere else
+  // it is a row under More, a tile in the hall and a card on the front page.
+  const puHere = current === 'universe' ? ' aria-current="page"' : '';
   // The nav and the extra link are held together so a wide bar can centre
   // them as one row, on the page rather than in whatever room the account
   // button leaves. On a phone the holder steps aside (display: contents) and
@@ -155,6 +162,7 @@ export function bar(current = '', { signedIn = true, main = 'main' } = {}) {
     <a class="menu-nav-link site-extra site-extra-early" href="/lockup"${lockupHere}>${icon('lockup')}<span>Lockup</span></a>
     <a class="menu-nav-link site-extra" href="/gerrymander/"${extraHere}>${icon('gerrymander')}<span>Gerrymander</span></a>
     <a class="menu-nav-link site-extra site-extra-compact" href="/how-it-works"${hiwHere}>${icon('explainers')}<span>How it works</span></a>
+    <a class="menu-nav-link site-extra site-extra-late" href="/pocket-universe/"${puHere}>${icon('universe')}<span>Pocket Universe</span></a>
     </div>`;
   if (!signedIn) {
     return `${skip}
@@ -330,8 +338,15 @@ export function render(html) {
 // without (`head`: the canonical address, the share tags) and the site's name
 // in its title (`title`), so it is found and shared as one of ours. Its own
 // files are left exactly as the build wrote them.
-export function withBar(html, current, { main = 'main', head = '', title = '' } = {}) {
-  const sheet = `${head}\n    <link rel="stylesheet" href="/shell.css" />\n    <script src="/shell.js" defer></script>\n  </head>`;
+//
+// `tokens` is for a page that does not carry its own copy of our tokens, as
+// Gerrymander does: it brings fonts.css and tokens.css in ahead of shell.css,
+// which is written in them. Pocket Universe asks for it. Its own variables
+// are all `--pu-` so that ours, which arrive after its styles, change none of
+// its colours.
+export function withBar(html, current, { main = 'main', head = '', title = '', tokens = false } = {}) {
+  const base = tokens ? '\n    <link rel="stylesheet" href="/fonts.css" />\n    <link rel="stylesheet" href="/tokens.css" />' : '';
+  const sheet = `${head}${base}\n    <link rel="stylesheet" href="/shell.css" />\n    <script src="/shell.js" defer></script>\n  </head>`;
   const top = bar(current, { signedIn: false, main });
   let out = html.replace('</head>', sheet).replace(/<body([^>]*)>/, (open) => `${open}\n  ${top}`);
   if (title) out = out.replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`);

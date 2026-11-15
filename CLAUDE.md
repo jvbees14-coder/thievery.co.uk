@@ -62,6 +62,7 @@ One server, a hall and five rooms off it:
 | `/switchhead`, `/switchhead/ABCD` | `server/switchhead.js` | required |
 | `/mindmaps` | `server/mindmaps.js` | required |
 | `/gerrymander/` | static files out of `public/gerrymander/`, with a redirect from `/gerrymander` in `server/index.js` | never |
+| `/pocket-universe/` | static files out of `public/pocket-universe/`, Gerrymander's arrangement (redirect, bar on the way out) plus our tokens | never |
 | `/lockup` | `server/site.js` — one view, `server/views/lockup.html`; the game is `public/lockup-rules.js` and `public/lockup.{js,css}` | never |
 | `/about`, `/privacy` | `server/site.js` — plain pages, up even in an outage | never |
 | `/tools`, `/tools/<slug>` | `server/site.js` and `server/tools.js` — the tools index and any tool pages | never |
@@ -109,6 +110,37 @@ the game's) and not `prefs.js` (it would write over the game's own
 `data-motion`). `shell.css` therefore dresses the wordmark and the bar's
 icons itself. The game's source keeps its plain-element rules inside `#app`
 for the same reason, so the bar is never restyled by the game.
+
+**Pocket Universe** (`public/pocket-universe/`) is a gravity sandbox: one
+self-contained `index.html` (canvas, physics, sound, saves, challenges),
+`manifest.webmanifest`, `sw.js` and `icons/`. No login, nothing sent to us;
+what it keeps is three `localStorage` keys (`pu-sound`, `pu-saves`,
+`pu-done`), listed on `/privacy` and checked there by `test/site.test.js`.
+Like Gerrymander it is made in another project,
+`C:\Users\jvbee\OneDrive\Documents\Cool\pocket-universe`, and copied in: the
+four things above and nothing else (not its `.bat` launcher). There is no
+build; change it there, then copy. It is served exactly as Gerrymander is
+(`/pocket-universe` redirects to the slash, `index.js` answers the page with
+`withBar`), with two differences that matter:
+
+- **It is sent our tokens.** It has no copy of them, and `shell.css` is
+  written in them, so `withBar(..., { tokens: true })` puts `fonts.css` and
+  `tokens.css` in ahead of `shell.css`. Those arrive *after* the game's own
+  `<style>`, which is why every one of its CSS variables is `--pu-`: an
+  unprefixed `--accent` or `--ink` would be ours. Keep that prefix when
+  changing it. `<html data-scheme="dark">` keeps the bar dark over the sky.
+- **It makes room for the bar itself.** The sky is a fixed canvas under
+  everything; the game measures `.site-bar` and, on a phone, the fixed
+  `.menu-nav` tab bar, and moves its readouts and controls clear of them
+  (`--pu-top`, `--pu-bottom`, `measureChrome`). Standalone there is no bar
+  and both are 0. It loads no fonts (the site makes no third-party request,
+  and the suite checks this page for any `src`/`href` off the site).
+
+Its link in the bar is a fourth `site-extra`, `site-extra-late`, shown only
+from 1701px (measured: the four extras are 1,173px wide, centred, beside a
+14rem account button). Narrower, it is a row under More, a tile in the hall
+and a linked card on the front page. Its service worker's scope is
+`/pocket-universe/`; bump `CACHE` in its `sw.js` when the game changes.
 
 **Lockup** (`server/views/lockup.html`; `public/lockup-rules.js`,
 `public/lockup.{js,css}`) is a tower
