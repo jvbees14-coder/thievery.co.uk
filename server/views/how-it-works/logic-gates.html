@@ -1,0 +1,47 @@
+<!--
+  How computers add up. Poured into _page.html; the scene is
+  public/explainers/logic-gates/scene.js and the gates art.js. Chapter ids:
+  switch, gates, adder, memory.
+-->
+        <section class="hiw-chapter" id="switch" aria-labelledby="h-switch">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-switch">A switch worked by electricity</h2>
+          <p>Everything a computer does is built from one part: the transistor, a switch with no moving parts that is turned on and off by electricity rather than a finger. Put a voltage on its input and current flows through it; take it away and the current stops.</p>
+          <p>Call a voltage 1 and none 0. Because one transistor's output can work another's input, switches can control switches, and that is enough to build anything.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Turn the input on and off.</p>
+        </section>
+
+        <section class="hiw-chapter" id="gates" aria-labelledby="h-gates">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-gates">Gates</h2>
+          <p>A handful of transistors wired together make a gate: a part that takes ones and noughts in and gives a one or a nought out, by a fixed rule. AND gives 1 only if both inputs are 1. OR gives 1 if either is. NOT turns 1 into 0 and 0 into 1. XOR gives 1 if the inputs differ.</p>
+          <p>The rules are George Boole's algebra of logic, from 1854. In 1937 Claude Shannon showed that switching circuits could carry it out, and every digital computer since has been built on that idea. A NAND gate on its own is enough: every other gate can be made from NANDs.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Pick a gate, change its inputs, and find each row of its table.</p>
+        </section>
+
+        <section class="hiw-chapter" id="adder" aria-labelledby="h-adder">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-adder">Adding with gates</h2>
+          <p>In binary, each column of a sum is one bit plus one bit, plus anything carried from the column before. 1 + 1 is 10: write 0, carry 1. That is exactly two gates' work: XOR gives the digit to write, and AND says whether to carry.</p>
+          <p>A full adder handles one column, carry in and carry out, with five gates. Line four up, each passing its carry to the next, and you can add any two numbers up to 15. A real processor does the same thing 64 columns wide, billions of times a second.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Pick two numbers and follow the carries along the row.</p>
+        </section>
+
+        <section class="hiw-chapter" id="memory" aria-labelledby="h-memory">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-memory">Gates that remember</h2>
+          <p>Gates on their own forget: change the inputs and the output follows. But wire two gates so each one feeds the other, and the pair holds itself in whichever state it was last put in.</p>
+          <p>A brief pulse on Set turns the output on, and it stays on after the pulse has gone. A pulse on Reset turns it off, and it stays off. That is one bit of memory, made from nothing but switches. Computers have used circuits like this to keep the numbers they are working on.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Press Set, wait, then press Reset. The output keeps its state in between.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The gates in the scene are worked out in your browser by their rules. Real gates are made of several transistors each, and the latch is the simplest kind of memory cell; most of a computer's memory is made a different way, with a tiny capacitor for each bit.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Logic_gate" rel="noopener">Logic gate</a>: the gates and their tables.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Adder_(electronics)" rel="noopener">Adder (electronics)</a>: half and full adders, and the ripple-carry adder.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Flip-flop_(electronics)" rel="noopener">Flip-flop (electronics)</a>: the set-reset latch made of two NOR gates.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/A_Symbolic_Analysis_of_Relay_and_Switching_Circuits" rel="noopener">A Symbolic Analysis of Relay and Switching Circuits</a>: Shannon's 1937 thesis. And <a href="https://en.wikipedia.org/wiki/NAND_logic" rel="noopener">NAND logic</a>.</li>
+      </ol>
+    </section>

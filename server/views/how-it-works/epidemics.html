@@ -1,0 +1,47 @@
+<!--
+  How epidemics spread. Poured into _page.html; the scene is
+  public/explainers/epidemics/scene.js and the model art.js. Chapter ids:
+  chain, curve, threshold, flatten.
+-->
+        <section class="hiw-chapter" id="chain" aria-labelledby="h-chain">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-chain">One case, then many</h2>
+          <p>An infectious disease spreads as a chain: each person who catches it passes it on to some others, who pass it on again. What matters most is how many, on average, each case infects. That number is called R.</p>
+          <p>If R is below 1, each generation is smaller than the last and the outbreak fizzles out. Above 1, it grows, slowly at first and then very fast. Chance plays a big part at the start: even with R at 2, about one outbreak in five dies out by luck in the first few generations.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Start new outbreaks with R below 1 and above it.</p>
+        </section>
+
+        <section class="hiw-chapter" id="curve" aria-labelledby="h-curve">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-curve">Rise and fall</h2>
+          <p>An outbreak can't grow forever, because it runs out of people who can catch it. In 1927 William Kermack and Anderson McKendrick described this with a simple model: everybody is either susceptible, infectious, or recovered and immune.</p>
+          <p>R0 is the R at the very start, when everyone can catch it. With an R0 of 3, cases climb until about 30% of people are ill at once, then fall as the susceptible run out. By the end, 94% have caught it. The outbreak overshoots: it carries on well past the point where it stops growing.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change R0 and watch the peak grow taller and come sooner.</p>
+        </section>
+
+        <section class="hiw-chapter" id="threshold" aria-labelledby="h-threshold">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-threshold">Herd immunity</h2>
+          <p>If some people are already immune, each case finds fewer people to infect. Once enough are immune that each case passes it to fewer than one other, an outbreak can't take off at all. The share needed is 1 − 1/R0: two in three for an R0 of 3.</p>
+          <p>This is why vaccinating most people protects those who can't be vaccinated. For a very contagious disease the bar is high: measles, with an R0 of 12 to 18, needs over 90% of people immune.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Raise the share immune at the start until the outbreak doesn't happen.</p>
+        </section>
+
+        <section class="hiw-chapter" id="flatten" aria-labelledby="h-flatten">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-flatten">Fewer contacts</h2>
+          <p>Cutting the number of people each of us meets lowers R directly. The outbreak still happens, but it is lower and later: with contacts cut by 40%, the peak here falls from 30% of people ill at once to about 12%, and comes six weeks later.</p>
+          <p>Fewer people ill at the same time means hospitals can care for them. And a later peak buys time, for treatments and vaccines that may not exist yet.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Cut contacts and compare the curve with the faint one.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The curves are the SIR model, worked out in your browser, with people ill for 7 days and everybody mixing evenly. Real epidemics are lumpier, since people mix in households, schools and towns, and behaviour changes as an outbreak grows; the model shows the shape, not a forecast.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Compartmental_models_in_epidemiology" rel="noopener">Compartmental models in epidemiology</a>: the SIR model of Kermack and McKendrick (1927).</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Basic_reproduction_number" rel="noopener">Basic reproduction number</a>: R0, and measles at 12 to 18.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Herd_immunity" rel="noopener">Herd immunity</a>: the threshold 1 − 1/R0.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Flattening_the_curve" rel="noopener">Flattening the curve</a>.</li>
+      </ol>
+    </section>

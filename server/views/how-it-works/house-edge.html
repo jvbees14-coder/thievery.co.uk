@@ -1,0 +1,52 @@
+<!--
+  Why the house always wins. Poured into _page.html; the scene is
+  public/explainers/house-edge/scene.js. Chapter ids: wheel, edge, long,
+  systems, american. It explains the arithmetic of casino games; it does not
+  encourage anybody to play them.
+-->
+        <section class="hiw-chapter" id="wheel" aria-labelledby="h-wheel">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-wheel">A fair-looking wheel</h2>
+          <p>A European roulette wheel has 37 pockets: the numbers 1 to 36, half red and half black, and a green zero. A bet on red pays even money: stake £1, and if the ball lands on red you get your pound back and another.</p>
+          <p>Red and black look like a coin toss. The zero is what makes it not quite one.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Spin it a few times, then a thousand.</p>
+        </section>
+
+        <section class="hiw-chapter" id="edge" aria-labelledby="h-edge">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-edge">One pocket in thirty-seven</h2>
+          <p>Red wins on 18 pockets and loses on 19, because zero counts against it. So for every 37 pounds bet on red you can expect to win 18 and lose 19: a loss of one pound in 37, or 2.70%. That is the house edge.</p>
+          <p>Every bet on the table works out the same. One number pays 35 to 1, but wins on only 1 pocket in 37: in 37 spins at a pound each you expect to win 36 and stake 37. The payouts are all set just short of fair.</p>
+        </section>
+
+        <section class="hiw-chapter" id="long" aria-labelledby="h-long">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-long">The long run</h2>
+          <p>A small edge is invisible in a few spins, and certain over many. Here a hundred players each start with £100 and bet £1 on red, a thousand times.</p>
+          <p>Some get lucky and finish ahead, about one in five. But the crowd drifts down the gold line, which is the 2.70% at work: after a thousand spins the average player has lost about £27. The casino isn't playing one player; it is playing all of them, so it gets the average.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Press Play and watch the spread of lines sink.</p>
+        </section>
+
+        <section class="hiw-chapter" id="systems" aria-labelledby="h-systems">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-systems">Systems don't help</h2>
+          <p>The oldest system is to double your stake after every loss, so that the first win recovers everything plus a pound. It wins small, often. Then a long losing streak comes along, the stakes double past what you have left or what the table allows, and a single run wipes out the lot.</p>
+          <p>No pattern of bets can change the edge, because every spin has the same 2.70% against you whatever came before. Here, with £100 each and a £100 table limit, about 85 players in 100 end with nothing.</p>
+        </section>
+
+        <section class="hiw-chapter" id="american" aria-labelledby="h-american">
+          <p class="hiw-chapter-num">Chapter 5</p>
+          <h2 id="h-american">The double zero</h2>
+          <p>American wheels add a second green pocket, 00. Red now wins on 18 of 38, and the edge almost doubles, to 5.26%.</p>
+          <p>The same hundred players, the same thousand pounds bet each: now only about four in a hundred finish ahead, and the average player has lost around £52.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>Every spin in the scene is a fresh random pocket; the wheel's layout and colours are the real European ones. The shares of players ahead, broke and the average losses come from simulating 20,000 players.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Roulette" rel="noopener">Roulette</a>: the European and American wheels, the payouts, and house edges of 2.70% and 5.26%.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Martingale_(betting_system)" rel="noopener">Martingale (betting system)</a>: doubling after a loss, and why table limits and finite money defeat it.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Law_of_large_numbers" rel="noopener">Law of large numbers</a>.</li>
+      </ol>
+    </section>

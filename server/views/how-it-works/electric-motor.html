@@ -1,0 +1,47 @@
+<!--
+  How an electric motor works. Poured into _page.html; the scene is
+  public/explainers/electric-motor/scene.js and the simulation art.js.
+  Chapter ids: force, coil, commutator, speed.
+-->
+        <section class="hiw-chapter" id="force" aria-labelledby="h-force">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-force">A push on a wire</h2>
+          <p>Put a wire between the poles of a magnet and send a current through it, and the wire is pushed sideways: at right angles both to the current and to the magnet's field. Michael Faraday used this in 1821 to make a wire spin round a magnet, the first electric motor.</p>
+          <p>The push grows with the current, with the strength of the magnet, and with the length of wire in the field. Reverse the current and the push reverses too.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change the current and the magnet, and reverse the current.</p>
+        </section>
+
+        <section class="hiw-chapter" id="coil" aria-labelledby="h-coil">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-coil">Two pushes make a turn</h2>
+          <p>Bend the wire into a loop on a shaft. The current goes one way along one side and back along the other, so one side is pushed up and the other down. Together they turn the loop.</p>
+          <p>But only so far. Once the loop stands across the field, the pushes line up with the shaft and stop turning it. Go past that point and they push it back. The loop rocks to and fro and settles there, stuck.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Watch the loop swing and come to rest standing upright.</p>
+        </section>
+
+        <section class="hiw-chapter" id="commutator" aria-labelledby="h-commutator">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-commutator">The commutator</h2>
+          <p>The fix is to reverse the current in the loop at the moment it stands upright. Then the side that was being pushed up is now pushed down, just as it starts down, and the loop keeps turning the same way.</p>
+          <p>A commutator does it with no electronics: a ring on the shaft, split in two, with the loop's ends on each half. Two fixed brushes press on the ring and bring in the current. Every half turn, each brush slides onto the other half, and the current through the loop flips.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Watch the current symbols swap as the coil passes upright.</p>
+        </section>
+
+        <section class="hiw-chapter" id="speed" aria-labelledby="h-speed">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-speed">Why it doesn't go on speeding up</h2>
+          <p>A coil turning in a magnetic field makes a voltage of its own: that is how a generator works. In a motor, this voltage pushes against the supply. The faster it spins, the more it pushes back, and the less current gets through.</p>
+          <p>So a motor settles at a speed where it makes nearly as much voltage as it is given. Load it and it slows, its own voltage falls, and more current flows to give it more push. Held still, it draws the most current of all: here 8 amps, against under 2 running free. That is why a jammed motor gets hot.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Add load and watch the speed fall and the current rise.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The coil is simulated in your browser from the force on a wire and the voltage a moving coil makes, for a small 12-volt motor with one coil. Real motors have several coils at different angles, so the push is smoother and they can start from any position.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Electric_motor" rel="noopener">Electric motor</a>: Faraday's 1821 motor, and how the force on a current makes a motor turn.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Lorentz_force" rel="noopener">Lorentz force</a>: the force on a wire, F = BIL.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Commutator_(electric)" rel="noopener">Commutator (electric)</a>.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Counter-electromotive_force" rel="noopener">Counter-electromotive force</a>: the voltage a running motor makes, and why stalled motors draw so much current.</li>
+      </ol>
+    </section>

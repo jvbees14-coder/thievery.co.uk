@@ -961,7 +961,7 @@ the socket.
 
 ## How it works
 
-Interactive explainers, nineteen of them in six sections: a canvas scene
+Interactive explainers, thirty-four of them in six sections: a canvas scene
 pinned beside writing cut into chapters, every chapter changing the scene.
 Plain pages like the tools (no login, nothing stored, up in an outage),
 listed in `server/explainers.js`; an unlisted view is a 404.
@@ -996,11 +996,17 @@ listed in `server/explainers.js`; an unlisted view is a 404.
   `public/explainers/shared/land.js` once and credited on `/about`. Globes
   draw them as dots (`shared/earth.js`, `landDots`) so nothing needs
   clipping at the edge of the disc; flat maps draw the rings.
-- **Two scenes do real work, not pictures of it.** `qr-codes/qr.js` is a
+- **Three scenes do real work, not pictures of it.** `qr-codes/qr.js` is a
   QR encoder (byte mode, versions 1 to 10), checked against the standard's
   published Reed-Solomon example and format table and by decoding its own
   output; `wing-lift/flow.js` is the exact ideal flow round a Joukowski
-  aerofoil. Change either with the same care as `grade.js`.
+  aerofoil; `enigma/machine.js` is the army Enigma with the real wirings
+  and the double step, which must turn AAAAA into BDZGO at rings and start
+  AAA with no cables. Change any of them with the same care as `grade.js`.
+- **Several scenes are models, and their pages quote the model's own
+  figures** (traffic-jams, epidemics, heat-pump, electric-motor, sorting,
+  pagerank). Change a constant in an `art.js` and rerun it before trusting
+  the numbers in the view's writing.
 - **Sound plays only on a press** (`sound/scene.js`, Web Audio, quiet), and
   stops on a chapter change and on `pagehide`. Nothing on the site makes a
   noise by itself.

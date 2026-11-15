@@ -1,0 +1,45 @@
+<!--
+  The birthday paradox. Poured into _page.html; the scene is
+  public/explainers/birthday-paradox/scene.js. Chapter ids: pairs, curve,
+  rooms, days.
+-->
+        <section class="hiw-chapter" id="pairs" aria-labelledby="h-pairs">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-pairs">Twenty-three people</h2>
+          <p>Put 23 people in a room. The chance that two of them share a birthday is better than even: 50.7%.</p>
+          <p>It sounds far too high, because we think about our own birthday: the chance that someone shares <i>yours</i> is small. But the question is about any two people, and 23 people make 253 different pairs. Every pair is another chance.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Make new rooms of 23 and count how often a red dot turns up.</p>
+        </section>
+
+        <section class="hiw-chapter" id="curve" aria-labelledby="h-curve">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-curve">How the chance grows</h2>
+          <p>The sum is easiest done backwards. The chance everybody's birthday differs is 364/365 for the second person, times 363/365 for the third, and so on. One minus that is the chance of a match.</p>
+          <p>It climbs steeply. With 57 people it is 99%; with 70, 99.9%. You need 366 people to be certain, but you hardly ever need more than about 60.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Slide the number of people and watch the dot run up the curve.</p>
+        </section>
+
+        <section class="hiw-chapter" id="rooms" aria-labelledby="h-rooms">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-rooms">Filling rooms</h2>
+          <p>Another way to see it: let people into a room one at a time and stop at the first shared birthday. Do it over and over and record how many it took.</p>
+          <p>Half the time it takes 23 or fewer. On average it takes about 24.6. Matches are not rare at all; they are the usual thing.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Press Play, or fill a thousand rooms at once.</p>
+        </section>
+
+        <section class="hiw-chapter" id="days" aria-labelledby="h-days">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-days">Not just birthdays</h2>
+          <p>The same sum applies to anything drawn at random from a fixed number of values. With 1,000 possible values an even chance of a match comes at 38; with a million, at 1,178. Roughly, it arrives at the square root of the number of values, not half of it.</p>
+          <p>Computers meet this all the time. Random codes, short IDs and the fingerprints used to check files collide much sooner than intuition says, which is why they are made so long. Attacks that look for two inputs with the same fingerprint are called birthday attacks.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change the number of possible values and see where an even chance arrives.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The chances are worked out exactly in your browser, assuming 365 equally likely birthdays and no leap days, as is usual. Real birthdays are not quite evenly spread, which only makes matches a little more likely.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Birthday_problem" rel="noopener">Birthday problem</a>: 50.7% at 23 people, 99.9% at 70, the square-root rule, and birthday attacks.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Birthday_attack" rel="noopener">Birthday attack</a>.</li>
+      </ol>
+    </section>

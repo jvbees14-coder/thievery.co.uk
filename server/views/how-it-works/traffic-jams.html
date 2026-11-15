@@ -1,0 +1,46 @@
+<!--
+  Why traffic jams appear from nowhere. Poured into _page.html; the scene is
+  public/explainers/traffic-jams/scene.js and the model art.js. Chapter ids:
+  ring, wave, density, smooth.
+-->
+        <section class="hiw-chapter" id="ring" aria-labelledby="h-ring">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-ring">A jam with no cause</h2>
+          <p>Sometimes a motorway grinds to a halt and then clears, and there is no accident, no roadworks and no junction. In 2008, researchers in Japan tested this with 22 drivers on a circular track 230 metres round, told to drive round steadily.</p>
+          <p>For a while they did. Then a small knot of cars formed, stopping and starting, and it never went away. Nothing caused it except the drivers themselves. This simulation follows the same set-up.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Watch the ring. Within a minute or so a red knot of stopped cars appears.</p>
+        </section>
+
+        <section class="hiw-chapter" id="wave" aria-labelledby="h-wave">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-wave">A wave going backwards</h2>
+          <p>It starts with one driver easing off slightly. The driver behind sees it a moment late and brakes a little harder to keep a safe gap. The next brakes harder still. On a crowded road the ripple grows as it goes back, until somebody has to stop.</p>
+          <p>Cars arrive at the back of the jam, stop, and pull away from the front. The front keeps losing cars and the back keeps gaining them, so the jam itself drifts backwards, against the traffic.</p>
+          <p class="hiw-try"><strong>Try it.</strong> In the record below the ring, the red band slanting backwards is the jam.</p>
+        </section>
+
+        <section class="hiw-chapter" id="density" aria-labelledby="h-density">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-density">Too many cars</h2>
+          <p>With fewer cars, the gaps are big enough to soak up each wobble, and the ripples die away. Past a certain crowding they grow instead. Here the change comes between about 14 and 18 cars.</p>
+          <p>And beyond that point, adding cars makes fewer of them get through. In this model the ring passes the most cars, about 1,600 an hour, with 14 on it; with 22 it manages about 700. That is why motorways sometimes lower the speed limit when traffic builds: a slightly slower road that keeps moving gets more cars through than one in stop-start jams.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change the number of cars and watch how many get through.</p>
+        </section>
+
+        <section class="hiw-chapter" id="smooth" aria-labelledby="h-smooth">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-smooth">One steady driver</h2>
+          <p>The cure is a driver who doesn't pass the ripple on. Instead of braking hard whenever the gap ahead shrinks, they hold a steady speed, close to the average, and let the gap open and close.</p>
+          <p>In experiments published in 2018, researchers in Arizona put one self-driving car driven this way among about 20 on a ring like this one, and the stop-start waves largely disappeared. Here the same happens: a single steady car smooths out the whole ring.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Wait for the jam, then switch on the steady driver.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The cars follow the Intelligent Driver Model, a standard model of how drivers follow the car ahead, with a small random wobble standing in for human imperfection. The figures for flow come from running it; they are this model's, not measurements of a real road.</p>
+      <ol>
+        <li>Yuki Sugiyama and others, <a href="https://doi.org/10.1088/1367-2630/10/3/033001" rel="noopener">Traffic jams without bottlenecks</a>, <i>New Journal of Physics</i> 10 (2008): 22 cars on a 230 m circle.</li>
+        <li>Raphael Stern and others, <a href="https://doi.org/10.1016/j.trc.2018.02.005" rel="noopener">Dissipation of stop-and-go waves via control of autonomous vehicles</a>, <i>Transportation Research Part C</i> 89 (2018).</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Intelligent_driver_model" rel="noopener">Intelligent driver model</a> and <a href="https://en.wikipedia.org/wiki/Traffic_wave" rel="noopener">Traffic wave</a>.</li>
+      </ol>
+    </section>

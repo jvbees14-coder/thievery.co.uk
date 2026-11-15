@@ -1,0 +1,54 @@
+<!--
+  Frequency analysis. Poured into _page.html; the scene is
+  public/explainers/frequency-analysis/scene.js and the passage text.js.
+  Chapter ids: substitution, counting, matching, solving, defence.
+-->
+        <section class="hiw-chapter" id="substitution" aria-labelledby="h-substitution">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-substitution">Swap every letter</h2>
+          <p>The simplest secret code swaps each letter for another, the same way every time: every a becomes Q, every b becomes M, and so on down a jumbled alphabet.</p>
+          <p>It looks hopeless to break by trying keys. There are 26 × 25 × 24 … × 1 ways to jumble an alphabet, about 400 million million million million. But nobody breaks it by trying keys.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Make a new alphabet. The message underneath changes completely, but something about it doesn't.</p>
+        </section>
+
+        <section class="hiw-chapter" id="counting" aria-labelledby="h-counting">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-counting">Count the letters</h2>
+          <p>Swapping letters hides what they are, but not how often they turn up. In English, e makes up about one letter in eight, t and a are next, and q and z hardly appear at all.</p>
+          <p>So count the letters of the coded message and sort them. The commonest is very likely e. The idea was first written down by the Arab scholar al-Kindi in the ninth century.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Compare the two sets of bars. Go back and change the alphabet: the letters change, the shape doesn't.</p>
+        </section>
+
+        <section class="hiw-chapter" id="matching" aria-labelledby="h-matching">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-matching">A first guess</h2>
+          <p>The crudest attack: assume the commonest letter in the message is e, the next is t, the next a, and so on down the list.</p>
+          <p>It gets about a third of the letters right. That is not enough to read, because one message is too short to match the averages exactly: h and o, or s and r, often swap places. But e and t are almost always right, and that is a foothold.</p>
+        </section>
+
+        <section class="hiw-chapter" id="solving" aria-labelledby="h-solving">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-solving">Words give it away</h2>
+          <p>From the foothold, a codebreaker reads the patterns. A three-letter word that starts with t and ends in e is almost certainly the. A one-letter word is a or I. A doubled letter is likely ll, ee, ss or oo.</p>
+          <p>Each letter fixed makes the next easier to spot. Usually about nine fixes are enough to make the whole letter readable. In 1586 this is how Mary, Queen of Scots' coded letters were read, and the plot they described cost her her life.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Fix a letter at a time and watch the message come out of the noise.</p>
+        </section>
+
+        <section class="hiw-chapter" id="defence" aria-labelledby="h-defence">
+          <p class="hiw-chapter-num">Chapter 5</p>
+          <h2 id="h-defence">More than one alphabet</h2>
+          <p>The defence is to use several jumbled alphabets in turn: the first letter with one, the second with the next, and so on. Now e comes out as a different letter depending on where it falls, and the counts flatten out.</p>
+          <p>Ciphers like this, such as the Vigenère cipher, held out for about three centuries. They were broken in the 1800s by first working out how many alphabets were in use, then counting each one's letters separately. The Enigma machine took the idea as far as it would go, with a new alphabet for every letter.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Add alphabets and watch the tallest bar shrink.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The letter was written for this page and is enciphered in your browser with a random alphabet. "About a third" and "about nine fixes" come from enciphering it thousands of times; each fix puts right whichever wrong letter is most common.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Frequency_analysis" rel="noopener">Frequency analysis</a>: the method, and al-Kindi's ninth-century description.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Letter_frequency" rel="noopener">Letter frequency</a>: the English letter frequencies used here.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Babington_Plot" rel="noopener">Babington Plot</a>: Mary, Queen of Scots' letters, deciphered in 1586.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Vigen%C3%A8re_cipher" rel="noopener">Vigenère cipher</a>: its long reputation, and how Babbage and Kasiski broke it.</li>
+      </ol>
+    </section>

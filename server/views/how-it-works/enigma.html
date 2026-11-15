@@ -1,0 +1,56 @@
+<!--
+  The Enigma machine. Poured into _page.html; the scene is
+  public/explainers/enigma/scene.js and the machine itself machine.js,
+  checked against the textbook AAAAA to BDZGO. Chapter ids: circuit, rotors,
+  never, keys, broken.
+-->
+        <section class="hiw-chapter" id="circuit" aria-labelledby="h-circuit">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-circuit">A key, a wire, a lamp</h2>
+          <p>The Enigma looks like a typewriter, but it prints nothing. Press a key and a lamp lights under a different letter. The operator wrote the lit letters down, and that was the coded message.</p>
+          <p>Between the key and the lamp, the current takes a winding route: through a plugboard that swaps pairs of letters, through three rotors that each scramble the alphabet with their own wiring, into a reflector that sends it back, and through the rotors and plugboard again by another path.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Type a message and follow the last letter through the machine.</p>
+        </section>
+
+        <section class="hiw-chapter" id="rotors" aria-labelledby="h-rotors">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-rotors">The rotors turn</h2>
+          <p>A fixed scramble would be easy to break: it is a simple substitution, solved by counting letters. So every key press turns the right-hand rotor one place before the current flows. Every 26 presses it turns the middle one on, and the middle turns the left.</p>
+          <p>That changes the whole route, so the same key lights a different lamp almost every time. Type AAAAA on this machine, set to its starting letters, and you get BDZGO.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Press A again and again, and watch the route move.</p>
+        </section>
+
+        <section class="hiw-chapter" id="never" aria-labelledby="h-never">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-never">Never itself</h2>
+          <p>At any one position, the machine pairs the letters off: thirteen pairs. If A lights G, then G would light A. That is the reflector's doing, and it made the machine convenient: to decode, the receiver set the same starting letters and typed the coded message in, and the original came out on the lamps.</p>
+          <p>It had a price. Because the current always comes back by a different wire, no letter can ever be encoded as itself. It looks like a small detail. It was a serious weakness.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Press a key to step the rotors, and look for a letter joined to itself. There never is one.</p>
+        </section>
+
+        <section class="hiw-chapter" id="keys" aria-labelledby="h-keys">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-keys">159 million million million</h2>
+          <p>Each day, operators set the machine from a printed sheet: which three of five rotors, in what order; where each started; and which letters to join on the plugboard, usually with ten cables.</p>
+          <p>Multiplied together that is 158,962,555,217,826,360,000 settings. Nobody could try them one by one. Most of that comes from the plugboard, which is the part that looks least clever.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change the number of cables. Ten is close to the most; past eleven the number falls again.</p>
+        </section>
+
+        <section class="hiw-chapter" id="broken" aria-labelledby="h-broken">
+          <p class="hiw-chapter-num">Chapter 5</p>
+          <h2 id="h-broken">How it was broken</h2>
+          <p>Polish mathematicians first broke Enigma in the 1930s, and handed what they knew to Britain and France in 1939. At Bletchley Park, the codebreakers used guessed words, called cribs. Military messages were formulaic: a weather report started much the same way every morning.</p>
+          <p>A crib can only sit where none of its letters matches the letter above it, because no letter is ever itself. That rules out many places straight away. Then Alan Turing's machines, the bombes, raced through the rotor settings to find ones that could turn the crib into the intercepted text.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Slide the guessed word along the message. Red letters rule a place out.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The machine in the scene is the three-rotor army Enigma with the real wirings of rotors I, II and III, reflector B, their real notches and the middle rotor's double step. It gives the standard test result: with rings and rotors at A and no cables, AAAAA becomes BDZGO. The message in chapter 5 is an example enciphered on it, not a real intercept.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Enigma_machine" rel="noopener">Enigma machine</a>: how it worked, the reflector, and 158,962,555,217,826,360,000 settings with ten cables.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Enigma_rotor_details" rel="noopener">Enigma rotor details</a>: the wirings and turnover notches.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Cryptanalysis_of_the_Enigma" rel="noopener">Cryptanalysis of the Enigma</a>: the Polish work, cribs, and the weakness of a letter never being itself.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Bombe" rel="noopener">Bombe</a>.</li>
+      </ol>
+    </section>

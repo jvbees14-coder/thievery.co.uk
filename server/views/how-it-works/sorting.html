@@ -1,0 +1,46 @@
+<!--
+  How computers sort. Poured into _page.html; the scene is
+  public/explainers/sorting/scene.js and the sorts art.js. Chapter ids:
+  bubble, merge, quick, race.
+-->
+        <section class="hiw-chapter" id="bubble" aria-labelledby="h-bubble">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-bubble">One comparison at a time</h2>
+          <p>A computer can't glance at a row of numbers and see the order. It can only compare two at a time and, if they are the wrong way round, swap them. The question is how few comparisons it can get away with.</p>
+          <p>The simplest way is bubble sort: walk along the row comparing each neighbour with the next, swapping as you go. The biggest number rises to the end like a bubble. Then do it again, and again, until a pass makes no swaps. For 32 numbers that takes around 480 comparisons.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Watch the pairs being compared, or step through one at a time.</p>
+        </section>
+
+        <section class="hiw-chapter" id="merge" aria-labelledby="h-merge">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-merge">Split, sort, merge</h2>
+          <p>Merge sort, described by John von Neumann in 1945, starts from a simple fact: two rows that are already sorted are easy to join into one. Look at the front of each, take the smaller, and repeat.</p>
+          <p>So split the row in half, sort each half the same way, and merge them. The halves are split again and again until each piece is a single number, which is already sorted. For 32 numbers it needs around 120 comparisons, a quarter of bubble sort's.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Watch the small sorted runs form and then merge into longer ones.</p>
+        </section>
+
+        <section class="hiw-chapter" id="quick" aria-labelledby="h-quick">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-quick">Quicksort</h2>
+          <p>Tony Hoare invented quicksort in 1959. Pick one number, the pivot, and move everything smaller in front of it and everything bigger behind. The pivot is now in its final place. Then do the same to the two sides.</p>
+          <p>It makes a few more comparisons than merge sort on average, but it moves numbers around within the row rather than copying them out and back, and in practice it is often the fastest. A bad run of pivots can make it slow, which is why the pivot is picked at random.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Each green bar is a pivot that has reached its place.</p>
+        </section>
+
+        <section class="hiw-chapter" id="race" aria-labelledby="h-race">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-race">Why it matters</h2>
+          <p>For 32 numbers the difference hardly matters. But bubble sort's work grows with the square of the row's length: double the row and it takes four times as long. Merge sort's grows only a little faster than the row itself.</p>
+          <p>Sorting a million numbers takes bubble sort about 500 billion comparisons, and merge sort about 20 million: at a billion a second, eight minutes against a fiftieth of a second. Choosing the method can matter more than buying a faster computer.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Make the row longer and watch bubble sort's bar run away.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The sorts run in your browser on freshly shuffled numbers, so the counts change a little each time. The figures for a million numbers are from the formulas: n(n − 1)/2 comparisons for bubble sort and about n log₂ n for merge sort.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Bubble_sort" rel="noopener">Bubble sort</a>.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Merge_sort" rel="noopener">Merge sort</a>: von Neumann, 1945, and its n log n comparisons.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Quicksort" rel="noopener">Quicksort</a>: Hoare, 1959, random pivots, and its worst case.</li>
+      </ol>
+    </section>

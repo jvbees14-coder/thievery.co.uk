@@ -1,0 +1,45 @@
+<!--
+  How a search engine ranks pages. Poured into _page.html; the scene is
+  public/explainers/pagerank/scene.js and the web art.js. Chapter ids:
+  links, surfer, rank, damping.
+-->
+        <section class="hiw-chapter" id="links" aria-labelledby="h-links">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-links">Links as votes</h2>
+          <p>Early search engines found pages by the words on them, which made them easy to fool: repeat a word often enough and your page came top. In 1998 Larry Page and Sergey Brin, the founders of Google, published another way to judge a page: by the links pointing to it from other pages.</p>
+          <p>A link is a kind of vote. But simply counting them isn't enough either. Anybody can make a hundred pages that all link to theirs.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Find the page with the most links in. Here every page is sized by its count.</p>
+        </section>
+
+        <section class="hiw-chapter" id="surfer" aria-labelledby="h-surfer">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-surfer">A random surfer</h2>
+          <p>Their idea: imagine somebody browsing at random. On each page they click one of its links, chosen at random. Now and then, 15% of the time, they get bored and jump to any page at all.</p>
+          <p>Leave them to it for long enough and count where they spend their time. That share is the page's rank. A link from a page that is visited a lot sends a lot of visitors, so it counts for more than a link from a page nobody reaches.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Let the surfer run, or take a thousand hops at once, and watch the pages grow.</p>
+        </section>
+
+        <section class="hiw-chapter" id="rank" aria-labelledby="h-rank">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-rank">Working it out</h2>
+          <p>There is no need to wait for a surfer. Start every page with an equal share. Then, round after round, every page hands its share out equally along its links, plus a small even share for the jumps. After a few rounds the shares stop changing; here it takes about eight.</p>
+          <p>Look at the Shop. It has fewer links in than Recipes but ranks higher, because one of its links comes from Home, the most important page. And the Forum, with no links in, keeps only what the random jumps give it.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Press One round a few times and watch the shares settle.</p>
+        </section>
+
+        <section class="hiw-chapter" id="damping" aria-labelledby="h-damping">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-damping">How often to jump</h2>
+          <p>The 85% chance of following a link is called the damping factor, and it was the value in Page and Brin's paper. The jumps matter: without them a surfer could get stuck going round a closed loop of pages, and pages with no links in would get nothing at all.</p>
+          <p>Lower the chance and the ranks even out, since the surfer jumps more. Raise it and the links dominate. Real search engines now weigh hundreds of other signals, but this sum was the start of Google.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Move the slider and watch the ranks spread out and even up.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The eight pages are made up. Their ranks are worked out in your browser by repeating the sum; the surfer is a random walk following the same rules.</p>
+      <ol>
+        <li>Sergey Brin and Lawrence Page, <a href="http://infolab.stanford.edu/~backrub/google.html" rel="noopener">The Anatomy of a Large-Scale Hypertextual Web Search Engine</a> (1998): PageRank, the random surfer, and a damping factor of 0.85.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/PageRank" rel="noopener">PageRank</a>: the sum, power iteration, and pages with no links out.</li>
+      </ol>
+    </section>
