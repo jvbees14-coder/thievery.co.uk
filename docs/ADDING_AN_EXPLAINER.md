@@ -189,6 +189,16 @@ In `server/explainers.js`, add to `EXPLAINERS`:
 },
 ```
 
+Then give it three explainers to read next, in `RELATED` in the same file:
+
+```js
+'bicycle-gears': ['pulleys', 'car-engine', 'hydraulics'],
+```
+
+Each must be a listed slug and none may be itself; `npm test` fails if an
+explainer has no entry. The previous and next links at the foot of the
+page need nothing: they follow the order of `EXPLAINERS` within the section.
+
 The view and thumbnail are found by the slug. The server reads views once
 at boot, so restart it to see the HTML change (the `thievery-watch` launch
 configuration restarts by itself); scripts and styles only need a reload.

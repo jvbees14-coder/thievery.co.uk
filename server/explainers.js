@@ -851,6 +851,87 @@ export const EXPLAINERS = [
     alt: 'A curve falling steeply then slowly towards room temperature.',
   },
 ];
+// What to read next: three explainers for each, picked by hand and mostly
+// from other sections, so a reader follows an idea rather than a category.
+// test/site.test.js checks every slug here is a live explainer, that none
+// points at itself, and that every explainer has its three.
+export const RELATED = {
+  shuffling: ['card-counting', 'random-walks', 'monty-hall'],
+  'card-counting': ['house-edge', 'shuffling', 'regression-to-mean'],
+  'monty-hall': ['false-positives', 'birthday-paradox', 'simpsons-paradox'],
+  'birthday-paradox': ['hash-tables', 'passwords', 'lottery'],
+  'house-edge': ['random-walks', 'card-counting', 'lottery'],
+  'false-positives': ['simpsons-paradox', 'polls', 'epidemics'],
+  'regression-to-mean': ['false-positives', 'polls', 'simpsons-paradox'],
+  'random-walks': ['house-edge', 'monte-carlo', 'traffic-jams'],
+  lottery: ['birthday-paradox', 'house-edge', 'monte-carlo'],
+  'simpsons-paradox': ['false-positives', 'polls', 'voting-systems'],
+  polls: ['false-positives', 'voting-systems', 'regression-to-mean'],
+  'monte-carlo': ['random-walks', 'lottery', 'fractals'],
+  'pin-tumbler': ['passwords', 'enigma', 'public-key'],
+  passwords: ['birthday-paradox', 'public-key', 'hash-tables'],
+  'public-key': ['secret-sharing', 'zero-knowledge', 'passwords'],
+  enigma: ['frequency-analysis', 'one-time-pad', 'logic-gates'],
+  'frequency-analysis': ['enigma', 'compression', 'benfords-law'],
+  'one-time-pad': ['enigma', 'frequency-analysis', 'public-key'],
+  'secret-sharing': ['public-key', 'zero-knowledge', 'error-correction'],
+  'zero-knowledge': ['public-key', 'secret-sharing', 'passwords'],
+  steganography: ['dithering', 'screen-colour', 'error-correction'],
+  gps: ['orbits', 'internet-packets', 'earthquakes'],
+  tides: ['moon-phases', 'orbits', 'ocean-waves'],
+  'map-projections': ['gps', 'coriolis', 'seasons'],
+  seasons: ['solar-noon', 'moon-phases', 'solar-panels'],
+  'moon-phases': ['tides', 'orbits', 'seasons'],
+  rainbows: ['blue-sky', 'camera-lens', 'screen-colour'],
+  'blue-sky': ['rainbows', 'greenhouse-effect', 'solar-panels'],
+  'greenhouse-effect': ['heat-pump', 'blue-sky', 'cooling'],
+  earthquakes: ['gps', 'ocean-waves', 'sound'],
+  orbits: ['gps', 'moon-phases', 'tides'],
+  'ocean-waves': ['tides', 'coriolis', 'sound'],
+  coriolis: ['ocean-waves', 'orbits', 'map-projections'],
+  'solar-noon': ['seasons', 'mechanical-watch', 'gps'],
+  'mechanical-watch': ['solar-noon', 'car-engine', 'gps'],
+  'car-engine': ['electric-motor', 'bicycle-gears', 'heat-pump'],
+  'wing-lift': ['wind-turbine', 'coriolis', 'car-engine'],
+  'camera-lens': ['rainbows', 'screen-colour', 'dithering'],
+  sound: ['ocean-waves', 'compression', 'microwave-oven'],
+  'electric-motor': ['car-engine', 'wind-turbine', 'logic-gates'],
+  'heat-pump': ['greenhouse-effect', 'cooling', 'car-engine'],
+  'bicycle-gears': ['pulleys', 'car-engine', 'hydraulics'],
+  'solar-panels': ['seasons', 'wind-turbine', 'blue-sky'],
+  bridges: ['pulleys', 'hydraulics', 'fractals'],
+  pulleys: ['hydraulics', 'bicycle-gears', 'bridges'],
+  'microwave-oven': ['sound', 'cooling', 'ocean-waves'],
+  'wind-turbine': ['wing-lift', 'solar-panels', 'electric-motor'],
+  hydraulics: ['pulleys', 'bicycle-gears', 'car-engine'],
+  compression: ['frequency-analysis', 'error-correction', 'qr-codes'],
+  touchscreen: ['screen-colour', 'logic-gates', 'camera-lens'],
+  'internet-packets': ['error-correction', 'pathfinding', 'gps'],
+  'qr-codes': ['error-correction', 'compression', 'steganography'],
+  'logic-gates': ['floating-point', 'neural-network', 'enigma'],
+  pagerank: ['small-world', 'pathfinding', 'voting-systems'],
+  sorting: ['hash-tables', 'pathfinding', 'shuffling'],
+  'error-correction': ['qr-codes', 'internet-packets', 'compression'],
+  pathfinding: ['pagerank', 'small-world', 'sorting'],
+  'neural-network': ['logic-gates', 'pagerank', 'game-of-life'],
+  'screen-colour': ['dithering', 'rainbows', 'touchscreen'],
+  'floating-point': ['logic-gates', 'compound-interest', 'hash-tables'],
+  'hash-tables': ['birthday-paradox', 'passwords', 'sorting'],
+  dithering: ['screen-colour', 'steganography', 'camera-lens'],
+  'voting-systems': ['polls', 'stable-matching', 'simpsons-paradox'],
+  'compound-interest': ['epidemics', 'benfords-law', 'house-edge'],
+  'traffic-jams': ['epidemics', 'game-of-life', 'random-walks'],
+  epidemics: ['small-world', 'compound-interest', 'false-positives'],
+  'benfords-law': ['compound-interest', 'frequency-analysis', 'fractals'],
+  'prisoners-dilemma': ['game-of-life', 'stable-matching', 'voting-systems'],
+  sunflowers: ['fractals', 'game-of-life', 'benfords-law'],
+  'game-of-life': ['logic-gates', 'traffic-jams', 'sunflowers'],
+  fractals: ['sunflowers', 'monte-carlo', 'game-of-life'],
+  'stable-matching': ['prisoners-dilemma', 'voting-systems', 'pathfinding'],
+  'small-world': ['epidemics', 'pagerank', 'pathfinding'],
+  cooling: ['heat-pump', 'greenhouse-effect', 'compound-interest'],
+};
+
 // The view and the thumbnail are found by the slug unless an entry says
 // otherwise.
 for (const x of EXPLAINERS) {
@@ -860,8 +941,12 @@ for (const x of EXPLAINERS) {
 
 const DIR = path.join(VIEWS, 'how-it-works');
 
+const groupName = (id) => GROUPS.find((g) => g.id === id)?.name || '';
+
 function card(x) {
-  return `<li>
+  // What the index's search box matches against, in lower case.
+  const words = [x.name, x.hook, x.description, groupName(x.group)].join(' ').toLowerCase();
+  return `<li data-search="${esc(words)}">
         <a class="hiw-card" href="/how-it-works/${x.slug}">
           <canvas class="hiw-thumb" data-thumb="${x.thumb}" role="img" aria-label="${x.alt}"></canvas>
           <span class="hiw-card-name">${x.name}</span>
@@ -879,14 +964,25 @@ export function indexPage() {
     const sections = GROUPS.map((g) => {
       const here = EXPLAINERS.filter((x) => x.group === g.id);
       if (!here.length) return '';
-      return `<section class="hiw-group" aria-labelledby="g-${g.id}">
+      return `<section class="hiw-group" data-group="${g.id}" aria-labelledby="g-${g.id}">
       <h2 class="hiw-group-name" id="g-${g.id}">${g.name}</h2>
       <ul class="hiw-grid">
       ${here.map(card).join('\n      ')}
       </ul>
     </section>`;
     }).join('\n    ');
-    index = render(html.split('{{explainers}}').join(sections));
+    // Search and section filters. public/explainers/index.js does the
+    // filtering; without it every card simply shows.
+    const chips = GROUPS.map((g) => `<button type="button" class="hiw-chip" data-group="${g.id}" aria-pressed="false"><span class="hiw-chip-dot"></span><span>${g.name}</span></button>`).join('\n        ');
+    const find = `<div class="hiw-find" role="search">
+      <label class="hiw-find-label" for="hiw-q">Find an explainer</label>
+      <input id="hiw-q" class="hiw-find-input" type="search" data-cancel autocomplete="off" spellcheck="false" placeholder="Try orbits, codes or chance" />
+      <div class="hiw-chip-row" role="group" aria-label="Sections">
+        ${chips}
+      </div>
+      <p class="hiw-find-count" aria-live="polite"></p>
+    </div>`;
+    index = render(html.split('{{explainers}}').join(`${find}\n    ${sections}`));
   }
   return index;
 }
@@ -927,7 +1023,39 @@ function build(x) {
     };
     html = shared('_page.html').replace(/[{][{](hiw-[a-z]+)[}][}]/g, (whole, key) => (key in fill ? fill[key] : whole));
   }
-  return html.split('{{hiw-stage}}').join(shared('_stage.html'));
+  html = html.split('{{hiw-stage}}').join(shared('_stage.html'));
+  // Read next, and the neighbours in the same section, at the foot of the
+  // page. Put in before </main> so it works for whole-page views too.
+  return html.replace('</main>', `${onward(x)}\n  </main>`);
+}
+
+/** The "Read next" block for an explainer. */
+export function onward(x) {
+  const bySlug = (s) => EXPLAINERS.find((e) => e.slug === s);
+  const next = (RELATED[x.slug] || []).map(bySlug).filter(Boolean);
+  const siblings = EXPLAINERS.filter((e) => e.group === x.group);
+  const i = siblings.indexOf(x), before = siblings[i - 1], after = siblings[i + 1];
+  const group = groupName(x.group);
+  const cards = next.map((e) => `<li>
+          <a class="hiw-onward-card" href="/how-it-works/${e.slug}">
+            <span class="hiw-onward-group">${esc(groupName(e.group))}</span>
+            <span class="hiw-onward-name">${esc(e.name)}</span>
+            <span class="hiw-onward-hook">${esc(e.hook)}</span>
+          </a>
+        </li>`).join('\n        ');
+  const step = (e, rel, word) => (e
+    ? `<a class="hiw-sibling hiw-sibling-${rel}" rel="${rel}" href="/how-it-works/${e.slug}"><span class="hiw-sibling-word">${word} in ${esc(group)}</span><span class="hiw-sibling-name">${esc(e.name)}</span></a>`
+    : '<span></span>');
+  return `<nav class="hiw-onward" aria-labelledby="h-onward">
+      <h2 class="hiw-onward-title" id="h-onward">Read next</h2>
+      <ul class="hiw-onward-list">
+        ${cards}
+      </ul>
+      <div class="hiw-siblings">
+        ${step(before, 'prev', 'Previous')}
+        ${step(after, 'next', 'Next')}
+      </div>
+    </nav>`;
 }
 
 const pages = new Map();

@@ -967,6 +967,14 @@ Plain pages like the tools (no login, nothing stored, up in an outage),
 listed in `server/explainers.js`; an unlisted view is a 404.
 `docs/ADDING_AN_EXPLAINER.md` is the walk-through.
 
+- **Every page ends with "Read next"**: three hand-picked explainers from
+  `RELATED`, then the previous and next in its own section, by the order of
+  `EXPLAINERS`. `build()` puts it in before `</main>` (`onward`). A new
+  explainer needs a `RELATED` entry or `test/site.test.js` fails.
+- **The index can be searched and narrowed to a section** in
+  `public/explainers/index.js`, on each card's `data-search` (name, hook,
+  description, section). Nothing is sent anywhere.
+
 - **A view holds only its writing.** `server/explainers.js` pours it into
   `_page.html` (head, share tags, title) with `_stage.html` (the scene and
   its controls); the line `<!-- end of chapters -->` splits the chapters

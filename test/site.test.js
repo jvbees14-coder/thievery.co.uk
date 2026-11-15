@@ -543,6 +543,33 @@ async function run() {
     }
   });
 
+  // Every explainer ends by pointing onwards: three picked by hand, and its
+  // neighbours in its own section. A renamed slug must not leave a dead link.
+  await check('every explainer points to three more, and its neighbours', async () => {
+    const { EXPLAINERS, RELATED } = await import('../server/explainers.js');
+    const slugs = new Set(EXPLAINERS.map((x) => x.slug));
+    for (const [from, to] of Object.entries(RELATED)) {
+      assert.ok(slugs.has(from), `RELATED names ${from}, which is not listed`);
+      for (const s of to) {
+        assert.ok(slugs.has(s), `${from} points to ${s}, which is not listed`);
+        assert.notEqual(s, from, `${from} points to itself`);
+      }
+    }
+    for (const x of EXPLAINERS) {
+      assert.equal(RELATED[x.slug]?.length, 3, `${x.slug} has no three to read next`);
+      const { html } = await stranger.page(`/how-it-works/${x.slug}`);
+      assert.ok(html.includes('class="hiw-onward"'), `${x.slug} has no read-next block`);
+      for (const s of RELATED[x.slug]) assert.ok(html.includes(`href="/how-it-works/${s}"`), `${x.slug} does not link to ${s}`);
+      const siblings = EXPLAINERS.filter((e) => e.group === x.group);
+      const i = siblings.indexOf(x);
+      if (i > 0) assert.ok(html.includes(`rel="prev" href="/how-it-works/${siblings[i - 1].slug}"`), `${x.slug} has no link back to ${siblings[i - 1].slug}`);
+      if (i < siblings.length - 1) assert.ok(html.includes(`rel="next" href="/how-it-works/${siblings[i + 1].slug}"`), `${x.slug} has no link on to ${siblings[i + 1].slug}`);
+    }
+    const index = await stranger.page('/how-it-works');
+    assert.ok(index.html.includes('id="hiw-q"'), 'the index has no search box');
+    assert.equal((index.html.match(/<li data-search="/g) || []).length, EXPLAINERS.length, 'not every card can be searched');
+  });
+
   await check('the game page by its file name is sent to /cards', async () => {
     const res = await stranger.page('/cards.html');
     assert.equal(res.status, 301);
