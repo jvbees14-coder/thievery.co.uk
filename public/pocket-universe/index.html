@@ -75,13 +75,6 @@ canvas#sky.panning { cursor: grabbing; }
 .stats dd { margin: 0; font: 600 14px/1.3 var(--pu-mono); font-variant-numeric: tabular-nums; }
 .top-right { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; justify-content: flex-end; }
 
-.badge {
-  position: fixed; left: 50%; transform: translateX(-50%);
-  top: calc(64px + max(env(safe-area-inset-top, 0px), var(--pu-top)));
-  font: 600 11px var(--pu-mono); letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--pu-accent); background: var(--pu-panel); border: 1px solid var(--pu-line);
-  padding: 5px 10px; border-radius: 999px; pointer-events: none;
-}
 
 /* ---------- Challenge banner ---------- */
 .banner {
@@ -273,8 +266,6 @@ canvas#sky.panning { cursor: grabbing; }
   </div>
 </header>
 
-<div class="badge" id="slowBadge" hidden>Slow motion · impact</div>
-
 <section class="banner" id="challengeBar" hidden aria-live="polite">
   <h2 id="chTitle">Challenge</h2>
   <p id="chGoal"></p>
@@ -315,8 +306,10 @@ canvas#sky.panning { cursor: grabbing; }
     </dl>
   </div>
   <div class="section">
-    <span class="sub">Change momentum · or drag the body to aim it</span>
+    <span class="sub">Change its orbit · or drag the body to aim it</span>
     <div class="grid" id="momentumBtns">
+      <button class="btn outline" id="circularizeBtn" type="button" title="Turn its orbit into a circle">Circularize</button>
+      <button class="btn outline" id="stretchBtn" type="button" title="Make its orbit more oval, without letting it escape">Stretch</button>
       <button class="btn outline" data-k="0.75" title="Lose a quarter of its momentum">Brake</button>
       <button class="btn outline" data-k="1.33" title="Gain a third more momentum">Boost</button>
       <button class="btn outline" data-k="-1" title="Same speed, opposite direction">Reverse</button>
@@ -379,7 +372,6 @@ canvas#sky.panning { cursor: grabbing; }
       <div class="row">
         <button class="btn" id="trailsBtn" aria-pressed="true" title="Orbit trails (T)">Trails</button>
         <button class="btn" id="fieldBtn" aria-pressed="false" title="Show the gravity field (G)">Field</button>
-        <button class="btn" id="slowmoBtn" aria-pressed="true" title="Slow down for big impacts (S)">Slow-mo</button>
         <button class="btn" id="soundBtn" aria-pressed="true" title="Collision sounds (M)">Sound</button>
         <button class="btn" id="centerBtn" title="Recenter (C)">Recenter</button>
       </div>
@@ -442,7 +434,6 @@ const YEAR = 785;            // sim time for one orbit of the 3rd planet in the 
 const MAX_SUB_DT = 0.125;    // largest integration step
 const MIN_SUB_DT = 0.004;    // smallest step, used only during very close passes
 const STEP_ETA = 0.25;       // accuracy factor for adaptive steps
-const TRAIL_DT = 1;          // sim time between trail points (independent of speed)
 const STEP_BUDGET_MS = 12;   // physics time allowed per frame before we let the sim fall behind
 const LAUNCH_K = 0.02;       // world-units of drag -> velocity
 const SPEEDS = [0.25, 0.5, 1, 2, 4, 8];
@@ -477,15 +468,11 @@ let simTime = 0;
 let merges = 0;
 let showTrails = true;
 let showField = false;
-let slowmoOn = true;
 let massIdx = 2;
 let selected = null;
 let effects = [];
 let gesture = null;
 let spawnQueue = [];
-let timeScale = 1;           // < 1 during slow-motion impacts
-let impactHold = 0;          // real seconds to stay slow after a big impact
-let trailClock = 0;
 let actualSpeed = 1;
 let hudTick = 0;
 let undoStack = [];
@@ -549,7 +536,7 @@ function makeBody(x, y, vx, vy, m, opts = {}) {
     id: opts.id ?? nextId++, x, y, vx, vy, ax: 0, ay: 0, m,
     bh: !!opts.bh, comet: !!opts.comet, debris: !!opts.debris, noTidal: !!opts.noTidal,
     mine: !!opts.mine, target: !!opts.target,
-    hue: opts.hue ?? rand(0, 360), tint: opts.tint || null, trail: [], heat: 0, flux: 0, sun: null, born: simTime,
+    hue: opts.hue ?? rand(0, 360), tint: opts.tint || null, trail: [], ts: 0, heat: 0, flux: 0, sun: null, born: simTime,
   };
   refresh(b);
   return b;
@@ -752,7 +739,6 @@ function merge(a, b) {
   if (cam.follow === small) cam.follow = big;
   if (selected === small) selected = big;
   merges++;
-  if (small.m >= 3) impactHold = 0.45;
   if (small.m >= 0.5 && (!reduceMotion || small.m > 5)) effects.push({ x: big.x, y: big.y, r0: big.r, t: 0, color: big.color, size: Math.min(1, small.m / big.m) });
 
   if (splash) {
@@ -908,28 +894,6 @@ function predict(x, y, vx, vy, r, exclude) {
     if (s % 3 === 0) pts.push(x, y);
   }
   return { pts, hit: false };
-}
-
-/* Will two sizable bodies collide in the next moment? Used to trigger slow motion. */
-function impactImminent() {
-  const big = [];
-  for (const b of bodies) if (b.m >= 3 && !b.tint) big.push(b);
-  if (big.length > 80) big.length = 80;
-  const horizon = SPEEDS[speedIdx] * 60 * 0.5;
-  for (let i = 0; i < big.length; i++) {
-    const a = big[i];
-    for (let j = i + 1; j < big.length; j++) {
-      const b = big[j];
-      const rx = b.x - a.x, ry = b.y - a.y, vx = b.vx - a.vx, vy = b.vy - a.vy;
-      const v2 = vx * vx + vy * vy;
-      if (v2 < 1e-6) continue;
-      const t = -(rx * vx + ry * vy) / v2;
-      if (t <= 0 || t > horizon) continue;
-      const mx = rx + vx * t, my = ry + vy * t, rr = (a.cr + b.cr) * 0.9;
-      if (mx * mx + my * my < rr * rr) return true;
-    }
-  }
-  return false;
 }
 
 /* Star heating: planets near stars glow; far ones freeze. Comets use the brightest star for their tails. */
@@ -1201,7 +1165,6 @@ function setBodies(list, radius) {
   bodies = list;
   simTime = 0; merges = 0; effects = []; spawnQueue = []; selected = null; cam.follow = null;
   cam.x = 0; cam.y = 0; cam.zoom = fitZoom(radius);
-  timeScale = 1; impactHold = 0;
   computeAcc();
   resetTimeline();
 }
@@ -1262,28 +1225,54 @@ function drawBackground() {
   }
 }
 
-/* Gravity field: a rubber-sheet grid pulled toward each mass, brighter where the pull is strong. */
+/* Gravity field: a rubber-sheet grid dented toward each mass.
+   Each body makes a dent of its own: a point at distance r is pulled in by
+   s(r) = DENT · r · e^(−(r/L)²), where the reach L grows with the square root
+   of the mass. Because s′(r) ≤ DENT < 1 everywhere, a dent can squeeze the
+   sheet but never fold it, and it fades to nothing a few L out, so the grid
+   at the edge of the screen stays put. Dents are applied one after another
+   (each moves the already-moved points) rather than added up: a chain of
+   maps that cannot fold cannot fold either, so two big masses side by side
+   stretch the sheet between them instead of tangling it.
+   Where dents overlap, each takes its share of the combined pull (its mass
+   over the mass of every dent reaching its centre), so a tight cluster dents
+   the sheet about as deep as one body of the same mass would. Stacked at full
+   strength, twelve stars squeezed the grid so hard its lines crossed. */
+const DENT = 0.82;
+const dentReach = m => 3.4 * Math.sqrt(m);
 function drawField() {
-  const heavy = bodies.filter(b => b.m >= 1).sort((a, b) => b.m - a.m).slice(0, 40);
+  const z = cam.zoom;
+  const heavy = bodies.filter(b => b.m >= 1 && dentReach(b.m) * z >= 3).sort((a, b) => b.m - a.m).slice(0, 40);
   if (!heavy.length) return;
-  const sp = 34;
-  const cols = Math.ceil(W / sp) + 3, rows = Math.ceil(H / sp) + 3;
-  const ox = ((W / 2 - cam.x * cam.zoom) % sp + sp) % sp - sp, oy = ((H / 2 - cam.y * cam.zoom) % sp + sp) % sp - sp;
-  const X = new Float32Array(cols * rows), Y = new Float32Array(cols * rows), S = new Float32Array(cols * rows);
+  const sp = 28;
+  // A margin of cells off screen, so a dent near the edge pulls in grid that
+  // was out of sight rather than leaving a bare strip.
+  const pad = 4;
+  const cols = Math.ceil(W / sp) + 1 + 2 * pad, rows = Math.ceil(H / sp) + 1 + 2 * pad;
+  const ox = ((W / 2 - cam.x * z) % sp + sp) % sp - sp * pad, oy = ((H / 2 - cam.y * z) % sp + sp) % sp - sp * pad;
+  const n = cols * rows;
+  const X = new Float32Array(n), Y = new Float32Array(n), S = new Float32Array(n);
+  const dents = heavy.map(b => { const L = dentReach(b.m); return { x: b.x, y: b.y, m: b.m, L, inv: 1 / (L * L), far: 9 * L * L, a: DENT }; });
+  for (const d of dents) {
+    let M = 0;
+    for (const e of dents) M += e.m * Math.exp(-((d.x - e.x) ** 2 + (d.y - e.y) ** 2) * e.inv);
+    d.a = 1 - Math.pow(1 - DENT, d.m / M);
+  }
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-    const sx = ox + c * sp, sy = oy + r * sp;
-    const wx = (sx - W / 2) / cam.zoom + cam.x, wy = (sy - H / 2) / cam.zoom + cam.y;
-    let dx = 0, dy = 0, pull = 0;
-    for (const b of heavy) {
-      const ex = b.x - wx, ey = b.y - wy;
-      const d = Math.sqrt(ex * ex + ey * ey + 25);
-      const s = Math.min(0.85 * d, 3.6 * b.m / (d + 15));
-      dx += ex / d * s; dy += ey / d * s;
-      pull += b.m / (d * d);
+    let wx = (ox + c * sp - W / 2) / z + cam.x, wy = (oy + r * sp - H / 2) / z + cam.y;
+    let depth = 0;
+    for (const d of dents) {
+      const ex = wx - d.x, ey = wy - d.y;
+      const r2 = ex * ex + ey * ey;
+      if (r2 >= d.far) continue;               // beyond three reaches the dent is under a thousandth
+      const k = d.a * Math.exp(-r2 * d.inv);   // s(r)/r
+      wx -= ex * k; wy -= ey * k;
+      depth += k;
     }
     const i = r * cols + c;
-    X[i] = sx + dx * cam.zoom; Y[i] = sy + dy * cam.zoom; S[i] = pull;
+    X[i] = (wx - cam.x) * z + W / 2; Y[i] = (wy - cam.y) * z + H / 2; S[i] = depth;
   }
+  // Brighter where the sheet is dented deeper.
   ctx.lineWidth = 1;
   const pass = (lo, hi, alpha) => {
     ctx.strokeStyle = `rgba(120,150,255,${alpha})`;
@@ -1295,29 +1284,90 @@ function drawField() {
     }
     ctx.stroke();
   };
-  pass(0, 0.01, 0.10); pass(0.01, 0.1, 0.2); pass(0.1, 1, 0.32); pass(1, Infinity, 0.5);
+  pass(0, 0.05, 0.10); pass(0.05, 0.25, 0.17); pass(0.25, 0.55, 0.26); pass(0.55, Infinity, 0.36);
 }
 
-function drawTrails() {
-  const z = cam.zoom;
-  ctx.lineWidth = 1.1;
-  ctx.lineCap = 'round';
-  const CH = 4;
+/* Trails are measured in time, not points. Each body keeps (x, y, time)
+   triples in b.trail from b.ts on; a point is added when the body has moved a
+   couple of screen pixels (so fast bodies get more points and curves stay
+   round), and points older than the trail's life are dropped one at a time.
+   One point older than the life is kept so the tail can be cut exactly at the
+   life, and slides along smoothly instead of jumping a segment at a time.
+   Brightness falls with age, to nothing at the tail. */
+function trailLife() { return bodies.length > 400 ? 70 : bodies.length > 120 ? 110 : 300; }
+
+function recordTrails(now) {
+  if (!showTrails) return;
+  const life = trailLife();
+  const minD = 2 / cam.zoom, minD2 = minD * minD;
+  const maxGap = life / 24;               // slow bodies still get points often enough to age smoothly
   for (const b of bodies) {
     const t = b.trail;
-    const n = t.length / 2;
-    if (n < 2) continue;
-    const per = Math.ceil(n / CH);
-    const col = displayColor(b);
-    for (let c = 0; c < CH; c++) {
-      const s = c * per, e = Math.min(n - 1, (c + 1) * per);
-      if (e <= s) continue;
-      ctx.strokeStyle = rgba(col, 0.06 + 0.16 * (c + 1));
-      ctx.beginPath();
-      ctx.moveTo((t[s * 2] - cam.x) * z + W / 2, (t[s * 2 + 1] - cam.y) * z + H / 2);
-      for (let i = s + 1; i <= e; i++) ctx.lineTo((t[i * 2] - cam.x) * z + W / 2, (t[i * 2 + 1] - cam.y) * z + H / 2);
-      ctx.stroke();
+    const n = t.length;
+    if (n === 0 || n - 3 < b.ts) { t.length = 0; b.ts = 0; t.push(b.x, b.y, now); continue; }
+    const dx = b.x - t[n - 3], dy = b.y - t[n - 2];
+    if (dx * dx + dy * dy >= minD2 || now - t[n - 1] >= maxGap) {
+      t.push(b.x, b.y, now);
+      if ((n - b.ts) / 3 > 1500) b.ts += 3;   // a hard cap, never reached in practice
     }
+    // Drop the oldest point while the one after it is also past the life.
+    const cut = now - life;
+    while (b.ts + 5 < t.length && t[b.ts + 5] <= cut) b.ts += 3;
+    if (b.ts > 600) { t.splice(0, b.ts); b.ts = 0; }
+  }
+}
+function clearTrails() { for (const b of bodies) { b.trail.length = 0; b.ts = 0; } }
+
+/* Every trail piece of the same colour and age band goes into one path and is
+   stroked once, so a galaxy of hundreds of trails is a few dozen draw calls
+   rather than thousands. Colours are rounded to 8 levels a channel for this,
+   which the eye cannot tell apart at a trail's brightness. */
+function drawTrails() {
+  const z = cam.zoom, ox = W / 2 - cam.x * z, oy = H / 2 - cam.y * z;
+  const now = simTime, life = trailLife(), cut = now - life;
+  const BANDS = bodies.length > 400 ? 5 : 8;
+  const groups = new Map();
+  for (const b of bodies) {
+    const t = b.trail;
+    let i = b.ts || 0;
+    const end = t.length;
+    if (end - i < 3) continue;
+    const dc = displayColor(b);
+    const ck = ((dc[0] >> 5) << 6) | ((dc[1] >> 5) << 3) | (dc[2] >> 5);
+    // Where the tail starts: exactly at the life, between the two oldest points.
+    let px, py;
+    if (end - i >= 6 && t[i + 2] < cut) {
+      const t0 = t[i + 2], t1 = t[i + 5];
+      const f = t1 > t0 ? Math.min(1, (cut - t0) / (t1 - t0)) : 1;
+      px = t[i] + (t[i + 3] - t[i]) * f; py = t[i + 1] + (t[i + 4] - t[i + 1]) * f;
+      i += 3;
+    } else { px = t[i]; py = t[i + 1]; }
+    let band = -1, path = null;
+    // Points go from oldest to newest, then on to where the body is now.
+    for (; i <= end; i += 3) {
+      const last = i === end;
+      const x = last ? b.x : t[i], y = last ? b.y : t[i + 1], tm = last ? now : t[i + 2];
+      const bnd = Math.min(BANDS - 1, Math.max(0, Math.floor((1 - (now - tm) / life) * BANDS)));
+      if (bnd !== band) {
+        band = bnd;
+        const key = ck * 16 + bnd;
+        path = groups.get(key);
+        if (!path) { path = new Path2D(); groups.set(key, path); }
+        path.moveTo(px * z + ox, py * z + oy);
+      }
+      path.lineTo(x * z + ox, y * z + oy);
+      px = x; py = y;
+    }
+  }
+  ctx.lineWidth = 1.1;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  for (const [key, path] of groups) {
+    const ck = key >> 4, bnd = key & 15;
+    const col = [((ck >> 6) << 5) + 16, (((ck >> 3) & 7) << 5) + 16, ((ck & 7) << 5) + 16];
+    // Brightest at the body, fading to nothing at the tail.
+    ctx.strokeStyle = rgba(col, 0.62 * Math.pow((bnd + 0.5) / BANDS, 1.3));
+    ctx.stroke(path);
   }
 }
 
@@ -1474,11 +1524,6 @@ function drawPrediction(pred) {
     ctx.beginPath(); ctx.moveTo(q.x - 5, q.y - 5); ctx.lineTo(q.x + 5, q.y + 5); ctx.moveTo(q.x + 5, q.y - 5); ctx.lineTo(q.x - 5, q.y + 5); ctx.stroke();
   }
 }
-function speedLabelAt(x, y, text) {
-  ctx.font = '600 12px "JetBrains Mono", Consolas, monospace';
-  ctx.fillStyle = 'rgba(231,233,244,0.95)';
-  ctx.fillText(text, x + 12, y - 10);
-}
 function drawVelocityArrow() {
   if (!selected || (gesture && gesture.type === 'aim')) return;
   const b = selected;
@@ -1489,6 +1534,53 @@ function drawVelocityArrow() {
   if (len > 360) { dx *= 360 / len; dy *= 360 / len; }
   drawArrow(p.x, p.y, p.x + dx, p.y + dy, 'rgba(157,184,255,0.45)', 1.5);
 }
+/* The throw arrow from (sx, sy), with the orbit guide's marks laid along the
+   direction of the drag: green where a round orbit is, red where escape is.
+   The arrow itself goes to the throw that will actually happen, which is the
+   snapped one when it has locked onto a circle. */
+function drawThrow(sx, sy, A) {
+  const g = A.guide;
+  const scale = cam.zoom / LAUNCH_K;   // velocity -> screen pixels
+  const dx = gesture.cx - sx, dy = gesture.cy - sy, len = Math.hypot(dx, dy);
+  if (g && len > 2) {
+    const ux = dx / len, uy = dy / len, nx = -uy, ny = ux;
+    const marks = [[g.sc, 'orbit', '127,224,168'], [g.se, 'escape', '255,138,122']]
+      .filter(([s]) => s && s * scale < 4000);
+    const rail = Math.max(len, ...marks.map(([s]) => s * scale)) + 14;
+    ctx.strokeStyle = 'rgba(231,233,244,0.2)'; ctx.lineWidth = 1; ctx.setLineDash([2, 5]);
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + ux * rail, sy + uy * rail); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = '600 11px ui-monospace, Consolas, monospace';
+    for (const [s, label, rgb] of marks) {
+      const mx = sx + ux * s * scale, my = sy + uy * s * scale;
+      ctx.strokeStyle = `rgba(${rgb},0.95)`; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(mx - nx * 8, my - ny * 8); ctx.lineTo(mx + nx * 8, my + ny * 8); ctx.stroke();
+      ctx.fillStyle = `rgba(${rgb},0.95)`;
+      const tw = ctx.measureText(label).width;
+      ctx.fillText(label, mx + nx * 14 - (nx < 0 ? tw : 0), my + ny * 14 + 4);
+    }
+  }
+  const tx = sx + A.rvx * scale, ty = sy + A.rvy * scale;
+  drawArrow(sx, sy, tx, ty, g && g.snapped ? 'rgba(127,224,168,0.95)' : 'rgba(255,179,92,0.95)', 2);
+  // The readout goes on the other side of the arrow from the marks' labels.
+  const al = Math.hypot(tx - sx, ty - sy) || 1;
+  const lnx = (ty - sy) / al, lny = -(tx - sx) / al;
+  return { tx, ty, lx: tx + lnx * 14, ly: ty + lny * 14 + 4, right: lnx < 0 };
+}
+function throwLabel(tip, text) {
+  ctx.font = '600 12px ui-monospace, Consolas, monospace';
+  ctx.fillStyle = 'rgba(231,233,244,0.95)';
+  const w = ctx.measureText(text).width;
+  const x = clamp(tip.right ? tip.lx - w : tip.lx, 4, W - w - 4);
+  ctx.fillText(text, x, clamp(tip.ly, 14, H - 4));
+}
+function throwNote(A) {
+  const g = A.guide;
+  if (!g) return '';
+  if (g.snapped) return ' · circular orbit';
+  if (g.rel >= g.ve) return ' · escapes';
+  return '';
+}
 function drawAim() {
   if (!gesture || gesture.type !== 'aim') return;
   const b = gesture.body;
@@ -1496,8 +1588,9 @@ function drawAim() {
   const A = aimParams();
   drawPrediction(predict(b.x, b.y, A.vx, A.vy, b.r, b));
   const p = toScreen(b.x, b.y);
-  drawArrow(p.x, p.y, gesture.cx, gesture.cy, 'rgba(255,179,92,0.95)', 2);
-  speedLabelAt(gesture.cx, gesture.cy, `v ${Math.hypot(A.rvx, A.rvy).toFixed(2)} · p ${fmt(b.m * Math.hypot(A.rvx, A.rvy))}`);
+  const tip = drawThrow(p.x, p.y, A);
+  const spd = Math.hypot(A.rvx, A.rvy);
+  throwLabel(tip, `v ${spd.toFixed(2)} · p ${fmt(b.m * spd)}${throwNote(A)}`);
 }
 function drawLaunch() {
   if (!gesture || gesture.type !== 'launch' || !gesture.moved) return;
@@ -1505,11 +1598,11 @@ function drawLaunch() {
   const t = MASS_TYPES[massIdx];
   const r = radiusFor(t.m, t.bh);
   drawPrediction(predict(L.x, L.y, L.vx, L.vy, r));
-  drawArrow(gesture.sx, gesture.sy, gesture.cx, gesture.cy, 'rgba(255,179,92,0.95)', 2);
+  const tip = drawThrow(gesture.sx, gesture.sy, L);
   const ghost = makeBody(L.x, L.y, 0, 0, t.m, { bh: t.bh, comet: t.comet, id: -1 });
   ctx.globalAlpha = 0.75; drawBody(ghost); ctx.globalAlpha = 1;
   const spd = Math.hypot(L.rvx, L.rvy);
-  speedLabelAt(gesture.cx, gesture.cy, `v ${spd.toFixed(2)} · p ${fmt(t.m * spd)}`);
+  throwLabel(tip, `v ${spd.toFixed(2)} · p ${fmt(t.m * spd)}${throwNote(L)}`);
 }
 function drawChallengeMarks() {
   if (!challenge || !challenge.def.zone) return;
@@ -1536,13 +1629,94 @@ function hitTest(sx, sy) {
 function frameVelocity() { return cam.follow ? { vx: cam.follow.vx, vy: cam.follow.vy } : { vx: 0, vy: 0 }; }
 /* Velocities are aimed relative to the body you're following, unless that's the body itself. */
 function frameFor(b) { return cam.follow && cam.follow !== b ? { vx: cam.follow.vx, vy: cam.follow.vy } : { vx: 0, vy: 0 }; }
+/* ================= Orbit guide =================
+   While a body is thrown or re-aimed, the arrow carries two marks: the speed
+   for a round orbit around whatever pulls hardest at that spot, and the speed
+   that escapes it. Let go close to the first mark, pointing roughly sideways,
+   and the throw snaps to a perfect circle (hold Alt to throw exactly as
+   drawn). Challenges have no guide: judging the throw is the point there.
+   `f` is the frame the arrow is drawn in (the followed body, or still), and
+   (rvx, rvy) the arrow as a velocity in that frame. */
+const SNAP_SPEED = 0.08;                   // within 8% of round-orbit speed…
+const SNAP_ANGLE = 14 * Math.PI / 180;     // …and 14° of square to the radius
+function orbitGuide(x, y, exclude, f, rvx, rvy) {
+  if (challenge) return null;
+  const host = strongestPull(x, y, exclude);
+  if (!host) return null;
+  const dx = x - host.x, dy = y - host.y;
+  const d = Math.hypot(dx, dy) || 1;
+  // Round-orbit speed relative to the host, softened exactly as circularVelocity is.
+  const vc = Math.sqrt(G * host.m * d * d / Math.pow(d * d + SOFT2, 1.5));
+  const ve = vc * Math.SQRT2;
+  const wx = f.vx - host.vx, wy = f.vy - host.vy;   // the frame's own motion, seen from the host
+  const s = Math.hypot(rvx, rvy);
+  const g = { host, vc, ve, sc: null, se: null, snapped: false, rvx, rvy, rel: Math.hypot(wx + rvx, wy + rvy) };
+  if (s < 1e-9) return g;
+  const ux = rvx / s, uy = rvy / s;
+  // How long the arrow must be, in this direction, to reach a given speed relative to the host.
+  const along = (target) => {
+    const b = ux * wx + uy * wy, c = wx * wx + wy * wy - target * target;
+    const disc = b * b - c;
+    if (disc < 0) return null;
+    const r = -b + Math.sqrt(disc);
+    return r > 0 ? r : null;
+  };
+  g.sc = along(vc); g.se = along(ve);
+  const relx = wx + rvx, rely = wy + rvy;
+  const tx = -dy / d, ty = dx / d;                     // square to the radius
+  const tang = relx * tx + rely * ty;
+  const angle = Math.acos(clamp(Math.abs(tang) / (g.rel || 1), 0, 1));
+  if (!gesture || !gesture.noSnap) {
+    if (Math.abs(g.rel - vc) < SNAP_SPEED * vc && angle < SNAP_ANGLE) {
+      const sense = tang < 0 ? -1 : 1;                 // keep the way round it was thrown
+      g.snapped = true;
+      g.rvx = host.vx + tx * vc * sense - f.vx;
+      g.rvy = host.vy + ty * vc * sense - f.vy;
+      g.rel = vc;
+    }
+  }
+  return g;
+}
+
 function aimParams() {
   const b = gesture.body;
   const p = toScreen(b.x, b.y);
-  const rvx = (gesture.cx - p.x) / cam.zoom * LAUNCH_K;
-  const rvy = (gesture.cy - p.y) / cam.zoom * LAUNCH_K;
+  let rvx = (gesture.cx - p.x) / cam.zoom * LAUNCH_K;
+  let rvy = (gesture.cy - p.y) / cam.zoom * LAUNCH_K;
   const f = frameFor(b);
-  return { vx: rvx + f.vx, vy: rvy + f.vy, rvx, rvy };
+  const guide = orbitGuide(b.x, b.y, b, f, rvx, rvy);
+  if (guide && guide.snapped) { rvx = guide.rvx; rvy = guide.rvy; }
+  return { vx: rvx + f.vx, vy: rvy + f.vy, rvx, rvy, guide };
+}
+
+/* Round out a body's orbit around whatever pulls on it hardest, keeping the
+   way round it was going. */
+function circularize(b) {
+  const h = strongestPull(b.x, b.y, b);
+  if (!h) return false;
+  const v = circularVelocity(h, b.x, b.y);              // anticlockwise
+  const dx = b.x - h.x, dy = b.y - h.y;
+  const clockwise = dx * (b.vy - h.vy) - dy * (b.vx - h.vx) < 0;
+  b.vx = clockwise ? 2 * h.vx - v.vx : v.vx;
+  b.vy = clockwise ? 2 * h.vy - v.vy : v.vy;
+  return true;
+}
+
+/* Make an orbit more oval, one step at a time, without letting it escape:
+   faster than round-orbit speed it is sped up (the far side swings out),
+   slower it is slowed (the near side drops in). */
+function stretchOrbit(b) {
+  const h = strongestPull(b.x, b.y, b);
+  if (!h || !isBoundTo(b, h)) return 'not-bound';
+  const dx = b.x - h.x, dy = b.y - h.y, d = Math.hypot(dx, dy) || 1;
+  const vc = Math.sqrt(G * h.m * d * d / Math.pow(d * d + SOFT2, 1.5));
+  const rx = b.vx - h.vx, ry = b.vy - h.vy, rel = Math.hypot(rx, ry) || 1e-9;
+  let k = rel >= vc * 0.999 ? 1.08 : 0.92;
+  const limit = vc * Math.SQRT2 * 0.96;
+  if (rel * k > limit) k = limit / rel;
+  if (k <= 1.0005 && rel >= vc) return 'max';
+  b.vx = h.vx + rx * k; b.vy = h.vy + ry * k;
+  return 'ok';
 }
 function scaleVelocity(b, k) {
   const f = frameFor(b);
@@ -1551,10 +1725,12 @@ function scaleVelocity(b, k) {
 }
 function launchParams() {
   const w = toWorld(gesture.sx, gesture.sy);
-  const rvx = (gesture.cx - gesture.sx) / cam.zoom * LAUNCH_K;
-  const rvy = (gesture.cy - gesture.sy) / cam.zoom * LAUNCH_K;
+  let rvx = (gesture.cx - gesture.sx) / cam.zoom * LAUNCH_K;
+  let rvy = (gesture.cy - gesture.sy) / cam.zoom * LAUNCH_K;
   const f = frameVelocity();
-  return { x: w.x, y: w.y, vx: rvx + f.vx, vy: rvy + f.vy, rvx, rvy };
+  const guide = orbitGuide(w.x, w.y, null, f, rvx, rvy);
+  if (guide && guide.snapped) { rvx = guide.rvx; rvy = guide.rvy; }
+  return { x: w.x, y: w.y, vx: rvx + f.vx, vy: rvy + f.vy, rvx, rvy, guide };
 }
 function addBody(b) {
   bodies.push(b);
@@ -1604,9 +1780,9 @@ canvas.addEventListener('pointermove', e => {
       selected = gesture.body;
     }
   } else if (gesture.type === 'aim') {
-    gesture.cx = e.clientX; gesture.cy = e.clientY;
+    gesture.cx = e.clientX; gesture.cy = e.clientY; gesture.noSnap = e.altKey;
   } else if (gesture.type === 'launch') {
-    gesture.cx = e.clientX; gesture.cy = e.clientY;
+    gesture.cx = e.clientX; gesture.cy = e.clientY; gesture.noSnap = e.altKey;
     if (Math.hypot(gesture.cx - gesture.sx, gesture.cy - gesture.sy) > 6) gesture.moved = true;
   }
 });
@@ -2034,7 +2210,6 @@ function syncControls() {
   $('miniSpeed').textContent = `${SPEEDS[speedIdx]}×`;
   $('trailsBtn').setAttribute('aria-pressed', String(showTrails));
   $('fieldBtn').setAttribute('aria-pressed', String(showField));
-  $('slowmoBtn').setAttribute('aria-pressed', String(slowmoOn));
   $('soundBtn').setAttribute('aria-pressed', String(audio.on));
   const locked = challenge && challenge.def.mass !== undefined;
   document.querySelectorAll('#masses .btn').forEach((b, i) => { b.setAttribute('aria-pressed', String(i === massIdx)); b.disabled = !!locked && i !== massIdx; });
@@ -2065,9 +2240,8 @@ $('slowerBtn').addEventListener('click', () => { speedIdx = Math.max(0, speedIdx
 $('fasterBtn').addEventListener('click', () => { speedIdx = Math.min(SPEEDS.length - 1, speedIdx + 1); syncControls(); });
 $('undoBtn').addEventListener('click', undo);
 $('miniUndo').addEventListener('click', undo);
-$('trailsBtn').addEventListener('click', () => { showTrails = !showTrails; if (!showTrails) bodies.forEach(b => b.trail.length = 0); syncControls(); });
+$('trailsBtn').addEventListener('click', () => { showTrails = !showTrails; if (!showTrails) clearTrails(); syncControls(); });
 $('fieldBtn').addEventListener('click', () => { showField = !showField; syncControls(); });
-$('slowmoBtn').addEventListener('click', () => { slowmoOn = !slowmoOn; syncControls(); });
 $('centerBtn').addEventListener('click', recenter);
 $('soundBtn').addEventListener('click', () => { setSound(!audio.on); syncControls(); });
 document.querySelectorAll('#momentumBtns [data-k]').forEach(btn => btn.addEventListener('click', () => {
@@ -2077,6 +2251,26 @@ document.querySelectorAll('#momentumBtns [data-k]').forEach(btn => btn.addEventL
   if (challenge) challenge.counters.edits++;
   hudTick = 5;
 }));
+$('circularizeBtn').addEventListener('click', () => {
+  if (!selected || !challengeAllowsEdit(selected)) return;
+  if (!strongestPull(selected.x, selected.y, selected)) { flashMessage('There is nothing for it to orbit.'); return; }
+  pushUndo();
+  circularize(selected);
+  if (challenge) challenge.counters.edits++;
+  hudTick = 5;
+});
+$('stretchBtn').addEventListener('click', () => {
+  if (!selected || !challengeAllowsEdit(selected)) return;
+  pushUndo();
+  const result = stretchOrbit(selected);
+  if (result !== 'ok') {
+    undoStack.pop();   // nothing changed, so nothing to undo
+    flashMessage(result === 'not-bound' ? 'It isn\'t in orbit. Circularize it first.' : 'That\'s as oval as it can go without escaping.');
+    return;
+  }
+  if (challenge) challenge.counters.edits++;
+  hudTick = 5;
+});
 $('infoClose').addEventListener('click', () => { selected = null; hudTick = 5; });
 $('infoMore').addEventListener('click', () => {
   const open = !$('info').classList.contains('expanded');
@@ -2144,7 +2338,7 @@ rewindEl.addEventListener('input', () => {
   paused = true; syncControls();
   if (v >= history.length) { restore(liveSnap); scrubIdx = null; liveSnap = null; }
   else { scrubIdx = v; restore(history[v]); }
-  for (const b of bodies) b.trail.length = 0;
+  clearTrails();
   updateRewindLabel();
 });
 function updateRewindLabel() {
@@ -2181,9 +2375,8 @@ window.addEventListener('keydown', e => {
   else if (e.key === '[') speedIdx = Math.max(0, speedIdx - 1);
   else if (e.key === ']') speedIdx = Math.min(SPEEDS.length - 1, speedIdx + 1);
   else if (e.key >= '1' && e.key <= '6') { if (!(challenge && challenge.def.mass !== undefined)) massIdx = Number(e.key) - 1; }
-  else if (e.key === 't' || e.key === 'T') { showTrails = !showTrails; if (!showTrails) bodies.forEach(b => b.trail.length = 0); }
+  else if (e.key === 't' || e.key === 'T') { showTrails = !showTrails; if (!showTrails) clearTrails(); }
   else if (e.key === 'g' || e.key === 'G') showField = !showField;
-  else if (e.key === 's' || e.key === 'S') slowmoOn = !slowmoOn;
   else if (e.key === 'c' || e.key === 'C') recenter();
   else if (e.key === 'm' || e.key === 'M') setSound(!audio.on);
   else if (e.key === 'u' || e.key === 'U') undo();
@@ -2201,11 +2394,10 @@ function updateHud() {
   $('stTime').textContent = `${(simTime / YEAR).toFixed(2)} yr`;
   $('stMerges').textContent = merges;
   const req = SPEEDS[speedIdx];
-  const lag = !paused && timeScale > 0.95 && actualSpeed < req * 0.85;
+  const lag = !paused && actualSpeed < req * 0.85;
   const label = lag ? `${req}× (≈${actualSpeed < 1 ? actualSpeed.toFixed(1) : Math.round(actualSpeed)}×)` : `${req}×`;
   $('speedLabel').textContent = label; $('miniSpeed').textContent = label;
   $('speedLabel').title = lag ? 'Your computer is running the simulation as fast as it can. Fewer bodies will make it faster.' : '';
-  $('slowBadge').hidden = !(timeScale < 0.8 && !paused) || !!challenge;
   $('undoBtn').disabled = !undoStack.length; $('miniUndo').disabled = !undoStack.length;
   updateRewindLabel();
   const card = $('info');
@@ -2242,36 +2434,20 @@ function updateHud() {
 }
 
 /* ================= Main loop ================= */
-function recordTrails() {
-  if (!showTrails) return;
-  const cap = bodies.length > 400 ? 40 : bodies.length > 120 ? 70 : 300;
-  for (const b of bodies) {
-    const t = b.trail;
-    t.push(b.x, b.y);
-    if (t.length > cap * 2 + 40) t.splice(0, t.length - cap * 2);
-  }
-}
 let last = performance.now();
 function frame(now) {
   const fdt = Math.min(0.05, (now - last) / 1000);
   last = now;
   if (!paused && bodies.length) {
     commitScrub();
-    // Slow motion: ease down when two sizable bodies are about to collide, ease back afterwards.
-    if (slowmoOn && !challenge) {
-      impactHold = Math.max(0, impactHold - fdt);
-      const target = impactHold > 0 || impactImminent() ? 0.15 : 1;
-      timeScale += (target - timeScale) * (target < timeScale ? 0.3 : 0.05);
-    } else timeScale = 1;
-    const want = SPEEDS[speedIdx] * fdt * 60 * timeScale;
+    const want = SPEEDS[speedIdx] * fdt * 60;
     let todo = want, done = 0;
     const t0 = performance.now();
     while (todo > 1e-9) {
       const h = Math.min(stepSize(), todo);
       step(h);
       todo -= h; done += h;
-      trailClock += h;
-      if (trailClock >= TRAIL_DT) { trailClock %= TRAIL_DT; recordTrails(); }
+      recordTrails(simTime + done);
       if (performance.now() - t0 > STEP_BUDGET_MS) break;
     }
     simTime += done;
@@ -2336,7 +2512,7 @@ window.__pu = {
   get bodies() { return bodies; }, cam, loadScene, audio, ensureAudio, playImpact, makeBody, addBody, computeAcc, step, tidalCheck,
   snapshot, restore, undo, get undoStack() { return undoStack; }, get history() { return history; },
   packCode, unpackCode, universeData, applyUniverse, startChallenge, get challenge() { return challenge; },
-  orbitOf, impactImminent, updateHeat, get simTime() { return simTime; }, CHALLENGES,
+  orbitOf, updateHeat, get simTime() { return simTime; }, CHALLENGES,
 };
 })();
 </script>
