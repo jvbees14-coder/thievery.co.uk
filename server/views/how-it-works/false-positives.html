@@ -1,0 +1,45 @@
+<!--
+  Why a positive test can be wrong. Poured into _page.html; the scene is
+  public/explainers/false-positives/scene.js. Chapter ids: crowd, positive,
+  rarity, retest.
+-->
+        <section class="hiw-chapter" id="crowd" aria-labelledby="h-crowd">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-crowd">A good test</h2>
+          <p>Picture a screening test for an illness that one person in a hundred has. The test is good: it catches 90% of the people who are ill, and wrongly flags only 9% of the people who are well.</p>
+          <p>You take it and it comes back positive. How likely is it that you are ill? Many people, doctors included, guess something close to 90%. The real answer is about 9%.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Here are a thousand people tested. Red dots are ill; a ring means a positive result.</p>
+        </section>
+
+        <section class="hiw-chapter" id="positive" aria-labelledby="h-positive">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-positive">Count the positives</h2>
+          <p>Of the thousand, 10 are ill, and the test catches 9 of them. But 990 are well, and 9% of those is 89 more positives. So 98 people test positive, and only 9 of them are ill: about one in eleven.</p>
+          <p>The test isn't bad. The trouble is that the well vastly outnumber the ill, so even a small share of mistakes among them swamps the real cases. Forgetting how rare the illness was is called the base rate fallacy.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Only the positives are lit. Count the red ones.</p>
+        </section>
+
+        <section class="hiw-chapter" id="rarity" aria-labelledby="h-rarity">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-rarity">Rare things are hard to find</h2>
+          <p>The rarer the illness, the worse a positive result gets, even with the same test. If a third of people were ill, a positive would be right most of the time.</p>
+          <p>That's why screening everybody for something rare gives lots of false alarms, and why a test's result depends on who is being tested. A positive means more for somebody with symptoms than for somebody picked at random.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Make the illness rarer or commoner, and the test better or worse.</p>
+        </section>
+
+        <section class="hiw-chapter" id="retest" aria-labelledby="h-retest">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-retest">Test again</h2>
+          <p>Now take the 98 who tested positive and test them again. This time the starting point is very different: about one in eleven of them is ill, not one in a hundred.</p>
+          <p>The second test catches 8 of the 9 ill people, and flags 8 of the 89 well ones. So a second positive takes the chance to about 50%. That is why a positive screening result usually leads to a second, different test before anything is decided.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The figures (1% ill, 90% caught, 9% wrongly flagged) are the ones Gerd Gigerenzer used when he put this question to doctors, and are not any particular real test. The chances are worked out by Bayes' rule in your browser. Chapter 4 treats the second test as independent of the first, which real repeat tests are not quite.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Base_rate_fallacy" rel="noopener">Base rate fallacy</a>: the error, and the medical screening example.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Bayes%27_theorem" rel="noopener">Bayes' theorem</a>.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Gerd_Gigerenzer" rel="noopener">Gerd Gigerenzer</a>, whose work showed that natural frequencies (9 out of 98) are easier to reason with than percentages.</li>
+      </ol>
+    </section>

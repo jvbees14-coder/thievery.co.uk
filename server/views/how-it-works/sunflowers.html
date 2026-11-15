@@ -1,0 +1,46 @@
+<!--
+  Why sunflowers spiral. Poured into _page.html; the scene is
+  public/explainers/sunflowers/scene.js and the seed head art.js. Chapter
+  ids: angle, golden, spirals, cones.
+-->
+        <section class="hiw-chapter" id="angle" aria-labelledby="h-angle">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-angle">One seed at a time</h2>
+          <p>A sunflower's seeds grow from the middle, one after another, each new one pushing the older ones outwards. Each new seed appears turned by the same angle from the one before.</p>
+          <p>That one angle decides the whole pattern. Most angles waste space: the seeds line up in straight spokes with gaps between them, or in a few loose spirals.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change the turn between seeds and watch the pattern jump about.</p>
+        </section>
+
+        <section class="hiw-chapter" id="golden" aria-labelledby="h-golden">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-golden">The golden angle</h2>
+          <p>A turn of 120° is a third of a circle, so every third seed lands in line: three spokes. 144° is two fifths of a turn: five spokes. Any angle that is a simple fraction of a turn makes spokes.</p>
+          <p>To avoid lining up, the angle needs to be as far as possible from every simple fraction. The answer is about 137.5°, the golden angle, linked to the golden ratio, which is in a precise sense the hardest number to approximate by fractions. At 137.5° the seeds fill the head evenly; even half a degree off, gaps open up.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Compare 120°, 144°, 137° and the golden angle.</p>
+        </section>
+
+        <section class="hiw-chapter" id="spirals" aria-labelledby="h-spirals">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-spirals">Spirals in Fibonacci numbers</h2>
+          <p>Look at a sunflower and your eye picks out spirals curving each way. Count them and you usually get neighbouring numbers from the Fibonacci sequence, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, in which each number is the sum of the two before: often 34 one way and 55 the other.</p>
+          <p>That comes straight from the golden angle. Seeds 21 apart, or 34, or 55, land almost on top of each other's direction, so they line up into neat spiral arms. Colour the seeds into 21 families and you see 21 clean spirals; try 20 and the arms break up.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Colour the seeds by 13, 21 and 34, then by 20.</p>
+        </section>
+
+        <section class="hiw-chapter" id="cones" aria-labelledby="h-cones">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-cones">Pine cones and pineapples</h2>
+          <p>The same growth rule turns up in pine cones, pineapples, daisies and the leaves round a stem. Pine cones commonly have 8 spirals one way and 13 the other; pineapples often 8 and 13 too.</p>
+          <p>Nobody told the plant about Fibonacci. Each new bud simply forms in the biggest gap left by the ones before, and that rule, followed again and again, settles on the golden angle by itself.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Count the coloured spirals on this smaller head.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The seed heads use Helmut Vogel's 1979 model: seed <i>n</i> at <i>n</i> times the angle, and at a distance from the middle that grows with the square root of <i>n</i>. "How evenly packed" compares how far apart the outer seeds are with the ideal of a perfect honeycomb. Real flowers are not always exact, and some show other spiral counts.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Fermat%27s_spiral" rel="noopener">Fermat's spiral</a>: Vogel's model of the sunflower head.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Golden_angle" rel="noopener">Golden angle</a>: about 137.508°.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Phyllotaxis" rel="noopener">Phyllotaxis</a>: spirals in Fibonacci numbers in sunflowers, pine cones and pineapples, and why buds form in the largest gap.</li>
+      </ol>
+    </section>

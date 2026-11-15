@@ -1,0 +1,46 @@
+<!--
+  The one-time pad. Poured into _page.html; the scene is
+  public/explainers/one-time-pad/scene.js. Chapter ids: pad, perfect,
+  reuse, keys.
+-->
+        <section class="hiw-chapter" id="pad" aria-labelledby="h-pad">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-pad">A key as long as the message</h2>
+          <p>Write down a string of random letters, as long as your message. Move each letter of the message along the alphabet by the matching letter of the key: A by nought places, B by one, and so on, wrapping round after Z. Send what comes out.</p>
+          <p>Your friend holds a copy of the same key and moves each letter back. That is the whole cipher, called the one-time pad because the key was printed on pads of paper and each page was torn off and destroyed after use.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Type a message, and make a new key a few times.</p>
+        </section>
+
+        <section class="hiw-chapter" id="perfect" aria-labelledby="h-perfect">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-perfect">Unbreakable, really</h2>
+          <p>Most ciphers can be broken with enough time and cleverness. This one can't, and in 1949 Claude Shannon proved it. The reason is simple: for any message of the right length, there is a key that turns the intercepted letters into it.</p>
+          <p>So the intercept could say anything. An attacker trying keys would find "meet at noon" and "sell the car" and every other message, and no way to tell which was sent. No amount of computing power helps.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Type a different message: there is always a key that fits.</p>
+        </section>
+
+        <section class="hiw-chapter" id="reuse" aria-labelledby="h-reuse">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-reuse">Never twice</h2>
+          <p>The guarantee holds only if a key is used once. Send two messages with the same key, and an eavesdropper can subtract one intercept from the other. The key cancels out, leaving one message mixed with the other.</p>
+          <p>Guess a likely word in one message, slide it along, and wherever the guess is right, the other message appears in plain letters. In the 1940s Soviet clerks under pressure reused some pad pages, and American codebreakers in the Venona project used exactly this to read parts of thousands of messages.</p>
+          <p class="hiw-try"><strong>Try it.</strong> The first message starts with THE. Slide your guess and watch what the second must say.</p>
+        </section>
+
+        <section class="hiw-chapter" id="keys" aria-labelledby="h-keys">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-keys">The trouble with keys</h2>
+          <p>A perfect cipher with a terrible catch: you need as much key as you will ever send, it must be truly random, and both sides must hold it, delivered in secret beforehand. When it runs out, somebody has to carry more.</p>
+          <p>For a few lines that matter enough, people have done it: the teleprinter hotline set up between Washington and Moscow in 1963 used one-time tape. For everyday messages, the key problem is why the world uses other ciphers instead, and public-key cryptography to agree keys between strangers.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Send messages until the pad runs out.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The keys in the scene come from your browser's ordinary random numbers, which are fine for a demonstration but not for real secrets. Real one-time pads need keys from a truly random source.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/One-time_pad" rel="noopener">One-time pad</a>: how it works, Shannon's proof of perfect secrecy, and the Moscow–Washington hotline.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Venona_project" rel="noopener">Venona project</a>: reused Soviet pad pages.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Communication_Theory_of_Secrecy_Systems" rel="noopener">Communication Theory of Secrecy Systems</a>: Shannon's 1949 paper.</li>
+      </ol>
+    </section>

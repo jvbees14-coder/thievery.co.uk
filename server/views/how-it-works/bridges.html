@@ -1,0 +1,47 @@
+<!--
+  How bridges stand up. Poured into _page.html; the scene is
+  public/explainers/bridges/scene.js and the truss solver art.js. Chapter
+  ids: beam, truss, arch, suspension.
+-->
+        <section class="hiw-chapter" id="beam" aria-labelledby="h-beam">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-beam">Squeeze and stretch</h2>
+          <p>Lay a plank across a stream and stand in the middle. It bends: its top edge is squeezed shorter and its bottom edge stretched longer. Every bridge has to deal with those two forces, called compression and tension.</p>
+          <p>A plain beam gets worse fast as it gets longer. Under the same load in the middle, doubling the span makes it sag eight times as much, and its own weight grows too. Beams are fine for short crossings and hopeless for long ones.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Lengthen the span and watch the sag.</p>
+        </section>
+
+        <section class="hiw-chapter" id="truss" aria-labelledby="h-truss">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-truss">Triangles</h2>
+          <p>A square frame of four bars folds flat if you push it. A triangle can't change shape without one of its bars changing length. So engineers build long spans from triangles: a truss.</p>
+          <p>Each bar in a truss is only ever stretched or squeezed along its length, which is what steel and timber are best at. As the load moves, the forces move round the frame: the top chord is squeezed, the bottom one stretched, and the diagonals take turns.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Move the load and watch which bars work hardest.</p>
+        </section>
+
+        <section class="hiw-chapter" id="arch" aria-labelledby="h-arch">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-arch">A hanging chain, upside down</h2>
+          <p>Hang a chain between two hooks. It falls into a curve called a catenary, and every link is pulled along the curve: pure tension, nowhere bent.</p>
+          <p>Robert Hooke saw in the 1670s that the same curve turned upside down is the ideal arch. Now every part is pressed along the curve instead: pure compression. Stone and brick are strong when squeezed and weak when stretched, which is why arches of stone have stood for two thousand years.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Turn the chain upside down.</p>
+        </section>
+
+        <section class="hiw-chapter" id="suspension" aria-labelledby="h-suspension">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-suspension">Hanging the road</h2>
+          <p>For the longest spans, the road hangs from cables draped over two tall towers. The cables are in tension and the towers in compression, each part doing what it is best at.</p>
+          <p>How far the cable sags matters. A tighter, flatter cable has to pull much harder to hold the same road up: with a sag of one tenth of the span, it pulls sideways with about one and a quarter times the weight of the deck, and halving the sag doubles that.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Make the cable flatter or deeper and watch the pull.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The truss's forces are worked out in your browser by balancing every joint, the method engineers call the method of joints. The beam's sag is drawn much larger than life. The cable's pull uses the standard formula for a cable carrying an evenly spread load, which hangs as a parabola.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Truss" rel="noopener">Truss</a>: triangles, tension and compression, and the method of joints.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Deflection_(engineering)" rel="noopener">Deflection (engineering)</a>: sag growing with the cube of the span.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Catenary" rel="noopener">Catenary</a>: the hanging chain, and Hooke's inverted arch.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Suspension_bridge" rel="noopener">Suspension bridge</a>.</li>
+      </ol>
+    </section>

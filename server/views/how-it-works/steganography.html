@@ -1,0 +1,46 @@
+<!--
+  Hiding a message in a picture. Poured into _page.html; the scene is
+  public/explainers/steganography/scene.js and the bits art.js. Chapter
+  ids: bits, hide, planes, traces.
+-->
+        <section class="hiw-chapter" id="bits" aria-labelledby="h-bits">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-bits">Eight bits of grey</h2>
+          <p>A digital picture is a grid of pixels, and in a simple greyscale picture each pixel's brightness is a number from 0 to 255: eight bits. The first bit is worth 128, the next 64, and so on down to the last, worth just 1.</p>
+          <p>Flip that last bit and the brightness changes by one step in 255. Nobody can see the difference.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change the brightness and compare the two shades, which differ only in the last bit.</p>
+        </section>
+
+        <section class="hiw-chapter" id="hide" aria-labelledby="h-hide">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-hide">Writing in the last bits</h2>
+          <p>A message is bits too: each letter is a byte of eight. So write the message, one bit at a time, into the last bit of each pixel in turn. About half the pixels change, each by one shade, and the picture looks exactly the same.</p>
+          <p>Anyone who knows to look reads the last bits back in order and gets the message. Hiding a message where nobody thinks to look, rather than scrambling it, is called steganography.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Type a message and compare the two pictures.</p>
+        </section>
+
+        <section class="hiw-chapter" id="planes" aria-labelledby="h-planes">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-planes">Layers of bits</h2>
+          <p>Pull out one bit from every pixel and you get a black-and-white layer. The top layer, the 128s, is a rough outline of the picture. Each layer down carries less of it.</p>
+          <p>The lowest layer is mostly the grain of the picture, which is why changing it is invisible. A photograph has millions of these bits, room for a long letter.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Step down through the layers.</p>
+        </section>
+
+        <section class="hiw-chapter" id="traces" aria-labelledby="h-traces">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-traces">Leaving traces</h2>
+          <p>Invisible isn't undetectable. A message's bits aren't quite like the grain they replace, and careful statistics on the lowest layer can show that something has been written there. Finding hidden messages is called steganalysis.</p>
+          <p>So people who want both encrypt the message first, which makes its bits look random, and then hide it, spread thinly through a large picture.</p>
+          <p class="hiw-try"><strong>Try it.</strong> The message's stretch of the lowest layer is shaded. Change the message and watch it grow.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The picture is drawn by the page and the message is written into it in your browser: a byte for its length, then its bytes. Real pictures usually have three colours per pixel, which triples the room.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Steganography" rel="noopener">Steganography</a>: hiding in the least significant bits of a picture.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Bit_plane" rel="noopener">Bit plane</a>.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Steganalysis" rel="noopener">Steganalysis</a>.</li>
+      </ol>
+    </section>

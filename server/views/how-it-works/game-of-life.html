@@ -1,0 +1,45 @@
+<!--
+  The Game of Life. Poured into _page.html; the scene is
+  public/explainers/game-of-life/scene.js and the rules art.js. Chapter
+  ids: rules, glider, soup, gun.
+-->
+        <section class="hiw-chapter" id="rules" aria-labelledby="h-rules">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-rules">Three rules</h2>
+          <p>Take a grid of squares, each alive or dead. Every tick of the clock, each square counts its eight neighbours. A live square with two or three live neighbours survives; with fewer it dies of loneliness, with more of overcrowding. A dead square with exactly three live neighbours comes to life.</p>
+          <p>That's all. The mathematician John Conway devised it in 1970. Some shapes sit still for ever, like the square block. Others flip back and forth, like the line of three called a blinker.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Step a generation at a time and check the rules for yourself.</p>
+        </section>
+
+        <section class="hiw-chapter" id="glider" aria-labelledby="h-glider">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-glider">Something that moves</h2>
+          <p>Five live squares in the right shape do something nobody programmed: they walk. Every four generations the pattern reappears one square further along, diagonally. It's called a glider.</p>
+          <p>Nothing in the rules mentions movement. The glider is behaviour that emerges from simple local rules, which is the whole fascination of the game.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Watch the glider cross the grid and come back round the edge.</p>
+        </section>
+
+        <section class="hiw-chapter" id="soup" aria-labelledby="h-soup">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-soup">Order from a random start</h2>
+          <p>Scatter live squares at random and let it run. At first it boils; then it settles into a scattering of still blocks, blinking lines and the odd glider wandering off.</p>
+          <p>Whether a pattern will die, settle or grow for ever can't, in general, be worked out without running it. Life turns out to be able to compute anything a computer can, given a large enough grid.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Start a few random soups and see how they settle.</p>
+        </section>
+
+        <section class="hiw-chapter" id="gun" aria-labelledby="h-gun">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-gun">A glider gun</h2>
+          <p>Conway wondered whether any pattern could grow without limit, and offered a prize. Bill Gosper won it in 1970 with this: a pattern of 36 cells that shuttles back and forth and fires off a new glider every 30 generations, for ever.</p>
+          <p>Streams of gliders can carry signals and collide like logic gates. People have since built working clocks, calculators and even a version of Life itself, all inside Life.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Watch the gun fire and count the gliders.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The grid runs Conway's rules in your browser. In chapters 1 to 3 its edges wrap round, so a glider leaving one side comes back on the other; in chapter 4 they don't, and gliders that reach the edge break up.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life" rel="noopener">Conway's Game of Life</a>: the rules, still lifes, oscillators, gliders, and Life computing anything.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Gun_(cellular_automaton)" rel="noopener">Gun (cellular automaton)</a>: Gosper's glider gun of 1970, period 30.</li>
+      </ol>
+    </section>

@@ -1,0 +1,46 @@
+<!--
+  How computers find things instantly. Poured into _page.html; the scene is
+  public/explainers/hash-tables/scene.js. Chapter ids: buckets, collisions,
+  load, clumping.
+-->
+        <section class="hiw-chapter" id="buckets" aria-labelledby="h-buckets">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-buckets">Work out where it goes</h2>
+          <p>To find a name in a list of a million, a computer could check them one by one. Far faster: decide where each name lives from the name itself. A hash function scrambles the name's letters into a big number, and the remainder after dividing by the number of buckets says which bucket to put it in.</p>
+          <p>To look a name up later, hash it again and look in that one bucket. However many names there are, it takes about the same time. This is a hash table, and it is behind almost every look-up a computer does.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Type a name and see which bucket it would be in.</p>
+        </section>
+
+        <section class="hiw-chapter" id="collisions" aria-labelledby="h-collisions">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-collisions">Collisions</h2>
+          <p>Sooner or later two names land in the same bucket. It happens sooner than you'd think: with 16 buckets, five names have an even chance of a clash. It's the birthday paradox again.</p>
+          <p>So each bucket holds a short list, and a look-up checks the few names in it. As long as the lists stay short, it's still fast.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Add names and watch the red buckets, the ones holding more than one.</p>
+        </section>
+
+        <section class="hiw-chapter" id="load" aria-labelledby="h-load">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-load">Keep it roomy</h2>
+          <p>Cram many names into few buckets and the lists grow long, and look-ups slow down. So hash tables watch how full they are, and when they pass a set level, often three quarters, they double the number of buckets and file everything again.</p>
+          <p>Doubling takes a moment, but it happens rarely enough that, on average, every look-up stays quick however large the table grows.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Add up to 60 names, with and without the table growing.</p>
+        </section>
+
+        <section class="hiw-chapter" id="clumping" aria-labelledby="h-clumping">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-clumping">A good scramble matters</h2>
+          <p>Everything depends on the hash spreading names evenly. A poor one, filing by the first letter, say, might do for a handful of people, but real keys are often alike: photo-001, photo-002 and so on. By first letter, every one lands in the same bucket, and the table is no better than a list.</p>
+          <p>A good hash function makes similar inputs land far apart. Some attackers have even slowed web servers by sending keys chosen to collide, which is why many languages now mix a secret random value into their hashes.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Switch to a good hash and watch the photos spread out.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The good hash in the scene is FNV-1a, a real and simple hash function, worked out in your browser. Each bucket keeps a list of its names, which is called separate chaining; some tables use other ways to handle collisions.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Hash_table" rel="noopener">Hash table</a>: buckets, collisions, chaining, load factor and resizing.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function" rel="noopener">Fowler–Noll–Vo hash function</a>.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Collision_attack#Hash_flooding" rel="noopener">Hash flooding</a>: denial of service by colliding keys, and randomised hashing.</li>
+      </ol>
+    </section>

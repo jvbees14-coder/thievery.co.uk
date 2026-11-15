@@ -805,6 +805,8 @@ export function mount(def, root = document.querySelector('[data-explainer]')) {
     onChange(id, i) {
       api.chapter = id;
       api.index = i;
+      // A chapter with nothing to read out must not keep the last one's figures.
+      readoutSlot.replaceChildren();
       def.chapter(id, api);
       scene.invalidate();
     },

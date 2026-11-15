@@ -1,0 +1,45 @@
+<!--
+  How long is a coastline? Poured into _page.html; the scene is
+  public/explainers/fractals/scene.js. Chapter ids: snowflake, length,
+  coastline, dimension.
+-->
+        <section class="hiw-chapter" id="snowflake" aria-labelledby="h-snowflake">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-snowflake">A snowflake of bumps</h2>
+          <p>Start with a triangle. On the middle third of every edge, add a smaller triangle pointing out. Now do the same to every edge of the new shape, and again, for ever. Helge von Koch described this snowflake in 1904.</p>
+          <p>Each step the edges multiply by four. Zoom into any part and it looks like the whole: the same bumps on bumps at every scale. A shape like that is called a fractal.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Add steps and watch the edge crinkle.</p>
+        </section>
+
+        <section class="hiw-chapter" id="length" aria-labelledby="h-length">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-length">An endless edge round a finite area</h2>
+          <p>Every step replaces each edge with four pieces a third as long, making the outline 4/3 as long as before. Keep going and it grows without limit: after ten steps it's nearly 18 times the triangle's, after a hundred, over three thousand billion times.</p>
+          <p>Yet the area barely changes. The added triangles shrink so fast that the total never passes 8/5 of the original triangle. An infinitely long boundary round a small, fixed area.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Compare how the edge and the area grow with each step.</p>
+        </section>
+
+        <section class="hiw-chapter" id="coastline" aria-labelledby="h-coastline">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-coastline">Measuring a coast</h2>
+          <p>Real coastlines are a bit like this: bays within bays, rocks within coves. Lewis Fry Richardson noticed that the length you measure depends on your ruler. Walk a pair of dividers along a map with a long span and you skip every inlet; shorten it and the coast seems to grow.</p>
+          <p>There's no settled answer to how long a coast is, only an answer for a given ruler. That's why published lengths for the same coastline can differ a great deal.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Shorten the ruler and watch the measured length climb.</p>
+        </section>
+
+        <section class="hiw-chapter" id="dimension" aria-labelledby="h-dimension">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-dimension">Between a line and a plane</h2>
+          <p>Plot the measured length against the ruler, both on logarithmic scales, and the points fall on a straight line. Its slope says how quickly the coast keeps revealing detail. Benoit Mandelbrot turned that into a number in 1967, in a paper called "How Long Is the Coast of Britain?": the fractal dimension.</p>
+          <p>A smooth line has dimension 1 and a filled area 2. The Koch snowflake's edge is about 1.26. Richardson's figures for Britain's west coast give about 1.25, and this made-up coast comes out close to that.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The snowflake and the made-up coast are drawn in your browser; the coast is built by adding random bumps at every scale. Its dimension is one minus the slope of the best straight line through the points in chapter 4.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Koch_snowflake" rel="noopener">Koch snowflake</a>: von Koch, 1904; the perimeter, the area of 8/5, and the dimension of log 4 / log 3.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Coastline_paradox" rel="noopener">Coastline paradox</a>: Richardson's measurements.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/How_Long_Is_the_Coast_of_Britain%3F_Statistical_Self-Similarity_and_Fractional_Dimension" rel="noopener">How Long Is the Coast of Britain?</a>: Mandelbrot, 1967, and about 1.25 for Britain's west coast.</li>
+      </ol>
+    </section>

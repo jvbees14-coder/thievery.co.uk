@@ -3,7 +3,7 @@
 An explainer is a page at `/how-it-works/<slug>` that teaches how something
 works by letting the reader play with it: a live canvas scene pinned beside
 writing cut into chapters, with controls and live numbers under the scene.
-Every chapter changes what the scene shows. There are thirty-four; read a short
+Every chapter changes what the scene shows. There are seventy-four; read a short
 one (`compression`, `touchscreen`) beside this guide, and `gps` for the most
 elaborate.
 

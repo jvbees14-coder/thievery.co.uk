@@ -1,0 +1,47 @@
+<!--
+  How a screen makes every colour. Poured into _page.html; the scene is
+  public/explainers/screen-colour/scene.js, the one scene that draws
+  literal colours. Chapter ids: pixels, mixing, eyes, numbers.
+-->
+        <section class="hiw-chapter" id="pixels" aria-labelledby="h-pixels">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-pixels">Three tiny lights</h2>
+          <p>Look at a screen through a magnifying glass and the colours vanish. Each pixel is three tiny lights side by side, one red, one green and one blue, each turned up or down.</p>
+          <p>They are far too small for your eye to tell apart at normal distance, so their light blends into one colour. An orange pixel is red turned well up, green part way and blue nearly off.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Zoom in until the three lights appear, and change their levels.</p>
+        </section>
+
+        <section class="hiw-chapter" id="mixing" aria-labelledby="h-mixing">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-mixing">Mixing light</h2>
+          <p>Mixing light isn't like mixing paint. Paint absorbs colours, so more paint makes things darker. Lights add up. Red and green light together look yellow; green and blue, cyan; blue and red, magenta; all three at full strength, white.</p>
+          <p>Yellow made this way contains no yellow light at all. It only looks yellow.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Turn each light up and down and watch the overlaps change.</p>
+        </section>
+
+        <section class="hiw-chapter" id="eyes" aria-labelledby="h-eyes">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-eyes">Why three is enough</h2>
+          <p>The trick works because of our eyes. The retina sees colour with just three kinds of cone cell, each most sensitive to a different part of the spectrum: short, medium and long wavelengths. All your brain gets is how strongly each kind responds.</p>
+          <p>Pure yellow light at 580 nm stirs the medium and long cones in a certain proportion. A mix of red and green light can stir them in exactly the same proportion, so the brain can't tell the two apart. Three lights, one for each kind of cone, can fake most of the colours we see.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Pick a single colour of light and compare the cone signals with the red and green mix that matches it.</p>
+        </section>
+
+        <section class="hiw-chapter" id="numbers" aria-labelledby="h-numbers">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-numbers">Sixteen million colours</h2>
+          <p>A computer usually stores each light's level as a number from 0 to 255: eight bits. Three of them give 256 × 256 × 256, which is 16,777,216 different colours, more than the eye can tell apart.</p>
+          <p>Web designers write the three numbers in hexadecimal, two digits each, after a # sign. FF0000 is full red; FFFFFF is white; 000000 is all three off.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Set the levels and read the colour's code.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The cone curves in chapter 3 are rough bell curves placed at the cones' peak sensitivities, and each of the screen's lights is treated as a single wavelength, so the match is the idea rather than a measurement. Real screens arrange their sub-pixels in several different patterns.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Subpixel_rendering" rel="noopener">Subpixel rendering</a> and <a href="https://en.wikipedia.org/wiki/Pixel" rel="noopener">Pixel</a>.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Additive_color" rel="noopener">Additive colour</a>.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Cone_cell" rel="noopener">Cone cell</a> and <a href="https://en.wikipedia.org/wiki/Metamerism_(color)" rel="noopener">Metamerism</a>: three cone types, and different lights that look the same.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Web_colors" rel="noopener">Web colors</a>: hexadecimal codes.</li>
+      </ol>
+    </section>

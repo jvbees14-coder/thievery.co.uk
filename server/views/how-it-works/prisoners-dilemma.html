@@ -1,0 +1,46 @@
+<!--
+  The prisoner's dilemma. Poured into _page.html; the scene is
+  public/explainers/prisoners-dilemma/scene.js and the strategies art.js.
+  Chapter ids: dilemma, repeated, tournament, evolution.
+-->
+        <section class="hiw-chapter" id="dilemma" aria-labelledby="h-dilemma">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-dilemma">Trust or cheat?</h2>
+          <p>Two players each secretly choose to cooperate or to defect. If both cooperate, both get 3 points. If both defect, 1 each. If one defects while the other cooperates, the defector gets 5 and the trusting one nothing.</p>
+          <p>Whatever the other does, you score more by defecting: 5 rather than 3, or 1 rather than 0. So two sensible players both defect and get 1 each, when they could both have had 3. That is the dilemma, and it turns up wherever selfish choices add up to a worse result for everyone: price wars, arms races, overfishing.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Pick a move for each side and read the points.</p>
+        </section>
+
+        <section class="hiw-chapter" id="repeated" aria-labelledby="h-repeated">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-repeated">Playing again and again</h2>
+          <p>Everything changes when the same two players meet over and over. Now a defection can be punished next time, and cooperation rewarded.</p>
+          <p>Your opponent here plays tit for tat: cooperate in the first round, then copy whatever you did last. Defect and you gain once, but it defects back. Cooperate and it cooperates for as long as you do.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Play twenty rounds. Try to beat it, then try to score the most.</p>
+        </section>
+
+        <section class="hiw-chapter" id="tournament" aria-labelledby="h-tournament">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-tournament">A tournament</h2>
+          <p>In 1980 the political scientist Robert Axelrod invited experts to send in strategies, and played them all against each other. The winner was the simplest entry, tit for tat, sent in by Anatol Rapoport.</p>
+          <p>Axelrod saw what successful strategies shared: they were nice, never defecting first; they hit back when cheated; and they forgave once the other side behaved. In this small tournament of seven, the same pattern shows: every strategy that never defects first scores above every one that does, and always defecting finishes last or next to last.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Play the tournament a few times. The random players change the details, not the pattern.</p>
+        </section>
+
+        <section class="hiw-chapter" id="evolution" aria-labelledby="h-evolution">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-evolution">Survival of the nicest</h2>
+          <p>Now let strategies breed: each generation, a strategy's share of the population grows in proportion to how well it scored against the current mix.</p>
+          <p>A defector profits only from the trusting. Against everyone else it soon meets defection, scoring 1 a round, while cooperators meeting each other score 3. So the defectors' share shrinks every generation until they are gone, and the strategies left are the cooperative ones. It suggests how cooperation can arise among selfish players without anyone planning it.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Watch the shares change over sixty generations.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The points are Axelrod's. The seven strategies, 200-round matches and breeding rule are this page's own small version, run in your browser; Sneaky plays tit for tat but defects one time in ten.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Prisoner%27s_dilemma" rel="noopener">Prisoner's dilemma</a>: the game, the payoffs, and Axelrod's tournaments.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Tit_for_tat" rel="noopener">Tit for tat</a>: Rapoport's entry and why it did well.</li>
+        <li>Robert Axelrod, <i>The Evolution of Cooperation</i> (1984).</li>
+      </ol>
+    </section>

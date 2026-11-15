@@ -1,0 +1,46 @@
+<!--
+  How errors fix themselves. Poured into _page.html; the scene is
+  public/explainers/error-correction/scene.js and the code art.js. Chapter
+  ids: noise, parity, hamming, everywhere.
+-->
+        <section class="hiw-chapter" id="noise" aria-labelledby="h-noise">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-noise">Noise flips bits</h2>
+          <p>Every message a computer sends or stores is a row of ones and noughts. And every line or disc is a little noisy: interference, a scratch, a stray cosmic ray, and now and then a one arrives as a nought.</p>
+          <p>Sending again is one answer, if there's time to ask. A space probe billions of kilometres away, or a scratched CD, can't ask. The data has to carry enough spare information to repair itself.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Turn up the noise and send the bits again.</p>
+        </section>
+
+        <section class="hiw-chapter" id="parity" aria-labelledby="h-parity">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-parity">One extra bit</h2>
+          <p>The simplest check: add one bit to make the number of ones even. If an odd number arrives, something went wrong.</p>
+          <p>But it can't say which bit, so it can only ask for the message again. And two flips cancel out and slip through unnoticed.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Flip one bit, then two.</p>
+        </section>
+
+        <section class="hiw-chapter" id="hamming" aria-labelledby="h-hamming">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-hamming">Overlapping checks</h2>
+          <p>In 1950 Richard Hamming, tired of his weekend jobs on a Bell Labs computer failing on errors, found a cleverer arrangement. Send four bits of data as seven: three check bits, each covering a different, overlapping group of the others.</p>
+          <p>Draw the groups as three circles. If one bit flips, exactly the circles that contain it fail their check, and every bit sits in a different combination of circles. So the failing circles point straight at the culprit, and the receiver flips it back.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Flip any one bit and watch the circles find it.</p>
+        </section>
+
+        <section class="hiw-chapter" id="everywhere" aria-labelledby="h-everywhere">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-everywhere">Worth the extra bits</h2>
+          <p>Hamming's code spends three bits to protect four, and it pays. If the line flips one bit in twenty, four bits sent plain arrive right only 81% of the time; sent as Hamming code, 96%.</p>
+          <p>Stronger codes built on the same idea are everywhere: in computer memory, mobile phones, QR codes, CDs and the radio links to spacecraft. They are why most data arrives whole over lines that are never quite clean.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Turn the noise up and compare the two lines.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The code in the scene is Hamming's (7,4) code, worked out in your browser. The chances in chapter 4 assume each bit is flipped independently; Hamming's code repairs one flipped bit in each group of seven, and two or more defeat it.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Hamming(7,4)" rel="noopener">Hamming(7,4)</a>: the code and its circle diagram.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Hamming_code" rel="noopener">Hamming code</a>: Hamming's frustration with the Bell Labs computer, and the 1950 paper.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Parity_bit" rel="noopener">Parity bit</a> and <a href="https://en.wikipedia.org/wiki/Error_correction_code" rel="noopener">Error correction code</a>.</li>
+      </ol>
+    </section>

@@ -1,0 +1,46 @@
+<!--
+  How a neural network learns. Poured into _page.html; the scene is
+  public/explainers/neural-network/scene.js and the network art.js. Chapter
+  ids: neuron, learn, xor, layers.
+-->
+        <section class="hiw-chapter" id="neuron" aria-labelledby="h-neuron">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-neuron">One neuron</h2>
+          <p>An artificial neuron is a very small sum. It takes some numbers in, multiplies each by a weight, adds them up with one more number called the bias, and answers yes if the total is above nought.</p>
+          <p>Feed it the two coordinates of a point, and it divides the square with a straight line: yes on one side, no on the other. The weights set the line's angle and the bias moves it along.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Move the weights until the line splits the two colours. Ringed points are on the wrong side.</p>
+        </section>
+
+        <section class="hiw-chapter" id="learn" aria-labelledby="h-learn">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-learn">Learning from mistakes</h2>
+          <p>Nobody needs to set the weights by hand. Show the neuron a point it gets wrong and nudge each weight a little in the direction that would have helped. Then another, and another.</p>
+          <p>This is the perceptron rule, from Frank Rosenblatt in 1958. If a straight line can split the points at all, it is certain to find one, after a number of mistakes.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Press Play, or correct one mistake at a time, and watch the line swing into place.</p>
+        </section>
+
+        <section class="hiw-chapter" id="xor" aria-labelledby="h-xor">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-xor">A line isn't enough</h2>
+          <p>Here one colour sits in two opposite corners and the other colour in the other two. No straight line can split them; the best manages about three-quarters.</p>
+          <p>In 1969 Marvin Minsky and Seymour Papert pointed out this limit of single neurons, and for years interest in the idea faded.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Try any line you like. Some points always end up on the wrong side.</p>
+        </section>
+
+        <section class="hiw-chapter" id="layers" aria-labelledby="h-layers">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-layers">Layers</h2>
+          <p>The answer is to stack them. A layer of neurons each draws its own soft line, and a final neuron combines their answers. Together they can draw curves and closed shapes.</p>
+          <p>Training needs a way to tell every weight, even deep inside, which way to move. Backpropagation does it, working backwards from the error at the output; it was made widely known in 1986. This network has just eight hidden neurons and learns either pattern in a second or two. The large models behind today's AI work the same way, with billions of weights.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Watch the network learn the ring, then the crossed pattern.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>Everything trains for real in your browser. The single neuron uses the perceptron rule; the network has one hidden layer of eight neurons and is trained by gradient descent with backpropagation.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Perceptron" rel="noopener">Perceptron</a>: Rosenblatt's 1958 rule, its guarantee, and Minsky and Papert's 1969 book.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Backpropagation" rel="noopener">Backpropagation</a>: Rumelhart, Hinton and Williams, 1986.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Artificial_neural_network" rel="noopener">Neural network (machine learning)</a>.</li>
+      </ol>
+    </section>

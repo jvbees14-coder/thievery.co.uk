@@ -1,0 +1,45 @@
+<!--
+  Why 0.1 + 0.2 isn't 0.3. Poured into _page.html; the scene is
+  public/explainers/floating-point/scene.js. Chapter ids: binary, rounding,
+  gaps, errors.
+-->
+        <section class="hiw-chapter" id="binary" aria-labelledby="h-binary">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-binary">A tenth in binary</h2>
+          <p>Computers store numbers in binary. Fractions that are halves, quarters, eighths and so on come out neatly: 0.5 is 0.1 in binary, 0.75 is 0.11.</p>
+          <p>But a tenth doesn't. In binary it is 0.000110011001100110011… with the 0011 repeating for ever, just as a third is 0.333… in decimal. A computer can only keep so many digits, usually 52, and rounds off the rest.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Compare 0.5 and 0.75 with 0.1, 0.2 and 0.3.</p>
+        </section>
+
+        <section class="hiw-chapter" id="rounding" aria-labelledby="h-rounding">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-rounding">0.30000000000000004</h2>
+          <p>So when you type 0.1, the computer stores the nearest number it can hold, which is a shade over a tenth. The same goes for 0.2. Add them and the two small errors add up, then the sum is rounded again, landing one step above the nearest stored value to 0.3.</p>
+          <p>Ask most programming languages whether 0.1 + 0.2 equals 0.3 and they say no. It's not a bug in the computer: it's working exactly to the standard, IEEE 754, used almost everywhere. That's why money is usually counted in whole pennies.</p>
+        </section>
+
+        <section class="hiw-chapter" id="gaps" aria-labelledby="h-gaps">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-gaps">Gaps that grow</h2>
+          <p>These are called floating-point numbers because the point floats: a number is kept as a fixed number of significant digits times a power of two. So between each power of two and the next there are always the same count of numbers, and the gaps between them double each time.</p>
+          <p>Near 1 the gap is tiny, about two parts in ten million billion. Beyond 9 million billion it is 2, so odd numbers can't be stored at all. Precision is relative: always about 16 significant decimal digits.</p>
+          <p class="hiw-try"><strong>Try it.</strong> See the pattern in a tiny format, then find the gap at a number of your choice.</p>
+        </section>
+
+        <section class="hiw-chapter" id="errors" aria-labelledby="h-errors">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-errors">When it matters</h2>
+          <p>Small errors can grow. In 1991 a Patriot missile battery in Dhahran, Saudi Arabia, counted time in tenths of a second, stored with 24 bits. Each tenth was off by about a ten-millionth of a second.</p>
+          <p>After 100 hours running, the clock was 0.34 seconds out. A Scud missile travels over half a kilometre in that time, and the system looked in the wrong place. It failed to intercept a Scud that killed 28 soldiers. The cure was simply to restart the system regularly, which a software update did too late.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Leave the system running and watch the drift.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The stored values in chapter 2 are your browser's own. The format in chapter 3 is made up, with only 3 bits after the point so that the pattern shows; real doubles have 52. The Patriot's drift is worked out from the 24-bit value of a tenth, and a Scud's speed taken as 1,676 m/s.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Floating-point_arithmetic" rel="noopener">Floating-point arithmetic</a>: binary fractions, rounding, IEEE 754, and the Patriot failure.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Double-precision_floating-point_format" rel="noopener">Double-precision floating-point format</a>: 52 bits, and the gaps.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/MIM-104_Patriot#Failure_at_Dhahran" rel="noopener">MIM-104 Patriot: failure at Dhahran</a>: 0.34 seconds after 100 hours, and 28 soldiers killed.</li>
+      </ol>
+    </section>

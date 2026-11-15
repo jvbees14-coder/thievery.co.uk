@@ -1,0 +1,44 @@
+<!--
+  Simpson's paradox. Poured into _page.html; the scene is
+  public/explainers/simpsons-paradox/scene.js. Chapter ids: overall, split,
+  why, mix.
+-->
+        <section class="hiw-chapter" id="overall" aria-labelledby="h-overall">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-overall">B looks better</h2>
+          <p>A study in 1986 compared two treatments for kidney stones. Treatment A was open surgery; treatment B a less invasive method. Each was used on 350 patients.</p>
+          <p>Overall, B worked for 83% of its patients and A for 78%. It seems clear that B is the better treatment.</p>
+        </section>
+
+        <section class="hiw-chapter" id="split" aria-labelledby="h-split">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-split">A is better at everything</h2>
+          <p>Now split the patients by the size of their stones. For small stones, A worked 93% of the time and B 87%. For large stones, A 73% and B 69%.</p>
+          <p>A wins in both groups, and loses when they are put together. Nothing is miscounted. This is Simpson's paradox, named after Edward Simpson, who described it in 1951.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Compare each pair of bars with the last.</p>
+        </section>
+
+        <section class="hiw-chapter" id="why" aria-labelledby="h-why">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-why">Who got which</h2>
+          <p>Doctors gave the tougher open surgery mostly to the patients with large stones, the hard cases: 263 of A's 350. B was mostly given to people with small stones, which are easier to treat whatever the method.</p>
+          <p>So A's overall figure is dragged down by its hard cases, and B's is lifted by its easy ones. The overall comparison mostly measures who each treatment was given to, not how well it works.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Compare the widths of the blocks: that is who each treatment got.</p>
+        </section>
+
+        <section class="hiw-chapter" id="mix" aria-labelledby="h-mix">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-mix">Change the mix</h2>
+          <p>Keep A just as good in each group, and change only how many of its patients had large stones. Give A the same mix as B, 80 large stones in 350, and A comes out ahead overall, 88% to 83%.</p>
+          <p>The same trap catches comparisons of hospitals, schools and universities: in 1973 the University of California, Berkeley seemed to admit men at a higher rate than women, yet department by department women did as well or better. Women had applied more to the departments that turned most people away.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Move the slider and watch A's overall figure swing while its group figures never change.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The figures are the study's own, as quoted in the sources below. In chapter 4 the scene keeps A's success rate for each stone size fixed and recalculates its overall figure for the mix you choose.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Simpson%27s_paradox" rel="noopener">Simpson's paradox</a>: the kidney stone study (Charig and others, 1986), the Berkeley admissions case, and Simpson's 1951 paper.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Confounding" rel="noopener">Confounding</a>.</li>
+      </ol>
+    </section>

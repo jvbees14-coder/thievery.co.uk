@@ -1,0 +1,46 @@
+<!--
+  How a satnav finds a route. Poured into _page.html; the scene is
+  public/explainers/pathfinding/scene.js and the searches art.js. Chapter
+  ids: flood, mud, astar, compare.
+-->
+        <section class="hiw-chapter" id="flood" aria-labelledby="h-flood">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-flood">Spread out from the start</h2>
+          <p>A computer finding a route can't see the whole map at a glance. It has to look at one place at a time and work outwards. The simplest way: look at every place one step from the start, then every place two steps away, then three, and so on, like water spreading.</p>
+          <p>This is breadth-first search. The first time it reaches the goal, it has found a route with the fewest possible steps, and by remembering where it came from at each place it can trace the route back.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Watch the search flood the grid, then try a new grid.</p>
+        </section>
+
+        <section class="hiw-chapter" id="mud" aria-labelledby="h-mud">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-mud">Not every step costs the same</h2>
+          <p>Real roads differ: a motorway mile is quicker than a mile through town. Here the orange cells are mud, five times as slow to cross. The fewest steps may wade straight through it.</p>
+          <p>In 1956 Edsger Dijkstra worked out how to find the cheapest route instead: always settle next whichever place is cheapest to reach so far. It spreads out by cost rather than by steps, and finds a route round the mud that takes a few more steps but less time.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Switch between fewest steps and lowest cost, and compare the routes.</p>
+        </section>
+
+        <section class="hiw-chapter" id="astar" aria-labelledby="h-astar">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-astar">Aim at the goal</h2>
+          <p>Both searches waste effort looking in every direction, including away from the goal. A* (said "A star"), from 1968, adds a guess: for each place, the cost so far plus the straight-line distance still to go. It settles the places that look most promising first.</p>
+          <p>As long as the guess never overestimates, A* still finds the best route, but it heads towards the goal and leaves most of the map alone. Satnavs and computer games use searches built on it.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Watch A* push towards the red goal.</p>
+        </section>
+
+        <section class="hiw-chapter" id="compare" aria-labelledby="h-compare">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-compare">Less looking</h2>
+          <p>On the same grid, both find a shortest route, but A* gets there after looking at far fewer places: across fifty random grids like these, about half as many.</p>
+          <p>On a map of a whole country, with millions of junctions, that difference is everything. Route planners add more tricks, such as working out shortcuts between major roads in advance, so an answer comes back in a fraction of a second.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Make new grids and compare the counts.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The searches run in your browser on randomly made grids, moving up, down, left and right; A* guesses the rest of the way by counting rows and columns. "About half" is the average over fifty grids.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Breadth-first_search" rel="noopener">Breadth-first search</a>.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm" rel="noopener">Dijkstra's algorithm</a>: conceived in 1956.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/A*_search_algorithm" rel="noopener">A* search algorithm</a>: Hart, Nilsson and Raphael, 1968, and why the guess must not overestimate.</li>
+      </ol>
+    </section>

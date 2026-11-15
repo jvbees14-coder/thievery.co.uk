@@ -1,0 +1,46 @@
+<!--
+  Shades from black and white. Poured into _page.html; the scene is
+  public/explainers/dithering/scene.js. Chapter ids: threshold, random,
+  ordered, diffusion.
+-->
+        <section class="hiw-chapter" id="threshold" aria-labelledby="h-threshold">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-threshold">Only two colours</h2>
+          <p>A newspaper printer has black ink and white paper. Early screens and many receipt printers had only two colours too. How do you show a grey?</p>
+          <p>The obvious way: make every pixel lighter than middle grey white, and every darker one black. The result is harsh: the gentle shading becomes flat shapes with hard edges, and all the in-between greys are lost.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Compare with the original greys, and zoom in.</p>
+        </section>
+
+        <section class="hiw-chapter" id="random" aria-labelledby="h-random">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-random">Mix in some noise</h2>
+          <p>The trick is to use the mix of black and white dots to stand for a grey. A pixel that's 30% grey should be white about 30% of the time. Compare each pixel with a random level instead of the middle, and on average that's exactly what happens.</p>
+          <p>From far enough away the eye blends the dots into the right shade. But the randomness shows as grain, like an old photograph.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Step back from the screen and watch the greys appear.</p>
+        </section>
+
+        <section class="hiw-chapter" id="ordered" aria-labelledby="h-ordered">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-ordered">An orderly pattern</h2>
+          <p>Instead of random levels, use a small repeating grid of levels, arranged so that as the grey darkens, dots switch on evenly spread out. This is ordered dithering, and the commonest grid is Bryce Bayer's, from 1973.</p>
+          <p>It's quick and steady, which suits moving pictures, but it leaves a visible crosshatch, familiar from old computer games and printed comics.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Zoom in to see the grid.</p>
+        </section>
+
+        <section class="hiw-chapter" id="diffusion" aria-labelledby="h-diffusion">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-diffusion">Pass the error on</h2>
+          <p>In 1976 Robert Floyd and Louis Steinberg had a better idea. Go through the pixels in order, rounding each to black or white, and note how far off it was. Then share that error out among the neighbours not yet drawn: 7/16 to the right, and the rest to the three below.</p>
+          <p>Every bit of brightness lost in one pixel is made up nearby, so the shading comes out smooth and detailed, with no regular pattern. It is still one of the most used ways to print a photograph in two colours.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Zoom in and compare with the ordered pattern. Both keep the shading right on average; this one keeps finer detail and has no grid.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The picture is drawn by the page, and each method runs in your browser. The error figure averages, over 8 by 8 pixel patches, how far the share of white pixels is from the original's brightness. On it the ordered pattern and error diffusion score about the same; the difference between them is in fine detail and pattern, which that figure doesn't measure.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Dither" rel="noopener">Dither</a>: thresholds, random dithering and the methods compared.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Ordered_dithering" rel="noopener">Ordered dithering</a>: the Bayer matrix (1973).</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Floyd%E2%80%93Steinberg_dithering" rel="noopener">Floyd–Steinberg dithering</a>: the 1976 method and its weights.</li>
+      </ol>
+    </section>

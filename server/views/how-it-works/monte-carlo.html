@@ -1,0 +1,45 @@
+<!--
+  Finding π with random darts. Poured into _page.html; the scene is
+  public/explainers/monte-carlo/scene.js. Chapter ids: darts, converge,
+  needle, uses.
+-->
+        <section class="hiw-chapter" id="darts" aria-labelledby="h-darts">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-darts">Darts at a square</h2>
+          <p>Draw a quarter of a circle inside a square, its radius the width of the square. The quarter circle covers π/4 of the square, about 78.5%.</p>
+          <p>Now throw darts at the square completely at random. About 78.5% will land inside the curve. Count them, multiply the share by four, and you have an estimate of π, worked out with nothing but chance.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Throw darts and watch the estimate.</p>
+        </section>
+
+        <section class="hiw-chapter" id="converge" aria-labelledby="h-converge">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-converge">Slowly closer</h2>
+          <p>The estimate wanders at first and settles as darts pile up, but slowly. The typical error shrinks with the square root of the number of darts: a hundred times more darts for one more correct digit. Ten thousand darts usually get π to within about 0.02.</p>
+          <p>That makes darts a poor way to find π, which is known to trillions of digits by better methods. Its strength is elsewhere.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Throw a hundred thousand and watch the line hug π.</p>
+        </section>
+
+        <section class="hiw-chapter" id="needle" aria-labelledby="h-needle">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-needle">Buffon's needle</h2>
+          <p>In 1777 Georges-Louis Leclerc, Comte de Buffon, asked a related question. Drop needles on a floor of boards, each needle as long as a board is wide. What share land across a crack?</p>
+          <p>The answer is 2/π, about 64%. So dropping needles, counting, and dividing gives π again. It was one of the first problems to join chance and geometry.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Drop needles. Gold ones cross a line.</p>
+        </section>
+
+        <section class="hiw-chapter" id="uses" aria-labelledby="h-uses">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-uses">Answers from randomness</h2>
+          <p>The same trick measures things no formula can. The area of this lake has no neat expression, but random darts find it all the same.</p>
+          <p>Stanislaw Ulam and John von Neumann made the idea a working method in the 1940s at Los Alamos, and it was named after the Monte Carlo casino. Computers now use it to simulate everything from neutrons and weather to financial risk: when a problem is too tangled to solve, try it at random many times and count.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Throw darts at the lake and compare with its exact area.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The darts and needles use your browser's random numbers. The lake's exact area is found by checking 360,000 points on a fine grid. The shaded band in chapter 2 is where the estimate falls about two times in three.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Monte_Carlo_method" rel="noopener">Monte Carlo method</a>: estimating π, Ulam and von Neumann, and the name.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Buffon%27s_needle_problem" rel="noopener">Buffon's needle problem</a>: the chance of 2/π.</li>
+      </ol>
+    </section>

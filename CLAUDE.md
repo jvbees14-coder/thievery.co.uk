@@ -961,7 +961,7 @@ the socket.
 
 ## How it works
 
-Interactive explainers, thirty-four of them in six sections: a canvas scene
+Interactive explainers, seventy-four of them in six sections: a canvas scene
 pinned beside writing cut into chapters, every chapter changing the scene.
 Plain pages like the tools (no login, nothing stored, up in an outage),
 listed in `server/explainers.js`; an unlisted view is a 404.
@@ -986,7 +986,13 @@ listed in `server/explainers.js`; an unlisted view is a 404.
   its page's ids, and that the count matches `chapters` in the list.
 - **The scene is drawn in tokens**, read off the page, plus the section's
   own `--hiw-ink-*` in `explainers.css`, each an existing token. No literal
-  colours, so light and dark need nothing extra.
+  colours, so light and dark need nothing extra. The one exception is
+  `screen-colour`, whose subject is the reader's own red, green and blue
+  levels. Anything that must stay dark on a light page (night, the Moon's
+  dark side) uses `--back`, which is navy in both schemes; `--bg` is not.
+- **The readout is cleared on every chapter change** by the engine, so a
+  chapter that calls `api.readout` for nothing shows none rather than the
+  last chapter's figures.
 - **Motion:** nothing moves by itself unless `api.playing && api.motion`;
   reduced motion and the site's still setting start it paused.
 - **Figures are sourced on the page.** Each scene's constants and its
@@ -1005,7 +1011,10 @@ listed in `server/explainers.js`; an unlisted view is a 404.
   AAA with no cables. Change any of them with the same care as `grade.js`.
 - **Several scenes are models, and their pages quote the model's own
   figures** (traffic-jams, epidemics, heat-pump, electric-motor, sorting,
-  pagerank). Change a constant in an `art.js` and rerun it before trusting
+  pagerank, random-walks, greenhouse-effect, solar-panels, orbits,
+  prisoners-dilemma, pathfinding, neural-network, polls, monte-carlo,
+  ocean-waves, coriolis, wind-turbine, microwave-oven, fractals,
+  stable-matching, small-world, cooling). Change a constant in an `art.js` and rerun it before trusting
   the numbers in the view's writing.
 - **Sound plays only on a press** (`sound/scene.js`, Web Audio, quiet), and
   stops on a chapter change and on `pagehide`. Nothing on the site makes a

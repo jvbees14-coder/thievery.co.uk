@@ -1,0 +1,45 @@
+<!--
+  How polls work. Poured into _page.html; the scene is
+  public/explainers/polls/scene.js. Chapter ids: sample, spread, size, bias.
+-->
+        <section class="hiw-chapter" id="sample" aria-labelledby="h-sample">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-sample">Asking a few</h2>
+          <p>Nobody can ask a whole country what it thinks. A poll asks a sample, perhaps a thousand people chosen at random, and assumes the rest think much the same.</p>
+          <p>Any one sample comes out a little off, just by the luck of who was picked. Ask 100 people from a crowd that is 52% in favour and the answer might be 47% or 58%.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Ask a few different hundreds and see how the answer moves.</p>
+        </section>
+
+        <section class="hiw-chapter" id="spread" aria-labelledby="h-spread">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-spread">The margin of error</h2>
+          <p>Run the same poll of 1,000 people hundreds of times and the answers pile up in a bell shape round the truth. About 95 polls in 100 land within 3 points of it, either way. That's the margin of error a newspaper quotes.</p>
+          <p>So a poll showing 52% to 48% can't really tell you who is ahead. The other 5 polls in 100 miss by more, and nobody can tell which polls those are.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Run more polls and count how many land in the green band.</p>
+        </section>
+
+        <section class="hiw-chapter" id="size" aria-labelledby="h-size">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-size">Bigger samples, slowly better</h2>
+          <p>Asking more people narrows the margin, but slowly: it shrinks with the square root of the sample. 100 people give about ±10 points, 1,000 about ±3, and 4,000 about ±1.5. Four times the work halves the error.</p>
+          <p>Surprisingly, the size of the country hardly matters. A random sample of 1,000 works as well for 70 million people as for 7 million.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change the sample size and watch the bell narrow.</p>
+        </section>
+
+        <section class="hiw-chapter" id="bias" aria-labelledby="h-bias">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-bias">When the sample isn't random</h2>
+          <p>All of this assumes everyone is equally likely to be asked and to answer. If one side is even a little less willing to talk to pollsters, every poll leans the same way, and asking more people only makes them confidently wrong. If supporters answer nine times for every ten others do, polls of 52% support come out under 50%.</p>
+          <p>In 1936 the <i>Literary Digest</i> collected 2.4 million replies and predicted a clear win for Alf Landon. Franklin Roosevelt won by a landslide. Its readers and the people it wrote to were richer than most voters. Polls today spend much of their effort on correcting for who answers.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Make supporters shyer, then make the polls bigger. The bell narrows round the wrong answer.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The polls in the scene are simulated in your browser: each person asked is in favour with a 52% chance. The margin of error is the usual one for a 95% level, 1.96 times the standard error.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Margin_of_error" rel="noopener">Margin of error</a>: about ±3 points for 1,000 people, and why the population's size barely matters.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/The_Literary_Digest" rel="noopener">The Literary Digest</a>: the 1936 poll of 2.4 million.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Response_bias" rel="noopener">Response bias</a> and <a href="https://en.wikipedia.org/wiki/Sampling_bias" rel="noopener">Sampling bias</a>.</li>
+      </ol>
+    </section>

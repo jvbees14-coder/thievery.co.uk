@@ -1,0 +1,45 @@
+<!--
+  Benford's law. Poured into _page.html; the scene is
+  public/explainers/benfords-law/scene.js and the data sets art.js. Chapter
+  ids: digits, why, data, fraud.
+-->
+        <section class="hiw-chapter" id="digits" aria-labelledby="h-digits">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-digits">Too many ones</h2>
+          <p>Take a big collection of real-world numbers, such as town populations, river lengths or company accounts, and look only at the first digit of each. You might expect each of 1 to 9 to turn up about one time in nine.</p>
+          <p>They don't. A 1 leads about 30% of the time, a 2 about 18%, and a 9 under 5%. The pattern is called Benford's law, after the physicist who studied it in 1938, though Simon Newcomb noticed it in 1881 from the worn first pages of books of logarithms.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Here are the first digits of the first thousand powers of 2, against Benford's figures.</p>
+        </section>
+
+        <section class="hiw-chapter" id="why" aria-labelledby="h-why">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-why">Why 1 wins</h2>
+          <p>Think of something growing steadily, say by 10% a year. To get from 100 to 200 it must double. To get from 900 to 1,000 it needs to grow only 11%. So it spends much longer with a leading 1 than with a leading 9.</p>
+          <p>On a scale where every tenfold rise takes the same room, the stretch from 1 to 2 fills 30% of it and the stretch from 9 to 10 under 5%. Numbers that grow by percentages, or span many powers of ten, fall into each stretch in proportion to its width.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Watch the growing number and how long it lingers at each digit.</p>
+        </section>
+
+        <section class="hiw-chapter" id="data" aria-labelledby="h-data">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-data">It turns up everywhere</h2>
+          <p>Powers of 2, the Fibonacci numbers and money growing at interest all follow the law closely. So do many messier collections: populations, prices, stock volumes and physical constants.</p>
+          <p>It doesn't apply to everything. Numbers held in a narrow range, such as adult heights in centimetres, or numbers assigned by rule, such as phone numbers, ignore it.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Switch between the collections.</p>
+        </section>
+
+        <section class="hiw-chapter" id="fraud" aria-labelledby="h-fraud">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-fraud">Catching made-up numbers</h2>
+          <p>People inventing figures tend to spread their digits evenly, because that feels random. The result looks nothing like Benford's law.</p>
+          <p>Accountants and tax investigators use this as a warning sign: a set of expense claims or accounts whose first digits are too even deserves a closer look. It proves nothing on its own, but it tells them where to dig.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Compare the made-up figures with the gold line.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The data sets are made in your browser. The made-up figures pick a first digit evenly from 1 to 9, as people inventing numbers tend to.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Benford%27s_law" rel="noopener">Benford's law</a>: the figures, Newcomb's 1881 note, Benford's 1938 paper, where it applies, and its use against fraud.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Logarithmic_scale" rel="noopener">Logarithmic scale</a>.</li>
+      </ol>
+    </section>

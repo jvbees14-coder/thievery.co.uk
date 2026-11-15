@@ -1,0 +1,46 @@
+<!--
+  Matching doctors to hospitals. Poured into _page.html; the scene is
+  public/explainers/stable-matching/scene.js and the algorithm art.js.
+  Chapter ids: problem, unstable, algorithm, proposers.
+-->
+        <section class="hiw-chapter" id="problem" aria-labelledby="h-problem">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-problem">Everyone has a list</h2>
+          <p>Every year thousands of new doctors need hospital jobs, and every hospital needs doctors. Each doctor ranks the hospitals, and each hospital ranks the doctors. How do you pair them up?</p>
+          <p>Paired at random, plenty of people are unhappy. Worse, some doctor and some hospital will each prefer the other to what they got, and they have every reason to quietly make their own deal. When that happens the whole system falls apart.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Draw random matchings and count the red dashed pairs: people who would both rather swap.</p>
+        </section>
+
+        <section class="hiw-chapter" id="unstable" aria-labelledby="h-unstable">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-unstable">What stable means</h2>
+          <p>A matching is stable if there's no such pair: no doctor and hospital who both prefer each other to their actual partners. Not everyone gets their first choice, but nobody has a partner who would rather have them and whom they would rather have.</p>
+          <p>It isn't obvious that a stable matching always exists. In 1962 David Gale and Lloyd Shapley proved that it always does, and showed how to find one.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Read off one unstable pair and why.</p>
+        </section>
+
+        <section class="hiw-chapter" id="algorithm" aria-labelledby="h-algorithm">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-algorithm">Ask, hold, let go</h2>
+          <p>Every applicant asks their first-choice hospital. Each hospital holds on to the best applicant who asked it and turns the others away, but only for now. Anyone turned away asks their next choice. A hospital that gets a better offer lets go of the one it was holding, who carries on down their list.</p>
+          <p>Nobody is accepted for good until the end, so it's called deferred acceptance. It always finishes, and the result is always stable.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Step through and watch offers being held and let go.</p>
+        </section>
+
+        <section class="hiw-chapter" id="proposers" aria-labelledby="h-proposers">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-proposers">Who asks matters</h2>
+          <p>The side that does the asking comes off better. With applicants asking, every applicant gets the best partner they could have in any stable matching; with hospitals asking, the hospitals do.</p>
+          <p>The US system that matches junior doctors to hospitals has used a version of this since the 1950s, and in the 1990s Alvin Roth redesigned it so that the applicants do the asking. Shapley and Roth shared the 2012 Nobel prize in economics for this work. Versions now place pupils in schools and match kidney donors.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Switch who asks and compare how each side does.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The preferences are made up at random and the algorithm runs in your browser. In a thousand random runs with six on each side, it never once produced an unstable result.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Stable_marriage_problem" rel="noopener">Stable marriage problem</a>: stability, Gale and Shapley's 1962 algorithm, and why the asking side does best.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/National_Resident_Matching_Program" rel="noopener">National Resident Matching Program</a>: the doctors' match and Roth's redesign.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Alvin_E._Roth" rel="noopener">Alvin E. Roth</a>: the 2012 Nobel prize with Lloyd Shapley, school choice and kidney exchange.</li>
+      </ol>
+    </section>
