@@ -535,7 +535,7 @@ function makeBody(x, y, vx, vy, m, opts = {}) {
   const b = {
     id: opts.id ?? nextId++, x, y, vx, vy, ax: 0, ay: 0, m,
     bh: !!opts.bh, comet: !!opts.comet, debris: !!opts.debris, noTidal: !!opts.noTidal,
-    mine: !!opts.mine, target: !!opts.target,
+    mine: !!opts.mine, target: !!opts.target, group: opts.group || 0, grace: opts.grace || 0,
     hue: opts.hue ?? rand(0, 360), tint: opts.tint || null, trail: [], ts: 0, heat: 0, flux: 0, sun: null, born: simTime,
   };
   refresh(b);
@@ -710,6 +710,100 @@ function stepSize() {
 }
 
 /* ================= Collisions, debris, tidal breakup ================= */
+
+/* How hard a hit has to be to break a body up. The measure is the impact
+   energy per unit of total mass, Q, against the energy that disperses half
+   of a body of that mass, Q* ≈ 1.9 × its gravitational binding energy per
+   unit mass (0.6·G·M/R), the factor Leinhardt & Stewart (2012) found for
+   bodies held together by gravity alone. At Q = Q* the largest piece
+   left holds half the mass, below half of Q* it is a merge with at most a splash,
+   and past 1.8·Q* the body is pulverised. Stars, black holes, galaxy dust and
+   pieces that are already debris never break up this way. */
+const DISRUPT_FROM = 0.5;
+function disruptionOf(a, b, rv2) {
+  if (a.bh || b.bh || a.tint || b.tint || a.debris || b.debris) return null;
+  const big = a.m >= b.m ? a : b;
+  if (big.kind === 'star' || big.m >= 200) return null;
+  const M = a.m + b.m;
+  const Q = 0.5 * (a.m * b.m / M) * rv2 / M;
+  const ratio = Q / (1.9 * 0.6 * G * M / radiusFor(M, false));
+  if (ratio < DISRUPT_FROM) return null;
+  const left = ratio < 1.8 ? 1 - 0.5 * ratio : 0.1 * Math.pow(ratio / 1.8, -1.5);
+  return { ratio, Mlr: M * left };
+}
+
+/* Piece masses for `total`, drawn from the power law real fragments follow
+   (dN/dm ∝ m^-1.8: a few big chunks, many small), between lo and hi, at most
+   `cap` of them, scaled to add up exactly. */
+function pieceMasses(total, lo, hi, cap) {
+  const e = -0.8, a = Math.pow(lo, e), b = Math.pow(hi, e);
+  const out = [];
+  let sum = 0;
+  while (sum < total && out.length < cap) { const m = Math.pow(a + Math.random() * (b - a), 1 / e); out.push(m); sum += m; }
+  const k = total / sum;
+  return out.map(m => m * k).sort((p, q) => q - p);
+}
+
+/* A hit hard enough to break the bigger body: what is left of it stays where
+   the two met, and the rest is thrown out from the impact site. A glancing
+   blow sprays out of the crater; a harder one blows material out through the
+   far side as well, in a wider fan. Pieces leave at around the escape speed
+   (smaller ones a little faster), so some fall back and some fly off, and
+   the momentum of the whole is what it was. */
+function shatter(a, b, dis) {
+  const big = a.m >= b.m ? a : b, small = big === a ? b : a;
+  const slots = MAX_BODIES - bodies.length - spawnQueue.length - 10;
+  if (slots < 4) return false;
+  const M = a.m + b.m;
+  const cx = (a.x * a.m + b.x * b.m) / M, cy = (a.y * a.m + b.y * b.m) / M;
+  const vx = (a.vx * a.m + b.vx * b.m) / M, vy = (a.vy * a.m + b.vy * b.m) / M;
+  let nx = small.x - big.x, ny = small.y - big.y;
+  const nl = Math.hypot(nx, ny) || 1; nx /= nl; ny /= nl;            // out of the crater
+  let dx = small.vx - big.vx, dy = small.vy - big.vy;
+  const dl = Math.hypot(dx, dy) || 1; dx /= dl; dy /= dl;            // on through the body
+  const w = clamp((dis.ratio - DISRUPT_FROM) / 1.3, 0, 1);
+  let ax = nx * (1 - w) + dx * w, ay = ny * (1 - w) + dy * w;
+  const al = Math.hypot(ax, ay);
+  if (al < 1e-6) { ax = nx; ay = ny; } else { ax /= al; ay /= al; }
+  const spread = (55 + 125 * w) * Math.PI / 180;
+
+  big.x = cx; big.y = cy; big.vx = vx; big.vy = vy;
+  big.m = Math.max(dis.Mlr, 0.02);
+  big.comet = false;
+  big.mine = a.mine || b.mine;
+  refresh(big);
+  const thrown = M - big.m;
+  const hi = Math.max(0.02, dis.ratio < 1.8 ? Math.min(thrown * 0.35, big.m * 0.5) : thrown * 0.3);
+  const lo = Math.min(hi, Math.max(0.02, thrown / 60));
+  const masses = pieceMasses(thrown, lo, hi, Math.min(40, slots));
+  const vesc = Math.sqrt(2 * G * M / radiusFor(M, false));
+  const group = big.id, grace = simTime + 20;
+  big.group = group; big.grace = grace;
+  let px = 0, py = 0;
+  const pieces = [];
+  for (const m of masses) {
+    const t = (Math.random() * 2 - 1) * spread;
+    const ux = ax * Math.cos(t) - ay * Math.sin(t), uy = ax * Math.sin(t) + ay * Math.cos(t);
+    const sp = vesc * rand(0.5, 1.3) * Math.min(2.5, Math.pow(m / masses[0], -1 / 6));
+    const dist = big.r + radiusFor(m, false) * 0.35 + 1.5 + Math.random() * Math.max(2, big.r * 0.6);
+    const f = makeBody(cx + ux * dist, cy + uy * dist, vx + ux * sp, vy + uy * sp, m,
+      { debris: true, noTidal: true, hue: Math.random() < 0.7 ? big.hue : small.hue, mine: big.mine, group, grace });
+    px += m * ux * sp; py += m * uy * sp;
+    pieces.push(f);
+  }
+  // Share the recoil out over everything, so the total momentum is unchanged.
+  const sx = px / M, sy = py / M;
+  big.vx -= sx; big.vy -= sy;
+  for (const f of pieces) { f.vx -= sx; f.vy -= sy; }
+  spawnQueue.push(...pieces);
+  small.dead = true;
+  if (cam.follow === small) cam.follow = big;
+  if (selected === small) selected = big;
+  effects.push({ x: cx, y: cy, r0: big.r, t: 0, color: big.color, size: 1 });
+  if (M >= 1) flashMessage(dis.ratio >= 1 ? `${nameOf(big)} was shattered` : `${nameOf(big)} was broken open`);
+  return true;
+}
+
 function merge(a, b) {
   const big = a.m >= b.m ? a : b, small = big === a ? b : a;
   const m = a.m + b.m;
@@ -718,7 +812,10 @@ function merge(a, b) {
   playImpact(energy, m, small.m, toScreen(big.x, big.y).x, a.bh || b.bh, big.kind === 'star' && small.m >= 10);
   if (challenge) challengeMerge(a, b);
 
-  // Decide whether this crash is violent enough to throw off debris.
+  const dis = disruptionOf(a, b, rv2);
+  if (dis && shatter(a, b, dis)) { merges++; return; }
+
+  // Not enough to break it: a merge, with a splash off the smaller body if it was quick.
   const vEsc2 = 2 * G * m / (big.r + small.r);
   const splash = !a.bh && !b.bh && big.kind !== 'star' && !a.debris && !b.debris && !a.tint && !b.tint &&
     small.m >= 0.3 && rv2 > 1.5 * vEsc2 && bodies.length + spawnQueue.length < MAX_BODIES - 20;
@@ -766,11 +863,17 @@ function merge(a, b) {
   }
 }
 
+/* Pieces of the same break-up do not merge again straight away: they were
+   made touching, and would otherwise clump back together on the next step. */
+function kin(a, b) {
+  return a.group !== 0 && a.group === b.group && simTime < a.grace && simTime < b.grace;
+}
+
 function resolveCollisions() {
   if (!collisionPairs.length) return false;
   for (let i = 0; i < collisionPairs.length; i += 2) {
     const a = collisionPairs[i], b = collisionPairs[i + 1];
-    if (a.dead || b.dead) continue;
+    if (a.dead || b.dead || kin(a, b)) continue;
     merge(a, b);
   }
   bodies = bodies.filter(b => !b.dead);
@@ -778,39 +881,102 @@ function resolveCollisions() {
   return true;
 }
 
-/* A planet or moon that strays inside a big body's Roche limit is pulled apart into a ring of fragments. */
-function tidalCheck() {
-  if (bodies.length > MAX_BODIES - 40) return;
+/* Tides. A body that strays inside a bigger body's Roche limit is stretched
+   along the line to it and comes apart from both ends: material leaves from
+   the face toward the host and the face away from it, and because the inner
+   pieces orbit faster than the outer ones they draw out into a pair of tidal
+   tails, one ahead along the orbit and one behind. The deeper it goes, the
+   faster it sheds (with (roche/d)³ − 1, the strength of the tide over the
+   body's own pull). Deep enough, or with most of it gone, what is left breaks
+   up as a whole: a stretched clump turning with its orbit, which shears out
+   into an arc rather than a line. */
+const TIDE_RATE = 0.02;
+function tidalCheck(dt) {
+  if (!dt || bodies.length > MAX_BODIES - 30) return;
   const hosts = bodies.filter(b => b.m >= 10);
   if (!hosts.length) return;
   let changed = false;
   for (const s of bodies) {
-    if (s.dead || s.debris || s.tint || s.bh || s.noTidal || s.m < 0.5 || s.m >= 200) continue;
+    if (s.dead || s.debris || s.tint || s.bh || s.noTidal || s.m >= 200) continue;
+    if (s.m < 0.5 && !s.tideM0) continue;
+    let host = null, depth = 0;
     for (const h of hosts) {
       if (h === s || h.dead || h.m < 12 * s.m) continue;
       const d = Math.hypot(s.x - h.x, s.y - h.y);
       const roche = (h.bh ? h.r * 3.2 : h.r * 2.0) + s.r;
-      if (d < roche && d > (h.cr + s.cr) * 0.85) { shred(s, h); changed = true; break; }
+      if (d < roche && d > (h.cr + s.cr) * 0.85 && roche / d > depth) { depth = roche / d; host = h; }
+    }
+    if (!host) continue;
+    if (!s.tideM0) {
+      s.tideM0 = s.m;
+      flashMessage(`${nameOf(s)} is being pulled apart by ${nameOf(host)}`);
+    }
+    const piece = Math.max(0.03, s.tideM0 * 0.035);
+    if (depth > 1.6 || s.m - piece < 0.25 * s.tideM0 || bodies.length + spawnQueue.length > MAX_BODIES - 40) {
+      breakUp(s, host);
+      changed = true;
+      continue;
+    }
+    s.tideAcc = (s.tideAcc || 0) + s.m * TIDE_RATE * (depth ** 3 - 1) * dt;
+    let n = 0;
+    while (s.tideAcc >= piece && n < 4 && s.m - piece >= 0.25 * s.tideM0) {
+      s.tideSide = -(s.tideSide || 1);
+      shedPiece(s, host, piece, s.tideSide);
+      s.tideAcc -= piece; n++;
+      changed = true;
     }
   }
   if (changed) { bodies = bodies.filter(b => !b.dead); bodies.push(...spawnQueue); spawnQueue = []; computeAcc(); }
 }
-function shred(s, h) {
-  const N = clamp(Math.round(5 + s.m * 1.5), 6, 16);
-  const rvx = s.vx - h.vx, rvy = s.vy - h.vy;
-  const sp = Math.hypot(rvx, rvy) || 1;
-  const tx = rvx / sp, ty = rvy / sp;
-  const spacing = Math.max(1.6, s.r * 0.9);
-  for (let k = 0; k < N; k++) {
-    const o = k - (N - 1) / 2;
-    const f = makeBody(s.x + tx * o * spacing, s.y + ty * o * spacing, s.vx + tx * o * sp * 0.012, s.vy + ty * o * sp * 0.012, s.m / N,
-      { debris: true, noTidal: true, hue: s.hue, mine: s.mine, comet: s.comet });
+
+/* One piece off the face toward the host (side −1) or away from it (+1),
+   nudged off the surface; the body takes the recoil. */
+function shedPiece(s, h, m, side) {
+  let rx = s.x - h.x, ry = s.y - h.y;
+  const d = Math.hypot(rx, ry) || 1;
+  rx /= d; ry /= d;
+  const ux = rx * side, uy = ry * side;
+  s.m -= m;
+  refresh(s);
+  const kick = Math.sqrt(2 * G * s.m / s.r) * 0.6;
+  const off = s.r + radiusFor(m, false) * 0.35 + 0.8;
+  s.group = s.id; s.grace = simTime + 40;
+  const f = makeBody(s.x + ux * off, s.y + uy * off, s.vx + ux * kick, s.vy + uy * kick, m,
+    { debris: true, noTidal: true, hue: s.hue, mine: s.mine, comet: s.comet, group: s.id, grace: simTime + 40 });
+  s.vx -= ux * kick * m / s.m; s.vy -= uy * kick * m / s.m;
+  spawnQueue.push(f);
+}
+
+/* What is left goes at once: uneven pieces in a clump stretched three to one
+   along the line to the host, each moving with the body plus the turn of its
+   orbit, so the inner ones run ahead, the outer ones fall behind, and the
+   clump spreads into an arc. */
+function breakUp(s, h) {
+  let rx = s.x - h.x, ry = s.y - h.y;
+  const d = Math.hypot(rx, ry) || 1;
+  rx /= d; ry /= d;
+  const tx = -ry, ty = rx;
+  const omega = (rx * (s.vy - h.vy) - ry * (s.vx - h.vx)) / d;   // the orbit's turn rate
+  const room = Math.max(4, MAX_BODIES - bodies.length - spawnQueue.length - 10);
+  const N = Math.min(room, clamp(Math.round(5 + s.m * 2), 6, 18));
+  const masses = pieceMasses(s.m, Math.max(0.02, s.m / 60), Math.max(0.03, s.m * 0.3), N);
+  const A = 1.6 * s.r + 1, B = 0.55 * s.r + 0.6;
+  const group = s.id, grace = simTime + 30;
+  let biggest = null;
+  masses.forEach((m, i) => {
+    const rr = Math.sqrt((i + 0.5) / masses.length), th = i * 2.39996;
+    const oa = Math.cos(th) * rr * A, ob = Math.sin(th) * rr * B;   // along the line to the host, and across it
+    const ox = rx * oa + tx * ob, oy = ry * oa + ty * ob;
+    const f = makeBody(s.x + ox, s.y + oy, s.vx - omega * oy, s.vy + omega * ox, m,
+      { debris: true, noTidal: true, hue: s.hue, mine: s.mine, comet: s.comet, group, grace });
     spawnQueue.push(f);
-    if (k === Math.floor(N / 2)) { if (cam.follow === s) cam.follow = f; if (selected === s) selected = f; }
-  }
+    if (!biggest) biggest = f;
+  });
+  if (cam.follow === s) cam.follow = biggest;
+  if (selected === s) selected = biggest;
   s.dead = true;
   effects.push({ x: s.x, y: s.y, r0: s.r, t: 0, color: s.color, size: 0.6 });
-  playImpact(s.m * sp * sp * 0.2, s.m, s.m, toScreen(s.x, s.y).x, false, false);
+  playImpact(s.m * omega * omega * d * d * 0.2, s.m, s.m, toScreen(s.x, s.y).x, false, false);
   if (challenge) challengeShred(s);
   flashMessage(`${nameOf(s)} was torn apart by ${nameOf(h)}'s tides`);
 }
@@ -2453,7 +2619,7 @@ function frame(now) {
     simTime += done;
     const ratio = want > 0 ? done / want : 1;
     actualSpeed += (SPEEDS[speedIdx] * ratio - actualSpeed) * 0.1;
-    tidalCheck();
+    tidalCheck(done);
     cull();
     syncTargets();
     challengeTick(done);

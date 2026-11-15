@@ -1,5 +1,5 @@
 // Offline support: try the network first (so updates show up), fall back to the cache when offline.
-const CACHE = 'pocket-universe-v8';
+const CACHE = 'pocket-universe-v9';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {
