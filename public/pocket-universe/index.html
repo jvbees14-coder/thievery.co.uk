@@ -1346,10 +1346,25 @@ function markScene(name) {
 }
 
 /* ================= Starfield ================= */
+/* The background stars, in four brightness groups so each group is one fill
+   rather than a fill per star, over a sky painted once into its own canvas
+   (redone only when the window changes size). */
 let stars = [];
+let sky = null;
+const STAR_LEVELS = [0.3, 0.45, 0.62, 0.8];
 function makeStars() {
   const n = Math.round((W * H) / 3500);
-  stars = Array.from({ length: n }, () => ({ x: Math.random(), y: Math.random(), d: rand(0.02, 0.12), a: rand(0.25, 0.85), s: Math.random() < 0.08 ? 1.4 : 0.8 }));
+  stars = Array.from({ length: n }, () => ({ x: Math.random(), y: Math.random(), d: rand(0.02, 0.12), g: Math.floor(Math.random() * 4), s: Math.random() < 0.08 ? 1.4 : 0.8 }));
+  sky = document.createElement('canvas');
+  sky.width = Math.round(W * DPR); sky.height = Math.round(H * DPR);
+  const c = sky.getContext('2d');
+  c.setTransform(DPR, 0, 0, DPR, 0, 0);
+  c.fillStyle = '#05060d';
+  c.fillRect(0, 0, W, H);
+  const g = c.createRadialGradient(W * 0.7, H * 0.2, 0, W * 0.7, H * 0.2, Math.max(W, H) * 0.8);
+  g.addColorStop(0, 'rgba(60,70,140,0.10)');
+  g.addColorStop(1, 'rgba(5,6,13,0)');
+  c.fillStyle = g; c.fillRect(0, 0, W, H);
 }
 
 /* ================= Host page ================= */
@@ -1377,17 +1392,17 @@ function resize() {
 }
 
 function drawBackground() {
-  ctx.fillStyle = '#05060d';
-  ctx.fillRect(0, 0, W, H);
-  const g = ctx.createRadialGradient(W * 0.7, H * 0.2, 0, W * 0.7, H * 0.2, Math.max(W, H) * 0.8);
-  g.addColorStop(0, 'rgba(60,70,140,0.10)');
-  g.addColorStop(1, 'rgba(5,6,13,0)');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  for (const s of stars) {
-    let x = (s.x * W - cam.x * s.d * cam.zoom) % W; if (x < 0) x += W;
-    let y = (s.y * H - cam.y * s.d * cam.zoom) % H; if (y < 0) y += H;
-    ctx.fillStyle = `rgba(210,220,255,${s.a})`;
-    ctx.fillRect(x, y, s.s, s.s);
+  ctx.drawImage(sky, 0, 0, W, H);
+  for (let g = 0; g < 4; g++) {
+    ctx.fillStyle = `rgba(210,220,255,${STAR_LEVELS[g]})`;
+    ctx.beginPath();
+    for (const s of stars) {
+      if (s.g !== g) continue;
+      let x = (s.x * W - cam.x * s.d * cam.zoom) % W; if (x < 0) x += W;
+      let y = (s.y * H - cam.y * s.d * cam.zoom) % H; if (y < 0) y += H;
+      ctx.rect(x, y, s.s, s.s);
+    }
+    ctx.fill();
   }
 }
 
@@ -1454,32 +1469,63 @@ function drawField() {
 }
 
 /* Trails are measured in time, not points. Each body keeps (x, y, time)
-   triples in b.trail from b.ts on; a point is added when the body has moved a
-   couple of screen pixels (so fast bodies get more points and curves stay
-   round), and points older than the trail's life are dropped one at a time.
-   One point older than the life is kept so the tail can be cut exactly at the
-   life, and slides along smoothly instead of jumping a segment at a time.
-   Brightness falls with age, to nothing at the tail. */
-function trailLife() { return bodies.length > 400 ? 70 : bodies.length > 120 ? 110 : 300; }
+   triples in b.trail from b.ts on, and points older than the trail's life are
+   dropped one at a time. One point older than the life is kept so the tail
+   can be cut exactly at the life, and slides along smoothly instead of
+   jumping a segment at a time. Brightness falls with age, to nothing at the
+   tail.
+
+   A point is only laid down where it is needed: when the path has turned by
+   about 2° since the last one, or run straight for a long way, and never
+   closer than a couple of screen pixels. That keeps curves round at a few
+   points per degree and straight runs nearly free. A fast body circling a
+   black hole used to lay a point every two pixels for its whole life, well
+   over a thousand of them. Past a cap, every other point in the older half of
+   a trail is thinned out, which leaves both of its ends where they were. */
+function trailLife() { return bodies.length > 400 ? 55 : bodies.length > 120 ? 110 : 300; }
+function trailCap() { return Math.max(40, Math.min(bodies.length > 120 ? 120 : 260, Math.floor(30000 / Math.max(1, bodies.length)))); }
+const TURN = 0.035;   // tan of about 2°
+
+function thinTrail(b) {
+  const t = b.trail, s = b.ts, n = (t.length - s) / 3, half = n >> 1;
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    if (i > 0 && i < half && (i & 1)) continue;
+    const o = s + i * 3;
+    out.push(t[o], t[o + 1], t[o + 2]);
+  }
+  b.trail = out; b.ts = 0;
+}
 
 function recordTrails(now) {
   if (!showTrails) return;
-  const life = trailLife();
+  const life = trailLife(), cap = trailCap();
   const minD = 2 / cam.zoom, minD2 = minD * minD;
+  const maxSeg = 40 / cam.zoom, maxSeg2 = maxSeg * maxSeg;
   const maxGap = life / 24;               // slow bodies still get points often enough to age smoothly
   for (const b of bodies) {
     const t = b.trail;
     const n = t.length;
     if (n === 0 || n - 3 < b.ts) { t.length = 0; b.ts = 0; t.push(b.x, b.y, now); continue; }
-    const dx = b.x - t[n - 3], dy = b.y - t[n - 2];
-    if (dx * dx + dy * dy >= minD2 || now - t[n - 1] >= maxGap) {
+    const lx = t[n - 3], ly = t[n - 2];
+    const dx = b.x - lx, dy = b.y - ly, d2 = dx * dx + dy * dy;
+    let add = now - t[n - 1] >= maxGap;
+    if (!add && d2 >= minD2) {
+      if (d2 >= maxSeg2 || n - 6 < b.ts) add = true;
+      else {
+        const px = lx - t[n - 6], py = ly - t[n - 5];
+        const dot = px * dx + py * dy, cross = px * dy - py * dx;
+        add = dot <= 0 || Math.abs(cross) > TURN * dot;
+      }
+    }
+    if (add) {
       t.push(b.x, b.y, now);
-      if ((n - b.ts) / 3 > 1500) b.ts += 3;   // a hard cap, never reached in practice
+      if ((t.length - b.ts) / 3 > cap) thinTrail(b);
     }
     // Drop the oldest point while the one after it is also past the life.
-    const cut = now - life;
-    while (b.ts + 5 < t.length && t[b.ts + 5] <= cut) b.ts += 3;
-    if (b.ts > 600) { t.splice(0, b.ts); b.ts = 0; }
+    const tt = b.trail, cut = now - life;
+    while (b.ts + 5 < tt.length && tt[b.ts + 5] <= cut) b.ts += 3;
+    if (b.ts > 600) { tt.splice(0, b.ts); b.ts = 0; }
   }
 }
 function clearTrails() { for (const b of bodies) { b.trail.length = 0; b.ts = 0; } }
@@ -1491,7 +1537,7 @@ function clearTrails() { for (const b of bodies) { b.trail.length = 0; b.ts = 0;
 function drawTrails() {
   const z = cam.zoom, ox = W / 2 - cam.x * z, oy = H / 2 - cam.y * z;
   const now = simTime, life = trailLife(), cut = now - life;
-  const BANDS = bodies.length > 400 ? 5 : 8;
+  const BANDS = bodies.length > 400 ? 4 : 8;
   const groups = new Map();
   for (const b of bodies) {
     const t = b.trail;
@@ -1508,26 +1554,32 @@ function drawTrails() {
       px = t[i] + (t[i + 3] - t[i]) * f; py = t[i + 1] + (t[i + 4] - t[i + 1]) * f;
       i += 3;
     } else { px = t[i]; py = t[i + 1]; }
-    let band = -1, path = null;
+    let band = -1, path = null, sx = 0, sy = 0;
     // Points go from oldest to newest, then on to where the body is now.
+    // Points that would land within a pixel and a half of the last one drawn
+    // are skipped: on screen they are the same point.
     for (; i <= end; i += 3) {
       const last = i === end;
       const x = last ? b.x : t[i], y = last ? b.y : t[i + 1], tm = last ? now : t[i + 2];
       const bnd = Math.min(BANDS - 1, Math.max(0, Math.floor((1 - (now - tm) / life) * BANDS)));
+      const qx = x * z + ox, qy = y * z + oy;
       if (bnd !== band) {
         band = bnd;
         const key = ck * 16 + bnd;
         path = groups.get(key);
         if (!path) { path = new Path2D(); groups.set(key, path); }
-        path.moveTo(px * z + ox, py * z + oy);
+        sx = px * z + ox; sy = py * z + oy;
+        path.moveTo(sx, sy);
+      } else if (!last && (qx - sx) * (qx - sx) + (qy - sy) * (qy - sy) < 2.25) {
+        continue;
       }
-      path.lineTo(x * z + ox, y * z + oy);
-      px = x; py = y;
+      path.lineTo(qx, qy);
+      sx = qx; sy = qy; px = x; py = y;
     }
   }
   ctx.lineWidth = 1.1;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
+  ctx.lineCap = 'butt';
+  ctx.lineJoin = 'bevel';
   for (const [key, path] of groups) {
     const ck = key >> 4, bnd = key & 15;
     const col = [((ck >> 6) << 5) + 16, (((ck >> 3) & 7) << 5) + 16, ((ck & 7) << 5) + 16];
@@ -2600,22 +2652,49 @@ function updateHud() {
 }
 
 /* ================= Main loop ================= */
+// Where each frame's time goes, smoothed over about a second; read it from the
+// console as __pu.perf when a scene feels slow.
+const perf = { frame: 0, phys: 0, steps: 0, post: 0, heat: 0, bg: 0, field: 0, trails: 0, bodies: 0, rest: 0 };
+const ema = (k, v) => { perf[k] += (v - perf[k]) * 0.05; };
+// When measuring, make the canvas finish each stage before its timer stops
+// (it otherwise batches work and does it wherever it likes). Never on normally.
+let perfSync = false;
+// Physics gets what is left of a 60-a-second frame once drawing has had its
+// share, so a heavy scene slows the simulation (the speed readout says so)
+// rather than the frame rate. Two measures, the smaller wins: the time spent
+// issuing the drawing, and, because the canvas paints after that, the real
+// gap between frames. Frames running late take time away from physics; frames
+// on time hand it back a little at a time.
+let drawCost = 4;
+const FRAME_MS = 15;
+let physBudget = STEP_BUDGET_MS, gapEma = 1000 / 60;
 let last = performance.now();
-function frame(now) {
+function frame(now, manual) {
   const fdt = Math.min(0.05, (now - last) / 1000);
+  ema('frame', now - last);
+  if (!manual && now - last < 250) {                 // a long gap is a background tab, not a slow frame
+    gapEma += (now - last - gapEma) * 0.15;
+    if (gapEma > 18.5) physBudget = Math.max(3, physBudget * 0.85);
+    else if (gapEma < 17.5) physBudget = Math.min(STEP_BUDGET_MS, physBudget + 0.2);
+  }
   last = now;
+  let tA = performance.now(), tB;
   if (!paused && bodies.length) {
     commitScrub();
     const want = SPEEDS[speedIdx] * fdt * 60;
-    let todo = want, done = 0;
+    let todo = want, done = 0, steps = 0;
     const t0 = performance.now();
+    const budget = Math.min(physBudget, clamp(FRAME_MS - drawCost, 3, STEP_BUDGET_MS));
     while (todo > 1e-9) {
       const h = Math.min(stepSize(), todo);
       step(h);
+      steps++;
       todo -= h; done += h;
       recordTrails(simTime + done);
-      if (performance.now() - t0 > STEP_BUDGET_MS) break;
+      if (performance.now() - t0 > budget) break;
     }
+    ema('steps', steps);
+    tB = performance.now(); ema('phys', tB - tA); tA = tB;
     simTime += done;
     const ratio = want > 0 ? done / want : 1;
     actualSpeed += (SPEEDS[speedIdx] * ratio - actualSpeed) * 0.1;
@@ -2636,20 +2715,28 @@ function frame(now) {
     if (!bodies.includes(cam.follow)) cam.follow = null;
     else { cam.x += (cam.follow.x - cam.x) * 0.25; cam.y += (cam.follow.y - cam.y) * 0.25; }
   }
-  updateHeat();
-  drawBackground();
+  const mark = (k) => { if (perfSync) ctx.getImageData(0, 0, 1, 1); tB = performance.now(); ema(k, tB - tA); tA = tB; };
+  mark('post');
+  const drawStart = tA;
+  updateHeat(); mark('heat');
+  drawBackground(); mark('bg');
   if (showField) drawField();
+  mark('field');
   if (showTrails) drawTrails();
+  mark('trails');
   drawChallengeMarks();
   drawOrbitEllipse();
   for (const b of bodies) if (b.kind !== 'star' && b.kind !== 'bh') drawBody(b);
   for (const b of bodies) if (b.kind === 'star' || b.kind === 'bh') drawBody(b);
+  mark('bodies');
   drawEffects(fdt);
   drawVelocityArrow();
   drawAim();
   drawLaunch();
   updateHud();
-  requestAnimationFrame(frame);
+  mark('rest');
+  drawCost += (tA - drawStart - drawCost) * 0.1;
+  if (!manual) requestAnimationFrame(frame);
 }
 
 /* ================= App install / offline ================= */
@@ -2678,7 +2765,11 @@ window.__pu = {
   get bodies() { return bodies; }, cam, loadScene, audio, ensureAudio, playImpact, makeBody, addBody, computeAcc, step, tidalCheck,
   snapshot, restore, undo, get undoStack() { return undoStack; }, get history() { return history; },
   packCode, unpackCode, universeData, applyUniverse, startChallenge, get challenge() { return challenge; },
-  orbitOf, updateHeat, get simTime() { return simTime; }, CHALLENGES,
+  orbitOf, updateHeat, perf,
+  // One frame by hand, for measuring when the page is not being animated.
+  tick(ms = 1000 / 60) { frame(last + ms, true); },
+  set perfSync(v) { perfSync = !!v; },
+  get physBudget() { return physBudget; }, get simTime() { return simTime; }, CHALLENGES,
 };
 })();
 </script>
