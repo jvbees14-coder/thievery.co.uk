@@ -1,0 +1,49 @@
+<!--
+  How much to bet. Poured into _page.html; the scene is
+  public/explainers/kelly-betting/scene.js. Chapter ids: edge, all, fraction, paths.
+-->
+        <section class="hiw-chapter" id="edge" aria-labelledby="h-edge">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-edge">A coin in your favour</h2>
+          <p>Somebody offers a bet on a bent coin that lands heads 60% of the times it is tossed. You bet on heads; win and your stake is doubled, lose and it is gone. You can bet as often as you like, any amount up to what you have.</p>
+          <p>Every bet is in your favour: on average a pound staked comes back as £1.20. The only question is how much to stake each time.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Pick a share of your money to bet and toss.</p>
+        </section>
+
+        <section class="hiw-chapter" id="all" aria-labelledby="h-all">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-all">Betting everything</h2>
+          <p>Staking everything each time makes the average outcome as large as it can be. It also ends at the first tails, and you are left with nothing to bet with. The chance of ten heads in a row is 0.6 to the tenth power: 0.6%.</p>
+          <p>The average is huge only because of that rare run of luck. Almost everybody who follows this plan is broke within a few tosses.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Bet everything and see how long it lasts.</p>
+        </section>
+
+        <section class="hiw-chapter" id="fraction" aria-labelledby="h-fraction">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-fraction">The best share</h2>
+          <p>Bet a fixed share of what you have instead, and the money grows by a steady rate per toss over the long run. That rate is highest at 20%: the chance of winning minus the chance of losing. This is the <button class="hiw-term" data-term="kelly">Kelly criterion</button>, worked out by John Kelly at Bell Labs in 1956.</p>
+          <p>At 20% the money grows by about 2% a toss on average and is typically 7.5 times bigger after 100 tosses. Bet twice that, 40%, and it typically shrinks, even though every bet is in your favour.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Move along the curve and see the growth rate.</p>
+        </section>
+
+        <section class="hiw-chapter" id="paths" aria-labelledby="h-paths">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-paths">Twenty gamblers</h2>
+          <p>Here are twenty people each starting with £100 and staking the same share. At 20% most finish well ahead, though the ride is bumpy. Many people bet less than Kelly's share, giving up some growth for a smoother ride.</p>
+          <p>In a 2016 experiment, 61 people were given $25 to bet on exactly this coin for half an hour. 28% of them went bust.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change the share and toss for all twenty.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The growth rate for a share f is 0.6 × ln(1 + f) + 0.4 × ln(1 − f) per toss, worked out in your browser. "Typically" means the median: half of gamblers do better and half worse. The twenty paths use random tosses, so they change each time.</p>
+      <ol>
+        <li>J. L. Kelly Jr., "A new interpretation of information rate", <cite>Bell System Technical Journal</cite> 35 (1956).</li>
+        <li>Victor Haghani and Richard Dewey, "Rational decision-making under uncertainty: observed betting patterns on a biased coin" (2016).</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Kelly_criterion" rel="noopener">Kelly criterion</a>.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="kelly" data-title="Kelly criterion">For an even-money bet you win with chance p, stake the share 2p − 1 of what you have. It makes your money grow fastest over many bets.</p>
+    </template>

@@ -1,0 +1,45 @@
+<!--
+  How flocks move without a leader. Poured into _page.html; the scene is
+  public/explainers/flocking/scene.js. Chapter ids: wander, align, cohere, seven.
+-->
+        <section class="hiw-chapter" id="wander" aria-labelledby="h-wander">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-wander">Every bird for itself</h2>
+          <p>A flock of starlings turns as one, yet no bird is in charge and none can see the whole flock. Each watches only the few birds nearest it.</p>
+          <p>Start with birds that ignore each other entirely. They fly in every direction, and nothing like a flock appears.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Watch the "flying the same way" figure stay low.</p>
+        </section>
+
+        <section class="hiw-chapter" id="align" aria-labelledby="h-align">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-align">Keep clear, and match your neighbours</h2>
+          <p>In 1987 Craig Reynolds, a computer animator, showed that three simple rules for each bird are enough. The first two: don't fly into anyone close by, and turn towards the average heading of your neighbours.</p>
+          <p>Matching neighbours spreads a direction from bird to bird. Soon streams of birds are flying the same way, though they drift apart.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Switch the rules off and on and watch the order come and go.</p>
+        </section>
+
+        <section class="hiw-chapter" id="cohere" aria-labelledby="h-cohere">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-cohere">Stay close</h2>
+          <p>The third rule: drift towards the middle of your neighbours. Now the streams gather into flocks that hold together, split around obstacles and merge again.</p>
+          <p>Reynolds called his simulated birds "boids". The same three rules have animated bats, fish and crowds in films ever since, because nobody has to choreograph each animal.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Take away one rule at a time and see which part of the flock fails.</p>
+        </section>
+
+        <section class="hiw-chapter" id="seven" aria-labelledby="h-seven">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-seven">Seven neighbours</h2>
+          <p>Real starlings were filmed in Rome in 2008 by a team who worked out each bird's position in three dimensions. Each bird responded not to every bird within some distance, but to its six or seven nearest, however near or far they were.</p>
+          <p>Watching a fixed number keeps a flock together even as it stretches and thins, which helps it hold together when a hawk dives through.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Send a hawk, and change how many neighbours each bird watches.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The birds are simulated in your browser by Reynolds' three rules, with a little random wander added. In chapters 1 to 3 each bird watches every bird within a fixed distance; in chapter 4 it watches its nearest few. "Flying the same way" is the length of the birds' average heading, from 0% (all different) to 100% (all together).</p>
+      <ol>
+        <li>Craig W. Reynolds, "Flocks, herds and schools: a distributed behavioral model", <cite>Computer Graphics</cite> 21 (1987), SIGGRAPH '87.</li>
+        <li>M. Ballerini and others, "Interaction ruling animal collective behavior depends on topological rather than metric distance", <cite>PNAS</cite> 105 (2008).</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Boids" rel="noopener">Boids</a>.</li>
+      </ol>
+    </section>

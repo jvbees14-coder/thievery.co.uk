@@ -1,0 +1,48 @@
+<!--
+  How noise-cancelling headphones work. Poured into _page.html; the scene is
+  public/explainers/noise-cancelling/scene.js. Chapter ids: wave, flip, delay, passive.
+-->
+        <section class="hiw-chapter" id="wave" aria-labelledby="h-wave">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-wave">Sound is a wobble in pressure</h2>
+          <p>The drone of an engine reaches your ear as the air's pressure rising and falling slightly, many times a second. Your eardrum is pushed in and pulled out in time with it.</p>
+          <p>Low sounds, like an engine's rumble, wobble slowly. High sounds, like a hiss, wobble quickly.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Watch the pressure at your ear rise and fall.</p>
+        </section>
+
+        <section class="hiw-chapter" id="flip" aria-labelledby="h-flip">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-flip">Adding the opposite</h2>
+          <p>A small microphone on the headphone hears the noise. The headphone plays the same wave turned upside down: where the noise pushes, the speaker pulls. The two pressures add, and if they match exactly, the sum is no wobble at all.</p>
+          <p>This is <button class="hiw-term" data-term="interference">destructive interference</button>. The sound isn't absorbed or blocked; it is cancelled by more sound.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Switch the cancelling on and watch the sum flatten.</p>
+        </section>
+
+        <section class="hiw-chapter" id="delay" aria-labelledby="h-delay">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-delay">Why low notes cancel best</h2>
+          <p>The upside-down wave always arrives a moment late: the microphone has to hear, the electronics work out the reply, and the speaker has to move. Here that takes 50 millionths of a second.</p>
+          <p>For a slow 100 Hz hum, that is a tiny slice of one wobble, and the noise is cut to about 3% of its strength. At 1,000 Hz it is cut only to about a third. Above about 3,300 Hz the late wave starts to add to the noise instead. So headphones only cancel low sounds actively.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Raise the pitch and watch the cancelling fail.</p>
+        </section>
+
+        <section class="hiw-chapter" id="passive" aria-labelledby="h-passive">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-passive">The cushions do the rest</h2>
+          <p>High sounds are short waves, and short waves are easily stopped by a snug ear cushion or earbud tip. Low sounds are long waves that pass through almost anything, which is why you hear a neighbour's bass and not their voice.</p>
+          <p>So each half covers the other's gap: the electronics take out the rumble, and the seal takes out the chatter and hiss. Voices, in the middle, get through the most.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Switch each half on and off and see what is left.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The cancelling in chapter 3 is worked out in your browser: a tone cancelled by its upside-down copy arriving τ seconds late is left with 2 × sin(π × frequency × τ) of its strength. 50 microseconds is a round figure chosen for illustration; real headphones also shape their reply by frequency. The cushion's blocking in chapter 4 is a smooth guess at a typical shape, not a measurement.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Active_noise_control" rel="noopener">Active noise control</a>.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Noise-cancelling_headphones" rel="noopener">Noise-cancelling headphones</a>: effective mainly at low frequencies, with passive isolation above.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="interference" data-title="Destructive interference">Two waves adding so that the peaks of one fill the troughs of the other, leaving less than either alone.</p>
+    </template>

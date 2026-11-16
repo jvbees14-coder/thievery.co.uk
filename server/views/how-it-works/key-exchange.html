@@ -1,0 +1,49 @@
+<!--
+  Agreeing a secret in public. Poured into _page.html; the scene is
+  public/explainers/key-exchange/scene.js. Chapter ids: paint, clock, hard, middle.
+-->
+        <section class="hiw-chapter" id="paint" aria-labelledby="h-paint">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-paint">Mixing paint</h2>
+          <p>Two people want a shared secret, a key to lock their messages with, but every word between them can be overheard. It sounds impossible. The trick can be shown with paint.</p>
+          <p>They agree a starting colour in public. Each adds a secret colour of their own and sends the mixture across. Each then adds their own secret to the other's mixture. Both end up with the same three colours mixed. Somebody listening has seen the starting colour and both mixtures, but paint cannot be unmixed.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Step through the exchange and see what the listener has.</p>
+        </section>
+
+        <section class="hiw-chapter" id="clock" aria-labelledby="h-clock">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-clock">Clock arithmetic</h2>
+          <p>Computers use numbers instead of paint. Take a clock with 23 hours and a starting number, 5. Alice picks a secret, 4, and works out 5 multiplied by itself 4 times, keeping only the remainder after dividing by 23: 4. Bob picks 3 and gets 10. They swap the answers in public.</p>
+          <p>Alice raises Bob's 10 to her 4, Bob raises Alice's 4 to his 3, and both get 18, because both have worked out 5 to the power 4 × 3. This is the <button class="hiw-term" data-term="dh">Diffie–Hellman</button> exchange.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Choose both secrets and check that they always agree.</p>
+        </section>
+
+        <section class="hiw-chapter" id="hard" aria-labelledby="h-hard">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-hard">Easy one way, hard the other</h2>
+          <p>Going forwards is quick: squaring and multiplying gets 5 to a huge power in a few thousand steps. Going backwards, from the answer to the secret, has no known shortcut. On the clock the answers jump about with no pattern to follow.</p>
+          <p>With 23 hours a listener could try every secret. Real exchanges use clocks with numbers more than 600 digits long, or a curve with the same property, so trying them all would take longer than the age of the universe.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Make the clock bigger and look for a pattern.</p>
+        </section>
+
+        <section class="hiw-chapter" id="middle" aria-labelledby="h-middle">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-middle">Somebody in the middle</h2>
+          <p>The exchange protects against listening, not against impersonation. If somebody can stand between the two and change messages, they can do one exchange with Alice and another with Bob, and read everything that passes.</p>
+          <p>So the numbers are signed. Your browser checks a website's signature before trusting its half of the exchange. Whitfield Diffie and Martin Hellman published the exchange in 1976; researchers at GCHQ had found the same idea a few years earlier, and it was kept secret until 1997.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Put somebody in the middle and see which secrets match.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The clock in chapter 2 is the standard textbook example (p = 23, g = 5). The scene works every power out in your browser. Paint is only an analogy: real mixing is not quite irreversible, and the arithmetic is what does the work.</p>
+      <ol>
+        <li>Whitfield Diffie and Martin Hellman, "New directions in cryptography", <cite>IEEE Transactions on Information Theory</cite> 22 (1976).</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange" rel="noopener">Diffie–Hellman key exchange</a>: the example, the paint picture and the GCHQ history.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Discrete_logarithm" rel="noopener">Discrete logarithm</a>.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="dh" data-title="Diffie–Hellman">A way for two parties to agree a secret number over an open line, published in 1976. It is used every time a browser opens a secure connection.</p>
+    </template>

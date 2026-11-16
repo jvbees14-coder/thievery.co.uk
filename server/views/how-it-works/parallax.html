@@ -1,0 +1,51 @@
+<!--
+  Measuring the distance to the stars. Poured into _page.html; the scene is
+  public/explainers/parallax/scene.js. Chapter ids: blink, orbit, parsec, tiny.
+-->
+        <section class="hiw-chapter" id="blink" aria-labelledby="h-blink">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-blink">Blink one eye, then the other</h2>
+          <p>Hold a finger up at arm's length and look at it with one eye, then the other. It jumps sideways against the wall behind it. Bring it closer and it jumps further. This shift is <button class="hiw-term" data-term="parallax">parallax</button>.</p>
+          <p>Your eyes are about 6.5 cm apart. Knowing that and the angle of the jump, the finger's distance follows from a thin triangle, which is how your brain judges depth.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Switch eyes and move the finger closer.</p>
+        </section>
+
+        <section class="hiw-chapter" id="orbit" aria-labelledby="h-orbit">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-orbit">Eyes 300 million km apart</h2>
+          <p>Stars are so far away that two eyes see no shift at all. But Earth moves: in January it is on one side of the Sun and in July on the other, about 300 million km apart. A nearby star seen six months apart shifts against much more distant ones behind it.</p>
+          <p>Over a year it traces a tiny loop and returns. The nearer the star, the bigger the loop.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Run the year and watch the near star shift against the far ones.</p>
+        </section>
+
+        <section class="hiw-chapter" id="parsec" aria-labelledby="h-parsec">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-parsec">The parsec</h2>
+          <p>Astronomers measure the shift as half the full swing, in <button class="hiw-term" data-term="arcsec">arcseconds</button>. A star at the distance where that is exactly one arcsecond is one <b>parsec</b> away, from "parallax second": about 3.26 light years.</p>
+          <p>The rule is then simple: the distance in parsecs is one divided by the shift in arcseconds. Half an arcsecond is 2 parsecs; a tenth is 10.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Move the star further away and read off its shift.</p>
+        </section>
+
+        <section class="hiw-chapter" id="tiny" aria-labelledby="h-tiny">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-tiny">How small the angles are</h2>
+          <p>Even the nearest star, Proxima Centauri, shifts by only 0.77 arcseconds: the width of a 2p coin seen from about 7 km away. That is why the first measurement took until 1838, when Friedrich Bessel caught 61 Cygni shifting by about 0.3 arcseconds.</p>
+          <p>Above the blurring air, the Gaia spacecraft has since measured the shifts of almost 1.5 billion stars, and with them the shape of our part of the galaxy.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Pick a star and see how far away the coin would be.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>Chapter 2 exaggerates the shift enormously; the true one would be far smaller than a pixel. The coin is a 2p piece, 25.9 mm across, and its distance is worked out in your browser from the star's parallax.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Stellar_parallax" rel="noopener">Stellar parallax</a>: Bessel and 61 Cygni in 1838.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Parsec" rel="noopener">Parsec</a>: 3.26 light years.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Proxima_Centauri" rel="noopener">Proxima Centauri</a>: a parallax of 768 milliarcseconds.</li>
+        <li>ESA, <a href="https://www.cosmos.esa.int/web/gaia/dr3" rel="noopener">Gaia Data Release 3</a>: parallaxes for about 1.47 billion sources.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="parallax" data-title="Parallax">The apparent shift of a near object against a far background when you look from two different places.</p>
+      <p data-def="arcsec" data-title="Arcsecond">A 3,600th of a degree. A full circle is 1,296,000 of them.</p>
+    </template>

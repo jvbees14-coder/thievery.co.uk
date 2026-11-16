@@ -1,0 +1,51 @@
+<!--
+  Finding planets round other stars. Poured into _page.html; the scene is
+  public/explainers/exoplanets/scene.js. Chapter ids: dip, size, period, wobble.
+-->
+        <section class="hiw-chapter" id="dip" aria-labelledby="h-dip">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-dip">A dip in the light</h2>
+          <p>Planets round other stars are far too faint to see beside their star. But if a planet's orbit happens to be edge-on to us, once an orbit it passes in front of the star and blocks a little of its light. This is a <button class="hiw-term" data-term="transit">transit</button>.</p>
+          <p>A telescope that measures the star's brightness very steadily sees a small, flat-bottomed dip, then the light returns to normal.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Watch the planet cross and the light curve dip.</p>
+        </section>
+
+        <section class="hiw-chapter" id="size" aria-labelledby="h-size">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-size">How deep tells how big</h2>
+          <p>The dip is the share of the star's disc that the planet covers: its area over the star's. A planet with a tenth of the star's width blocks a hundredth of its light.</p>
+          <p>Jupiter crossing the Sun would dim it by about 1%. Earth would dim it by 0.0084%, 84 parts in a million, which is why finding Earth-sized planets needed a telescope in space, above the shimmer of the air.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change the planet's size and read off the dip.</p>
+        </section>
+
+        <section class="hiw-chapter" id="period" aria-labelledby="h-period">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-period">Dips that come back</h2>
+          <p>One dip could be anything. The same dip returning on schedule is an orbit, and the time between dips is the planet's year. From that and the star's mass, Kepler's laws give its distance from the star.</p>
+          <p>Only orbits lined up just right show transits at all: for a planet where Earth is round a star like the Sun, about one in 200. The Kepler space telescope watched about 150,000 stars for four years to catch enough of them, and found more than 2,600 planets.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change the orbit and watch the dips spread out.</p>
+        </section>
+
+        <section class="hiw-chapter" id="wobble" aria-labelledby="h-wobble">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-wobble">The star's wobble</h2>
+          <p>A planet and its star both circle their shared centre of mass, so the star moves too: towards us, then away. Its light is squeezed slightly bluer, then stretched redder, by the <button class="hiw-term" data-term="doppler">Doppler effect</button>.</p>
+          <p>Jupiter swings the Sun at about 12.4 m/s, a running pace; Earth, at 9 cm/s, a slow crawl. Michel Mayor and Didier Queloz used this wobble to find the first planet round a Sun-like star, 51 Pegasi b, in 1995.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Make the planet heavier and watch the star swing.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The light curve is the exact area of the star covered by the planet's disc, worked out in your browser for a star of even brightness. Real stars are dimmer towards their edge, which rounds the dip's corners. Sizes are not to scale with the orbit: the orbit would be far wider.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Transit_method" rel="noopener">Methods of detecting exoplanets: transit photometry</a>.</li>
+        <li>NASA, <a href="https://science.nasa.gov/mission/kepler/" rel="noopener">Kepler / K2</a>: about 150,000 stars watched, and the mission's planet count.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Doppler_spectroscopy" rel="noopener">Doppler spectroscopy</a>: about 12.4 m/s for Jupiter and 9 cm/s for Earth.</li>
+        <li>Michel Mayor and Didier Queloz, "A Jupiter-mass companion to a solar-type star", <cite>Nature</cite> 378 (1995).</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="transit" data-title="Transit">A planet passing in front of its star, as seen from Earth.</p>
+      <p data-def="doppler" data-title="Doppler effect">Waves from something moving towards you arrive squeezed together, and from something moving away, stretched out. For light that means slightly bluer or redder.</p>
+    </template>

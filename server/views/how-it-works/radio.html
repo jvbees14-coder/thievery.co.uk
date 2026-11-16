@@ -1,0 +1,50 @@
+<!--
+  How radio carries a voice. Poured into _page.html; the scene is
+  public/explainers/radio/scene.js. Chapter ids: carrier, am, fm, size.
+-->
+        <section class="hiw-chapter" id="carrier" aria-labelledby="h-carrier">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-carrier">A steady wave</h2>
+          <p>A radio transmitter drives electric current up and down a mast, very fast, and sends out a wave of electric and magnetic field that travels at the speed of light. On its own it is a steady hum, the <button class="hiw-term" data-term="carrier">carrier</button>, and it says nothing.</p>
+          <p>Each station has its own frequency, so a radio can pick one out. Medium-wave stations rise and fall about a million times a second; FM stations about a hundred million.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change the frequency and watch the waves crowd together.</p>
+        </section>
+
+        <section class="hiw-chapter" id="am" aria-labelledby="h-am">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-am">Changing how strong it is</h2>
+          <p>A voice is a much slower wobble, a few hundred to a few thousand times a second. The oldest way to send it is to let the voice set how strong the carrier is: louder when the voice pushes, weaker when it pulls. This is amplitude modulation, AM.</p>
+          <p>The receiver only has to follow the outline of the wave's peaks to get the voice back. The trouble is that a spark, a motor or lightning also changes the wave's strength, and the receiver can't tell that from the voice: it is heard as crackle.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Add interference and see it land on the voice.</p>
+        </section>
+
+        <section class="hiw-chapter" id="fm" aria-labelledby="h-fm">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-fm">Changing how fast it is</h2>
+          <p>Edwin Armstrong's answer, in the 1930s, was to keep the strength steady and let the voice nudge the frequency instead: slightly faster when the voice pushes, slightly slower when it pulls. FM stations swing up to 75 kHz either side of their own frequency.</p>
+          <p>The receiver listens only to the timing of the wave, so crackle that changes its strength is ignored. That is why FM sounds cleaner. Its cost is room: each station needs a wide slice of the dial.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Add the same interference and see what reaches the speaker.</p>
+        </section>
+
+        <section class="hiw-chapter" id="size" aria-labelledby="h-size">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-size">Long waves need tall masts</h2>
+          <p>The wavelength is the speed of light divided by the frequency. An FM station at 100 MHz sends waves 3 m long; BBC Radio 4 on long wave, at 198 kHz, sends waves of 1,514 m.</p>
+          <p>An aerial works best at about a quarter of a wavelength, so an FM aerial is under a metre, while long-wave masts are hundreds of metres tall. Wi-Fi, at 2.4 GHz, has waves of 12 cm, and its aerials fit inside a phone.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Pick a station and compare its wave with a person and a mast.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The waves are drawn far slower than they are: on screen the carrier makes a few dozen swings for each swing of the voice, against hundreds or thousands in a real transmitter. The receivers in chapters 2 and 3 are worked out from the drawn wave: the AM one follows the peaks, the FM one counts the time between swings.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Amplitude_modulation" rel="noopener">Amplitude modulation</a>.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Frequency_modulation" rel="noopener">Frequency modulation</a>: Armstrong, and ±75 kHz for FM broadcasting.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/BBC_Radio_4" rel="noopener">BBC Radio 4</a>: long wave on 198 kHz.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Monopole_antenna" rel="noopener">Monopole antenna</a>: the quarter-wave aerial.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="carrier" data-title="Carrier">The steady radio wave a station transmits, which is then changed to carry sound or data.</p>
+    </template>

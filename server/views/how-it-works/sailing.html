@@ -1,0 +1,52 @@
+<!--
+  Sailing into the wind. Poured into _page.html; the scene is
+  public/explainers/sailing/scene.js (the model is art.js).
+  Chapter ids: run, wing, keel, tack.
+-->
+        <section class="hiw-chapter" id="run" aria-labelledby="h-run">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-run">Pushed from behind</h2>
+          <p>With the wind straight behind, a sail is simply pushed, like a hand pushing a door. But the boat can never go faster than the wind this way, and the faster it goes, the less wind its sail feels.</p>
+          <p>In this boat's model, a 10-knot wind from behind gives about 3.7 knots.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Point the boat downwind and watch the wind it feels drop as it speeds up.</p>
+        </section>
+
+        <section class="hiw-chapter" id="wing" aria-labelledby="h-wing">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-wing">A sail is a wing</h2>
+          <p>Turn across the wind and the sail stops being a sheet that is pushed. Curved, with air flowing over both sides, it works like an aircraft wing on its side and makes <button class="hiw-term" data-term="lift">lift</button>: a strong push at right angles to the wind it feels.</p>
+          <p>That wind is not the real wind but the <button class="hiw-term" data-term="apparent">apparent wind</button>, the real wind combined with the breeze of the boat's own motion, so it always seems to come from further ahead. Here the boat is fastest at about 80° to the wind, at 6.3 knots: much faster than going straight downwind.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Turn the boat and compare the real and apparent winds.</p>
+        </section>
+
+        <section class="hiw-chapter" id="keel" aria-labelledby="h-keel">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-keel">The keel takes the sideways push</h2>
+          <p>Close to the wind, most of the sail's push is sideways, and only a little points forwards. On its own the boat would just slide sideways.</p>
+          <p>Under the hull is a deep fin, the keel. Water pushes back hard on it when the boat tries to slide sideways, but hardly at all when it moves forwards. So the sideways part of the push is cancelled and only the forward part is left, like a bar of soap squeezed between your fingers shooting forwards.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Split the sail's push into forward and sideways parts.</p>
+        </section>
+
+        <section class="hiw-chapter" id="tack" aria-labelledby="h-tack">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-tack">Zigzagging upwind</h2>
+          <p>Point too close to the wind and the sail can't make lift: it flaps, and the boat stops. In this model that happens within about 30°. Real yachts lose their push somewhere around 30° to 45°.</p>
+          <p>So to reach a place upwind, a boat zigzags, turning across the wind each time, which is called <button class="hiw-term" data-term="tacking">tacking</button>. The best angle balances speed against direction: here about 43°, which still gains 3.5 knots straight into the wind.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change the angle of the zigzag and see how fast the boat really gains ground upwind.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The boat's speeds come from a simple model, worked out in your browser: the sail's lift and drag grow with the apparent wind's speed squared, the hull's drag with the boat's speed squared, and the keel lets nothing slip sideways. Its constants were chosen to give a cruising yacht's sort of speeds in a 10-knot wind, so the figures are the model's, not any real boat's; the shape of the result is the real thing.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Forces_on_sails" rel="noopener">Forces on sails</a>: apparent wind, lift and drag, and the keel.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Point_of_sail" rel="noopener">Point of sail</a>: the no-go zone and beating upwind.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Polar_diagram_(sailing)" rel="noopener">Polar diagram (sailing)</a>.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="lift" data-title="Lift">The push at right angles to the air flowing past a curved surface, such as a wing or a sail.</p>
+      <p data-def="apparent" data-title="Apparent wind">The wind as felt on a moving boat: the true wind combined with the headwind made by the boat's own speed.</p>
+      <p data-def="tacking" data-title="Tacking">Turning the bow through the wind so it blows on the other side of the sail, to zigzag towards somewhere upwind.</p>
+    </template>

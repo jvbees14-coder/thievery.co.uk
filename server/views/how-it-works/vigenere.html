@@ -1,0 +1,46 @@
+<!--
+  The cipher that stood for 300 years. Poured into _page.html; the scene is
+  public/explainers/vigenere/scene.js (arithmetic in art.js).
+  Chapter ids: shift, keyword, flat, crack.
+-->
+        <section class="hiw-chapter" id="shift" aria-labelledby="h-shift">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-shift">One shift for every letter</h2>
+          <p>The simplest cipher moves every letter the same number of places along the alphabet: with a shift of 3, A becomes D and the becomes WKH. It falls to counting. E is the commonest letter in English, so the commonest letter in the secret message is probably E in disguise, and that gives away the shift.</p>
+          <p>The bars show it: shifting moves the whole pattern of English letter counts along, but keeps its shape.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change the shift and watch the pattern slide.</p>
+        </section>
+
+        <section class="hiw-chapter" id="keyword" aria-labelledby="h-keyword">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-keyword">A different shift for each letter</h2>
+          <p>In 1553 Giovan Battista Bellaso published a fix. Choose a keyword, say VAULT, and use its letters as shifts in turn: the first letter of the message moves by V (21 places), the second by A (none), the third by U, and so on, starting again at the keyword's end.</p>
+          <p>Now one letter can be disguised five different ways, and the same disguise can stand for five different letters. The cipher was later credited to Blaise de Vigenère, and his name stuck.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Type a keyword and see each letter's shift.</p>
+        </section>
+
+        <section class="hiw-chapter" id="flat" aria-labelledby="h-flat">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-flat">The counts go flat</h2>
+          <p>With several shifts mixed together, the tall bar for E is spread over several letters, and the counts come out nearly level. Counting letters, the attack that broke every simple cipher, no longer works.</p>
+          <p>For three centuries it was called <i lang="fr">le chiffre indéchiffrable</i>, the unbreakable cipher.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Make the keyword longer and watch the bars flatten.</p>
+        </section>
+
+        <section class="hiw-chapter" id="crack" aria-labelledby="h-crack">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-crack">Breaking it</h2>
+          <p>The weakness is the repeating keyword. Guess its length, write the message out in that many columns, and every column was shifted by the same letter: each column is a simple shift again.</p>
+          <p>The right length is the one whose columns look most like English: two letters picked from one column match about 7% of the time, against under 4% for letters shuffled at random. Then each column's shift is found by counting, as in chapter 1. Charles Babbage broke the cipher this way in the 1850s, and Friedrich Kasiski published a method in 1863.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Pick a keyword, then crack it without being told.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The message is 449 letters, written for this page. The scene encrypts it in your browser, and the crack in chapter 4 is done there too: it scores key lengths 1 to 10 by how often letters in the same column match (the "index of coincidence"), then fits each column to English letter frequencies. It needs a few dozen letters a column, so very long keywords on this short message can defeat it.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Vigen%C3%A8re_cipher" rel="noopener">Vigenère cipher</a>: Bellaso, Babbage and Kasiski.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Index_of_coincidence" rel="noopener">Index of coincidence</a>: about 0.067 for English and 0.0385 for random letters.</li>
+        <li>Robert Lewand, <cite>Cryptological Mathematics</cite> (2000): the English letter frequencies.</li>
+      </ol>
+    </section>

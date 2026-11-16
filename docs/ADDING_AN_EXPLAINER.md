@@ -3,7 +3,7 @@
 An explainer is a page at `/how-it-works/<slug>` that teaches how something
 works by letting the reader play with it: a live canvas scene pinned beside
 writing cut into chapters, with controls and live numbers under the scene.
-Every chapter changes what the scene shows. There are seventy-four; read a short
+Every chapter changes what the scene shows. There are a hundred; read a short
 one (`compression`, `touchscreen`) beside this guide, and `gps` for the most
 elaborate.
 
@@ -118,6 +118,12 @@ What the engine gives you, through `api`:
   region. Write to it when the reader does something, never every frame.
 - **`api.note(text)`** is the small label in the top corner: the scale, or
   what is sped up.
+- **The top of the scene is taken.** The note sits in the top left and the
+  Pause button in the top right, so keep labels and pictures below about
+  56px there, and check at phone width (the scene is about 343 × 326), where
+  the note can wrap onto a second line. `shared/plot.js` draws a chart's
+  axes (`plot`, `curve`) and has `seeded()` for random numbers the writing
+  quotes.
 - **`api.colours`**, **`api.motion`** (false under reduced motion or the
   site's still setting), **`api.playing`** (the Pause button),
   **`api.invalidate()`** (ask for a frame), **`api.chapter`**, **`api.scene`**

@@ -1,0 +1,49 @@
+<!--
+  How diff finds what changed. Poured into _page.html; the scene is
+  public/explainers/diff/scene.js. Chapter ids: lines, common, grid, words.
+-->
+        <section class="hiw-chapter" id="lines" aria-labelledby="h-lines">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-lines">What changed?</h2>
+          <p>Somebody has edited a recipe and you want to see what they did. The obvious way is to compare it line by line: first with first, second with second.</p>
+          <p>It works until a line is added or removed. Then everything after it is out of step, and lines that never changed are marked as different. Here one line was added and one changed, but comparing in place marks every line after the first as different.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Find the lines that really changed.</p>
+        </section>
+
+        <section class="hiw-chapter" id="common" aria-labelledby="h-common">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-common">Keep the most in order</h2>
+          <p>A better question is: what is the longest list of lines that appear in both versions, in the same order? That is the <button class="hiw-term" data-term="lcs">longest common subsequence</button>. Here it is five lines. Everything else was either removed from the old version or added in the new one.</p>
+          <p>The result is the familiar diff: red lines out, green lines in, the rest untouched. Keeping the most lines means showing the fewest changes.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Read the diff from top to bottom.</p>
+        </section>
+
+        <section class="hiw-chapter" id="grid" aria-labelledby="h-grid">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-grid">A path through a grid</h2>
+          <p>Lay the old lines down the side of a grid and the new ones along the top. A step right means adding a line, a step down means removing one, and where two lines match there is a free diagonal step. Any path from the top-left corner to the bottom-right is a way of turning old into new.</p>
+          <p>The best diff is the path with the fewest right and down steps. Eugene Myers found a fast way to find it in 1986, by trying paths with no edits, then one, then two, and stopping at the first that reaches the corner. Git still uses it.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Step along the path and count the edits.</p>
+        </section>
+
+        <section class="hiw-chapter" id="words" aria-labelledby="h-words">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-words">Word by word</h2>
+          <p>Nothing about the method cares what the pieces are. Split by lines, it compares files; split by words, it shows exactly which words in a sentence changed, as word processors do with tracked changes.</p>
+          <p>The Unix <code>diff</code> program, written by James Hunt and Douglas McIlroy in the 1970s, made this an everyday tool for programmers, and patches sent between them are still written in the format it grew into.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Edit either sentence and watch the diff follow.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The scene finds the longest common subsequence with the textbook table, worked out in your browser, and reads one shortest edit path from it. When several paths are equally short it prefers removing before adding; Myers' method and Git's other options can pick a different but equally short one.</p>
+      <ol>
+        <li>Eugene W. Myers, "An O(ND) difference algorithm and its variations", <cite>Algorithmica</cite> 1 (1986).</li>
+        <li>J. W. Hunt and M. D. McIlroy, "An algorithm for differential file comparison", Bell Laboratories Computing Science Technical Report 41 (1976).</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Longest_common_subsequence" rel="noopener">Longest common subsequence</a>.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="lcs" data-title="Longest common subsequence">The longest list of items found in both of two lists in the same order, though not necessarily side by side.</p>
+    </template>

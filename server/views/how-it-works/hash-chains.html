@@ -1,0 +1,50 @@
+<!--
+  Why a chained ledger can't be quietly changed. Poured into _page.html; the
+  scene is public/explainers/hash-chains/scene.js. Chapter ids: ledger, chain, tamper, work.
+-->
+        <section class="hiw-chapter" id="ledger" aria-labelledby="h-ledger">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-ledger">A record that can be rewritten</h2>
+          <p>A ledger records who paid whom. Kept as a plain list, anybody who can reach it can change an old line, and nothing on the page shows it.</p>
+          <p>One fix is to give each page a fingerprint: a <button class="hiw-term" data-term="hash">hash</button> of everything written on it. SHA-256 gives 64 hexadecimal digits, and changing a single character changes about half of them.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change an entry and watch its fingerprint.</p>
+        </section>
+
+        <section class="hiw-chapter" id="chain" aria-labelledby="h-chain">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-chain">Each page names the last</h2>
+          <p>A fingerprint on its own can be rewritten along with the page. So each new page also copies out the fingerprint of the page before it, and that copy is part of what its own fingerprint covers.</p>
+          <p>Now every page vouches for all the pages before it. Keep just the latest fingerprint somewhere safe and you can check the whole ledger.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Follow the links from each page back to the one before.</p>
+        </section>
+
+        <section class="hiw-chapter" id="tamper" aria-labelledby="h-tamper">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-tamper">Changes show</h2>
+          <p>Change an old entry and its page's fingerprint changes. The next page still carries the old one, so that link breaks. Mending it means rewriting the next page's copy, which changes that page's fingerprint and breaks the link after it, and so on to the end.</p>
+          <p>So hiding the change means rewriting every later page, and then the latest fingerprint no longer matches the copy kept safe. Git, the tool most programmers keep their code in, stores its history this way.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Edit page 2, then rewrite the later pages, and compare the last fingerprint with the one kept safe.</p>
+        </section>
+
+        <section class="hiw-chapter" id="work" aria-labelledby="h-work">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-work">Making pages costly</h2>
+          <p>A ledger shared among strangers has no safe place to keep the latest fingerprint, and anybody could rewrite all the pages. Bitcoin's answer is to make every page costly to write: a page only counts if its fingerprint starts with a run of zeros, found by changing a spare number, the <button class="hiw-term" data-term="nonce">nonce</button>, until it does.</p>
+          <p>Each extra zero digit means 16 times as many tries on average: four zeros take about 65,000. Rewriting an old page means redoing the work for it and every page after, faster than everybody else is adding new ones.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Ask for more zeros and find a nonce.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>Every fingerprint is real SHA-256 of the page's text, nonce and the previous fingerprint, worked out in your browser. Only the first eight digits are shown. The search in chapter 4 is real too; Bitcoin's pages need far more zeros, found by machines built for nothing else.</p>
+      <ol>
+        <li>Stuart Haber and W. Scott Stornetta, "How to time-stamp a digital document", <cite>Journal of Cryptology</cite> 3 (1991).</li>
+        <li>Satoshi Nakamoto, "Bitcoin: a peer-to-peer electronic cash system" (2008).</li>
+        <li>Scott Chacon and Ben Straub, <a href="https://git-scm.com/book/en/v2/Git-Internals-Git-Objects" rel="noopener"><cite>Pro Git</cite>, "Git objects"</a>: each commit names its parent's hash.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="hash" data-title="Hash">A fixed-length fingerprint of any amount of data. A tiny change gives a completely different fingerprint.</p>
+      <p data-def="nonce" data-title="Nonce">A number used once: here, a spare field on the page that can be changed freely until the fingerprint comes out as required.</p>
+    </template>

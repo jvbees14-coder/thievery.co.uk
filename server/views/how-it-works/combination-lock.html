@@ -1,0 +1,49 @@
+<!--
+  How a safe's dial works. Poured into _page.html; the scene is
+  public/explainers/combination-lock/scene.js. Chapter ids: wheels, dialling, odds, feel.
+-->
+        <section class="hiw-chapter" id="wheels" aria-labelledby="h-wheels">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-wheels">Wheels behind the dial</h2>
+          <p>Behind a safe's dial is a stack of loose wheels on one spindle, here three. Each has a notch, the <button class="hiw-term" data-term="gate">gate</button>, cut in its rim, and a small pin on its face.</p>
+          <p>The dial turns only the first piece directly. Turn far enough and a pin catches the next wheel and carries it along; nearly another turn and that one catches the third. So a wheel moves only when it is pushed, and stays where it was left.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Turn the dial a few full turns one way and watch the wheels join in, then turn it back.</p>
+        </section>
+
+        <section class="hiw-chapter" id="dialling" aria-labelledby="h-dialling">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-dialling">Dialling the combination</h2>
+          <p>That is why a combination is dialled in such a strange way. Turning left several times picks up all three wheels; stopping at the first number leaves the far wheel with its gate in place. Turning right, passing the second number twice, picks up the other two but stops before reaching the far wheel. Turning left to the third number moves only the near wheel.</p>
+          <p>With all three gates lined up under a bar called the <button class="hiw-term" data-term="fence">fence</button>, the fence drops into them and the bolt can be drawn back.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Dial the combination, then spin the dial and see the wheels scatter.</p>
+        </section>
+
+        <section class="hiw-chapter" id="odds" aria-labelledby="h-odds">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-odds">How many to try</h2>
+          <p>A hundred numbers on three wheels makes a million combinations. But nobody can turn a dial to an exact number every time, so locks are made to open within a number or so of each one. If the lock opens within one number either side, every try covers three numbers on each wheel, and 34 tries per wheel cover them all: about 39,000 combinations.</p>
+          <p>At 20 seconds a try that is nine days of dialling, which is why safes are rated by the time they hold out, and many add a time lock or a penalty for wrong tries.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change how close the lock lets you be.</p>
+        </section>
+
+        <section class="hiw-chapter" id="feel" aria-labelledby="h-feel">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-feel">Feeling for the gates</h2>
+          <p>Safecrackers rarely try every combination. When the fence rests on the wheels, a nose on the lever touches the drive cam at two points that can be felt through the dial. A gate passing under the fence lets the lever sink a fraction, and the two points move closer together.</p>
+          <p>By parking one wheel at each number in turn and reading the points, a skilled person can find each gate without the combination. Good modern locks are built to hide those small differences.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Find the number where the gap narrows.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The scene models the wheel pack as three wheels each free to move almost a full turn against its neighbour before being pushed. Locks differ in how many turns each step takes; this one's dialling is worked out from the model. The figures in chapter 3 assume every number is allowed. The chart in chapter 4 is a picture of the idea, not a measurement from a real lock.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Combination_lock" rel="noopener">Combination lock</a>: the wheel pack, gates, fence and dialling.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Safe-cracking" rel="noopener">Safe-cracking</a>: manipulation by contact points.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="gate" data-title="Gate">The notch in a wheel's rim. The lock opens only when every wheel's gate is in the same place.</p>
+      <p data-def="fence" data-title="Fence">A bar resting on the rims of all the wheels. It can only drop, and free the bolt, into a row of lined-up gates.</p>
+    </template>

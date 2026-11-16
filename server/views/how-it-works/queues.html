@@ -1,0 +1,45 @@
+<!--
+  Why queues suddenly get long. Poured into _page.html; the scene is
+  public/explainers/queues/scene.js. Chapter ids: busy, curve, steady, shared.
+-->
+        <section class="hiw-chapter" id="busy" aria-labelledby="h-busy">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-busy">One till</h2>
+          <p>A shop has one till. Serving takes a minute on average, sometimes less and sometimes more, and customers turn up at random. If customers arrive, on average, at 80% of the rate the till can serve them, it is busy 80% of the time and idle 20%.</p>
+          <p>That sounds like plenty of slack. Yet the queue keeps growing for a while, emptying, and growing again.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Make the till busier and watch the queue.</p>
+        </section>
+
+        <section class="hiw-chapter" id="curve" aria-labelledby="h-curve">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-curve">The curve that bends upwards</h2>
+          <p>For a till like this the average wait in the queue is the share of time it is busy divided by the share it is idle, in minutes of service. Busy half the time: a minute. 80%: four minutes. 90%: nine. 95%: nineteen.</p>
+          <p>The last few per cent of busyness cost far more than the first. A quiet spell can't be saved up for later, but a rush piles up a queue that takes a long time to clear.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Slide towards 100% and see the wait take off.</p>
+        </section>
+
+        <section class="hiw-chapter" id="steady" aria-labelledby="h-steady">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-steady">Variety makes the queue</h2>
+          <p>If every customer took exactly one minute, the average wait would halve: 4.5 minutes at 90% busy instead of 9. If customers also arrived exactly evenly, there would be no queue at all until the till was full.</p>
+          <p>Queues come from unevenness: bursts of arrivals, and the customer with the trolley. Anything that smooths either, such as appointments or a quick lane for a few items, shortens the wait.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Compare random and fixed service times.</p>
+        </section>
+
+        <section class="hiw-chapter" id="shared" aria-labelledby="h-shared">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-shared">One queue, two tills</h2>
+          <p>With two tills, each busy 90% of the time, a separate queue for each means an average wait of 9 minutes. One queue feeding whichever till is free cuts it to about 4.3.</p>
+          <p>With separate queues, one till can stand idle while the other has a line. One shared queue never wastes a free till, which is why banks and post offices use a single line.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change how busy the tills are and compare the two layouts.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The curves are the standard formulas for queues with random arrivals, worked out in your browser: ρ ÷ (1 − ρ) minutes for one till with random service times (the M/M/1 queue), half that when service takes exactly a minute (M/D/1), and Erlang's formula for two tills sharing a queue. Chapter 1 simulates customers one by one, so its average wobbles before it settles.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/M/M/1_queue" rel="noopener">M/M/1 queue</a>.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/M/D/1_queue" rel="noopener">M/D/1 queue</a>.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Erlang_(unit)" rel="noopener">Erlang (unit)</a>: the Erlang C formula, from A. K. Erlang's work on telephone exchanges.</li>
+      </ol>
+    </section>

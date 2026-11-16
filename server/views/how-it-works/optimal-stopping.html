@@ -1,0 +1,48 @@
+<!--
+  When to stop looking. Poured into _page.html; the scene is
+  public/explainers/optimal-stopping/scene.js. Chapter ids: problem, cutoff, rule, risk.
+-->
+        <section class="hiw-chapter" id="problem" aria-labelledby="h-problem">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-problem">One chance at each</h2>
+          <p>Ten flats to view, one after another, in a random order. After each viewing you must take it or turn it down for good; somebody else will have it by tomorrow. You want the best of the ten.</p>
+          <p>Take the first and you get the best one time in ten. Wait for the last and the same. A better plan is to look without taking for a while, then take the first one better than everything you have seen.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Set how many to look at first and run the viewings.</p>
+        </section>
+
+        <section class="hiw-chapter" id="cutoff" aria-labelledby="h-cutoff">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-cutoff">How long to look</h2>
+          <p>Look at too few and you take something early, before you know what good looks like. Look at too many and the best has probably gone by.</p>
+          <p>With ten flats, looking at three and then taking the first that beats them finds the very best 39.9% of the time. Looking at four is almost as good, at 39.8%.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Run a thousand searches for each choice and compare them with the exact chances.</p>
+        </section>
+
+        <section class="hiw-chapter" id="rule" aria-labelledby="h-rule">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-rule">The 37% rule</h2>
+          <p>As the number of choices grows, the best plan settles down: look at the first 37% without taking any, then take the first one better than all of those. It finds the best about 37% of the time, however many there are.</p>
+          <p>Both figures are 1 divided by <button class="hiw-term" data-term="e">e</button>. That the chance stays at 37% even among a million choices is the surprise: the long wait does not make it hopeless.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Raise the number of choices and watch the best plan settle.</p>
+        </section>
+
+        <section class="hiw-chapter" id="risk" aria-labelledby="h-risk">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-risk">The cost of the rule</h2>
+          <p>The rule still misses the best 63% of the time. Often it takes a good one that isn't the best. But when the best was among those you only looked at, nothing later beats it, and you are left with whatever comes last: that happens as often as the share you looked at, 37%.</p>
+          <p>Looking at fewer makes that unlikely, at a small cost to finding the very best. Real choices are rarely all or nothing, which is why people usually stop sooner.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Move the cut-off and see how the outcomes change.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The exact chances are worked out in your browser: looking at r of n and then taking the first better one finds the best with chance (r/n) × (1/r + 1/(r+1) + … + 1/(n−1)). The runs are simulated with random orders. This is the "secretary problem", studied since the 1950s.</p>
+      <ol>
+        <li>Thomas S. Ferguson, "Who solved the secretary problem?", <cite>Statistical Science</cite> 4 (1989).</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Secretary_problem" rel="noopener">Secretary problem</a>.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="e" data-title="e">A number, about 2.718, that turns up wherever things grow or shrink in proportion to their size. One over e is about 0.368.</p>
+    </template>

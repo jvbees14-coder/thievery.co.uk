@@ -1,0 +1,46 @@
+<!--
+  Why rockets are mostly fuel. Poured into _page.html; the scene is
+  public/explainers/rockets/scene.js. Chapter ids: push, equation, orbit, stages.
+-->
+        <section class="hiw-chapter" id="push" aria-labelledby="h-push">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-push">Throwing things backwards</h2>
+          <p>A rocket does not push against the air or the ground. It throws its own fuel out of the back, very fast, and is pushed the other way, as you would be if you threw heavy balls off the back of a skateboard. That is why rockets work in space.</p>
+          <p>The faster the exhaust leaves, the more push each kilogram of fuel gives. Burning kerosene with oxygen sends it out at about 3 km/s; hydrogen with oxygen, about 4.4 km/s.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change the exhaust speed and watch the rocket pick up speed.</p>
+        </section>
+
+        <section class="hiw-chapter" id="equation" aria-labelledby="h-equation">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-equation">The rocket equation</h2>
+          <p>Early in the burn, the rocket is heavy with fuel it hasn't burnt yet, so each kilogram thrown out speeds it up only a little. Near the end, nearly empty, each kilogram does far more.</p>
+          <p>Konstantin Tsiolkovsky wrote down the result in 1903. The speed gained is the exhaust speed times the natural logarithm of the full mass over the empty mass. Doubling the fuel does not double the speed; each extra km/s costs more fuel than the last.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Fill the rocket with more fuel and see the speed it can reach.</p>
+        </section>
+
+        <section class="hiw-chapter" id="orbit" aria-labelledby="h-orbit">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-orbit">What it takes to reach orbit</h2>
+          <p>To stay up, a spacecraft just above the atmosphere must travel sideways at about 7.8 km/s. Climbing against gravity and pushing through the air costs another 1.5 or so, so a launch has to provide about 9.4 km/s in all.</p>
+          <p>With kerosene, that needs a full rocket 23 times as heavy as the empty one: 96% of it fuel. Hydrogen's faster exhaust cuts that to 88%, but hydrogen is so light that its tanks have to be huge.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Switch fuels and see how much of the rocket is left once the fuel is gone.</p>
+        </section>
+
+        <section class="hiw-chapter" id="stages" aria-labelledby="h-stages">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-stages">Dropping empty tanks</h2>
+          <p>Tanks, engines and structure weigh something too. If they are 8% of a rocket's fuelled weight, a single kerosene rocket can never reach orbit: when the fuel runs out it is still carrying all that metal.</p>
+          <p>So rockets come in stages. When the first runs dry, it falls away, and a smaller rocket on top carries on without the dead weight. With two stages, 2% of the weight at launch can reach orbit; with three, about 2.6%. Each extra stage helps less, and adds engines that must start in flight.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Add stages and lighten the tanks.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The scene uses Tsiolkovsky's equation, Δv = v × ln(full mass ÷ empty mass), worked out in your browser, with 9.4 km/s for a launch to low orbit. The stages share the speed equally and every stage's tanks and engines are the same share of its weight, which keeps the sums simple; real rockets tune each stage. 3 km/s and 4.4 km/s are round figures for kerosene and hydrogen engines in vacuum.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Tsiolkovsky_rocket_equation" rel="noopener">Tsiolkovsky rocket equation</a>.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Delta-v_budget" rel="noopener">Delta-v budget</a>: about 9.3 to 10 km/s to low Earth orbit, including losses.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Specific_impulse" rel="noopener">Specific impulse</a>: exhaust speeds of kerosene and hydrogen engines.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Multistage_rocket" rel="noopener">Multistage rocket</a>.</li>
+      </ol>
+    </section>

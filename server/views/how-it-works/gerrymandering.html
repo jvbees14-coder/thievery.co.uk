@@ -1,0 +1,51 @@
+<!--
+  Drawing the lines. Poured into _page.html; the scene is
+  public/explainers/gerrymandering/scene.js (the plans are art.js).
+  Chapter ids: map, lines, packing, measure.
+-->
+        <section class="hiw-chapter" id="map" aria-labelledby="h-map">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-map">Fifty voters, five seats</h2>
+          <p>A small country has 50 voters: 30 vote purple and 20 vote gold, 60% to 40%. It is split into five districts of ten voters, and each district elects whoever gets most of its votes.</p>
+          <p>Somebody has to decide where the district lines go. That choice turns out to matter as much as the votes.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Look at where each party's voters live.</p>
+        </section>
+
+        <section class="hiw-chapter" id="lines" aria-labelledby="h-lines">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-lines">Same votes, different lines</h2>
+          <p>Draw the districts as five rows and every row has six purple voters and four gold: purple wins all five seats. Draw them as pairs of columns and purple wins three, gold two, close to the share of the vote.</p>
+          <p>Both maps are neat rectangles, and both are honestly drawn. Nobody has changed a vote.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Switch between the two plans.</p>
+        </section>
+
+        <section class="hiw-chapter" id="packing" aria-labelledby="h-packing">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-packing">Packing and cracking</h2>
+          <p>Now draw the lines on purpose. <b>Pack</b> as many purple voters as possible into two districts, which purple wins ten to nothing, wasting votes it didn't need. <b>Crack</b> the rest of them thinly across three districts, where gold wins each by six to four or more.</p>
+          <p>Gold, with 40% of the vote, now wins three seats out of five. This is <button class="hiw-term" data-term="gerrymander">gerrymandering</button>, named after Elbridge Gerry, governor of Massachusetts, whose party drew a district in 1812 that a newspaper said looked like a salamander.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Compare the packed plan with the fair ones.</p>
+        </section>
+
+        <section class="hiw-chapter" id="measure" aria-labelledby="h-measure">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-measure">Counting wasted votes</h2>
+          <p>One way to spot it is to count wasted votes: every vote for a loser, and every winning vote beyond the half needed. The difference between the two parties' wasted votes, as a share of all votes, is the <button class="hiw-term" data-term="gap">efficiency gap</button>. In the packed plan purple wastes 20 votes and gold 5: a gap of 30% against purple.</p>
+          <p>No single number settles it; even the tidy column plan has a gap of 10%. That is why some countries, the UK among them, hand the drawing to independent commissions with rules about equal numbers and keeping communities together. You can try drawing districts yourself in our puzzle game, <a href="/gerrymander/">Gerrymander</a>.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Compare the wasted votes in each plan.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The map and the plans are made up for this page, and the counts are worked out in your browser. A winner's wasted votes are counted beyond five of the district's ten, the "half needed" in the efficiency gap's usual form.</p>
+      <ol>
+        <li>Nicholas O. Stephanopoulos and Eric M. McGhee, "Partisan gerrymandering and the efficiency gap", <cite>University of Chicago Law Review</cite> 82 (2015).</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Gerrymandering" rel="noopener">Gerrymandering</a>: Elbridge Gerry and the 1812 salamander.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Boundary_commissions_(United_Kingdom)" rel="noopener">Boundary commissions (United Kingdom)</a>.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="gerrymander" data-title="Gerrymandering">Drawing district boundaries to help one side win more seats than its share of the votes would give it.</p>
+      <p data-def="gap" data-title="Efficiency gap">One party's wasted votes minus the other's, divided by all the votes cast. Large gaps suggest the lines favour one side.</p>
+    </template>

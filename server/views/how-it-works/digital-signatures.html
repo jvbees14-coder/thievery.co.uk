@@ -1,0 +1,49 @@
+<!--
+  Signing without a pen. Poured into _page.html; the scene is
+  public/explainers/digital-signatures/scene.js. Chapter ids: fingerprint, sign, check, forge.
+-->
+        <section class="hiw-chapter" id="fingerprint" aria-labelledby="h-fingerprint">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-fingerprint">A fingerprint of the message</h2>
+          <p>A signature on paper can be copied onto another page. A digital one is tied to the exact words it signs, and it starts with a fingerprint: a <button class="hiw-term" data-term="hash">hash</button> of the message.</p>
+          <p>SHA-256 turns any message into 256 bits. Change one letter and about half of those bits flip, with no pattern to which. Finding two messages with the same fingerprint has never been done.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Edit the message and watch the fingerprint change.</p>
+        </section>
+
+        <section class="hiw-chapter" id="sign" aria-labelledby="h-sign">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-sign">Signing with a private key</h2>
+          <p>The signer has two keys that belong together: a private one they keep, and a public one they give to everybody. Here they are tiny RSA keys: the public key is the pair 3233 and 17, and the private key is 2753.</p>
+          <p>To sign, they take the fingerprint (cut down to a number below 3233 for this toy) and raise it to the power 2753 on a clock of 3233. The answer is the signature, sent with the message.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Sign the message and see the numbers.</p>
+        </section>
+
+        <section class="hiw-chapter" id="check" aria-labelledby="h-check">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-check">Anybody can check it</h2>
+          <p>To check, raise the signature to the public power, 17, on the same clock. The two powers undo each other, so the right signature turns back into the message's fingerprint. Anybody can do this, and nobody learns the private key by doing it.</p>
+          <p>Change the message after it is signed and its fingerprint no longer matches what the signature turns into.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Alter the signed message and check it again.</p>
+        </section>
+
+        <section class="hiw-chapter" id="forge" aria-labelledby="h-forge">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-forge">Trying to forge one</h2>
+          <p>Without the private key, a forger can only guess signatures. On this toy clock one guess in 3233 works, and the private key can be found by splitting 3233 into 61 × 53.</p>
+          <p>Real keys use numbers over 600 digits long, which nobody can split, and fingerprints of 256 bits. Every software update your phone installs and every secure website you visit is checked this way.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Guess signatures and count how many fail.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The fingerprint is real SHA-256, worked out in your browser. The keys are the textbook RSA example (p = 61, q = 53), far too small to be safe; to fit them, the scene keeps the fingerprint's first three bytes and takes the remainder after dividing by 3233. Real RSA signatures also pad the fingerprint in a set way before signing.</p>
+      <ol>
+        <li>R. L. Rivest, A. Shamir and L. Adleman, "A method for obtaining digital signatures and public-key cryptosystems", <cite>Communications of the ACM</cite> 21 (1978).</li>
+        <li>NIST, <a href="https://csrc.nist.gov/pubs/fips/180-4/upd1/final" rel="noopener">FIPS 180-4, Secure Hash Standard</a>.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/RSA_(cryptosystem)" rel="noopener">RSA (cryptosystem)</a>: the worked example with 3233, 17 and 2753.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="hash" data-title="Hash">A fixed-length summary of any amount of data, made so that a small change gives a completely different summary and two different inputs are practically never given the same one.</p>
+    </template>

@@ -1,0 +1,48 @@
+<!--
+  The six digits on your phone. Poured into _page.html; the scene is
+  public/explainers/one-time-codes/scene.js. Chapter ids: secret, clock, code, guess.
+-->
+        <section class="hiw-chapter" id="secret" aria-labelledby="h-secret">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-secret">A secret shared once</h2>
+          <p>When you turn on two-step sign-in with an authenticator app, the website shows a QR code. Inside it is a secret: a random string of letters and digits, here 32 of them. Your phone keeps a copy and so does the website. It is never sent again.</p>
+          <p>Every six-digit code the app shows afterwards is worked out from that secret and the time. The phone does not need a signal.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Look inside the QR code.</p>
+        </section>
+
+        <section class="hiw-chapter" id="clock" aria-labelledby="h-clock">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-clock">Both count the same 30 seconds</h2>
+          <p>Phone and website both know the time. They count how many 30-second steps have passed since the start of 1970, the reference point computers keep time from. That count changes twice a minute, and both sides get the same number without talking.</p>
+          <p>Websites usually accept the step before and after as well, in case the phone's clock is a few seconds out.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Watch the count tick over.</p>
+        </section>
+
+        <section class="hiw-chapter" id="code" aria-labelledby="h-code">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-code">From secret and time to six digits</h2>
+          <p>The secret and the count go into <button class="hiw-term" data-term="hmac">HMAC</button>, a hash with a key, which gives 20 bytes that look random. The last half-byte says where to look: take the four bytes starting there, drop the top bit, and keep the last six digits of that number.</p>
+          <p>The website does exactly the same, and if your six digits match its six digits, you have the secret. Anybody without it gets numbers that look unrelated.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Step the count forward and back and watch the code change.</p>
+        </section>
+
+        <section class="hiw-chapter" id="guess" aria-labelledby="h-guess">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-guess">Guessing, and the real risk</h2>
+          <p>A guess is right one time in a million. Sites stop after a handful of wrong tries, so guessing gets almost nowhere.</p>
+          <p>The danger is being tricked into typing a code into a fake sign-in page, which passes it to the real site within the 30 seconds it lasts. Codes protect against a stolen password, not against a convincing copy of the page. Passkeys, tied to the real website's address, close that gap.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change how many tries a site allows.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The codes are worked out in your browser with real HMAC-SHA-1, exactly as RFC 6238 sets out. The secret is the RFC's own test key (the text 12345678901234567890), so the scene's codes can be checked against the table in the RFC: at 59 seconds after 1970, the six-digit code is 287082. Never use a published secret for a real account.</p>
+      <ol>
+        <li>IETF, <a href="https://www.rfc-editor.org/rfc/rfc6238" rel="noopener">RFC 6238, TOTP: Time-Based One-Time Password Algorithm</a> (2011).</li>
+        <li>IETF, <a href="https://www.rfc-editor.org/rfc/rfc4226" rel="noopener">RFC 4226, HOTP: An HMAC-Based One-Time Password Algorithm</a> (2005): the truncation to six digits.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="hmac" data-title="HMAC">A way of hashing a message together with a secret key, so that only somebody with the key can produce the same result.</p>
+    </template>

@@ -1,0 +1,50 @@
+<!--
+  How JPEG shrinks a photo. Poured into _page.html; the scene is
+  public/explainers/jpeg/scene.js (arithmetic in art.js).
+  Chapter ids: blocks, patterns, quantise, artefacts.
+-->
+        <section class="hiw-chapter" id="blocks" aria-labelledby="h-blocks">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-blocks">Squares of 64 pixels</h2>
+          <p>A photo is a grid of numbers, one for each pixel's brightness (colour adds two more grids, handled the same way). A 12-megapixel photo is 36 million numbers, and JPEG makes the file a tenth of that size or less with little you can see.</p>
+          <p>It starts by cutting the picture into squares of 8 × 8 pixels and treating each one separately.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Pick a square and see its 64 numbers.</p>
+        </section>
+
+        <section class="hiw-chapter" id="patterns" aria-labelledby="h-patterns">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-patterns">64 patterns</h2>
+          <p>Any 8 × 8 square can be built by mixing 64 fixed patterns, from a flat grey through slow stripes to the finest checkerboard. Working out how much of each pattern a square needs is the <button class="hiw-term" data-term="dct">discrete cosine transform</button>.</p>
+          <p>This changes nothing yet: 64 pixels in, 64 amounts out, and the square can be rebuilt exactly. But in a photo most of the amount is in the first few, smooth patterns. The fine ones get small numbers.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Pick a square and see which patterns it uses.</p>
+        </section>
+
+        <section class="hiw-chapter" id="quantise" aria-labelledby="h-quantise">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-quantise">Throwing away fine detail</h2>
+          <p>Here JPEG loses information on purpose. Each amount is divided by a number from a table and rounded. The table's numbers are small for the smooth patterns and large for the fine ones, because eyes notice slow changes in brightness far more than tiny ripples.</p>
+          <p>Rounding turns most of the small amounts into zero. In this picture at quality 75, 80% of all the amounts become zero; at 50, 87%. Long runs of zeros take almost no room once the file is packed.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Lower the quality and count the zeros.</p>
+        </section>
+
+        <section class="hiw-chapter" id="artefacts" aria-labelledby="h-artefacts">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-artefacts">When it shows</h2>
+          <p>To open the file, each square is rebuilt from whatever amounts survived. Push the quality too low and the joins between squares start to show, and sharp edges grow faint ripples beside them, because the fine patterns that made the edge sharp were rounded away.</p>
+          <p>That is why JPEG suits photos and spoils screenshots and diagrams, which are full of sharp edges.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Drop the quality and compare the copy with the original.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>Everything is worked out in your browser on a 64 × 64 greyscale picture drawn for this page: the transform, the standard's luminance table scaled for quality as the Independent JPEG Group's library does, the rounding and the rebuilding. A real JPEG also stores colour at lower detail and packs the numbers with a Huffman code, which is where the zeros turn into a small file.</p>
+      <ol>
+        <li>ITU-T, <a href="https://www.w3.org/Graphics/JPEG/itu-t81.pdf" rel="noopener">Recommendation T.81</a> (1992): the JPEG standard, and its table K.1.</li>
+        <li>Gregory K. Wallace, "The JPEG still picture compression standard", <cite>Communications of the ACM</cite> 34 (1991).</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/JPEG" rel="noopener">JPEG</a>: typical compression of 10:1 with little visible loss.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="dct" data-title="Discrete cosine transform">A way of describing a block of numbers as a mix of smooth waves of different fineness. It loses nothing on its own.</p>
+    </template>

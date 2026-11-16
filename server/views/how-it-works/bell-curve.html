@@ -1,0 +1,49 @@
+<!--
+  Why so much is bell-shaped. Poured into _page.html; the scene is
+  public/explainers/bell-curve/scene.js. Chapter ids: one, two, many, lopsided.
+-->
+        <section class="hiw-chapter" id="one" aria-labelledby="h-one">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-one">One die is flat</h2>
+          <p>Roll a fair die and every face is as likely as any other: one chance in six each. Roll it a few thousand times and count, and the six bars come out about level.</p>
+          <p>Nothing about one die is bell-shaped. The bell comes from adding.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Let the rolls pile up and watch the bars even out.</p>
+        </section>
+
+        <section class="hiw-chapter" id="two" aria-labelledby="h-two">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-two">Two dice make a peak</h2>
+          <p>Add two dice and the totals are no longer equal. There is only one way to make 2 (a one and a one) but six ways to make 7: 1 and 6, 2 and 5, 3 and 4, and each of those the other way round. So 7 comes up 6 times in 36, about 17% of rolls, and 2 just once in 36.</p>
+          <p>Middling totals win because there are more ways to reach them.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Count the ways to each total, then roll and compare.</p>
+        </section>
+
+        <section class="hiw-chapter" id="many" aria-labelledby="h-many">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-many">More dice, a smoother bell</h2>
+          <p>With three dice the triangle rounds off. With ten, the totals run from 10 to 60, but 95% of rolls land between 25 and 45, and the most likely total, 35, comes up only about 7% of the time. The shape is the <button class="hiw-term" data-term="normal">normal curve</button>.</p>
+          <p>The bell is wider in total as dice are added, but narrower compared with the whole range, because high and low rolls cancel each other out more often than they line up.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Add dice one at a time and watch the bell form.</p>
+        </section>
+
+        <section class="hiw-chapter" id="lopsided" aria-labelledby="h-lopsided">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-lopsided">Even with a crooked die</h2>
+          <p>Here is a badly loaded die: it shows a one half the time, a two, three or four otherwise, and never a five or six. Its single-roll bars are nothing like a bell.</p>
+          <p>Add twenty of them and the bell is back, centred on 40. This is the <button class="hiw-term" data-term="clt">central limit theorem</button>: add up enough independent bits of chance and the total is bell-shaped, whatever each bit looks like. It is why heights, measurement errors and the average of a poll all come out close to a bell.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Switch between the fair and the loaded die and add dice.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The line on the chart is the exact chance of each total, worked out in your browser by adding the dice one at a time. The bars are real random rolls, so they wobble around it. The loaded die is made up for the example.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Central_limit_theorem" rel="noopener">Central limit theorem</a>.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Normal_distribution" rel="noopener">Normal distribution</a>.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="normal" data-title="Normal curve">The bell shape: tallest in the middle, falling away evenly either side. Also called the Gaussian curve.</p>
+      <p data-def="clt" data-title="Central limit theorem">The rule that the sum of many independent random amounts tends towards a bell shape, whatever shape each one has.</p>
+    </template>

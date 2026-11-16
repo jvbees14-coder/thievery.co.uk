@@ -1,0 +1,48 @@
+<!--
+  Collecting the full set. Poured into _page.html; the scene is
+  public/explainers/coupon-collector/scene.js. Chapter ids: first, last, whole, swap.
+-->
+        <section class="hiw-chapter" id="first" aria-labelledby="h-first">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-first">The easy start</h2>
+          <p>An album has 50 stickers to collect, and every packet holds one, picked at random. The first few packets are all new: with nothing collected, any sticker will do.</p>
+          <p>Half the album fills after about 34 packets. At that rate the whole thing looks like 70 or so away.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Open packets and watch the album fill, then slow down.</p>
+        </section>
+
+        <section class="hiw-chapter" id="last" aria-labelledby="h-last">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-last">The long wait for the last one</h2>
+          <p>With 49 of 50 in the album, only one sticker in 50 is any use, so the last one takes 50 packets on average. The one before it takes 25, the one before that about 17.</p>
+          <p>Each new sticker costs the number in the album divided by the number still missing. Add them all up and a 50-sticker album takes about 225 packets, three times what the start suggested.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Compare the wait for each new sticker.</p>
+        </section>
+
+        <section class="hiw-chapter" id="whole" aria-labelledby="h-whole">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-whole">Bigger albums</h2>
+          <p>The total is the size of the album times 1 + ½ + ⅓ + … up to one over the size: a sum called a <button class="hiw-term" data-term="harmonic">harmonic number</button>, which grows slowly but never stops.</p>
+          <p>Six toys in a cereal box take about 15 boxes. A 600-sticker album takes about 4,200 packets on average: seven times the number of stickers.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change the size of the album.</p>
+        </section>
+
+        <section class="hiw-chapter" id="swap" aria-labelledby="h-swap">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-swap">Swapping with friends</h2>
+          <p>Friends filling the same album can swap their doubles. Pooling everything, two friends need about 165 packets each instead of 225; five need about 115 each; ten, a little over 90.</p>
+          <p>Swapping helps most with the long wait at the end, because somebody else's spare is usually the one you are missing.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Add friends and see how many packets each one buys.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The scene assumes one sticker a packet and every sticker equally common. The figures for a whole album are the exact averages; the swapping figures come from thousands of simulated albums in your browser, assuming the friends pool every packet and swap perfectly. Real packets often hold several stickers, which changes the count of packets but not the shape.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Coupon_collector%27s_problem" rel="noopener">Coupon collector's problem</a>: the average n × H(n).</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Harmonic_number" rel="noopener">Harmonic number</a>.</li>
+      </ol>
+    </section>
+
+    <template id="hiw-glossary">
+      <p data-def="harmonic" data-title="Harmonic number">1 + ½ + ⅓ + … + 1/n. It grows roughly like the natural logarithm of n, so it keeps growing, but slowly.</p>
+    </template>

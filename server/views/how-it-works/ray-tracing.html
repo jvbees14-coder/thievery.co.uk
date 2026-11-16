@@ -1,0 +1,45 @@
+<!--
+  Drawing light backwards. Poured into _page.html; the scene is
+  public/explainers/ray-tracing/scene.js. Chapter ids: rays, shade, shadow, mirror.
+-->
+        <section class="hiw-chapter" id="rays" aria-labelledby="h-rays">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-rays">One ray for every pixel</h2>
+          <p>In the real world light leaves a lamp, bounces around, and a tiny fraction of it ends up in your eye. Simulating all of it would waste almost every ray. Ray tracing runs the journey backwards: from the eye, out through each pixel of the screen, into the scene.</p>
+          <p>Each ray is a straight line, and the first thing it meets decides that pixel. Here the scene is a ball on a floor, and the picture is 96 × 64 rays.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Pick a row and follow its ray in the side view.</p>
+        </section>
+
+        <section class="hiw-chapter" id="shade" aria-labelledby="h-shade">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-shade">Facing the light</h2>
+          <p>Where a ray lands, the computer works out which way the surface faces there. A surface facing the light straight on is lit most; one tipped away is lit less, by the cosine of the angle between them; one facing away gets none.</p>
+          <p>That one rule turns a flat disc into a round ball.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Move the light round and watch the bright side follow it.</p>
+        </section>
+
+        <section class="hiw-chapter" id="shadow" aria-labelledby="h-shadow">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-shadow">Asking the light</h2>
+          <p>Facing the light is not enough if something is in the way. So from every point a ray lands on, a second ray is sent towards the light. If it meets anything first, the point is in shadow.</p>
+          <p>Shadows come out right with no special effort, which is the great appeal of ray tracing: the picture follows from the geometry.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Follow a ray onto the floor beside the ball and see its second ray blocked.</p>
+        </section>
+
+        <section class="hiw-chapter" id="mirror" aria-labelledby="h-mirror">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-mirror">Bouncing</h2>
+          <p>A mirror is simple too: where a ray hits it, send a new ray out at the mirrored angle and colour the pixel with whatever that one finds. Turner Whitted described this in 1980, and his pictures of shiny balls set the style for years.</p>
+          <p>Films trace many rays per pixel and let them bounce many times, for soft shadows and light reflected off walls. Since 2018 graphics cards have had parts built to trace rays quickly enough for games.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Turn the ball into a mirror and find the floor in it.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The picture is traced in your browser, one ray per pixel plus one to the light from every point and up to three bounces off the mirror. The side view shows only the slice through the middle column of the picture, so a light off to one side is drawn where it falls on that slice.</p>
+      <ol>
+        <li>Turner Whitted, "An improved illumination model for shaded display", <cite>Communications of the ACM</cite> 23 (1980).</li>
+        <li>Arthur Appel, "Some techniques for shading machine renderings of solids", AFIPS Spring Joint Computer Conference (1968): casting rays to find shadows.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Ray_tracing_(graphics)" rel="noopener">Ray tracing (graphics)</a>.</li>
+      </ol>
+    </section>

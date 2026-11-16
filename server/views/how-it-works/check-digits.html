@@ -1,0 +1,45 @@
+<!--
+  The last digit that catches typos. Poured into _page.html; the scene is
+  public/explainers/check-digits/scene.js. Chapter ids: typo, luhn, swap, isbn.
+-->
+        <section class="hiw-chapter" id="typo" aria-labelledby="h-typo">
+          <p class="hiw-chapter-num">Chapter 1</p>
+          <h2 id="h-typo">One digit wrong</h2>
+          <p>Type a long number from memory and one digit will sometimes be wrong. Card numbers, book numbers and barcodes all end in an extra digit worked out from the others, so a form can tell straight away that a number was mistyped, without looking it up anywhere.</p>
+          <p>The simplest rule: choose the last digit so all the digits add up to a multiple of 10. Change any one digit and the total no longer does. But swap two digits and the total is the same, so it passes.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Change a digit, then swap two, and see which the check notices.</p>
+        </section>
+
+        <section class="hiw-chapter" id="luhn" aria-labelledby="h-luhn">
+          <p class="hiw-chapter-num">Chapter 2</p>
+          <h2 id="h-luhn">Doubling every other digit</h2>
+          <p>Bank cards use a rule patented by Hans Peter Luhn of IBM in 1960. Starting from the right, double every second digit, and where that gives a two-digit number, add its digits (which is the same as taking off 9). Add everything up; a valid number's total ends in 0.</p>
+          <p>Because neighbouring digits are treated differently, swapping them usually changes the total.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Edit the number and follow the working.</p>
+        </section>
+
+        <section class="hiw-chapter" id="swap" aria-labelledby="h-swap">
+          <p class="hiw-chapter-num">Chapter 3</p>
+          <h2 id="h-swap">Swapped neighbours</h2>
+          <p>Swapping two neighbouring digits is the commonest slip after a wrong digit. Luhn's rule catches every single wrong digit and every neighbouring swap except one pair: 0 and 9, since doubling 9 and taking off 9 gives 9 back, the same as leaving it alone.</p>
+          <p>The plain sum catches no swaps at all.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Swap neighbours and compare the two rules.</p>
+        </section>
+
+        <section class="hiw-chapter" id="isbn" aria-labelledby="h-isbn">
+          <p class="hiw-chapter-num">Chapter 4</p>
+          <h2 id="h-isbn">Book numbers</h2>
+          <p>Old ten-digit ISBNs multiplied the digits by 10, 9, 8 and so on down to 1, and made the total a multiple of 11. Eleven is a prime number, so the rule catches every single wrong digit and every swap of any two digits. The price was an eleventh possible check value, written X.</p>
+          <p>Since 2007 books have had 13-digit ISBNs that share the barcode system, with weights 1 and 3 and a total that is a multiple of 10. They catch every wrong digit, but miss a swap of two neighbours that differ by 5.</p>
+          <p class="hiw-try"><strong>Try it.</strong> Switch between the two book numbers and swap digits.</p>
+        </section>
+<!-- end of chapters -->
+    <section class="hiw-sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">Sources and notes</h2>
+      <p>The numbers are the worked examples from the Wikipedia articles below, not real card numbers. The table of mistakes caught tries every possible wrong digit and every swap of neighbouring digits on each example, in your browser.</p>
+      <ol>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Luhn_algorithm" rel="noopener">Luhn algorithm</a>: the 1960 patent, the example 79927398713, and the 09/90 swap.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/ISBN" rel="noopener">ISBN</a>: the ten- and thirteen-digit check digits, and 13 digits from 2007.</li>
+        <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Check_digit" rel="noopener">Check digit</a>.</li>
+      </ol>
+    </section>
