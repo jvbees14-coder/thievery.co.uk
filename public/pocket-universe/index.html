@@ -1346,10 +1346,26 @@ function markScene(name) {
 }
 
 /* ================= Starfield ================= */
+/* The background: the sky's gradient is painted once into a canvas of its own
+   (again only when the window changes size) and copied in each frame, and the
+   stars are filled in four brightness batches rather than one fill per star.
+   The picture is the same; it costs about a seventh of what it did. */
 let stars = [];
+let sky = null;
+const STAR_LEVELS = [0.3, 0.45, 0.62, 0.8];
 function makeStars() {
   const n = Math.round((W * H) / 3500);
-  stars = Array.from({ length: n }, () => ({ x: Math.random(), y: Math.random(), d: rand(0.02, 0.12), a: rand(0.25, 0.85), s: Math.random() < 0.08 ? 1.4 : 0.8 }));
+  stars = Array.from({ length: n }, () => ({ x: Math.random(), y: Math.random(), d: rand(0.02, 0.12), g: Math.floor(Math.random() * 4), s: Math.random() < 0.08 ? 1.4 : 0.8 }));
+  sky = document.createElement('canvas');
+  sky.width = Math.round(W * DPR); sky.height = Math.round(H * DPR);
+  const c = sky.getContext('2d');
+  c.setTransform(DPR, 0, 0, DPR, 0, 0);
+  c.fillStyle = '#05060d';
+  c.fillRect(0, 0, W, H);
+  const g = c.createRadialGradient(W * 0.7, H * 0.2, 0, W * 0.7, H * 0.2, Math.max(W, H) * 0.8);
+  g.addColorStop(0, 'rgba(60,70,140,0.10)');
+  g.addColorStop(1, 'rgba(5,6,13,0)');
+  c.fillStyle = g; c.fillRect(0, 0, W, H);
 }
 
 /* ================= Host page ================= */
@@ -1377,17 +1393,17 @@ function resize() {
 }
 
 function drawBackground() {
-  ctx.fillStyle = '#05060d';
-  ctx.fillRect(0, 0, W, H);
-  const g = ctx.createRadialGradient(W * 0.7, H * 0.2, 0, W * 0.7, H * 0.2, Math.max(W, H) * 0.8);
-  g.addColorStop(0, 'rgba(60,70,140,0.10)');
-  g.addColorStop(1, 'rgba(5,6,13,0)');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  for (const s of stars) {
-    let x = (s.x * W - cam.x * s.d * cam.zoom) % W; if (x < 0) x += W;
-    let y = (s.y * H - cam.y * s.d * cam.zoom) % H; if (y < 0) y += H;
-    ctx.fillStyle = `rgba(210,220,255,${s.a})`;
-    ctx.fillRect(x, y, s.s, s.s);
+  ctx.drawImage(sky, 0, 0, W, H);
+  for (let g = 0; g < 4; g++) {
+    ctx.fillStyle = `rgba(210,220,255,${STAR_LEVELS[g]})`;
+    ctx.beginPath();
+    for (const s of stars) {
+      if (s.g !== g) continue;
+      let x = (s.x * W - cam.x * s.d * cam.zoom) % W; if (x < 0) x += W;
+      let y = (s.y * H - cam.y * s.d * cam.zoom) % H; if (y < 0) y += H;
+      ctx.rect(x, y, s.s, s.s);
+    }
+    ctx.fill();
   }
 }
 
@@ -1474,13 +1490,26 @@ function recordTrails(now) {
     const dx = b.x - t[n - 3], dy = b.y - t[n - 2];
     if (dx * dx + dy * dy >= minD2 || now - t[n - 1] >= maxGap) {
       t.push(b.x, b.y, now);
-      if ((n - b.ts) / 3 > 1500) b.ts += 3;   // a hard cap, never reached in practice
+      // A runaway trail is thinned evenly along its whole length: every other
+      // point goes, keeping both ends, so no part of it is coarser than another.
+      if ((t.length - b.ts) / 3 > TRAIL_MAX) thinTrail(b);
     }
     // Drop the oldest point while the one after it is also past the life.
-    const cut = now - life;
-    while (b.ts + 5 < t.length && t[b.ts + 5] <= cut) b.ts += 3;
-    if (b.ts > 600) { t.splice(0, b.ts); b.ts = 0; }
+    const tt = b.trail, cut = now - life;
+    while (b.ts + 5 < tt.length && tt[b.ts + 5] <= cut) b.ts += 3;
+    if (b.ts > 600) { tt.splice(0, b.ts); b.ts = 0; }
   }
+}
+const TRAIL_MAX = 600;
+function thinTrail(b) {
+  const t = b.trail, s0 = b.ts, n = (t.length - s0) / 3;
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    if (i > 0 && i < n - 1 && (i & 1)) continue;
+    const o = s0 + i * 3;
+    out.push(t[o], t[o + 1], t[o + 2]);
+  }
+  b.trail = out; b.ts = 0;
 }
 function clearTrails() { for (const b of bodies) { b.trail.length = 0; b.ts = 0; } }
 
@@ -2600,22 +2629,32 @@ function updateHud() {
 }
 
 /* ================= Main loop ================= */
+// Where each frame's time goes, smoothed over about a second; read it from the
+// console as __pu.perf when a scene feels slow. It only measures.
+const perf = { frame: 0, phys: 0, steps: 0, draw: 0 };
+const ema = (k, v) => { perf[k] += (v - perf[k]) * 0.05; };
 let last = performance.now();
-function frame(now) {
+function frame(now, manual) {
   const fdt = Math.min(0.05, (now - last) / 1000);
+  ema('frame', now - last);
   last = now;
+  const tStart = performance.now();
   if (!paused && bodies.length) {
     commitScrub();
     const want = SPEEDS[speedIdx] * fdt * 60;
     let todo = want, done = 0;
     const t0 = performance.now();
+    let steps = 0;
     while (todo > 1e-9) {
       const h = Math.min(stepSize(), todo);
       step(h);
+      steps++;
       todo -= h; done += h;
       recordTrails(simTime + done);
       if (performance.now() - t0 > STEP_BUDGET_MS) break;
     }
+    ema('steps', steps);
+    ema('phys', performance.now() - tStart);
     simTime += done;
     const ratio = want > 0 ? done / want : 1;
     actualSpeed += (SPEEDS[speedIdx] * ratio - actualSpeed) * 0.1;
@@ -2636,6 +2675,7 @@ function frame(now) {
     if (!bodies.includes(cam.follow)) cam.follow = null;
     else { cam.x += (cam.follow.x - cam.x) * 0.25; cam.y += (cam.follow.y - cam.y) * 0.25; }
   }
+  const tDraw = performance.now();
   updateHeat();
   drawBackground();
   if (showField) drawField();
@@ -2649,7 +2689,8 @@ function frame(now) {
   drawAim();
   drawLaunch();
   updateHud();
-  requestAnimationFrame(frame);
+  ema('draw', performance.now() - tDraw);
+  if (!manual) requestAnimationFrame(frame);
 }
 
 /* ================= App install / offline ================= */
@@ -2678,7 +2719,9 @@ window.__pu = {
   get bodies() { return bodies; }, cam, loadScene, audio, ensureAudio, playImpact, makeBody, addBody, computeAcc, step, tidalCheck,
   snapshot, restore, undo, get undoStack() { return undoStack; }, get history() { return history; },
   packCode, unpackCode, universeData, applyUniverse, startChallenge, get challenge() { return challenge; },
-  orbitOf, updateHeat, get simTime() { return simTime; }, CHALLENGES,
+  orbitOf, updateHeat, perf,
+  // One frame by hand, for measuring when the page is not being animated.
+  tick(ms = 1000 / 60) { frame(last + ms, true); }, get simTime() { return simTime; }, CHALLENGES,
 };
 })();
 </script>
