@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  {{head:missions}}
+  <title>Missions admin · Thievery</title>
+  <meta name="robots" content="noindex, nofollow" />
+</head>
+<body>
+  {{bar:public}}
+
+  <!-- The admin page's door: the site's own admin account, signed in through
+       the hall's login route. Anybody else who signs in here gets a 404 on
+       the next load, the same as for an address that does not exist. -->
+  <main id="main" class="screen home">
+    <div class="home-card door-card">
+      <h1 class="logo wordmark">Missions<em>Admin</em></h1>
+      <form id="ms-signin" class="ms-form" autocomplete="on">
+        <div class="field">
+          <label for="ms-user">Username</label>
+          <input id="ms-user" name="username" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" required />
+        </div>
+        <div class="field">
+          <label for="ms-pass">Password</label>
+          <input id="ms-pass" name="password" type="password" maxlength="200" autocomplete="current-password" required />
+        </div>
+        <p id="ms-signin-error" class="field-error" role="alert" hidden></p>
+        <button class="btn primary" type="submit">Sign in</button>
+      </form>
+    </div>
+  </main>
+
+  {{foot}}
+
+  <script src="/missions-door.js" defer></script>
+</body>
+</html>

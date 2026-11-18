@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  {{head:missions}}
+  <!-- iPhones before the manifest was honoured read these instead. The name
+       is what goes under the icon on a Home Screen. -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Missions" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Missions · Thievery</title>
+  <meta name="description" content="Join a group's missions: dares that arrive on your phone at random times during a ride, a walk or a day out." />
+  <link rel="canonical" href="https://thievery.co.uk/missions" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Thievery" />
+  <meta property="og:title" content="Missions · Thievery" />
+  <meta property="og:description" content="Dares that arrive on your phone at random times. Tap to join." />
+  <meta property="og:url" content="https://thievery.co.uk/missions" />
+</head>
+<body class="ms-body">
+  {{bar:public}}
+
+  <!-- Every panel is in the page from the start and public/missions.js shows
+       the ones that apply: the iPhone steps, the join form, or the rider's
+       own orders. With scripts off, the first note is all there is. -->
+  <main id="main" class="ms-main">
+    <header class="ms-head">
+      <p class="ms-kicker">Thievery.co.uk</p>
+      <h1 class="ms-title">Missions</h1>
+      <p class="ms-lede" id="ms-lede">Dares, sent to your phone when you least expect them.</p>
+    </header>
+
+    <noscript><p class="ms-note">Missions needs JavaScript to sign your phone up.</p></noscript>
+
+    <p class="ms-note" id="ms-loading">Checking the post&hellip;</p>
+    <p class="ms-note ms-note-bad" id="ms-problem" role="alert" hidden></p>
+
+    <!-- iPhone in Safari: notifications only work from the Home Screen. -->
+    <section class="ms-panel" id="ms-home-screen" hidden aria-labelledby="ms-hs-title">
+      <h2 id="ms-hs-title">First, put this on your Home Screen</h2>
+      <p>iPhones only let a website send notifications once it&rsquo;s on the Home Screen. It takes a few taps.</p>
+      <ol class="ms-steps">
+        <li>
+          <span class="ms-step-n" aria-hidden="true">1</span>
+          <span>Tap <strong>Share</strong>
+            <svg class="ms-glyph" viewBox="0 0 24 24" role="img" aria-label="(the square with an arrow)"><path d="M12 3v12M8 7l4-4 4 4" /><path d="M8 10H6v11h12V10h-2" /></svg>
+            at the bottom of Safari (top right on an iPad).</span>
+        </li>
+        <li>
+          <span class="ms-step-n" aria-hidden="true">2</span>
+          <span>Scroll down, tap <strong>Add to Home Screen</strong>
+            <svg class="ms-glyph" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" /><path d="M12 8v8M8 12h8" /></svg>
+            and then <strong>Add</strong>.</span>
+        </li>
+        <li>
+          <span class="ms-step-n" aria-hidden="true">3</span>
+          <span>Close Safari and open <strong>Missions</strong> from its new icon on your Home Screen.</span>
+        </li>
+        <li>
+          <span class="ms-step-n" aria-hidden="true">4</span>
+          <span>Tap <strong>Join</strong>, then <strong>Allow</strong> when your phone asks about notifications.</span>
+        </li>
+      </ol>
+      <p class="ms-small">Needs iOS 16.4 or later. On an older iPhone you can still join here and check this page for missions.</p>
+      <button class="ms-btn ms-btn-quiet" id="ms-anyway" type="button">Join without notifications</button>
+    </section>
+
+    <!-- Joining. -->
+    <section class="ms-panel" id="ms-join" hidden aria-labelledby="ms-join-title">
+      <h2 id="ms-join-title">Join</h2>
+      <p id="ms-join-crew" class="ms-crew-note" hidden></p>
+      <form id="ms-join-form" class="ms-form" autocomplete="off" novalidate>
+        <div class="ms-field">
+          <label for="ms-name">Your name</label>
+          <input id="ms-name" name="name" maxlength="24" autocomplete="nickname" enterkeyhint="go" placeholder="What the organiser sees" />
+        </div>
+        <div class="ms-field" id="ms-crew-field" hidden>
+          <label for="ms-crew">Crew <span class="ms-opt">optional</span></label>
+          <select id="ms-crew" name="crew"><option value="">No crew</option></select>
+        </div>
+        <p class="ms-small" id="ms-no-push" hidden>This browser can&rsquo;t show notifications. You can still join and see missions on this page.</p>
+        <button class="ms-btn ms-btn-go" type="submit" id="ms-join-btn">Join</button>
+      </form>
+    </section>
+
+    <!-- In. -->
+    <section class="ms-in" id="ms-in" hidden>
+      <div class="ms-status">
+        <p class="ms-who">You&rsquo;re in, <strong id="ms-me-name"></strong><span id="ms-me-crews"></span></p>
+        <p class="ms-pill" id="ms-pill"></p>
+      </div>
+
+      <div class="ms-panel ms-help" id="ms-turn-on" hidden>
+        <p>Notifications are off on this phone, so missions will only show on this page.</p>
+        <button class="ms-btn ms-btn-go" id="ms-turn-on-btn" type="button">Turn on notifications</button>
+      </div>
+
+      <div class="ms-panel ms-help" id="ms-blocked" hidden>
+        <h2>Notifications are blocked</h2>
+        <p id="ms-blocked-text"></p>
+      </div>
+
+      <article class="ms-slip" id="ms-latest" aria-live="polite">
+        <p class="ms-stamp" id="ms-stamp" hidden>New</p>
+        <p class="ms-slip-from" id="ms-latest-from">Latest mission</p>
+        <p class="ms-slip-text" id="ms-latest-text"></p>
+        <p class="ms-slip-when" id="ms-latest-when"></p>
+      </article>
+
+      <section class="ms-earlier" id="ms-earlier" hidden aria-labelledby="ms-earlier-title">
+        <h2 id="ms-earlier-title">Earlier</h2>
+        <ol id="ms-earlier-list"></ol>
+      </section>
+
+      <div class="ms-leave">
+        <button class="ms-btn ms-btn-quiet" id="ms-leave" type="button">Leave</button>
+      </div>
+    </section>
+  </main>
+
+  {{foot}}
+
+  <script src="/missions.js" defer></script>
+</body>
+</html>

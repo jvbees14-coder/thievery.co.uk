@@ -13,7 +13,7 @@
     "decks:check": "node scripts/decks-check.js",
     "decks:topics": "node scripts/decks-topics.js",
     "decks:topics:claude": "node scripts/decks-topics-claude.js",
-    "test": "node test/source.test.js && node test/smoke.test.js && node test/powerups.test.js && node test/site.test.js && node test/battle.test.js && node test/switchhead.test.js && node test/lockup.test.js && node test/flashcards.test.js && node test/mindmaps.test.js && node test/r2.test.js",
+    "test": "node test/source.test.js && node test/smoke.test.js && node test/powerups.test.js && node test/site.test.js && node test/battle.test.js && node test/switchhead.test.js && node test/lockup.test.js && node test/flashcards.test.js && node test/mindmaps.test.js && node test/missions.test.js && node test/r2.test.js",
     "test:game": "node test/smoke.test.js",
     "test:powerups": "node test/powerups.test.js",
     "test:site": "node test/site.test.js",
@@ -22,10 +22,12 @@
     "test:lockup": "node test/lockup.test.js",
     "test:flashcards": "node test/flashcards.test.js",
     "test:mindmaps": "node test/mindmaps.test.js",
+    "test:missions": "node test/missions.test.js",
     "test:r2": "node test/r2.test.js",
     "test:source": "node test/source.test.js",
     "icons": "node scripts/make-icons.js",
-    "fonts": "node scripts/fetch-fonts.js"
+    "fonts": "node scripts/fetch-fonts.js",
+    "missions:keys": "node scripts/missions-keys.js"
   },
   "engines": {
     "node": ">=20"

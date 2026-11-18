@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm start              # serve on PORT (default 3000)
 npm run dev            # same, with --watch
-npm test               # all ten suites, in order; any failure stops the run
+npm test               # all eleven suites, in order; any failure stops the run
 npm run test:source    # the source as bytes: no literal control characters
 npm run test:game      # the card game: real server, real clients, whole rounds played out
 npm run test:powerups  # the five/six-hand power-up rules, played against game.js directly
@@ -17,7 +17,9 @@ npm run test:switchhead # the shedding rules against shed.js, then a game over t
 npm run test:lockup    # Lockup's rules, run as the browser runs them, and whole games played out
 npm run test:flashcards # the flashcards room over HTTP, and cards in and out as a file
 npm run test:mindmaps  # the mind maps over HTTP: the tree check, the revisions, whose map
+npm run test:missions  # Web Push against RFC 8291, the dispatch rules, and the room with a fake push service
 npm run test:r2        # the storage layer, against a stub S3 client
+npm run missions:keys  # print a fresh VAPID key pair for Missions (once; it goes in Render's environment)
 npm run r2:check       # are the four R2_* variables real? needs them in the environment
 npm run icons          # redraw public/icons/*.png from the mark in the script
 npm run fonts          # refetch public/fonts/*.woff2 and public/fonts.css (Limelight only)
@@ -61,6 +63,7 @@ One server, a hall and five rooms off it:
 | `/battle`, `/battle/ABCD` | `server/battle.js` | required |
 | `/switchhead`, `/switchhead/ABCD` | `server/switchhead.js` | required |
 | `/mindmaps` | `server/mindmaps.js` | required |
+| `/missions`, `/missions/admin` | `server/missions.js` — the join page, and the control room behind the admin account | never / admin |
 | `/gerrymander/` | static files out of `public/gerrymander/`, with a redirect from `/gerrymander` in `server/index.js` | never |
 | `/pocket-universe/` | static files out of `public/pocket-universe/`, Gerrymander's arrangement (redirect, bar on the way out) plus our tokens | never |
 | `/lockup` | `server/site.js` — one view, `server/views/lockup.html`; the game is `public/lockup-rules.js` and `public/lockup.{js,css}` | never |
@@ -71,6 +74,8 @@ One server, a hall and five rooms off it:
 | `/api/site/…` | the door, the menu's figures, the members panel, Lockup's record and its daily board | mostly |
 | `/api/flashcards/…` | the collection, the post, the panel | yes |
 | `/api/mindmaps/…` | a member's maps | yes |
+| `/api/missions/…` | joining, a rider's own missions, and the control room | no / admin |
+| `/missions/tick` | sends whatever is due; an outside cron visits it | no |
 | *(the battle room and Switchhead have no API — all of it is socket)* | | |
 | anything else | the static block in `server/index.js`, out of `public/`; a miss is `views/404.html` | no |
 
@@ -866,6 +871,54 @@ thumbnails, and `POST /api/mindmaps/maps` with `from` copies a map.
 - A deleted account takes its maps (`adminDeleteUser` calls
   `Maps.removeAllFor`).
 
+## Missions
+
+Dares pushed to phones at random times, for a group ride or any day out.
+`dispatch.js` is the rules (sets, crews, riders, who gets what), pure and
+handed its clock and dice; `webpush.js` is Web Push written out by hand
+(RFC 8291 encryption and RFC 8292 VAPID) on Node's crypto, so there is no
+`web-push` dependency; `missions.js` is the pages, the API and the clock.
+Pages: `public/missions.{js,css}`, `missions-admin.js`, `missions-door.js`,
+and `public/missions/` for the service worker and the manifest. Everything
+is under `missions` in the stored document.
+
+- **Riders have no account.** Joining hands the browser a random token
+  (kept in `thievery-missions`, listed on `/privacy`); only its SHA-256 is
+  stored, and the admin sees a different id. The token travels in POST
+  bodies, never in an address.
+- **The control room is the site's admin account**, not a separate key.
+  Signed out, `/missions/admin` is a sign-in that posts to
+  `/api/site/login`; anybody else gets a 404, and so does every admin route.
+- **The clock lives in the document.** Each running set has `nextAt`. A
+  timer aims at the earliest one while the process is awake, and
+  `/missions/tick` (visited by an outside cron every few minutes) does the
+  same round, which is what survives Render's free plan sleeping. A set
+  that was slept through sends **one** dare on waking and draws a fresh gap.
+  "Send one now" does not move `nextAt`. The next time is only sent to the
+  admin page with `?reveal=1`.
+- **Several sets run at once**, each with its own gap, list, no-repeat hat
+  (`used`, by challenge id, kept across edits) and audience: everyone,
+  crews, or chosen riders, optionally one of them at random. Crews have a
+  slug for join links (`/missions?crew=slug`) that does not change on
+  rename.
+- **Only real push services are posted to** (`endpointOk`: Google, Mozilla,
+  Apple, Microsoft, https, no port), because the endpoint comes from a
+  stranger and the server makes a request to it. A 404 or 410 from the
+  service clears that rider's subscription; the page sends the current one on
+  every visit, so a renewed subscription heals itself.
+- **The service worker is `/missions/sw.js`, served `no-store`** with
+  `Service-Worker-Allowed: /missions` so its scope covers the page and
+  nothing else on the site. Both missions pages swap the site manifest for
+  `/missions/manifest.webmanifest`, so a Home Screen icon opens Missions.
+  iPhones only get push from the Home Screen (iOS 16.4+); the page detects
+  Safari and shows the steps.
+- `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` come from `npm run missions:keys`.
+  Without them dares are still written to each rider's page, just not
+  pushed. A new pair orphans every existing subscription.
+- `test/missions.test.js` runs its own push service on 127.0.0.1
+  (`THIEVERY_MISSIONS_TEST_PUSH=1` lets the server post there) and decrypts
+  what arrives; `THIEVERY_MISSIONS_MINUTE_MS` shrinks a minute.
+
 ## The pages
 
 Every page is read through `server/views.js` (`readView`, or `render` for
@@ -1062,6 +1115,9 @@ any card whose history has a `welcomed` event, wherever it now is.
 | `THIEVERY_ALLOW_EPHEMERAL=1` | permit the throwaway disk in production |
 | `THIEVERY_BOT_PACE` | bot think-time multiplier; the game suite sets it low |
 | `THIEVERY_CONTACT_EMAIL` | overrides the address About and Privacy give, which is admin@thievery.co.uk |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Missions' push keys, from `npm run missions:keys`; both or neither |
+| `VAPID_SUBJECT` | optional; the contact push services are given, default `mailto:` the contact address |
+| `THIEVERY_MISSIONS_TEST_PUSH`, `THIEVERY_MISSIONS_MINUTE_MS` | test suite only |
 
 R2 keys are 32 hex characters and secrets 64 — a `cfut_`-prefixed value is a
 Cloudflare API token, not an S3 credential.
@@ -1101,7 +1157,7 @@ generated; the rules that came out of that still hold:
 - No stock examples (photosynthesis) and no promises about features that do
   not exist.
 
-Dependencies are `ws` and `@aws-sdk/client-s3`, there are no dev dependencies,
+Dependencies are `ws` and `@aws-sdk/client-s3` (Missions' push is hand-written for this reason), there are no dev dependencies,
 and that is meant to stay true. Playwright, axe and Lighthouse are used to
 check the pages, but run with `npx` and never added to `package.json`. The fonts and the icons are served out of
 `public/` rather than fetched from anywhere at runtime, so the site makes no

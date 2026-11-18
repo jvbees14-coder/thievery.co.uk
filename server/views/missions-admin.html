@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  {{head:missions}}
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Missions" />
+  <title>Missions admin · Thievery</title>
+  <meta name="robots" content="noindex, nofollow" />
+</head>
+<body class="ms-body">
+  {{bar:public}}
+
+  <!-- Drawn by public/missions-admin.js from GET /api/missions/admin. Every
+       change answers with the whole state again and the page redraws from
+       it, except a set being edited, which keeps its own draft until Save. -->
+  <main id="main" class="ms-main ms-admin">
+    <header class="ms-head">
+      <p class="ms-kicker">Missions</p>
+      <h1 class="ms-title">Control room</h1>
+    </header>
+
+    <p class="ms-note" id="ms-loading">Opening the files&hellip;</p>
+
+    <section class="ms-board" id="ms-board" aria-label="Status" hidden></section>
+
+    <section class="ms-section" aria-labelledby="ms-sets-title">
+      <div class="ms-section-head">
+        <h2 id="ms-sets-title">Sets</h2>
+        <label class="ms-check"><input type="checkbox" id="ms-reveal" /> Reveal next times</label>
+      </div>
+      <div id="ms-sets" class="ms-stack"></div>
+      <button class="ms-btn ms-btn-go" id="ms-add-set" type="button">New set</button>
+    </section>
+
+    <section class="ms-section" aria-labelledby="ms-crews-title">
+      <h2 id="ms-crews-title">Crews</h2>
+      <p class="ms-small">Group riders so a set can go to some of them. Each crew has a join link that puts people straight in it.</p>
+      <div id="ms-crews" class="ms-stack"></div>
+      <form class="ms-inline-form" id="ms-add-crew">
+        <label class="ms-sr" for="ms-crew-name">New crew name</label>
+        <input id="ms-crew-name" maxlength="30" placeholder="New crew name" />
+        <button class="ms-btn" type="submit">Add crew</button>
+      </form>
+    </section>
+
+    <section class="ms-section" aria-labelledby="ms-riders-title">
+      <h2 id="ms-riders-title">Riders</h2>
+      <p class="ms-small">Everyone joins at <a href="/missions">thievery.co.uk/missions</a>.</p>
+      <div id="ms-riders" class="ms-stack"></div>
+    </section>
+  </main>
+
+  {{foot}}
+
+  <script src="/missions-admin.js" defer></script>
+</body>
+</html>

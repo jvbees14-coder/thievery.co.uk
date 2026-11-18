@@ -28,6 +28,7 @@ import * as Site from './site.js';
 import * as Battle from './battle.js';
 import * as Switchhead from './switchhead.js';
 import * as Mindmaps from './mindmaps.js';
+import * as Missions from './missions.js';
 import * as Stats from './stats.js';
 import { currentUser } from './plumbing.js';
 import { readView, withBar } from './views.js';
@@ -147,6 +148,11 @@ function serve(req, res) {
   // The mind maps are the flashcards' shape: a page and a JSON API, behind
   // the login, with nothing over the socket.
   if (Mindmaps.handle(req, res, url)) return;
+
+  // Missions: a public join page, an admin page behind the site's admin
+  // login, and the service worker and manifest those two need, which have to
+  // be served from under /missions rather than out of the static block.
+  if (Missions.handle(req, res, url)) return;
 
   // Then the front hall, which owns "/" and the card table at /cards. It has
   // to come before the static block for the same reason: that block serves
@@ -1165,6 +1171,10 @@ Battle.start();
 // The admin account, if the environment has a password to give it, before the
 // door is opened to anybody.
 await Flashcards.start();
+
+// Missions keep their clock in the stored document, so anything that fell due
+// while the process was asleep is sent now that it can be read.
+Missions.start();
 
 // PORT=0 asks the machine for whatever port is going, which is how the tests
 // get one to themselves; the line below reports the port actually in use

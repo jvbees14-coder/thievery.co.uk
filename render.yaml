@@ -48,6 +48,12 @@ services:
         sync: false
       - key: R2_BUCKET_NAME
         sync: false
+      # Missions' push keys, from `npm run missions:keys`. The public half is
+      # sent to every browser anyway; the private half signs every push.
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
     # With all four of those set, THIEVERY_DATA_DIR is ignored. Leave them
     # unset and the server falls back to a local file under it, which is what
     # happens on a laptop and in the tests.
